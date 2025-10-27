@@ -1,0 +1,12 @@
+api_platform:
+    title: Deschide News API
+    version: 1.0.0
+    formats:
+        jsonld: ['application/ld+json']
+        json: ['application/json']
+        html: ['text/html']
+        multipart: ['multipart/form-data']
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin', 'Accept-Language']

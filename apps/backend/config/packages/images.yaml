@@ -1,0 +1,79 @@
+parameters:
+    # Storage paths
+    image.storage.root: '%kernel.project_dir%/public/media'
+    image.storage.originals_dir: 'images'
+    image.storage.thumbnails_dir: 'thumbnails'
+    image.storage.public_path: '/media'
+
+    # Upload constraints
+    image.upload.max_size: 10485760  # 10MB in bytes
+    image.upload.allowed_types:
+        - 'image/jpeg'
+        - 'image/jpg'
+        - 'image/png'
+        - 'image/gif'
+        - 'image/webp'
+
+    # Thumbnail profiles (can be synced with ThumbnailProfile entity)
+    image.thumbnail.profiles:
+        thumb_small:
+            width: 150
+            height: 150
+            mode: 'cover'  # cover, contain, crop, scale
+        thumb_medium:
+            width: 300
+            height: 300
+            mode: 'cover'
+        thumb_large:
+            width: 600
+            height: 600
+            mode: 'cover'
+        card_small:
+            width: 320
+            height: 180
+            mode: 'cover'
+        card_medium:
+            width: 640
+            height: 360
+            mode: 'cover'
+        card_large:
+            width: 1280
+            height: 720
+            mode: 'cover'
+        hero_small:
+            width: 960
+            height: 540
+            mode: 'cover'
+        hero_medium:
+            width: 1920
+            height: 1080
+            mode: 'cover'
+        hero_large:
+            width: 2560
+            height: 1440
+            mode: 'cover'
+        full:
+            width: 3840
+            height: 2160
+            mode: 'contain'
+
+    # Output formats
+    image.thumbnail.formats:
+        - 'webp'
+        - 'jpg'
+
+    # Quality settings per format (0-100)
+    image.thumbnail.quality:
+        jpg: 85
+        jpeg: 85
+        webp: 85
+        png: 9  # PNG uses compression level 0-9
+        avif: 80
+
+    # Progressive JPEG
+    image.thumbnail.progressive: true
+
+    # Blur placeholder (for progressive loading)
+    image.blur_placeholder.size: 20  # pixels
+    image.blur_placeholder.blur: 5   # blur intensity
+    image.blur_placeholder.quality: 60  # JPEG quality
