@@ -156,6 +156,9 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             setIsSubmitting(false);
             setSaveAction(null);
           }
+        } else {
+          setIsSubmitting(false);
+          setSaveAction(null);
         }
       } else {
         // If no message returned, something went wrong but no errors were reported
@@ -411,7 +414,11 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
           <TinyEditor
             initialValue={formData.lead}
             onChange={(html) => setFormData((prev) => ({ ...prev, lead: html }))}
-            height={400}
+            height={250}
+            imageList={attachedImages.map((img) => ({
+              title: img.image.originalName || `Image ${img.image.id}`,
+              value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/originals/${img.image.filename}`
+            }))}
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Introductory paragraph that appears at the beginning of the article (max 500 characters)
@@ -429,7 +436,11 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
           <TinyEditor
             initialValue={formData.content}
             onChange={(html) => setFormData((prev) => ({ ...prev, content: html }))}
-            height={800}
+            height={500}
+            imageList={attachedImages.map((img) => ({
+              title: img.image.originalName || `Image ${img.image.id}`,
+              value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/originals/${img.image.filename}`
+            }))}
           />
         </div>
       </div>
