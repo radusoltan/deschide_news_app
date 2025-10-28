@@ -50,7 +50,7 @@ export default function TinyEditor({
         toolbar_mode: 'wrap',
         toolbar: [
           'undo redo | blocks fontsize | bold italic underline strikethrough | forecolor backcolor | removeformat',
-          'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | blockquote | link image media table | charmap anchor | searchreplace visualblocks fullscreen | code preview help'
+          'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | blockquote | link image media table | charmap anchor | searchreplace visualblocks fullscreen  code '
         ],
 
         // Plugins (from example)
@@ -69,8 +69,6 @@ export default function TinyEditor({
           'insertdatetime',
           'media',
           'table',
-          'preview',
-          'help',
           'wordcount'
         ],
 

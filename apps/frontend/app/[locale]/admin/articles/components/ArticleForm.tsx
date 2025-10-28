@@ -414,7 +414,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
           <TinyEditor
             initialValue={formData.lead}
             onChange={(html) => setFormData((prev) => ({ ...prev, lead: html }))}
-            height={250}
+            height={400}
             imageList={attachedImages.map((img) => ({
               title: img.image.originalName || `Image ${img.image.id}`,
               value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/originals/${img.image.filename}`
@@ -436,7 +436,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
           <TinyEditor
             initialValue={formData.content}
             onChange={(html) => setFormData((prev) => ({ ...prev, content: html }))}
-            height={500}
+            height={900}
             imageList={attachedImages.map((img) => ({
               title: img.image.originalName || `Image ${img.image.id}`,
               value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/originals/${img.image.filename}`
