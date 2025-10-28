@@ -116,7 +116,9 @@ class ImageService
         }
 
         // Generate thumbnail filename and path
-        $filename = sprintf('%s.%s', $profile->getSlug(), $format);
+        // Format: {imageId}_{profileName}.{format}
+        // Example: 14_article_card.jpg
+        $filename = sprintf('%s_%s.%s', $image->getId(), $profile->getName(), $format);
         $relativePath = sprintf(
             '%s/%s',
             $this->thumbnailsDir,

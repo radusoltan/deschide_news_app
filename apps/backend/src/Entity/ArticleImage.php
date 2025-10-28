@@ -140,6 +140,11 @@ class ArticleImage
         return $this->isFeatured;
     }
 
+    public function getIsFeatured(): bool
+    {
+        return $this->isFeatured;
+    }
+
     public function setIsFeatured(bool $isFeatured): self
     {
         $this->isFeatured = $isFeatured;

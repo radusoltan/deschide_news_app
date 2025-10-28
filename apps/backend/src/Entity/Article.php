@@ -80,13 +80,12 @@ class Article implements Translatable
 
     #[Gedmo\Translatable]
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Assert\Length(max: 500)]
+    #[Assert\Length(max: 3000)]
     #[Groups(['article:read', 'article:write'])]
     private ?string $lead = null;
 
     #[Gedmo\Translatable]
-    #[ORM\Column(type: Types::TEXT)]
-    #[Assert\NotBlank]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['article:detail', 'article:write'])] // Content only in detail view
     private ?string $content = null;
 

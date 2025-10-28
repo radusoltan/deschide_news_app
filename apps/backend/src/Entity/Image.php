@@ -22,6 +22,7 @@ use Gedmo\Translatable\Translatable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 use Symfony\Component\Validator\Constraints as Assert;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
@@ -35,7 +36,10 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
     operations: [
         new Get(
             uriTemplate: '/images/{id}',
-            normalizationContext: ['groups' => ['image:read', 'image:detail']]
+            normalizationContext: [
+                'groups' => ['image:read', 'image:detail', 'thumbnail:read', 'thumbnail_profile:read'],
+                'enable_max_depth' => true
+            ]
         ),
         new GetCollection(
             uriTemplate: '/images',
@@ -56,6 +60,18 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
         ),
         new Delete(
             uriTemplate: '/images/{id}'
+        ),
+        new Post(
+            uriTemplate: '/images/{id}/thumbnails/crop',
+            denormalizationContext: ['groups' => ['image:crop']],
+            normalizationContext: ['groups' => ['thumbnail:read']],
+            description: 'Apply custom crop coordinates to generate/regenerate a thumbnail for a specific profile and format'
+        ),
+        new Post(
+            uriTemplate: '/images/{id}/thumbnails/reset-crop',
+            denormalizationContext: ['groups' => ['image:crop:reset']],
+            normalizationContext: ['groups' => ['thumbnail:read']],
+            description: 'Reset crop to default (regenerate thumbnail without custom crop data)'
         )
     ],
     provider: ImageProvider::class,
@@ -94,11 +110,11 @@ class Image implements Translatable
     #[Groups(['image:read'])]
     private ?string $path = null;
 
-    #[ORM\Column(type: Types::STRING, length: 100)]
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
     #[Groups(['image:read'])]
     private ?string $mimeType = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
     #[Groups(['image:read'])]
     private ?int $size = null;
 
@@ -139,6 +155,8 @@ class Image implements Translatable
     private Collection $articleImages;
 
     #[ORM\OneToMany(targetEntity: Thumbnail::class, mappedBy: 'image', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['image:read'])]
+    #[MaxDepth(1)]
     private Collection $thumbnails;
 
     // Timestamps
@@ -247,7 +265,7 @@ class Image implements Translatable
         return $this->mimeType;
     }
 
-    public function setMimeType(string $mimeType): self
+    public function setMimeType(?string $mimeType): self
     {
         $this->mimeType = $mimeType;
         return $this;
@@ -258,7 +276,7 @@ class Image implements Translatable
         return $this->size;
     }
 
-    public function setSize(int $size): self
+    public function setSize(?int $size): self
     {
         $this->size = $size;
         return $this;
@@ -391,5 +409,48 @@ class Image implements Translatable
         }
 
         return round($size, 2) . ' ' . $units[$unit];
+    }
+
+    // Temporary properties for crop operations (not persisted)
+    #[Groups(['image:crop'])]
+    private ?string $profile = null;
+
+    #[Groups(['image:crop'])]
+    private ?string $format = null;
+
+    #[Groups(['image:crop'])]
+    private ?array $cropData = null;
+
+    public function getProfile(): ?string
+    {
+        return $this->profile;
+    }
+
+    public function setProfile(?string $profile): self
+    {
+        $this->profile = $profile;
+        return $this;
+    }
+
+    public function getFormat(): ?string
+    {
+        return $this->format;
+    }
+
+    public function setFormat(?string $format): self
+    {
+        $this->format = $format;
+        return $this;
+    }
+
+    public function getCropData(): ?array
+    {
+        return $this->cropData;
+    }
+
+    public function setCropData(?array $cropData): self
+    {
+        $this->cropData = $cropData;
+        return $this;
     }
 }

@@ -69,15 +69,20 @@ final class ArticleImageProcessor implements ProcessorInterface
                     throw new \RuntimeException('ArticleImage not found');
                 }
 
-                // Update fields
-                $existingEntity->setPosition($data->getPosition());
+                // Update position if provided (non-zero or explicitly set)
+                if ($data->getPosition() > 0 || ($context['previous_data'] ?? null)?->getPosition() !== $data->getPosition()) {
+                    $existingEntity->setPosition($data->getPosition());
+                }
 
                 // If setting as featured, unfeatured others
                 if ($data->isFeatured() && !$existingEntity->isFeatured()) {
                     $this->unfeaturedAllForArticle($existingEntity->getArticle());
+                    $existingEntity->setIsFeatured(true);
+                } elseif (!$data->isFeatured() && $existingEntity->isFeatured()) {
+                    $existingEntity->setIsFeatured(false);
+                } elseif ($data->isFeatured()) {
+                    $existingEntity->setIsFeatured(true);
                 }
-
-                $existingEntity->setIsFeatured($data->isFeatured());
 
                 $this->entityManager->flush();
 

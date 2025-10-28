@@ -8,6 +8,8 @@ use ApiPlatform\Metadata\DeleteOperationInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Image;
+use App\Entity\ThumbnailProfile;
+use App\Service\ImageService;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -19,11 +21,12 @@ final class ImageProcessor implements ProcessorInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly RequestStack $requestStack
+        private readonly RequestStack $requestStack,
+        private readonly ImageService $imageService
     ) {
     }
 
-    public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): ?Image
+    public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = [])
     {
         $request = $this->requestStack->getCurrentRequest();
         $locale = $request?->headers->get('Accept-Language', 'ro') ?? 'ro';
@@ -36,9 +39,31 @@ final class ImageProcessor implements ProcessorInterface
             $locale = explode(',', $locale)[0];
         }
 
+        // Handle custom crop operations
+        $uriTemplate = $operation->getUriTemplate();
+
+        if ($uriTemplate === '/images/{id}/thumbnails/crop') {
+            return $this->handleCropOperation($data, $uriVariables);
+        }
+
+        if ($uriTemplate === '/images/{id}/thumbnails/reset-crop') {
+            return $this->handleResetCropOperation($data, $uriVariables);
+        }
+
         // Handle DELETE operation
         if ($operation instanceof DeleteOperationInterface) {
             if ($data instanceof Image) {
+                // Check if image is attached to any articles
+                $articleImages = $data->getArticleImages();
+                if ($articleImages && count($articleImages) > 0) {
+                    throw new \RuntimeException(
+                        sprintf(
+                            'Cannot delete image: it is attached to %d article(s). Please detach it from all articles first.',
+                            count($articleImages)
+                        )
+                    );
+                }
+
                 // TODO: Delete physical file from storage
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
@@ -146,5 +171,107 @@ final class ImageProcessor implements ProcessorInterface
         }
 
         $this->entityManager->flush();
+    }
+
+    /**
+     * Handle crop operation: POST /images/{id}/thumbnails/crop
+     *
+     * Expected payload: {
+     *   "profile": "article_card",
+     *   "format": "webp",
+     *   "cropData": {"x": 10, "y": 20, "width": 300, "height": 200}
+     * }
+     */
+    private function handleCropOperation(mixed $data, array $uriVariables)
+    {
+        // Load image entity
+        $imageId = $uriVariables['id'] ?? null;
+        if (!$imageId) {
+            throw new \InvalidArgumentException('Image ID is required');
+        }
+
+        $image = $this->entityManager->getRepository(Image::class)->find($imageId);
+        if (!$image) {
+            throw new \RuntimeException('Image not found');
+        }
+
+        // Extract request data from Image entity (denormalized with 'image:crop' group)
+        if (!$data instanceof Image) {
+            throw new \InvalidArgumentException('Invalid request data - expected Image entity');
+        }
+
+        $profileName = $data->getProfile();
+        $format = $data->getFormat() ?? 'webp';
+        $cropData = $data->getCropData();
+
+        if (!$profileName) {
+            throw new \InvalidArgumentException('Profile name is required');
+        }
+
+        if (!$cropData) {
+            throw new \InvalidArgumentException('Crop data is required');
+        }
+
+        // Load profile
+        $profile = $this->entityManager->getRepository(ThumbnailProfile::class)
+            ->findOneBy(['name' => $profileName]);
+
+        if (!$profile) {
+            throw new \InvalidArgumentException(sprintf('Profile "%s" not found', $profileName));
+        }
+
+        // Generate thumbnail with crop
+        $thumbnail = $this->imageService->generateThumbnail($image, $profile, $format, $cropData);
+
+        // Return the thumbnail (will be serialized with 'thumbnail:read' group)
+        return $thumbnail;
+    }
+
+    /**
+     * Handle reset crop operation: POST /images/{id}/thumbnails/reset-crop
+     *
+     * Expected payload: {
+     *   "profile": "article_card",
+     *   "format": "webp"
+     * }
+     */
+    private function handleResetCropOperation(mixed $data, array $uriVariables)
+    {
+        // Load image entity
+        $imageId = $uriVariables['id'] ?? null;
+        if (!$imageId) {
+            throw new \InvalidArgumentException('Image ID is required');
+        }
+
+        $image = $this->entityManager->getRepository(Image::class)->find($imageId);
+        if (!$image) {
+            throw new \RuntimeException('Image not found');
+        }
+
+        // Extract request data from Image entity
+        if (!$data instanceof Image) {
+            throw new \InvalidArgumentException('Invalid request data - expected Image entity');
+        }
+
+        $profileName = $data->getProfile();
+        $format = $data->getFormat() ?? 'webp';
+
+        if (!$profileName) {
+            throw new \InvalidArgumentException('Profile name is required');
+        }
+
+        // Load profile
+        $profile = $this->entityManager->getRepository(ThumbnailProfile::class)
+            ->findOneBy(['name' => $profileName]);
+
+        if (!$profile) {
+            throw new \InvalidArgumentException(sprintf('Profile "%s" not found', $profileName));
+        }
+
+        // Generate thumbnail WITHOUT crop (cropData = null)
+        $thumbnail = $this->imageService->generateThumbnail($image, $profile, $format, null);
+
+        // Return the thumbnail
+        return $thumbnail;
     }
 }

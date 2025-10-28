@@ -68,6 +68,25 @@ final class ArticleProcessor implements ProcessorInterface
                 $existingEntity->setBadge($data->getBadge());
                 $existingEntity->setIsFeatured($data->isFeatured());
 
+                // Update category if provided
+                if ($data->getCategory()) {
+                    $existingEntity->setCategory($data->getCategory());
+                }
+
+                // Sync authors collection
+                // Remove authors that are not in the new list
+                foreach ($existingEntity->getAuthors() as $author) {
+                    if (!$data->getAuthors()->contains($author)) {
+                        $existingEntity->removeAuthor($author);
+                    }
+                }
+                // Add new authors
+                foreach ($data->getAuthors() as $author) {
+                    if (!$existingEntity->getAuthors()->contains($author)) {
+                        $existingEntity->addAuthor($author);
+                    }
+                }
+
                 // Use existing entity instead of deserialized one
                 $data = $existingEntity;
             }

@@ -1,9 +1,9 @@
 parameters:
     # Storage paths
-    image.storage.root: '%kernel.project_dir%/public/media'
-    image.storage.originals_dir: 'images'
-    image.storage.thumbnails_dir: 'thumbnails'
-    image.storage.public_path: '/media'
+    image.storage.root: '%kernel.project_dir%/public/uploads'
+    image.storage.originals_dir: 'images/originals'
+    image.storage.thumbnails_dir: 'images/thumbnails'
+    image.storage.public_path: '/uploads'
 
     # Upload constraints
     image.upload.max_size: 10485760  # 10MB in bytes

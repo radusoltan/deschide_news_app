@@ -17,6 +17,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ThumbnailRepository::class)]
@@ -101,11 +102,13 @@ class Thumbnail
     #[ORM\ManyToOne(targetEntity: Image::class, inversedBy: 'thumbnails')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Groups(['thumbnail:read', 'thumbnail:create'])]
+    #[MaxDepth(1)]
     private ?Image $image = null;
 
     #[ORM\ManyToOne(targetEntity: ThumbnailProfile::class, inversedBy: 'thumbnails')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'RESTRICT')]
     #[Groups(['thumbnail:read', 'thumbnail:create'])]
+    #[MaxDepth(1)]
     private ?ThumbnailProfile $profile = null;
 
     // Timestamps
