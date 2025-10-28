@@ -1,4 +1,4 @@
-// Root layout - minimal, locale layout handles everything
+// Root layout - minimal, locale layout handles <html> and <body>
 export default function RootLayout({
   children,
 }: {

@@ -1,0 +1,114 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import ArticleForm from '../../components/ArticleForm';
+import { getArticle, getCategories } from '@/lib/dal';
+import { getAuthors } from '@/lib/api/authors';
+
+interface EditArticlePageProps {
+  params: Promise<{
+    locale: string;
+    id: string;
+  }>;
+}
+
+export default async function EditArticlePage({ params }: EditArticlePageProps) {
+  const { locale, id } = await params;
+  const articleId = parseInt(id, 10);
+
+  if (isNaN(articleId)) {
+    notFound();
+  }
+
+  // Fetch article data
+  let article;
+  try {
+    article = await getArticle(articleId, locale);
+  } catch (error) {
+    console.error('Failed to fetch article:', error);
+    notFound();
+  }
+
+  // Fetch categories for the select dropdown
+  let categories: any[] = [];
+  try {
+    const data = await getCategories({ locale, itemsPerPage: 100 });
+    categories = data.member.filter((cat: any) => cat.status === 'active');
+  } catch (error) {
+    console.error('Failed to fetch categories:', error);
+    categories = [];
+  }
+
+  // Fetch authors for the article form
+  let authors: any[] = [];
+  try {
+    authors = await getAuthors();
+  } catch (error) {
+    console.error('Failed to fetch authors:', error);
+    authors = [];
+  }
+
+  // Extract category ID from article.category (can be string IRI or object)
+  let categoryId = '';
+  if (article.category) {
+    if (typeof article.category === 'string') {
+      // Extract ID from IRI like "/api/categories/1"
+      const match = article.category.match(/\/(\d+)$/);
+      categoryId = match ? match[1] : '';
+    } else if (typeof article.category === 'object' && article.category !== null && 'id' in article.category) {
+      categoryId = (article.category as { id: number }).id.toString();
+    }
+  }
+
+  // Extract author IRIs from article.authors
+  let authorIris: string[] = [];
+  if (article.authors && Array.isArray(article.authors)) {
+    authorIris = article.authors.map((author: any) => {
+      if (typeof author === 'string') {
+        return author; // Already an IRI
+      } else if (typeof author === 'object' && author !== null && 'id' in author) {
+        return `/api/authors/${author.id}`;
+      }
+      return '';
+    }).filter((iri: string) => iri !== '');
+  }
+
+  return (
+    <div className="p-4">
+      {/* Page Header */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <Link href={`/${locale}/admin/articles`} className="hover:text-blue-600">
+            Articles
+          </Link>
+          <span>/</span>
+          <span>Edit Article</span>
+        </div>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          Edit Article
+        </h1>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          Update article details
+        </p>
+      </div>
+
+      {/* Article Form */}
+      <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-6">
+        <ArticleForm
+          locale={locale}
+          categories={categories}
+          authors={authors}
+          article={{
+            id: article.id,
+            title: article.title,
+            slug: article.slug,
+            lead: article.lead || '',
+            content: article.content || '',
+            status: article.status || 'new',
+            category: categoryId,
+            authors: authorIris,
+          }}
+        />
+      </div>
+    </div>
+  );
+}

@@ -1,11 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import {Dropdown, Avatar, DropdownHeader, DropdownItem, DropdownDivider} from 'flowbite-react';
+import { logout } from '@/app/actions/auth';
 
 export default function Navbar() {
   const params = useParams();
+  const router = useRouter();
   const locale = params.locale as string;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -42,6 +45,12 @@ export default function Navbar() {
       backdrop.classList.toggle('hidden');
     }
     setSidebarOpen(!sidebarOpen);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    router.push(`/${locale}/login`);
+    router.refresh();
   };
 
   return (
@@ -206,23 +215,35 @@ export default function Navbar() {
               </svg>
             </button>
 
-            {/* Profile */}
+            {/* Profile Dropdown */}
             <div className="flex items-center ml-3">
-              <div>
-                <button
-                  type="button"
-                  className="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
-                  id="user-menu-button"
-                  aria-expanded="false"
-                >
-                  <span className="sr-only">Open user menu</span>
-                  <img
-                    className="w-8 h-8 rounded-full"
-                    src="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
-                    alt="user"
+              <Dropdown
+                arrowIcon={false}
+                inline
+                label={
+                  <Avatar
+                    alt="User settings"
+                    img="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
+                    rounded
+                    className=""
                   />
-                </button>
-              </div>
+                }
+              >
+                <DropdownHeader>
+                  <span className="block text-sm">Admin User</span>
+                  <span className="block truncate text-sm font-medium">admin@deschide.local</span>
+                </DropdownHeader>
+                <DropdownItem>
+                  <Link href={`/${locale}/admin/profile`}>Profile</Link>
+                </DropdownItem>
+                <DropdownItem>
+                  <Link href={`/${locale}/admin/settings`}>Settings</Link>
+                </DropdownItem>
+                <DropdownDivider />
+                <DropdownItem onClick={handleLogout}>
+                  Sign out
+                </DropdownItem>
+              </Dropdown>
             </div>
           </div>
         </div>

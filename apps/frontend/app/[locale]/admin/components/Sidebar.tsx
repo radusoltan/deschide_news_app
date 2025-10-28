@@ -8,8 +8,6 @@ export default function Sidebar() {
   const params = useParams();
   const locale = params.locale as string;
 
-  const [articlesOpen, setArticlesOpen] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [usersOpen, setUsersOpen] = useState(false);
 
   return (
@@ -76,13 +74,12 @@ export default function Sidebar() {
 
                 {/* Articles */}
                 <li>
-                  <button
-                    type="button"
-                    className="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                    onClick={() => setArticlesOpen(!articlesOpen)}
+                  <Link
+                    href={`/${locale}/admin/articles`}
+                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
                   >
                     <svg
-                      className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
@@ -94,99 +91,48 @@ export default function Sidebar() {
                       />
                       <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z" />
                     </svg>
-                    <span className="flex-1 ml-3 text-left whitespace-nowrap">
-                      Articles
-                    </span>
-                    <svg
-                      className={`w-6 h-6 transition-transform ${
-                        articlesOpen ? 'rotate-180' : ''
-                      }`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                  {articlesOpen && (
-                    <ul className="py-2 space-y-2">
-                      <li>
-                        <Link
-                          href={`/${locale}/admin/articles`}
-                          className="flex items-center p-2 text-base text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                        >
-                          All Articles
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href={`/${locale}/admin/articles/new`}
-                          className="flex items-center p-2 text-base text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                        >
-                          Add New
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
+                    <span className="ml-3">Articles</span>
+                  </Link>
                 </li>
 
                 {/* Categories */}
                 <li>
-                  <button
-                    type="button"
-                    className="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                    onClick={() => setCategoriesOpen(!categoriesOpen)}
+                  <Link
+                    href={`/${locale}/admin/categories`}
+                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
                   >
                     <svg
-                      className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
                     >
                       <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                     </svg>
-                    <span className="flex-1 ml-3 text-left whitespace-nowrap">
-                      Categories
-                    </span>
+                    <span className="ml-3">Categories</span>
+                  </Link>
+                </li>
+
+                {/* Images */}
+                <li>
+                  <Link
+                    href={`/${locale}/admin/images`}
+                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
+                  >
                     <svg
-                      className={`w-6 h-6 transition-transform ${
-                        categoriesOpen ? 'rotate-180' : ''
-                      }`}
+                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
                     >
                       <path
                         fillRule="evenodd"
-                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
                         clipRule="evenodd"
                       />
                     </svg>
-                  </button>
-                  {categoriesOpen && (
-                    <ul className="py-2 space-y-2">
-                      <li>
-                        <Link
-                          href={`/${locale}/admin/categories`}
-                          className="flex items-center p-2 text-base text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                        >
-                          All Categories
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href={`/${locale}/admin/categories/new`}
-                          className="flex items-center p-2 text-base text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                        >
-                          Add New
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
+                    <span className="ml-3">Images</span>
+                  </Link>
                 </li>
 
                 {/* Users */}

@@ -313,6 +313,7 @@ export default async function HomePage({ params }: PageProps) {
       <NewsSlider
         title="American"
         backgroundImage="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&h=1080&fit=crop"
+        locale={locale}
       />
 
       {/* Block News Section - Africa */}
