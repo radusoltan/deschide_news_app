@@ -68,6 +68,11 @@ final class ArticleProcessor implements ProcessorInterface
                 $existingEntity->setBadge($data->getBadge());
                 $existingEntity->setIsFeatured($data->isFeatured());
 
+                // Update publishAt if provided
+                if ($data->getPublishAt() !== null) {
+                    $existingEntity->setPublishAt($data->getPublishAt());
+                }
+
                 // Update category if provided
                 if ($data->getCategory()) {
                     $existingEntity->setCategory($data->getCategory());
@@ -84,6 +89,20 @@ final class ArticleProcessor implements ProcessorInterface
                 foreach ($data->getAuthors() as $author) {
                     if (!$existingEntity->getAuthors()->contains($author)) {
                         $existingEntity->addAuthor($author);
+                    }
+                }
+
+                // Sync related articles collection
+                // Remove related articles that are not in the new list
+                foreach ($existingEntity->getRelatedArticles() as $relatedArticle) {
+                    if (!$data->getRelatedArticles()->contains($relatedArticle)) {
+                        $existingEntity->removeRelatedArticle($relatedArticle);
+                    }
+                }
+                // Add new related articles
+                foreach ($data->getRelatedArticles() as $relatedArticle) {
+                    if (!$existingEntity->getRelatedArticles()->contains($relatedArticle)) {
+                        $existingEntity->addRelatedArticle($relatedArticle);
                     }
                 }
 

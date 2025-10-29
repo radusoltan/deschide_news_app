@@ -1,0 +1,12 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Message;
+
+final class PublishScheduledArticles
+{
+    public function __construct()
+    {
+    }
+}

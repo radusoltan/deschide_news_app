@@ -29,6 +29,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Index(name: 'idx_article_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_article_published_at', columns: ['published_at'])]
+#[ORM\Index(name: 'idx_article_publish_at', columns: ['publish_at'])]
 #[ORM\Index(name: 'idx_article_featured', columns: ['is_featured'])]
 #[ApiResource(
     operations: [
@@ -104,6 +105,14 @@ class Article implements Translatable
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $articleImages;
 
+    #[ORM\ManyToMany(targetEntity: self::class)]
+    #[ORM\JoinTable(name: 'related_articles')]
+    #[ORM\JoinColumn(name: 'article_id', referencedColumnName: 'id')]
+    #[ORM\InverseJoinColumn(name: 'related_article_id', referencedColumnName: 'id')]
+    #[Assert\Count(max: 20, maxMessage: 'An article cannot have more than {{ limit }} related articles.')]
+    #[Groups(['article:detail', 'article:write'])]
+    private Collection $relatedArticles;
+
     // Non-translatable fields
     #[ORM\Column(type: Types::STRING, length: 20, enumType: ArticleStatus::class)]
     #[Groups(['article:read', 'article:write'])]
@@ -136,6 +145,11 @@ class Article implements Translatable
     #[Groups(['article:read'])]
     private ?\DateTimeImmutable $publishedAt = null;
 
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Assert\GreaterThan('now', message: 'Publish date must be in the future.')]
+    #[Groups(['article:read', 'article:write'])]
+    private ?\DateTimeImmutable $publishAt = null;
+
     // For translations
     #[Gedmo\Locale]
     #[Groups(['article:read'])]
@@ -145,6 +159,7 @@ class Article implements Translatable
     {
         $this->authors = new ArrayCollection();
         $this->articleImages = new ArrayCollection();
+        $this->relatedArticles = new ArrayCollection();
     }
 
     // Getters and setters
@@ -263,6 +278,17 @@ class Article implements Translatable
         return $this;
     }
 
+    public function getPublishAt(): ?\DateTimeImmutable
+    {
+        return $this->publishAt;
+    }
+
+    public function setPublishAt(?\DateTimeImmutable $publishAt): self
+    {
+        $this->publishAt = $publishAt;
+        return $this;
+    }
+
     public function setTranslatableLocale(?string $locale): void
     {
         $this->locale = $locale;
@@ -329,5 +355,28 @@ class Article implements Translatable
         }
         $wordCount = str_word_count(strip_tags($this->content));
         return (int) ceil($wordCount / 200);
+    }
+
+    /**
+     * @return Collection<int, Article>
+     */
+    public function getRelatedArticles(): Collection
+    {
+        return $this->relatedArticles;
+    }
+
+    public function addRelatedArticle(Article $article): self
+    {
+        if (!$this->relatedArticles->contains($article)) {
+            $this->relatedArticles->add($article);
+        }
+
+        return $this;
+    }
+
+    public function removeRelatedArticle(Article $article): self
+    {
+        $this->relatedArticles->removeElement($article);
+        return $this;
     }
 }

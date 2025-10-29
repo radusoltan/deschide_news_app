@@ -7,6 +7,7 @@ namespace App\State;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Entity\Image;
+use App\Service\ImageElasticService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -17,7 +18,8 @@ final class ImageProvider implements ProviderInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly RequestStack $requestStack
+        private readonly RequestStack $requestStack,
+        private readonly ImageElasticService $imageElasticService
     ) {
     }
 
@@ -61,6 +63,57 @@ final class ImageProvider implements ProviderInterface
         }
 
         // Handle collection retrieval
+        $searchTerm = null;
+        if ($request && $request->query->has('originalFilename')) {
+            $searchTerm = $request->query->get('originalFilename');
+        }
+
+        // Use Elasticsearch for search if enabled and search term provided
+        if ($this->imageElasticService->isEnabled() && !empty($searchTerm)) {
+            // Search with Elasticsearch
+            $searchResults = $this->imageElasticService->search($searchTerm);
+
+            if (empty($searchResults)) {
+                return [];
+            }
+
+            // Extract IDs from search results
+            $imageIds = array_map(fn($result) => $result['id'], $searchResults);
+
+            // Fetch images by IDs preserving Elasticsearch order
+            $queryBuilder = $repository->createQueryBuilder('i')
+                ->where('i.id IN (:ids)')
+                ->setParameter('ids', $imageIds);
+
+            $query = $queryBuilder->getQuery();
+            $query->setHint(
+                \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
+                $locale
+            );
+
+            $images = $query->getResult();
+
+            // Sort by Elasticsearch score order
+            $orderedImages = [];
+            $imageMap = [];
+            foreach ($images as $image) {
+                $imageMap[$image->getId()] = $image;
+            }
+            foreach ($imageIds as $id) {
+                if (isset($imageMap[$id])) {
+                    $orderedImages[] = $imageMap[$id];
+                }
+            }
+
+            foreach ($orderedImages as $image) {
+                $image->setTranslatableLocale($locale);
+                $this->entityManager->refresh($image);
+            }
+
+            return $orderedImages;
+        }
+
+        // Fallback to regular query (no search or Elasticsearch disabled)
         $queryBuilder = $repository->createQueryBuilder('i')
             ->orderBy('i.createdAt', 'DESC');
 
