@@ -57,7 +57,7 @@ class ArticleImage
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
-    #[Groups(['article_image:read'])]
+    #[Groups(['article_image:read', 'article:read'])]
     private ?int $id = null;
 
     // Relationships
@@ -68,17 +68,17 @@ class ArticleImage
 
     #[ORM\ManyToOne(targetEntity: Image::class, inversedBy: 'articleImages')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    #[Groups(['article_image:read', 'article_image:create'])]
+    #[Groups(['article_image:read', 'article_image:create', 'article:read'])]
     private ?Image $image = null;
 
     // Pivot Metadata
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     #[Assert\Range(min: 0)]
-    #[Groups(['article_image:read', 'article_image:write'])]
+    #[Groups(['article_image:read', 'article_image:write', 'article:read'])]
     private int $position = 0;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
-    #[Groups(['article_image:read', 'article_image:write'])]
+    #[Groups(['article_image:read', 'article_image:write', 'article:read'])]
     private bool $isFeatured = false;
 
     // Timestamps

@@ -41,7 +41,14 @@ class ImportantArticlesListProvider implements ProviderInterface
             ->addSelect('a')
             ->leftJoin('a.category', 'c')
             ->addSelect('c')
-            ->orderBy('ial.position', 'ASC');
+            ->leftJoin('a.authors', 'auth')
+            ->addSelect('auth')
+            ->leftJoin('a.articleImages', 'ai')
+            ->addSelect('ai')
+            ->leftJoin('ai.image', 'img')
+            ->addSelect('img')
+            ->orderBy('ial.position', 'ASC')
+            ->addOrderBy('ai.position', 'ASC');
 
         $query = $qb->getQuery();
         $query->setHint(

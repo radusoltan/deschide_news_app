@@ -37,8 +37,17 @@ security:
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
+        # Public access endpoints
         - { path: ^/api/(login_check|token/refresh), roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+
+        # Public READ access for frontend (GET only)
+        - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles), roles: PUBLIC_ACCESS, methods: [GET] }
+
+        # Admin/Editor access for write operations (POST, PUT, PATCH, DELETE)
+        - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles), roles: [ROLE_ADMIN, ROLE_EDITOR], methods: [POST, PUT, PATCH, DELETE] }
+
+        # All other API routes require authentication
         - { path: ^/api, roles: ROLE_USER }
 
 when@test:

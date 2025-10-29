@@ -99,38 +99,38 @@ class Image implements Translatable
 
     // File Information
     #[ORM\Column(type: Types::STRING, length: 255, unique: true)]
-    #[Groups(['image:read'])]
+    #[Groups(['image:read', 'article:read'])]
     private ?string $filename = null;
 
     #[ORM\Column(type: Types::STRING, length: 255)]
-    #[Groups(['image:read'])]
+    #[Groups(['image:read', 'article:read'])]
     private ?string $originalFilename = null;
 
     #[ORM\Column(type: Types::STRING, length: 500, nullable: true)]
-    #[Groups(['image:read'])]
+    #[Groups(['image:read', 'article:read'])]
     private ?string $path = null;
 
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
-    #[Groups(['image:read'])]
+    #[Groups(['image:read', 'article:read'])]
     private ?string $mimeType = null;
 
     #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    #[Groups(['image:read'])]
+    #[Groups(['image:read', 'article:read'])]
     private ?int $size = null;
 
     #[ORM\Column(type: Types::INTEGER)]
-    #[Groups(['image:read'])]
+    #[Groups(['image:read', 'article:read'])]
     private ?int $width = null;
 
     #[ORM\Column(type: Types::INTEGER)]
-    #[Groups(['image:read'])]
+    #[Groups(['image:read', 'article:read'])]
     private ?int $height = null;
 
     // Translatable fields
     #[Gedmo\Translatable]
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
-    #[Groups(['image:read', 'image:write'])]
+    #[Groups(['image:read', 'image:write', 'article:read'])]
     private ?string $alt = null;
 
     #[Gedmo\Translatable]

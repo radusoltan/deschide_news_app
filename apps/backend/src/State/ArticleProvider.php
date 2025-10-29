@@ -43,8 +43,13 @@ final class ArticleProvider implements ProviderInterface
                 ->addSelect('c')
                 ->leftJoin('a.authors', 'au')
                 ->addSelect('au')
+                ->leftJoin('a.articleImages', 'ai')
+                ->addSelect('ai')
+                ->leftJoin('ai.image', 'img')
+                ->addSelect('img')
                 ->where('a.id = :id')
-                ->setParameter('id', $uriVariables['id']);
+                ->setParameter('id', $uriVariables['id'])
+                ->orderBy('ai.position', 'ASC');
 
             // Apply Gedmo Translatable hint
             $query = $queryBuilder->getQuery();
@@ -81,7 +86,12 @@ final class ArticleProvider implements ProviderInterface
             ->addSelect('c')
             ->leftJoin('a.authors', 'au')
             ->addSelect('au')
-            ->orderBy('a.publishedAt', 'DESC');
+            ->leftJoin('a.articleImages', 'ai')
+            ->addSelect('ai')
+            ->leftJoin('ai.image', 'img')
+            ->addSelect('img')
+            ->orderBy('a.publishedAt', 'DESC')
+            ->addOrderBy('ai.position', 'ASC');
 
         $query = $queryBuilder->getQuery();
         $query->setHint(

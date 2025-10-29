@@ -22,6 +22,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Translatable\Translatable;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\MaxDepth;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
@@ -35,11 +36,11 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new Get(
             uriTemplate: '/articles/{id}',
-            normalizationContext: ['groups' => ['article:read', 'article:detail', 'category:read', 'author:read']]
+            normalizationContext: ['groups' => ['article:read', 'article:detail', 'category:read', 'author:read'], 'enable_max_depth' => true]
         ),
         new GetCollection(
             uriTemplate: '/articles',
-            normalizationContext: ['groups' => ['article:read', 'article:list', 'category:read', 'author:read']],
+            normalizationContext: ['groups' => ['article:read', 'article:list', 'category:read', 'author:read'], 'enable_max_depth' => true],
             paginationItemsPerPage: 20
         ),
         new Post(
@@ -103,6 +104,8 @@ class Article implements Translatable
 
     #[ORM\OneToMany(targetEntity: ArticleImage::class, mappedBy: 'article', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
+    #[Groups(['article:read', 'article:detail'])]
+    #[MaxDepth(2)]
     private Collection $articleImages;
 
     #[ORM\ManyToMany(targetEntity: self::class)]
@@ -377,6 +380,36 @@ class Article implements Translatable
     public function removeRelatedArticle(Article $article): self
     {
         $this->relatedArticles->removeElement($article);
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ArticleImage>
+     */
+    public function getArticleImages(): Collection
+    {
+        return $this->articleImages;
+    }
+
+    public function addArticleImage(ArticleImage $articleImage): self
+    {
+        if (!$this->articleImages->contains($articleImage)) {
+            $this->articleImages->add($articleImage);
+            $articleImage->setArticle($this);
+        }
+
+        return $this;
+    }
+
+    public function removeArticleImage(ArticleImage $articleImage): self
+    {
+        if ($this->articleImages->removeElement($articleImage)) {
+            // set the owning side to null (unless already changed)
+            if ($articleImage->getArticle() === $this) {
+                $articleImage->setArticle(null);
+            }
+        }
+
         return $this;
     }
 }
