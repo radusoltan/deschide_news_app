@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FiX, FiSearch, FiCheck, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import type { Image } from '@/lib/types/image';
 
@@ -22,6 +22,7 @@ export default function ImagePickerModal({
   const [images, setImages] = useState<Image[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,12 +31,22 @@ export default function ImagePickerModal({
   const itemsPerPage = 12;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setCurrentPage(1); // Reset to first page when search changes
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Fetch images when modal opens or page/search changes
   useEffect(() => {
     if (isOpen) {
       fetchImages();
     }
-  }, [isOpen, currentPage, searchQuery]);
+  }, [isOpen, currentPage, debouncedSearchQuery]);
 
   const fetchImages = async () => {
     setIsLoading(true);
@@ -44,8 +55,8 @@ export default function ImagePickerModal({
         page: currentPage.toString(),
         itemsPerPage: itemsPerPage.toString(),
       });
-      if (searchQuery) {
-        params.append('search', searchQuery);
+      if (debouncedSearchQuery) {
+        params.append('search', debouncedSearchQuery);
       }
 
       const response = await fetch(`/api/images?${params.toString()}`);
@@ -70,7 +81,7 @@ export default function ImagePickerModal({
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setCurrentPage(1); // Reset to first page on search
+    // Page reset is handled in debounce effect
   };
 
   const handleImageClick = (imageId: number) => {

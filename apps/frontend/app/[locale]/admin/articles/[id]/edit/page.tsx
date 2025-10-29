@@ -72,6 +72,14 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
     }).filter((iri: string) => iri !== '');
   }
 
+  // Convert publishAt from ISO to datetime-local format (YYYY-MM-DDTHH:mm)
+  let publishAtLocal = '';
+  if (article.publishAt) {
+    const date = new Date(article.publishAt);
+    // Format: YYYY-MM-DDTHH:mm
+    publishAtLocal = date.toISOString().slice(0, 16);
+  }
+
   return (
     <div className="p-4">
       {/* Page Header */}
@@ -106,6 +114,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
             status: article.status || 'new',
             category: categoryId,
             authors: authorIris,
+            publishAt: publishAtLocal,
           }}
         />
       </div>

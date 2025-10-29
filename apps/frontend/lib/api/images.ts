@@ -314,3 +314,6 @@ export function getThumbnailUrl(thumbnail: Pick<Thumbnail, 'path'>): string {
   const CDN_BASE = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
   return `${CDN_BASE}/uploads/${thumbnail.path}`;
 }
+
+// Alias for consistency
+export { getImage as getImageById };

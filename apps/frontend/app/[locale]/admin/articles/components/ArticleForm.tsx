@@ -58,6 +58,7 @@ interface ArticleFormProps {
     status?: string;
     category?: string | number;
     authors?: string[]; // Array of author IRIs
+    publishAt?: string;
   };
 }
 
@@ -74,6 +75,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
     status: article?.status || 'new',
     category: article?.category || '',
     authors: article?.authors || [], // Array of author IRIs
+    publishAt: article?.publishAt || '',
   });
 
   // Image management state
@@ -126,6 +128,12 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
 
       // Add authors to FormData (as JSON string of IRIs)
       formDataObj.set('authors', JSON.stringify(formData.authors));
+
+      // Convert publishAt to ISO format if provided
+      if (formData.publishAt) {
+        const publishAtDate = new Date(formData.publishAt);
+        formDataObj.set('publishAt', publishAtDate.toISOString());
+      }
 
       let result: ArticleFormState;
       if (article?.id) {
@@ -502,6 +510,30 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
               <option value="published">Published</option>
             </select>
           </div>
+
+          {/* Publish At - Only show when status is 'submitted' */}
+          {formData.status === 'submitted' && (
+            <div>
+              <label
+                htmlFor="publishAt"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Scheduled Publish Date & Time
+              </label>
+              <input
+                type="datetime-local"
+                id="publishAt"
+                name="publishAt"
+                value={formData.publishAt}
+                onChange={(e) => setFormData((prev) => ({ ...prev, publishAt: e.target.value }))}
+                disabled={isSubmitting}
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Leave empty to publish immediately. Set a future date/time to schedule publication.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Authors Section */}

@@ -7,9 +7,8 @@
 
 import 'server-only';
 import { cookies } from 'next/headers';
-import { decrypt, encrypt, type SessionPayload } from '@/lib/auth/session';
+import { decrypt, type SessionPayload } from '@/lib/auth/session';
 import { cache } from 'react';
-import { refreshToken, isTokenExpired } from '@/lib/api-client';
 
 // ============================================================================
 // Session Verification
@@ -28,46 +27,8 @@ export const verifySession = cache(async () => {
     return { isAuth: false };
   }
 
-  // Check if access token is expired
-  if (isTokenExpired(session.tokens.accessToken)) {
-    console.log('Access token expired, attempting refresh...');
-
-    try {
-      // Refresh the token (only needs refresh_token, not expired JWT)
-      const newTokens = await refreshToken(
-        session.tokens.refreshToken
-      );
-
-      // Update session with new tokens
-      const updatedSession: SessionPayload = {
-        user: session.user,
-        tokens: {
-          accessToken: newTokens.token,
-          refreshToken: newTokens.refresh_token,
-          refreshTokenExpiresAt: newTokens.refresh_token_expires_at,
-        },
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-      };
-
-      // Save updated session
-      const encryptedSession = await encrypt(updatedSession);
-      const cookieStore = await cookies();
-      cookieStore.set('session', encryptedSession, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        expires: updatedSession.expiresAt,
-        sameSite: 'lax',
-        path: '/',
-      });
-
-      console.log('Token refreshed successfully');
-      return { isAuth: true, userId: updatedSession.user, tokens: updatedSession.tokens };
-    } catch (error) {
-      console.error('Failed to refresh token:', error);
-      return { isAuth: false };
-    }
-  }
-
+  // Note: We don't check token expiration here to avoid cookie modification errors
+  // The API will return 401 if token is expired, and client can handle refresh
   return { isAuth: true, userId: session.user, tokens: session.tokens };
 });
 

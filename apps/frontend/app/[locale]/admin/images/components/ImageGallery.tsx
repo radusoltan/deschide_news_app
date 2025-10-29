@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiTrash, FiSearch, FiCrop } from 'react-icons/fi';
-import type { Image, ImageWithThumbnails, ThumbnailProfile, CropCoordinates } from '@/lib/types/image';
+import Image from 'next/image';
+import { FiTrash, FiSearch, FiCrop, FiLoader } from 'react-icons/fi';
+import type { Image as ImageType, ImageWithThumbnails, ThumbnailProfile, CropCoordinates } from '@/lib/types/image';
 import { CropModal } from '@/components/admin/images/CropModal';
 
 interface ImageGalleryProps {
-  images: Image[];
+  images: ImageType[];
   locale: string;
   onImageDeleted?: (id: number) => void;
 }
@@ -16,8 +17,10 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
   const router = useRouter();
   const [images, setImages] = useState(initialImages);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Crop modal state
   const [showCropModal, setShowCropModal] = useState(false);
@@ -25,14 +28,49 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
   const [profiles, setProfiles] = useState<ThumbnailProfile[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(false);
 
-  // Filter images based on search and type
-  const filteredImages = images.filter((item) => {
-    const matchesSearch =
-      searchQuery === '' ||
-      item.originalFilename?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.alt?.toLowerCase().includes(searchQuery.toLowerCase());
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
 
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Fetch images when search changes (server-side search)
+  useEffect(() => {
+    if (debouncedSearchQuery) {
+      fetchImagesWithSearch();
+    } else {
+      // Reset to initial images when search is cleared
+      setImages(initialImages);
+    }
+  }, [debouncedSearchQuery]);
+
+  const fetchImagesWithSearch = async () => {
+    setIsSearching(true);
+    try {
+      const params = new URLSearchParams({
+        page: '1',
+        itemsPerPage: '100',
+        search: debouncedSearchQuery,
+      });
+
+      const response = await fetch(`/api/images?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to search images');
+
+      const data = await response.json();
+      const members = data['hydra:member'] || data.member || [];
+      setImages(members);
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Filter images based on type (client-side filter)
+  const filteredImages = images.filter((item) => {
     const matchesType =
       filterType === 'all' ||
       (filterType === 'jpeg' && item.mimeType === 'image/jpeg') ||
@@ -40,7 +78,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
       (filterType === 'webp' && item.mimeType === 'image/webp') ||
       (filterType === 'gif' && item.mimeType === 'image/gif');
 
-    return matchesSearch && matchesType;
+    return matchesType;
   });
 
   const formatFileSize = (bytes: number | null): string => {
@@ -102,7 +140,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
     }
   };
 
-  const handleOpenCropModal = async (image: Image) => {
+  const handleOpenCropModal = async (image: ImageType) => {
     await loadProfilesIfNeeded();
 
     try {
@@ -166,9 +204,14 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+              className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               placeholder="Search by filename, description, alt..."
             />
+            {isSearching && (
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <FiLoader className="w-5 h-5 text-gray-400 animate-spin" />
+              </div>
+            )}
           </div>
 
           {/* Type Filter */}
@@ -239,9 +282,17 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6">
           {filteredImages.map((image) => {
-            const imageUrl = image.filename
-              ? `${process.env.NEXT_PUBLIC_API_URL}/media/images/${image.filename}`
-              : '';
+            // Build the image URL using CDN URL for better performance and CORS handling
+            const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL || process.env.NEXT_PUBLIC_API_URL;
+            let imageUrl = '';
+
+            if (image.contentUrl) {
+              // contentUrl already contains the full path
+              imageUrl = `${cdnUrl}${image.contentUrl}`;
+            } else if (image.filename) {
+              // Build URL from filename - images are stored in /uploads/images/originals/
+              imageUrl = `${cdnUrl}/uploads/images/originals/${image.filename}`;
+            }
 
             return (
               <div
@@ -259,6 +310,20 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
                         src={imageUrl}
                         alt={image.alt || image.originalFilename || 'Image'}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Hide broken image and show placeholder
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="w-full h-full flex items-center justify-center">
+                                <svg class="w-12 h-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                            `;
+                          }
+                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

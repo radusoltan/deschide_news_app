@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getImage, deleteImage } from '@/lib/api/images';
+import { getImage, deleteImage, updateImage } from '@/lib/api/images';
 
 /**
  * GET /api/images/[id]
@@ -24,6 +24,40 @@ export async function GET(
     console.error('GET /api/images/[id] error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to fetch image' },
+      { status: error.status || 500 }
+    );
+  }
+}
+
+/**
+ * PUT /api/images/[id]
+ * Update image metadata
+ */
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const imageId = parseInt(id, 10);
+
+    if (isNaN(imageId)) {
+      return NextResponse.json({ error: 'Invalid image ID' }, { status: 400 });
+    }
+
+    const body = await request.json();
+
+    const updatedImage = await updateImage(imageId, {
+      alt: body.alt,
+      caption: body.caption,
+      description: body.description,
+    });
+
+    return NextResponse.json(updatedImage);
+  } catch (error: any) {
+    console.error('PUT /api/images/[id] error:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to update image' },
       { status: error.status || 500 }
     );
   }
