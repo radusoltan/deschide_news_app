@@ -39,6 +39,10 @@ final class ArticleProvider implements ProviderInterface
         // Handle single item retrieval
         if (isset($uriVariables['id'])) {
             $queryBuilder = $repository->createQueryBuilder('a')
+                ->leftJoin('a.category', 'c')
+                ->addSelect('c')
+                ->leftJoin('a.authors', 'au')
+                ->addSelect('au')
                 ->where('a.id = :id')
                 ->setParameter('id', $uriVariables['id']);
 
@@ -55,6 +59,17 @@ final class ArticleProvider implements ProviderInterface
                 $result->setTranslatableLocale($locale);
                 // Force refresh to load translations
                 $this->entityManager->refresh($result);
+
+                // Set locale for related entities
+                if ($result->getCategory()) {
+                    $result->getCategory()->setTranslatableLocale($locale);
+                    $this->entityManager->refresh($result->getCategory());
+                }
+
+                foreach ($result->getAuthors() as $author) {
+                    $author->setTranslatableLocale($locale);
+                    $this->entityManager->refresh($author);
+                }
             }
 
             return $result;
@@ -62,6 +77,10 @@ final class ArticleProvider implements ProviderInterface
 
         // Handle collection retrieval
         $queryBuilder = $repository->createQueryBuilder('a')
+            ->leftJoin('a.category', 'c')
+            ->addSelect('c')
+            ->leftJoin('a.authors', 'au')
+            ->addSelect('au')
             ->orderBy('a.publishedAt', 'DESC');
 
         $query = $queryBuilder->getQuery();
@@ -75,6 +94,17 @@ final class ArticleProvider implements ProviderInterface
         foreach ($results as $result) {
             $result->setTranslatableLocale($locale);
             $this->entityManager->refresh($result);
+
+            // Set locale for related entities
+            if ($result->getCategory()) {
+                $result->getCategory()->setTranslatableLocale($locale);
+                $this->entityManager->refresh($result->getCategory());
+            }
+
+            foreach ($result->getAuthors() as $author) {
+                $author->setTranslatableLocale($locale);
+                $this->entityManager->refresh($author);
+            }
         }
 
         return $results;

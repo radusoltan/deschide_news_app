@@ -35,11 +35,11 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new Get(
             uriTemplate: '/articles/{id}',
-            normalizationContext: ['groups' => ['article:read', 'article:detail']]
+            normalizationContext: ['groups' => ['article:read', 'article:detail', 'category:read', 'author:read']]
         ),
         new GetCollection(
             uriTemplate: '/articles',
-            normalizationContext: ['groups' => ['article:read', 'article:list']],
+            normalizationContext: ['groups' => ['article:read', 'article:list', 'category:read', 'author:read']],
             paginationItemsPerPage: 20
         ),
         new Post(
