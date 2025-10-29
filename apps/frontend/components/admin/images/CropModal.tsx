@@ -137,7 +137,7 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
 
   // Get image URL from CDN
   const imageUrl = image.filename
-    ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/originals/${image.filename}`
+    ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${image.filename}`
     : '';
 
   return (

@@ -425,7 +425,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             height={400}
             imageList={attachedImages.map((img) => ({
               title: img.image.originalName || `Image ${img.image.id}`,
-              value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/originals/${img.image.filename}`
+              value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${img.image.filename}`
             }))}
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -447,7 +447,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             height={900}
             imageList={attachedImages.map((img) => ({
               title: img.image.originalName || `Image ${img.image.id}`,
-              value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/originals/${img.image.filename}`
+              value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${img.image.filename}`
             }))}
           />
         </div>

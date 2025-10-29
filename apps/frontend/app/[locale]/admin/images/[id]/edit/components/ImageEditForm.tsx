@@ -22,7 +22,7 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
 
   // Build image URL
   const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL || process.env.NEXT_PUBLIC_API_URL;
-  const imageUrl = `${cdnUrl}/uploads/images/originals/${image.filename}`;
+  const imageUrl = `${cdnUrl}/uploads/images/${image.filename}`;
 
   const formatFileSize = (bytes: number | null): string => {
     if (!bytes || bytes === 0) return '0 B';

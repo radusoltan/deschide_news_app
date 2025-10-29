@@ -46,7 +46,7 @@ function SortableImageCard({
 
   // Construct image URL from CDN
   const imageUrl = attachedImage.image.filename
-    ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/originals/${attachedImage.image.filename}`
+    ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${attachedImage.image.filename}`
     : '';
 
   return (

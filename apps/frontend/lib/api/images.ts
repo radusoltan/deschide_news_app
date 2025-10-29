@@ -304,7 +304,7 @@ export async function resetCrop(
  */
 export function getImageUrl(image: Pick<Image, 'filename'>): string {
   const CDN_BASE = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
-  return `${CDN_BASE}/uploads/images/originals/${image.filename}`;
+  return `${CDN_BASE}/uploads/images/${image.filename}`;
 }
 
 /**

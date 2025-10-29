@@ -290,8 +290,8 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
               // contentUrl already contains the full path
               imageUrl = `${cdnUrl}${image.contentUrl}`;
             } else if (image.filename) {
-              // Build URL from filename - images are stored in /uploads/images/originals/
-              imageUrl = `${cdnUrl}/uploads/images/originals/${image.filename}`;
+              // Build URL from filename - images are stored in /uploads/images/
+              imageUrl = `${cdnUrl}/uploads/images/${image.filename}`;
             }
 
             return (
