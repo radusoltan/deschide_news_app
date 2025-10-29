@@ -186,7 +186,7 @@ export default async function ArticlesPage({ params }: ArticlesPageProps) {
       </div>
 
       {/* Articles Table */}
-      <ArticlesTableClient articles={articlesData} locale={locale} />
+      <ArticlesTableClient articles={articlesData} locale={locale} categories={categories} />
     </div>
   );
 }

@@ -11,15 +11,22 @@ interface Article {
   slug: string;
   status: string;
   category?: any;
-  author?: any;
+  authors?: any[];
   publishedAt?: string;
   createdAt?: string;
   viewCount?: number;
 }
 
+interface Category {
+  id: number;
+  title: string;
+  slug: string;
+}
+
 interface ArticlesTableClientProps {
   articles: Article[];
   locale: string;
+  categories: Category[];
 }
 
 const statusStyles = {
@@ -50,9 +57,10 @@ interface ArticleLock {
   expiresAt: string;
 }
 
-export function ArticlesTableClient({ articles, locale }: ArticlesTableClientProps) {
+export function ArticlesTableClient({ articles, locale, categories }: ArticlesTableClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [activeLocks, setActiveLocks] = useState<Map<number, ArticleLock>>(new Map());
 
   // Fetch active locks
@@ -90,15 +98,23 @@ export function ArticlesTableClient({ articles, locale }: ArticlesTableClientPro
       // Status filter
       const matchesStatus = statusFilter === 'all' || article.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
-    });
-  }, [articles, searchQuery, statusFilter]);
+      // Category filter
+      const articleCategoryId = typeof article.category === 'object' && article.category !== null
+        ? article.category.id
+        : null;
+      const matchesCategory = categoryFilter === 'all' ||
+        (categoryFilter === 'none' ? !articleCategoryId : articleCategoryId?.toString() === categoryFilter);
 
-  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all';
+      return matchesSearch && matchesStatus && matchesCategory;
+    });
+  }, [articles, searchQuery, statusFilter, categoryFilter]);
+
+  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || categoryFilter !== 'all';
 
   const clearFilters = () => {
     setSearchQuery('');
     setStatusFilter('all');
+    setCategoryFilter('all');
   };
 
   const formatDate = (dateString?: string) => {
@@ -115,7 +131,7 @@ export function ArticlesTableClient({ articles, locale }: ArticlesTableClientPro
     <>
       {/* Search and Filters */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-4 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search Input */}
           <div className="relative md:col-span-2">
             <label
@@ -165,6 +181,30 @@ export function ArticlesTableClient({ articles, locale }: ArticlesTableClientPro
               <option value="new">New</option>
               <option value="submitted">Submitted</option>
               <option value="published">Published</option>
+            </select>
+          </div>
+
+          {/* Category Filter */}
+          <div>
+            <label
+              htmlFor="category-filter"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Filter by category
+            </label>
+            <select
+              id="category-filter"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Categories</option>
+              <option value="none">No Category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id.toString()}>
+                  {category.title}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -262,9 +302,13 @@ export function ArticlesTableClient({ articles, locale }: ArticlesTableClientPro
                         : article.category || '-'}
                     </td>
                     <td className="px-6 py-4">
-                      {typeof article.author === 'object' && article.author !== null
-                        ? article.author.name || '-'
-                        : article.author || '-'}
+                      {Array.isArray(article.authors) && article.authors.length > 0
+                        ? article.authors.map((author: any) =>
+                            typeof author === 'object' && author !== null
+                              ? author.fullName || `${author.firstName || ''} ${author.lastName || ''}`.trim()
+                              : author
+                          ).join(', ')
+                        : '-'}
                     </td>
                     <td className="px-6 py-4">{formatDate(article.publishedAt)}</td>
                     <td className="px-6 py-4">{article.viewCount || 0}</td>
