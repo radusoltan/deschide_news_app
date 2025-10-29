@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { HiPencil, HiSearch, HiX } from 'react-icons/hi';
+import { useState, useMemo, useEffect } from 'react';
+import { HiPencil, HiSearch, HiX, HiLockClosed } from 'react-icons/hi';
 import Link from 'next/link';
 import { Badge } from 'flowbite-react';
 
@@ -38,9 +38,46 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+interface ArticleLock {
+  articleId: number;
+  lockedBy: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  lockedAt: string;
+  expiresAt: string;
+}
+
 export function ArticlesTableClient({ articles, locale }: ArticlesTableClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [activeLocks, setActiveLocks] = useState<Map<number, ArticleLock>>(new Map());
+
+  // Fetch active locks
+  useEffect(() => {
+    const fetchLocks = async () => {
+      try {
+        const response = await fetch('/api/articles/locks/active');
+        if (response.ok) {
+          const locks: ArticleLock[] = await response.json();
+          const locksMap = new Map<number, ArticleLock>();
+          locks.forEach((lock) => {
+            locksMap.set(lock.articleId, lock);
+          });
+          setActiveLocks(locksMap);
+        }
+      } catch (error) {
+        console.error('Failed to fetch active locks:', error);
+      }
+    };
+
+    fetchLocks();
+    // Refresh locks every 30 seconds
+    const interval = setInterval(fetchLocks, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Filter and search articles
   const filteredArticles = useMemo(() => {
@@ -192,14 +229,30 @@ export function ArticlesTableClient({ articles, locale }: ArticlesTableClientPro
                   </td>
                 </tr>
               ) : (
-                filteredArticles.map((article) => (
-                  <tr
-                    key={article.id}
-                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                  >
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                      {article.title}
-                    </td>
+                filteredArticles.map((article) => {
+                  const lock = activeLocks.get(article.id);
+                  const isLocked = !!lock;
+
+                  return (
+                    <tr
+                      key={article.id}
+                      className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                    >
+                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1">
+                            <div>{article.title}</div>
+                            {isLocked && (
+                              <div className="flex items-center gap-1.5 mt-1 text-xs text-yellow-700 dark:text-yellow-400">
+                                <HiLockClosed className="w-3.5 h-3.5 flex-shrink-0" />
+                                <span>
+                                  Editing: {lock.lockedBy.firstName} {lock.lockedBy.lastName}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
                     <td className="px-6 py-4">
                       <StatusBadge status={article.status} />
                     </td>
@@ -225,7 +278,8 @@ export function ArticlesTableClient({ articles, locale }: ArticlesTableClientPro
                       </Link>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import ArticleForm from '../../components/ArticleForm';
+import moment from 'moment';
+import ArticleEditWrapper from './components/ArticleEditWrapper';
 import { getArticle, getCategories } from '@/lib/dal';
 import { getAuthors } from '@/lib/api/authors';
 
@@ -72,12 +73,26 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
     }).filter((iri: string) => iri !== '');
   }
 
+  // Extract related article IDs
+  let relatedArticleIds: number[] = [];
+  if (article.relatedArticles && Array.isArray(article.relatedArticles)) {
+    relatedArticleIds = article.relatedArticles.map((relatedArticle: any) => {
+      if (typeof relatedArticle === 'string') {
+        // Extract ID from IRI like "/api/articles/123"
+        const match = relatedArticle.match(/\/(\d+)$/);
+        return match ? parseInt(match[1], 10) : null;
+      } else if (typeof relatedArticle === 'object' && relatedArticle !== null && 'id' in relatedArticle) {
+        return relatedArticle.id;
+      }
+      return null;
+    }).filter((id: number | null) => id !== null);
+  }
+
   // Convert publishAt from ISO to datetime-local format (YYYY-MM-DDTHH:mm)
   let publishAtLocal = '';
   if (article.publishAt) {
-    const date = new Date(article.publishAt);
-    // Format: YYYY-MM-DDTHH:mm
-    publishAtLocal = date.toISOString().slice(0, 16);
+    // Use moment to convert to local timezone and format for datetime-local input
+    publishAtLocal = moment(article.publishAt).format('YYYY-MM-DDTHH:mm');
   }
 
   return (
@@ -99,12 +114,10 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
         </p>
       </div>
 
-      {/* Article Form */}
+      {/* Article Form with Lock Management */}
       <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-6">
-        <ArticleForm
+        <ArticleEditWrapper
           locale={locale}
-          categories={categories}
-          authors={authors}
           article={{
             id: article.id,
             title: article.title,
@@ -116,6 +129,8 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
             authors: authorIris,
             publishAt: publishAtLocal,
           }}
+          categories={categories}
+          authors={authors}
         />
       </div>
     </div>

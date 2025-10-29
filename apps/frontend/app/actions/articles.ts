@@ -41,6 +41,7 @@ export async function createArticleAction(
   const status = formData.get('status') as string;
   const category = formData.get('category') as string;
   const authorsJson = formData.get('authors') as string;
+  const publishAt = formData.get('publishAt') as string;
 
   // Validate required fields
   const errors: ArticleFormState['errors'] = {};
@@ -99,6 +100,11 @@ export async function createArticleAction(
     // Add authors (array of IRIs)
     articleData.authors = authors;
 
+    // Add publishAt if provided
+    if (publishAt && publishAt.trim() !== '') {
+      articleData.publishAt = publishAt.trim();
+    }
+
     const newArticle = await createArticle(articleData, locale);
 
     // Revalidate articles list page
@@ -136,6 +142,7 @@ export async function updateArticleAction(
   const status = formData.get('status') as string;
   const category = formData.get('category') as string;
   const authorsJson = formData.get('authors') as string;
+  const publishAt = formData.get('publishAt') as string;
 
   // Validate required fields
   const errors: ArticleFormState['errors'] = {};
@@ -193,6 +200,11 @@ export async function updateArticleAction(
 
     // Add authors (array of IRIs)
     articleData.authors = authors;
+
+    // Add publishAt if provided
+    if (publishAt && publishAt.trim() !== '') {
+      articleData.publishAt = publishAt.trim();
+    }
 
     await updateArticle(id, articleData, locale);
 
