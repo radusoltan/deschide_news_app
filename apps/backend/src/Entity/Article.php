@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -58,6 +62,20 @@ use Symfony\Component\Validator\Constraints as Assert;
     provider: ArticleProvider::class,
     processor: ArticleProcessor::class
 )]
+#[ApiFilter(SearchFilter::class, properties: [
+    'category' => 'exact',
+    'category.id' => 'exact',
+    'status' => 'exact',
+    'title' => 'partial',
+    'slug' => 'exact'
+])]
+#[ApiFilter(OrderFilter::class, properties: [
+    'publishedAt' => 'DESC',
+    'createdAt' => 'DESC',
+    'viewCount' => 'DESC',
+    'title' => 'ASC'
+])]
+#[ApiFilter(BooleanFilter::class, properties: ['isFeatured'])]
 class Article implements Translatable
 {
     #[ORM\Id]

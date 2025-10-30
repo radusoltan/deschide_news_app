@@ -155,7 +155,7 @@ class Image implements Translatable
     private Collection $articleImages;
 
     #[ORM\OneToMany(targetEntity: Thumbnail::class, mappedBy: 'image', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[Groups(['image:read'])]
+    #[Groups(['image:read', 'article:read'])]
     #[MaxDepth(1)]
     private Collection $thumbnails;
 

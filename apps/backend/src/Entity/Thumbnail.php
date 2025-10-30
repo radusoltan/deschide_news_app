@@ -70,21 +70,21 @@ class Thumbnail
 
     // File Information
     #[ORM\Column(type: Types::STRING, length: 255)]
-    #[Groups(['thumbnail:read', 'thumbnail:create'])]
+    #[Groups(['thumbnail:read', 'thumbnail:create', 'article:read'])]
     private ?string $filename = null;
 
     #[ORM\Column(type: Types::STRING, length: 500)]
-    #[Groups(['thumbnail:read', 'thumbnail:create'])]
+    #[Groups(['thumbnail:read', 'thumbnail:create', 'article:read'])]
     private ?string $path = null;
 
     #[ORM\Column(type: Types::INTEGER)]
     #[Assert\Range(min: 1)]
-    #[Groups(['thumbnail:read', 'thumbnail:write'])]
+    #[Groups(['thumbnail:read', 'thumbnail:write', 'article:read'])]
     private ?int $width = null;
 
     #[ORM\Column(type: Types::INTEGER)]
     #[Assert\Range(min: 1)]
-    #[Groups(['thumbnail:read', 'thumbnail:write'])]
+    #[Groups(['thumbnail:read', 'thumbnail:write', 'article:read'])]
     private ?int $height = null;
 
     #[ORM\Column(type: Types::INTEGER)]
@@ -107,7 +107,7 @@ class Thumbnail
 
     #[ORM\ManyToOne(targetEntity: ThumbnailProfile::class, inversedBy: 'thumbnails')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'RESTRICT')]
-    #[Groups(['thumbnail:read', 'thumbnail:create'])]
+    #[Groups(['thumbnail:read', 'thumbnail:create', 'article:read'])]
     #[MaxDepth(1)]
     private ?ThumbnailProfile $profile = null;
 

@@ -8,10 +8,15 @@ use App\Entity\ThumbnailProfile;
 use App\Enum\ThumbnailCategory;
 use App\Enum\ThumbnailMode;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
 
-class ThumbnailProfileFixtures extends Fixture
+class ThumbnailProfileFixtures extends Fixture implements FixtureGroupInterface
 {
+    public static function getGroups(): array
+    {
+        return ['import', 'thumbnail'];
+    }
     public function load(ObjectManager $manager): void
     {
         $profiles = [

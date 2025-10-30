@@ -9,6 +9,7 @@ use ApiPlatform\State\ProviderInterface;
 use App\Entity\Image;
 use App\Service\ImageElasticService;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -117,19 +118,32 @@ final class ImageProvider implements ProviderInterface
         $queryBuilder = $repository->createQueryBuilder('i')
             ->orderBy('i.createdAt', 'DESC');
 
+        // Apply pagination
+        if ($request) {
+            $page = max(1, (int) $request->query->get('page', 1));
+            $itemsPerPage = min(100, max(1, (int) $request->query->get('itemsPerPage', 30)));
+            $offset = ($page - 1) * $itemsPerPage;
+
+            $queryBuilder->setFirstResult($offset)
+                ->setMaxResults($itemsPerPage);
+        }
+
         $query = $queryBuilder->getQuery();
         $query->setHint(
             \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
             $locale
         );
 
-        $results = $query->getResult();
+        // Use Doctrine Paginator to get correct total count
+        $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: false);
+        $results = iterator_to_array($doctrinePaginator);
 
         foreach ($results as $result) {
             $result->setTranslatableLocale($locale);
             $this->entityManager->refresh($result);
         }
 
-        return $results;
+        // Return Doctrine Paginator which API Platform will wrap automatically
+        return $doctrinePaginator;
     }
 }

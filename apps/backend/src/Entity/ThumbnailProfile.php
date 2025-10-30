@@ -70,7 +70,7 @@ class ThumbnailProfile implements Translatable
     // Configuration - Non-translatable
     #[ORM\Column(type: Types::STRING, length: 100, unique: true)]
     #[Assert\Regex(pattern: '/^[a-z0-9_]+$/')]
-    #[Groups(['thumbnail_profile:read', 'thumbnail_profile:create'])]
+    #[Groups(['thumbnail_profile:read', 'thumbnail_profile:create', 'article:read'])]
     private ?string $name = null;
 
     // Translatable fields

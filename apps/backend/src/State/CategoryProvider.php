@@ -61,8 +61,26 @@ final class CategoryProvider implements ProviderInterface
         }
 
         // Handle collection retrieval
-        $queryBuilder = $repository->createQueryBuilder('c')
-            ->orderBy('c.title', 'ASC');
+        $queryBuilder = $repository->createQueryBuilder('c');
+
+        // Apply filters from query parameters
+        if ($request) {
+            // Filter by onFrontPage
+            if ($request->query->has('onFrontPage')) {
+                $onFrontPage = filter_var($request->query->get('onFrontPage'), FILTER_VALIDATE_BOOLEAN);
+                $queryBuilder->andWhere('c.onFrontPage = :onFrontPage')
+                    ->setParameter('onFrontPage', $onFrontPage);
+            }
+
+            // Filter by status
+            if ($status = $request->query->get('status')) {
+                $queryBuilder->andWhere('c.status = :status')
+                    ->setParameter('status', $status);
+            }
+        }
+
+        // Default ordering
+        $queryBuilder->orderBy('c.title', 'ASC');
 
         $query = $queryBuilder->getQuery();
         $query->setHint(

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -55,12 +58,18 @@ use Symfony\Component\Validator\Constraints as Assert;
     provider: CategoryProvider::class,
     processor: CategoryProcessor::class
 )]
+#[ApiFilter(SearchFilter::class, properties: [
+    'status' => 'exact',
+    'title' => 'partial',
+    'slug' => 'exact'
+])]
+#[ApiFilter(BooleanFilter::class, properties: ['onFrontPage'])]
 class Category implements Translatable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
-    #[Groups(['category:read'])]
+    #[Groups(['category:read', 'article:read'])]
     private ?int $id = null;
 
     // Translatable fields
@@ -68,13 +77,13 @@ class Category implements Translatable
     #[ORM\Column(type: Types::STRING, length: 255)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 255)]
-    #[Groups(['category:read', 'category:write'])]
+    #[Groups(['category:read', 'category:write', 'article:read'])]
     private ?string $title = null;
 
     #[Gedmo\Translatable]
     #[Gedmo\Slug(fields: ['title'])]
     #[ORM\Column(type: Types::STRING, length: 255)]
-    #[Groups(['category:read'])]
+    #[Groups(['category:read', 'article:read'])]
     private ?string $slug = null;
 
     // Relationships
