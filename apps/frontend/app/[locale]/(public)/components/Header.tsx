@@ -43,7 +43,8 @@ export default function Header({ locale }: HeaderProps) {
                     onMouseLeave={() => setIsPagesDropdownOpen(false)}
                   >
                     <a className="block py-3 px-6 border-b-2 border-transparent cursor-pointer" href="#">
-                      {intl.formatMessage({ id: 'header.pages' })}
+                      {/*{intl.formatMessage({ id: 'header.pages' })}*/}
+                      PAges
                     </a>
 
                     {isPagesDropdownOpen && (

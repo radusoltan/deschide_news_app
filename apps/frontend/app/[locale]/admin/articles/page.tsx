@@ -1,23 +1,33 @@
 import { getArticles, getCategories } from '@/lib/dal';
 import { ArticlesTableClient } from './ArticlesTableClient';
 import { ArticlesPageClient } from './components/ArticlesPageClient';
+import { ArticlesPagination } from './components/ArticlesPagination';
 
 interface ArticlesPageProps {
   params: Promise<{
     locale: string;
   }>;
+  searchParams: Promise<{
+    page?: string;
+  }>;
 }
 
-export default async function ArticlesPage({ params }: ArticlesPageProps) {
+export default async function ArticlesPage({ params, searchParams }: ArticlesPageProps) {
   const { locale } = await params;
+  const { page: pageParam } = await searchParams;
+
+  const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
+  const itemsPerPage = 20; // 20 articles per page
 
   // Fetch articles from API
   let articlesData: any[] = [];
+  let totalItems = 0;
   let error: string | null = null;
 
   try {
-    const data = await getArticles({ locale, page: 1, itemsPerPage: 100 });
+    const data = await getArticles({ locale, page: currentPage, itemsPerPage });
     articlesData = data.member;
+    totalItems = data.totalItems || 0;
   } catch (err) {
     console.error('Failed to fetch articles:', err);
     error = err instanceof Error ? err.message : 'Failed to load articles';
@@ -34,11 +44,13 @@ export default async function ArticlesPage({ params }: ArticlesPageProps) {
     categories = [];
   }
 
-  // Calculate stats
-  const totalArticles = articlesData.length;
+  // Calculate stats (current page)
+  const currentPageArticles = articlesData.length;
   const publishedArticles = articlesData.filter((a) => a.status === 'published').length;
   const newArticles = articlesData.filter((a) => a.status === 'new').length;
   const totalViews = articlesData.reduce((sum, a) => sum + (a.viewCount || 0), 0);
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
     <div>
@@ -73,7 +85,7 @@ export default async function ArticlesPage({ params }: ArticlesPageProps) {
                 Total Articles
               </p>
               <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                {totalArticles}
+                {totalItems}
               </p>
             </div>
             <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
@@ -187,6 +199,17 @@ export default async function ArticlesPage({ params }: ArticlesPageProps) {
 
       {/* Articles Table */}
       <ArticlesTableClient articles={articlesData} locale={locale} categories={categories} />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center">
+          <ArticlesPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            locale={locale}
+          />
+        </div>
+      )}
     </div>
   );
 }

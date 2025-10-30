@@ -1,30 +1,15 @@
 import Link from 'next/link';
 import { Checkbox, Badge } from 'flowbite-react';
-import { getCategories, type Category } from '@/lib/dal';
+import { type Category } from '@/lib/dal';
 
 interface CategoriesTableProps {
+  categories: any[];
+  totalItems: number;
   locale: string;
 }
 
-export default async function CategoriesTable({ locale }: CategoriesTableProps) {
-  let data;
-  let error;
-
-  try {
-    data = await getCategories({ locale, page: 1, itemsPerPage: 30 });
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to fetch categories';
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
-        <span className="font-medium">Error:</span> {error}
-      </div>
-    );
-  }
-
-  if (!data || data.member.length === 0) {
+export default function CategoriesTable({ categories, totalItems, locale }: CategoriesTableProps) {
+  if (!categories || categories.length === 0) {
     return (
       <div className="p-8 text-center text-gray-500 dark:text-gray-400">
         <p className="text-lg mb-2">No categories found</p>
@@ -32,9 +17,6 @@ export default async function CategoriesTable({ locale }: CategoriesTableProps) 
       </div>
     );
   }
-
-  const categories = data.member;
-  const totalItems = data.totalItems;
 
   const getStatusBadge = (status?: string) => {
     switch (status) {

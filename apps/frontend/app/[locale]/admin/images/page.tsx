@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { FiUpload } from 'react-icons/fi';
 import Link from 'next/link';
 import { ImageGallery } from './components/ImageGallery';
+import { ImagesPagination } from './components/ImagesPagination';
 import { getImages } from '@/lib/api/images';
 
 export const metadata: Metadata = {
@@ -17,36 +18,47 @@ interface PageProps {
   params: Promise<{
     locale: string;
   }>;
+  searchParams: Promise<{
+    page?: string;
+  }>;
 }
 
-export default async function ImagesPage({ params }: PageProps) {
+export default async function ImagesPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
+  const { page: pageParam } = await searchParams;
+
+  const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
+  const itemsPerPage = 24; // 24 images per page for gallery grid
 
   // Fetch images from API
   let images: any[] = [];
+  let totalItems = 0;
   let error: string | null = null;
 
   try {
-    const response = await getImages({ page: 1, itemsPerPage: 100 });
+    const response = await getImages({ page: currentPage, itemsPerPage });
     // Handle both 'hydra:member' and 'member' formats
     images = response['hydra:member'] || (response as any).member || [];
-    console.log('Fetched images count:', images.length);
+    totalItems = response['hydra:totalItems'] || (response as any).totalItems || 0;
+    console.log('Fetched images count:', images.length, 'Total:', totalItems);
   } catch (err) {
     console.error('Failed to fetch images:', err);
     error = err instanceof Error ? err.message : 'Failed to load images';
     images = [];
   }
 
-  // Calculate stats
-  const totalImages = images.length;
+  // Calculate stats for current page
+  const currentPageImages = images.length;
   const totalSize = images.reduce((sum, img) => sum + (img.size || 0), 0);
   const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
 
-  // Count by mime type
+  // Count by mime type (current page)
   const jpegCount = images.filter((img) => img.mimeType === 'image/jpeg').length;
   const pngCount = images.filter((img) => img.mimeType === 'image/png').length;
   const webpCount = images.filter((img) => img.mimeType === 'image/webp').length;
   const gifCount = images.filter((img) => img.mimeType === 'image/gif').length;
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
     <div className="p-4">
@@ -88,7 +100,7 @@ export default async function ImagesPage({ params }: PageProps) {
                 Total Images
               </p>
               <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                {totalImages}
+                {totalItems}
               </p>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 JPEG: {jpegCount} · PNG: {pngCount} · WebP: {webpCount} · GIF: {gifCount}
@@ -155,7 +167,7 @@ export default async function ImagesPage({ params }: PageProps) {
                 Average Size
               </p>
               <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                {totalImages > 0 ? (totalSize / totalImages / (1024 * 1024)).toFixed(2) : '0'}
+                {totalItems > 0 ? (totalSize / currentPageImages / (1024 * 1024)).toFixed(2) : '0'}
                 <span className="text-lg font-normal text-gray-500 dark:text-gray-400 ml-1">
                   MB
                 </span>
@@ -185,6 +197,17 @@ export default async function ImagesPage({ params }: PageProps) {
 
       {/* Image Gallery Grid */}
       <ImageGallery images={images} locale={locale} />
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center">
+          <ImagesPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            locale={locale}
+          />
+        </div>
+      )}
     </div>
   );
 }

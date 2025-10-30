@@ -73,6 +73,9 @@
     color: #ced4da;
     width: 3rem;
     margin-right: 0.5rem;
+    flex-shrink: 0;
+    display: inline-block;
+    text-align: left;
   }
 
   /* Navbar active state */
