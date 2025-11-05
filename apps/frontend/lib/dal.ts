@@ -63,8 +63,8 @@ async function authenticatedFetch(
 
   const { locale, headers, ...fetchOptions } = options;
 
-  const requestHeaders: HeadersInit = {
-    ...headers,
+  const requestHeaders: Record<string, string> = {
+    ...(headers as Record<string, string>),
     'Authorization': `Bearer ${session.tokens.accessToken}`,
     'Content-Type': 'application/ld+json',
     'Accept': 'application/ld+json',
@@ -100,6 +100,7 @@ export interface Article {
   category?: string | object;
   author?: string | object;
   authors?: Array<string | object>; // Array of author IRIs or objects
+  relatedArticles?: Array<string | object>; // Array of related article IRIs or objects
 }
 
 export interface ArticlesCollection {

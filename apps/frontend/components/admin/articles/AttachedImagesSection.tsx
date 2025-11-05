@@ -2,12 +2,18 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { FiUpload, FiImage, FiStar, FiTrash2, FiPlus, FiCrop } from 'react-icons/fi';
 import type { AttachedImage, ImageWithThumbnails, ThumbnailProfile, CropCoordinates } from '@/lib/types/image';
-import { CropModal } from '@/components/admin/images/CropModal';
+
+// Dynamically import CropModal (only loaded when modal opens)
+const CropModal = dynamic(() => import('@/components/admin/images/CropModal').then(mod => ({ default: mod.CropModal })), {
+  ssr: false,
+  loading: () => <div>Loading crop tool...</div>,
+});
 
 interface AttachedImagesSectionProps {
   articleId?: number;

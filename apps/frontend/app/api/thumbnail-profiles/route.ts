@@ -35,8 +35,8 @@ export async function GET() {
       quality: profile.quality,
       category: profile.category,
       isActive: profile.isActive,
-      createdAt: typeof profile.createdAt === 'string' ? profile.createdAt : profile.createdAt?.toString(),
-      updatedAt: typeof profile.updatedAt === 'string' ? profile.updatedAt : profile.updatedAt?.toString(),
+      createdAt: typeof profile.createdAt === 'string' ? profile.createdAt : (profile.createdAt as any)?.toString() ?? '',
+      updatedAt: typeof profile.updatedAt === 'string' ? profile.updatedAt : (profile.updatedAt as any)?.toString() ?? '',
       locale: profile.locale,
       translatableLocale: profile.translatableLocale,
     }));

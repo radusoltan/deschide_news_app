@@ -7,6 +7,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Article, Category } from '@/lib/types/article';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
+import { buildArticleUrl, buildCategoryUrl, getCategorySlug as getSlug } from '@/lib/utils/url-builder';
+import { ViewCountBadge } from '@/components/public/ViewCountBadge';
+import type { Locale } from '@/lib/types';
 
 interface ArticleCardProps {
   article: Article;
@@ -64,10 +67,14 @@ export default function ArticleCard({
   // Get excerpt: use lead if available, otherwise first sentence from content
   const excerpt = article.lead || (article.content ? getFirstSentence(article.content) : '');
 
+  // Build correct URLs using utility functions
+  const articleUrl = buildArticleUrl(article, locale as Locale);
+  const categoryUrl = buildCategoryUrl(article.category, locale as Locale);
+
   return (
     <div className="flex-shrink max-w-full w-full sm:w-1/3 px-3 pb-3 pt-3 sm:pt-0 border-b-2 sm:border-b-0 border-dotted border-gray-100">
       <div className="flex flex-row sm:block hover-img">
-        <Link href={`/${locale}/article/${article.slug}`}>
+        <Link href={articleUrl}>
           {imageToUse ? (
             <Image
               className="max-w-full w-full mx-auto h-auto"
@@ -76,7 +83,8 @@ export default function ArticleCard({
               width={imageToUse.width || 640}
               height={imageToUse.height || 427}
               loading="lazy"
-              unoptimized
+              placeholder="blur"
+              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQwIiBoZWlnaHQ9IjQyNyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
             />
           ) : (
             <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
@@ -86,20 +94,25 @@ export default function ArticleCard({
         </Link>
         <div className="py-0 sm:py-3 pl-3 sm:pl-0">
           <h3 className="text-lg font-bold leading-tight mb-2">
-            <Link href={`/${locale}/article/${article.slug}`}>{article.title}</Link>
+            <Link href={articleUrl}>{article.title}</Link>
           </h3>
           {excerpt && (
             <p className="hidden md:block text-gray-600 leading-tight mb-1">
               {excerpt}
             </p>
           )}
-          <Link
-            href={`/${locale}/category/${getCategorySlug(article.category)}`}
-            className="text-gray-500"
-          >
-            <span className="inline-block h-3 border-l-2 border-red-600 mr-2"></span>
-            {getCategoryTitle(article.category)}
-          </Link>
+          <div className="flex items-center justify-between mt-2">
+            <Link
+              href={categoryUrl}
+              className="text-gray-500"
+            >
+              <span className="inline-block h-3 border-l-2 border-red-600 mr-2"></span>
+              {getCategoryTitle(article.category)}
+            </Link>
+            {article.viewCount && (
+              <ViewCountBadge views={article.viewCount} />
+            )}
+          </div>
         </div>
       </div>
     </div>

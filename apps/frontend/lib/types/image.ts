@@ -16,6 +16,7 @@ export interface Image {
   alt: string | null;
   caption: string | null;
   description: string | null;
+  contentUrl?: string | null; // API Platform content URL (if exposed)
   uploadedAt: string;
   updatedAt: string | null;
   aspectRatio: number | null;

@@ -3,6 +3,7 @@ import NewsSlider from './components/NewsSlider';
 import ImportantList from "./components/home/important";
 import LatestNews from "./components/home/latest-news";
 import CategorySection from '@/components/CategorySection';
+import { TrendingArticles } from '@/components/public/TrendingArticles';
 import { fetchFrontPageCategories } from '@/lib/api/categories';
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export default async function HomePage({ params }: PageProps) {
   const { locale } = await params
 
   // Fetch categories that should appear on front page
-  let frontPageCategories;
+  let frontPageCategories: any[] = [];
   try {
     const response = await fetchFrontPageCategories(locale);
     // Filter only categories with onFrontPage=true (in case API doesn't filter)
@@ -35,6 +36,9 @@ export default async function HomePage({ params }: PageProps) {
 
       {/* Latest News Section */}
       <LatestNews locale={locale} />
+
+      {/* Trending Articles Section */}
+      <TrendingArticles locale={locale} limit={5} />
 
       {/* Dynamic Category Sections - Only categories with onFrontPage=true */}
       {frontPageCategories.map((category, index) => (

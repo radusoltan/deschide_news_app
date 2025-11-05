@@ -1,6 +1,9 @@
 import { notFound } from 'next/navigation';
 import { fetchArticlesByCategory } from '@/lib/api/articles';
 import { fetchCategories } from '@/lib/api/categories';
+import CategoryHeroArticle from '@/components/CategoryHeroArticle';
+import ArticleCard from '@/components/ArticleCard';
+import MostPopular from '@/components/MostPopular';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 120; // Revalidate every 2 minutes
@@ -54,12 +57,13 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   return (
     <main id="content">
-      {/* Category Header */}
+      {/* Category Section */}
       <div className="bg-gray-50 py-6">
         <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
           <div className="flex flex-row flex-wrap">
             {/* Left - Main Content */}
             <div className="flex-shrink max-w-full w-full lg:w-2/3 overflow-hidden">
+              {/* Category Title */}
               <div className="w-full py-3">
                 <h2 className="text-gray-800 text-2xl font-bold">
                   <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
@@ -70,56 +74,70 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               <div className="flex flex-row flex-wrap -mx-3">
                 {/* Hero Article */}
                 {heroArticle && (
-                  <div className="flex-shrink max-w-full w-full px-3 pb-5">
-                    <div className="relative hover-img max-h-98 overflow-hidden">
-                      {/* TODO: Add hero article component */}
-                      <div className="p-8 bg-gray-200">
-                        <h3 className="text-2xl font-bold">{heroArticle.title}</h3>
-                      </div>
-                    </div>
-                  </div>
+                  <CategoryHeroArticle article={heroArticle} locale={locale} />
                 )}
 
                 {/* Grid Articles */}
                 {gridArticles.map((article) => (
-                  <div
+                  <ArticleCard
                     key={article.id}
-                    className="flex-shrink max-w-full w-full sm:w-1/3 px-3 pb-3 pt-3 sm:pt-0 border-b-2 sm:border-b-0 border-dotted border-gray-100"
-                  >
-                    {/* TODO: Add grid article component */}
-                    <div className="p-4 bg-gray-100">
-                      <h4 className="font-bold">{article.title}</h4>
-                    </div>
-                  </div>
+                    article={article}
+                    locale={locale}
+                    thumbnailProfile="article_card"
+                  />
                 ))}
+
+                {/* No Articles Message */}
+                {articles.length === 0 && (
+                  <div className="flex-shrink max-w-full w-full px-3 py-12 text-center">
+                    <p className="text-gray-600 text-lg">
+                      No articles found in this category.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="mt-6">
-                  <p className="text-gray-600">
-                    Page {currentPage} of {totalPages}
-                  </p>
-                  {/* TODO: Add pagination component */}
+                <div className="mt-6 px-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-gray-600">
+                      Page {currentPage} of {totalPages}
+                    </p>
+                    <div className="flex gap-2">
+                      {currentPage > 1 && (
+                        <a
+                          href={`/${locale}/category/${slug}?page=${currentPage - 1}`}
+                          className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
+                        >
+                          Previous
+                        </a>
+                      )}
+                      {currentPage < totalPages && (
+                        <a
+                          href={`/${locale}/category/${slug}?page=${currentPage + 1}`}
+                          className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
+                        >
+                          Next
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
             {/* Right Sidebar - Most Popular */}
             <div className="flex-shrink max-w-full w-full lg:w-1/3 lg:pl-8 lg:pt-14 lg:pb-8 order-first lg:order-last">
-              <div className="w-full bg-white">
-                <div className="mb-6">
-                  <div className="p-4 bg-gray-100">
-                    <h2 className="text-lg font-bold">Most Popular</h2>
+              <MostPopular locale={locale} categoryId={category.id} limit={5} />
+
+              {/* Advertisement Placeholder (optional) */}
+              <div className="text-sm py-6 sticky">
+                <div className="w-full text-center">
+                  <a className="uppercase text-gray-500" href="#">Advertisement</a>
+                  <div className="mt-2 bg-gray-200 h-64 flex items-center justify-center">
+                    <span className="text-gray-400">Ad Space 250x250</span>
                   </div>
-                  <ul className="post-number">
-                    {/* TODO: Add most popular articles */}
-                    <li className="border-b border-gray-100 hover:bg-gray-50">
-                      <a className="text-lg font-bold px-6 py-3 flex flex-row items-center" href="#">
-                        Popular Article 1
-                      </a>
-                    </li>
-                  </ul>
                 </div>
               </div>
             </div>

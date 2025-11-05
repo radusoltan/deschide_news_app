@@ -92,3 +92,35 @@ export async function fetchLatestArticles(
 
   return response.json();
 }
+
+/**
+ * Fetch related articles for a given article
+ * Gets articles from the same category, excluding the current article
+ *
+ * @param articleId - Current article ID to exclude
+ * @param categoryId - Category ID to filter by
+ * @param locale - Language locale (ro, en, ru)
+ * @param limit - Number of articles to fetch (default: 6)
+ * @returns Related articles
+ */
+export async function fetchRelatedArticles(
+  articleId: number,
+  categoryId: number,
+  locale?: string,
+  limit: number = 6
+): Promise<any[]> {
+  try {
+    const result = await fetchArticlesByCategory(categoryId, locale, limit + 1);
+
+    // Filter out the current article
+    const relatedArticles = result.member.filter(
+      (article: any) => article.id !== articleId
+    );
+
+    // Return only the requested limit
+    return relatedArticles.slice(0, limit);
+  } catch (error) {
+    console.error('Error fetching related articles:', error);
+    return [];
+  }
+}

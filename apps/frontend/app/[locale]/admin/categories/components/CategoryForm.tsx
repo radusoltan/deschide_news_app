@@ -74,7 +74,7 @@ export default function CategoryForm({ locale, category }: CategoryFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title */}
       <div>
-        <Label htmlFor="title" value="Title *" />
+        <Label htmlFor="title">Title *</Label>
         <TextInput
           id="title"
           name="title"
@@ -90,7 +90,7 @@ export default function CategoryForm({ locale, category }: CategoryFormProps) {
       {/* Slug */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <Label htmlFor="slug" value="Slug *" />
+          <Label htmlFor="slug">Slug *</Label>
           <button
             type="button"
             onClick={generateSlug}
@@ -117,7 +117,7 @@ export default function CategoryForm({ locale, category }: CategoryFormProps) {
 
       {/* Status */}
       <div>
-        <Label htmlFor="status" value="Status *" />
+        <Label htmlFor="status">Status *</Label>
         <Select
           id="status"
           name="status"
@@ -140,7 +140,7 @@ export default function CategoryForm({ locale, category }: CategoryFormProps) {
           onChange={(e) => setFormData({ ...formData, onFrontPage: e.target.checked })}
           disabled={loading}
         />
-        <Label htmlFor="onFrontPage" value="Display on front page" />
+        <Label htmlFor="onFrontPage">Display on front page</Label>
       </div>
 
       {/* Form Actions */}

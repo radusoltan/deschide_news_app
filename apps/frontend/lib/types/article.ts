@@ -28,6 +28,7 @@ export interface Article {
   category: Category | string; // Full Category object or IRI
   authors: string[]; // IRIs to Authors
   articleImages: ArticleImage[];
+  relatedArticles?: (Article | string)[]; // Full Article objects or IRIs
   status: ArticleStatus;
   viewCount: number;
   createdAt: string;

@@ -3,6 +3,8 @@ import Image from "next/image";
 import { fetchLatestArticles } from "@/lib/api/articles";
 import { getFeaturedImage, buildImageUrl, getThumbnailByProfile } from "@/lib/api/important-articles";
 import { Article } from "@/lib/types/article";
+import { buildArticleUrl } from "@/lib/utils/url-builder";
+import type { Locale } from "@/lib/types";
 
 interface LatestNewsProps {
   locale: string;
@@ -41,6 +43,14 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
     return '';
   };
 
+  // Helper function to get category slug
+  const getCategorySlug = (category: any): string => {
+    if (typeof category === 'object' && category !== null && category.slug) {
+      return category.slug;
+    }
+    return '';
+  };
+
   return (
     <div className="bg-gray-50 py-6">
       <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
@@ -57,7 +67,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                     <li key={article.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <Link
                         className="text-lg font-bold px-6 py-3 flex flex-row items-center"
-                        href={`/${locale}/article/${article.slug}`}
+                        href={buildArticleUrl(article, locale as Locale)}
                       >
                         {article.title}
                       </Link>
@@ -82,7 +92,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
               {/* Featured Article - Full Width */}
               <div className="flex-shrink max-w-full w-full px-3 pb-5">
                 <div className="relative hover-img max-h-98 overflow-hidden">
-                  <Link href={`/${locale}/article/${featuredArticle.slug}`}>
+                  <Link href={buildArticleUrl(featuredArticle, locale as Locale)}>
                     {featuredThumbnail ? (
                       <Image
                         className="max-w-full w-full mx-auto h-auto"
@@ -90,7 +100,9 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                         alt={featuredImage?.alt || featuredArticle.title}
                         width={featuredThumbnail.width}
                         height={featuredThumbnail.height}
-                        unoptimized
+                        priority
+                        placeholder="blur"
+                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmM2Y0ZjYiLz48L3N2Zz4="
                       />
                     ) : featuredImage ? (
                       <Image
@@ -99,7 +111,9 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                         alt={featuredImage.alt || featuredArticle.title}
                         width={featuredImage.width || 1920}
                         height={featuredImage.height || 1080}
-                        unoptimized
+                        priority
+                        placeholder="blur"
+                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmM2Y0ZjYiLz48L3N2Zz4="
                       />
                     ) : (
                       <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
@@ -108,7 +122,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                     )}
                   </Link>
                   <div className="absolute px-5 pt-8 pb-5 bottom-0 w-full bg-gradient-cover">
-                    <Link href={`/${locale}/article/${featuredArticle.slug}`}>
+                    <Link href={buildArticleUrl(featuredArticle, locale as Locale)}>
                       <h2 className="text-3xl font-bold capitalize text-white mb-3">
                         {featuredArticle.title}
                       </h2>
@@ -141,7 +155,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                     className="flex-shrink max-w-full w-full sm:w-1/3 px-3 pb-3 pt-3 sm:pt-0 border-b-2 sm:border-b-0 border-dotted border-gray-100"
                   >
                     <div className="flex flex-row sm:block hover-img">
-                      <Link href={`/${locale}/article/${article.slug}`}>
+                      <Link href={buildArticleUrl(article, locale as Locale)}>
                         {thumbnail ? (
                           <Image
                             className="max-w-full w-full mx-auto"
@@ -149,7 +163,9 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                             alt={image?.alt || article.title}
                             width={thumbnail.width}
                             height={thumbnail.height}
-                            unoptimized
+                            loading="lazy"
+                            placeholder="blur"
+                            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
                           />
                         ) : image ? (
                           <Image
@@ -158,7 +174,9 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                             alt={image.alt || article.title}
                             width={image.width || 800}
                             height={image.height || 600}
-                            unoptimized
+                            loading="lazy"
+                            placeholder="blur"
+                            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
                           />
                         ) : (
                           <div className="w-full h-40 bg-gray-200 flex items-center justify-center">
@@ -168,7 +186,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                       </Link>
                       <div className="py-0 sm:py-3 pl-3 sm:pl-0">
                         <h3 className="text-lg font-bold leading-tight mb-2">
-                          <Link href={`/${locale}/article/${article.slug}`}>
+                          <Link href={buildArticleUrl(article, locale as Locale)}>
                             {article.title}
                           </Link>
                         </h3>
@@ -177,8 +195,8 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                             {article.lead}
                           </p>
                         )}
-                        {article.category && (
-                          <Link className="text-gray-500" href={`/${locale}/category/${article.category.slug}`}>
+                        {article.category && getCategorySlug(article.category) && (
+                          <Link className="text-gray-500" href={`/${locale}/category/${getCategorySlug(article.category)}`}>
                             <span className="inline-block h-3 border-l-2 border-red-600 mr-2"></span>
                             {getCategoryTitle(article.category)}
                           </Link>

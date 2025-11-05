@@ -424,7 +424,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             onChange={(html) => setFormData((prev) => ({ ...prev, lead: html }))}
             height={400}
             imageList={attachedImages.map((img) => ({
-              title: img.image.originalName || `Image ${img.image.id}`,
+              title: img.image.originalFilename || `Image ${img.image.id}`,
               value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${img.image.filename}`
             }))}
           />
@@ -446,7 +446,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             onChange={(html) => setFormData((prev) => ({ ...prev, content: html }))}
             height={900}
             imageList={attachedImages.map((img) => ({
-              title: img.image.originalName || `Image ${img.image.id}`,
+              title: img.image.originalFilename || `Image ${img.image.id}`,
               value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${img.image.filename}`
             }))}
           />

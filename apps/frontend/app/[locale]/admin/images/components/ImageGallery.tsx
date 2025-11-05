@@ -2,10 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { FiTrash, FiSearch, FiCrop, FiLoader } from 'react-icons/fi';
 import type { Image as ImageType, ImageWithThumbnails, ThumbnailProfile, CropCoordinates } from '@/lib/types/image';
-import { CropModal } from '@/components/admin/images/CropModal';
+
+// Dynamically import CropModal (only loaded when needed)
+const CropModal = dynamic(() => import('@/components/admin/images/CropModal').then(mod => ({ default: mod.CropModal })), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center p-4"><FiLoader className="animate-spin" size={24} /></div>,
+});
 
 interface ImageGalleryProps {
   images: ImageType[];

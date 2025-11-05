@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { fetchImportantArticles, getFeaturedImage, buildImageUrl, getThumbnailByProfile } from "@/lib/api/important-articles";
 import { ImportantArticle } from "@/lib/types/article";
+import { buildArticleUrl } from "@/lib/utils/url-builder";
+import type { Locale } from "@/lib/types";
 
 interface ImportantListProps {
   locale: string;
@@ -49,26 +51,28 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
         {/* Left Cover - Main Story */}
         <div className="flex-shrink max-w-full w-full lg:w-1/2 pb-1 lg:pb-0 lg:pr-1">
           <div className="relative hover-img max-h-98 overflow-hidden">
-            <Link href={`/${locale}/article/${mainArticle.article.slug}`}>
+            <Link href={buildArticleUrl(mainArticle.article, locale as Locale)}>
               {mainThumbnail ? (
                 <Image
                   className="max-w-full w-full mx-auto h-auto"
                   src={buildImageUrl(mainThumbnail.path)}
-                  alt={mainImage?.alt || mainArticle.article.title}
+                  alt={mainImage?.alt || mainArticle.article.title || 'Article image'}
                   width={mainThumbnail.width}
                   height={mainThumbnail.height}
                   priority
-                  unoptimized
+                  placeholder="blur"
+                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwMCIgaGVpZ2h0PSI5MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YzZjRmNiIvPjwvc3ZnPg=="
                 />
               ) : mainImage ? (
                 <Image
                   className="max-w-full w-full mx-auto h-auto"
                   src={buildImageUrl(mainImage.path)}
-                  alt={mainImage.alt || mainArticle.article.title}
+                  alt={mainImage.alt || mainArticle.article.title || 'Article image'}
                   width={mainImage.width || 1600}
                   height={mainImage.height || 900}
                   priority
-                  unoptimized
+                  placeholder="blur"
+                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwMCIgaGVpZ2h0PSI5MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YzZjRmNiIvPjwvc3ZnPg=="
                 />
               ) : (
                 <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
@@ -77,7 +81,7 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
               )}
             </Link>
             <div className="absolute px-5 pt-8 pb-5 bottom-0 w-full bg-gradient-cover">
-              <Link href={`/${locale}/article/${mainArticle.article.slug}`}>
+              <Link href={buildArticleUrl(mainArticle.article, locale as Locale)}>
                 <h2 className="text-3xl font-bold capitalize text-white mb-3">
                   {mainArticle.article.title}
                 </h2>
@@ -105,26 +109,28 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
               return (
                 <article key={importantArticle.id} className="flex-shrink max-w-full w-full sm:w-1/2">
                   <div className="relative hover-img max-h-48 overflow-hidden">
-                    <Link href={`/${locale}/article/${importantArticle.article.slug}`}>
+                    <Link href={buildArticleUrl(importantArticle.article, locale as Locale)}>
                       {thumbnail ? (
                         <Image
                           className="max-w-full w-full mx-auto h-auto"
                           src={buildImageUrl(thumbnail.path)}
-                          alt={image?.alt || importantArticle.article.title}
+                          alt={image?.alt || importantArticle.article.title || 'Article image'}
                           width={thumbnail.width}
                           height={thumbnail.height}
-                          priority
-                          unoptimized
+                          loading="lazy"
+                          placeholder="blur"
+                          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
                         />
                       ) : image ? (
                         <Image
                           className="max-w-full w-full mx-auto h-auto"
                           src={buildImageUrl(image.path)}
-                          alt={image.alt || importantArticle.article.title}
+                          alt={image.alt || importantArticle.article.title || 'Article image'}
                           width={image.width || 1600}
                           height={image.height || 900}
-                          priority
-                          unoptimized
+                          loading="lazy"
+                          placeholder="blur"
+                          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwMCIgaGVpZ2h0PSI5MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YzZjRmNiIvPjwvc3ZnPg=="
                         />
                       ) : (
                         <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
@@ -133,7 +139,7 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
                       )}
                     </Link>
                     <div className="absolute px-4 pt-7 pb-4 bottom-0 w-full bg-gradient-cover">
-                      <Link href={`/${locale}/article/${importantArticle.article.slug}`}>
+                      <Link href={buildArticleUrl(importantArticle.article, locale as Locale)}>
                         <h2 className="text-lg font-bold capitalize leading-tight text-white mb-1">
                           {importantArticle.article.title}
                         </h2>

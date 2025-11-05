@@ -7,11 +7,16 @@ export const metadata = {
   description: 'Sign in to your account',
 };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   // Redirect if already authenticated
   const authenticated = await isAuthenticated();
   if (authenticated) {
-    redirect('/');
+    const { locale } = await params;
+    redirect(`/${locale}/admin`);
   }
 
   return (

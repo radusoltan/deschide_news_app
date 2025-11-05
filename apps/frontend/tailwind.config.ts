@@ -11,6 +11,9 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'system-ui', 'arial', 'sans-serif'],
+      },
       colors: {
         primary: {
           50: '#eff6ff',
@@ -25,6 +28,15 @@ const config: Config = {
           900: '#1e3a8a',
           950: '#172554',
         },
+      },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(-10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.5s ease-out',
       },
     },
   },
