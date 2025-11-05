@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Delete;
 use App\Enum\ThumbnailCategory;
 use App\Enum\ThumbnailMode;
 use App\Repository\ThumbnailProfileRepository;
 use App\State\ThumbnailProfileProcessor;
 use App\State\ThumbnailProfileProvider;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -54,7 +55,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Delete(
             uriTemplate: '/thumbnail_profiles/{id}'
-        )
+        ),
     ],
     provider: ThumbnailProfileProvider::class,
     processor: ThumbnailProfileProcessor::class
@@ -127,12 +128,12 @@ class ThumbnailProfile implements Translatable
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['thumbnail_profile:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[Gedmo\Timestampable(on: 'update')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['thumbnail_profile:read'])]
-    private ?\DateTimeImmutable $updatedAt = null;
+    private ?DateTimeImmutable $updatedAt = null;
 
     // For translations
     #[Gedmo\Locale]
@@ -159,6 +160,7 @@ class ThumbnailProfile implements Translatable
     public function setName(?string $name): self
     {
         $this->name = $name;
+
         return $this;
     }
 
@@ -170,6 +172,7 @@ class ThumbnailProfile implements Translatable
     public function setDisplayName(?string $displayName): self
     {
         $this->displayName = $displayName;
+
         return $this;
     }
 
@@ -181,6 +184,7 @@ class ThumbnailProfile implements Translatable
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -192,6 +196,7 @@ class ThumbnailProfile implements Translatable
     public function setWidth(?int $width): self
     {
         $this->width = $width;
+
         return $this;
     }
 
@@ -203,6 +208,7 @@ class ThumbnailProfile implements Translatable
     public function setHeight(?int $height): self
     {
         $this->height = $height;
+
         return $this;
     }
 
@@ -214,6 +220,7 @@ class ThumbnailProfile implements Translatable
     public function setAspectRatio(?string $aspectRatio): self
     {
         $this->aspectRatio = $aspectRatio;
+
         return $this;
     }
 
@@ -225,6 +232,7 @@ class ThumbnailProfile implements Translatable
     public function setMode(ThumbnailMode $mode): self
     {
         $this->mode = $mode;
+
         return $this;
     }
 
@@ -236,6 +244,7 @@ class ThumbnailProfile implements Translatable
     public function setQuality(int $quality): self
     {
         $this->quality = $quality;
+
         return $this;
     }
 
@@ -247,6 +256,7 @@ class ThumbnailProfile implements Translatable
     public function setIsActive(bool $isActive): self
     {
         $this->isActive = $isActive;
+
         return $this;
     }
 
@@ -258,15 +268,16 @@ class ThumbnailProfile implements Translatable
     public function setCategory(ThumbnailCategory $category): self
     {
         $this->category = $category;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable
+    public function getUpdatedAt(): ?DateTimeImmutable
     {
         return $this->updatedAt;
     }
@@ -290,7 +301,7 @@ class ThumbnailProfile implements Translatable
     }
 
     /**
-     * Computed property - calculated aspect ratio
+     * Computed property - calculated aspect ratio.
      */
     #[Groups(['thumbnail_profile:read'])]
     public function getCalculatedAspectRatio(): string
@@ -304,16 +315,17 @@ class ThumbnailProfile implements Translatable
         }
 
         $gcd = $this->gcd($this->width, $this->height);
+
         return ($this->width / $gcd) . ':' . ($this->height / $gcd);
     }
 
     /**
-     * Computed property - dimensions label
+     * Computed property - dimensions label.
      */
     #[Groups(['thumbnail_profile:read'])]
     public function getDimensionsLabel(): string
     {
-        return sprintf(
+        return \sprintf(
             '%dx%d (%s)',
             $this->width ?? 0,
             $this->height ?? 0,
@@ -322,7 +334,7 @@ class ThumbnailProfile implements Translatable
     }
 
     /**
-     * Greatest Common Divisor (for aspect ratio calculation)
+     * Greatest Common Divisor (for aspect ratio calculation).
      */
     private function gcd(int $a, int $b): int
     {

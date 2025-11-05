@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
 
 /**
- * Reserved Slug Validator
+ * Reserved Slug Validator.
  *
  * Validates that a slug is not in the list of reserved slugs.
  */
@@ -27,7 +27,7 @@ class ReservedSlugValidator extends ConstraintValidator
             return;
         }
 
-        if (!is_string($value)) {
+        if (!\is_string($value)) {
             throw new UnexpectedValueException($value, 'string');
         }
 
@@ -35,7 +35,7 @@ class ReservedSlugValidator extends ConstraintValidator
         $normalizedSlug = strtolower(trim($value));
 
         // Check if slug is in reserved list
-        if (in_array($normalizedSlug, ReservedSlug::RESERVED_SLUGS, true)) {
+        if (\in_array($normalizedSlug, ReservedSlug::RESERVED_SLUGS, true)) {
             $this->context->buildViolation($constraint->message)
                 ->setParameter('{{ slug }}', $value)
                 ->addViolation();

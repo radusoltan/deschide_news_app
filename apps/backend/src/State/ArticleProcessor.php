@@ -10,6 +10,7 @@ use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Article;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -42,6 +43,7 @@ final class ArticleProcessor implements ProcessorInterface
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
             }
+
             return null;
         }
 
@@ -55,7 +57,7 @@ final class ArticleProcessor implements ProcessorInterface
                 $existingEntity = $this->entityManager->getRepository(Article::class)->find($uriVariables['id']);
 
                 if (!$existingEntity) {
-                    throw new \RuntimeException('Article not found');
+                    throw new RuntimeException('Article not found');
                 }
 
                 // Update fields from deserialized data
@@ -147,7 +149,7 @@ final class ArticleProcessor implements ProcessorInterface
     private function addTranslation(Article $article, string $locale): void
     {
         /** @var TranslationRepository $translationRepo */
-        $translationRepo = $this->entityManager->getRepository('Gedmo\\Translatable\\Entity\\Translation');
+        $translationRepo = $this->entityManager->getRepository('Gedmo\Translatable\Entity\Translation');
 
         if ($article->getTitle()) {
             $translationRepo->translate($article, 'title', $locale, $article->getTitle());

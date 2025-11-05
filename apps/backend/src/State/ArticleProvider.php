@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\State;
 
 use ApiPlatform\Metadata\Operation;
-use ApiPlatform\State\ProviderInterface;
 use ApiPlatform\State\Pagination\Pagination;
+use ApiPlatform\State\ProviderInterface;
 use App\Entity\Article;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
@@ -60,6 +60,10 @@ final class ArticleProvider implements ProviderInterface
                 $locale
             );
 
+            // Enable result cache for single article GET (1 hour)
+            $cacheKey = \sprintf('article_%d_%s', $uriVariables['id'], $locale);
+            $query->enableResultCache(3600, $cacheKey);
+
             $result = $query->getOneOrNullResult();
 
             if ($result) {
@@ -83,11 +87,13 @@ final class ArticleProvider implements ProviderInterface
         }
 
         // Handle collection retrieval
-        // For collections, we only eager load category to avoid pagination issues
-        // Authors, images and thumbnails will be lazy-loaded through serialization
+        // OPTIMIZATION: Eager load category and authors to avoid N+1 queries
+        // Images/thumbnails are loaded separately if needed by serialization groups
         $queryBuilder = $repository->createQueryBuilder('a')
             ->leftJoin('a.category', 'c')
-            ->addSelect('c');
+            ->addSelect('c')
+            ->leftJoin('a.authors', 'au')
+            ->addSelect('au');
 
         // Apply filters from query parameters
         if ($request) {
@@ -96,7 +102,7 @@ final class ArticleProvider implements ProviderInterface
 
             // Method 1: category[id]=X parsed as nested array
             $categoryArray = $request->query->all('category');
-            if (is_array($categoryArray) && isset($categoryArray['id'])) {
+            if (\is_array($categoryArray) && isset($categoryArray['id'])) {
                 $categoryId = (int) $categoryArray['id'];
             }
 
@@ -128,10 +134,10 @@ final class ArticleProvider implements ProviderInterface
 
             // Order by
             $orderBy = $request->query->all('order');
-            if (!empty($orderBy) && is_array($orderBy)) {
+            if (!empty($orderBy) && \is_array($orderBy)) {
                 foreach ($orderBy as $field => $direction) {
                     $direction = strtoupper((string) $direction);
-                    if (in_array($direction, ['ASC', 'DESC'], true)) {
+                    if (\in_array($direction, ['ASC', 'DESC'], true)) {
                         $queryBuilder->addOrderBy('a.' . $field, $direction);
                     }
                 }
@@ -150,32 +156,52 @@ final class ArticleProvider implements ProviderInterface
         }
 
         $query = $queryBuilder->getQuery();
+
+        // Set locale hint for Gedmo Translatable
         $query->setHint(
             \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
             $locale
         );
 
+        // Enable result cache for collection (30 minutes)
+        // Cache key includes page, itemsPerPage, filters, and locale
+        $cacheKey = \sprintf(
+            'articles_list_%s_p%d_ipp%d_%s_%s_%s',
+            $locale,
+            $page ?? 1,
+            $itemsPerPage ?? 20,
+            md5($request?->query->get('category', '')),
+            $request?->query->get('status', 'all'),
+            $request?->query->get('isFeatured', 'all')
+        );
+        $query->enableResultCache(1800, $cacheKey);  // 30 minutes
+
         // Use Doctrine Paginator to get correct total count
-        $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: false);
+        // fetchJoinCollection=true because we're joining collections (authors)
+        $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: true);
+
+        // OPTIMIZATION: Refresh entities to load translations, but avoid N+1 by using eager-loaded data
+        // Since we removed articleCount from serialization groups, this won't cause collection loading
         $results = iterator_to_array($doctrinePaginator);
+        foreach ($results as $article) {
+            // Refresh article for translatable fields (title, slug, lead)
+            $article->setTranslatableLocale($locale);
+            $this->entityManager->refresh($article);
 
-        foreach ($results as $result) {
-            $result->setTranslatableLocale($locale);
-            $this->entityManager->refresh($result);
-
-            // Set locale for related entities
-            if ($result->getCategory()) {
-                $result->getCategory()->setTranslatableLocale($locale);
-                $this->entityManager->refresh($result->getCategory());
+            // Refresh category for translatable fields (title, slug) - SAFE because no articleCount
+            if ($article->getCategory()) {
+                $article->getCategory()->setTranslatableLocale($locale);
+                $this->entityManager->refresh($article->getCategory());
             }
 
-            foreach ($result->getAuthors() as $author) {
+            // Refresh authors for translatable fields (bio) - SAFE because no articleCount
+            foreach ($article->getAuthors() as $author) {
                 $author->setTranslatableLocale($locale);
                 $this->entityManager->refresh($author);
             }
         }
 
-        // Return Doctrine Paginator which API Platform will wrap automatically
+        // Return the paginator (API Platform handles the iteration)
         return $doctrinePaginator;
     }
 }

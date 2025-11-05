@@ -14,6 +14,7 @@ use Doctrine\Persistence\ObjectManager;
 class ImportantArticlesListFixtures extends Fixture implements DependentFixtureInterface
 {
     private const IMPORTANT_ARTICLES_COUNT = 5;
+
     private const ARTICLE_COUNT = 80;
 
     public function getDependencies(): array
@@ -27,7 +28,7 @@ class ImportantArticlesListFixtures extends Fixture implements DependentFixtureI
     {
         // Get published articles to select from
         $publishedArticles = [];
-        for ($i = 1; $i <= self::ARTICLE_COUNT; $i++) {
+        for ($i = 1; $i <= self::ARTICLE_COUNT; ++$i) {
             /** @var Article $article */
             $article = $this->getReference('article_' . $i, Article::class);
             if ($article->getStatus() === ArticleStatus::PUBLISHED) {
@@ -37,7 +38,7 @@ class ImportantArticlesListFixtures extends Fixture implements DependentFixtureI
 
         // Shuffle and select first 5 published articles
         shuffle($publishedArticles);
-        $selectedArticles = array_slice($publishedArticles, 0, self::IMPORTANT_ARTICLES_COUNT);
+        $selectedArticles = \array_slice($publishedArticles, 0, self::IMPORTANT_ARTICLES_COUNT);
 
         // Create important articles list entries with positions 1-5
         foreach ($selectedArticles as $position => $article) {
@@ -50,6 +51,6 @@ class ImportantArticlesListFixtures extends Fixture implements DependentFixtureI
 
         $manager->flush();
 
-        echo "✅ Created " . self::IMPORTANT_ARTICLES_COUNT . " important articles (pinned to homepage)\n";
+        echo '✅ Created ' . self::IMPORTANT_ARTICLES_COUNT . " important articles (pinned to homepage)\n";
     }
 }

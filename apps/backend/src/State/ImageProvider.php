@@ -79,7 +79,7 @@ final class ImageProvider implements ProviderInterface
             }
 
             // Extract IDs from search results
-            $imageIds = array_map(fn($result) => $result['id'], $searchResults);
+            $imageIds = array_map(fn ($result) => $result['id'], $searchResults);
 
             // Fetch images by IDs preserving Elasticsearch order
             $queryBuilder = $repository->createQueryBuilder('i')

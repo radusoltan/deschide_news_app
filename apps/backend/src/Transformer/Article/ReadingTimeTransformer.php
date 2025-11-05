@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Transformer\Article;
 
 use App\Entity\Article;
-use Symfony\Component\ObjectMapper\Transformer\TransformCallableInterface;
+use Symfony\Component\ObjectMapper\TransformCallableInterface;
 
 /**
- * Transformer to calculate reading time from article content
+ * Transformer to calculate reading time from article content.
  */
 final class ReadingTimeTransformer implements TransformCallableInterface
 {
@@ -20,6 +20,7 @@ final class ReadingTimeTransformer implements TransformCallableInterface
 
         // Calculate: ~200 words per minute
         $wordCount = str_word_count(strip_tags($source->getContent()));
+
         return (int) ceil($wordCount / 200);
     }
 }

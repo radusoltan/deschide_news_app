@@ -4,30 +4,34 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Delete;
 use App\Enum\ArticleStatus;
 use App\Enum\CategoryStatus;
 use App\Repository\CategoryRepository;
 use App\State\CategoryProcessor;
 use App\State\CategoryProvider;
+use App\Validator as AppAssert;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Translatable\Translatable;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
+#[UniqueEntity('slug', message: 'This slug is already in use. Please choose a different slug.')]
 #[ORM\Table(name: 'categories')]
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Index(name: 'idx_category_status', columns: ['status'])]
@@ -53,7 +57,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Delete(
             uriTemplate: '/categories/{id}'
-        )
+        ),
     ],
     provider: CategoryProvider::class,
     processor: CategoryProcessor::class
@@ -61,7 +65,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiFilter(SearchFilter::class, properties: [
     'status' => 'exact',
     'title' => 'partial',
-    'slug' => 'exact'
+    'slug' => 'exact',
 ])]
 #[ApiFilter(BooleanFilter::class, properties: ['onFrontPage'])]
 class Category implements Translatable
@@ -81,8 +85,10 @@ class Category implements Translatable
     private ?string $title = null;
 
     #[Gedmo\Translatable]
-    #[Gedmo\Slug(fields: ['title'])]
-    #[ORM\Column(type: Types::STRING, length: 255)]
+    #[Gedmo\Slug(fields: ['title'], unique: true, updatable: true)]
+    #[ORM\Column(type: Types::STRING, length: 255, unique: true)]
+    #[Assert\NotBlank]
+    #[AppAssert\ReservedSlug]
     #[Groups(['category:read', 'article:read'])]
     private ?string $slug = null;
 
@@ -103,12 +109,12 @@ class Category implements Translatable
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['category:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[Gedmo\Timestampable(on: 'update')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['category:read'])]
-    private ?\DateTimeImmutable $updatedAt = null;
+    private ?DateTimeImmutable $updatedAt = null;
 
     // For translations
     #[Gedmo\Locale]
@@ -135,6 +141,7 @@ class Category implements Translatable
     public function setTitle(string $title): self
     {
         $this->title = $title;
+
         return $this;
     }
 
@@ -146,6 +153,7 @@ class Category implements Translatable
     public function setSlug(string $slug): self
     {
         $this->slug = $slug;
+
         return $this;
     }
 
@@ -187,6 +195,7 @@ class Category implements Translatable
     public function setStatus(CategoryStatus $status): self
     {
         $this->status = $status;
+
         return $this;
     }
 
@@ -198,15 +207,16 @@ class Category implements Translatable
     public function setOnFrontPage(bool $onFrontPage): self
     {
         $this->onFrontPage = $onFrontPage;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable
+    public function getUpdatedAt(): ?DateTimeImmutable
     {
         return $this->updatedAt;
     }
@@ -223,12 +233,13 @@ class Category implements Translatable
 
     /**
      * Computed property - article count
+     * OPTIMIZATION: Only include in category detail view, not when embedded in articles.
      */
-    #[Groups(['category:read'])]
+    #[Groups(['category:detail'])]
     public function getArticleCount(): int
     {
         return $this->articles
-            ->filter(fn($article) => $article->getStatus() === ArticleStatus::PUBLISHED)
+            ->filter(fn ($article) => $article->getStatus() === ArticleStatus::PUBLISHED)
             ->count();
     }
 }

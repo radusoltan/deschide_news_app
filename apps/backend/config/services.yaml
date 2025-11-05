@@ -4,6 +4,17 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # Varnish cache configuration
+    varnish.host: '%env(default::VARNISH_HOST)%'
+    varnish.port: '%env(int:default::VARNISH_PORT)%'
+    varnish.enabled: '%env(bool:default::VARNISH_ENABLED)%'
+
+    # Cloudflare CDN configuration
+    cloudflare.api_token: '%env(default::CLOUDFLARE_API_TOKEN)%'
+    cloudflare.zone_id: '%env(default::CLOUDFLARE_ZONE_ID)%'
+    cloudflare.enabled: '%env(bool:default::CLOUDFLARE_ENABLED)%'
+    cloudflare.domain: '%env(default:api_domain:CLOUDFLARE_DOMAIN)%'
+    api_domain: 'https://api.deschide.md'
 
 services:
     # default configuration for services in *this* file
@@ -32,3 +43,109 @@ services:
             $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+
+    # Redis Client for Performance Service and Sessions
+    Predis\Client:
+        arguments:
+            - scheme: 'tcp'
+              host: 'localhost'
+              port: 6379
+              database: 1
+
+    # Redis Session Handler
+    Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler:
+        arguments:
+            - '@Predis\Client'
+            -
+                prefix: 'deschide_session:'
+                ttl: 86400
+
+    # Performance Service (Cache + Statistics)
+    App\Service\PerformanceService:
+        arguments:
+            $redis: '@Predis\Client'
+            $em: '@doctrine.orm.entity_manager'
+            $logger: '@logger'
+
+    # Cached Article Provider (Decorator)
+    App\State\CachedArticleProvider:
+        decorates: App\State\ArticleProvider
+        arguments:
+            $decorated: '@.inner'
+            $performance: '@App\Service\PerformanceService'
+            $requestStack: '@request_stack'
+            $logger: '@logger'
+
+    # Cached Category Provider (Decorator)
+    App\State\CachedCategoryProvider:
+        decorates: App\State\CategoryProvider
+        arguments:
+            $decorated: '@.inner'
+            $performance: '@App\Service\PerformanceService'
+            $requestStack: '@request_stack'
+            $logger: '@logger'
+
+    # Prometheus Storage Adapter (Redis)
+    Prometheus\Storage\Redis:
+        arguments:
+            -
+                host: '%prometheus.storage.redis.host%'
+                port: '%prometheus.storage.redis.port%'
+                database: '%prometheus.storage.redis.database%'
+                password: '%prometheus.storage.redis.password%'
+                timeout: '%prometheus.storage.redis.timeout%'
+                read_timeout: '%prometheus.storage.redis.read_timeout%'
+                persistent_connections: '%prometheus.storage.redis.persistent_connections%'
+                prefix: '%prometheus.storage.redis.prefix%'
+
+    # Prometheus Collector Registry
+    Prometheus\CollectorRegistry:
+        arguments:
+            - '@Prometheus\Storage\Redis'
+
+    # LiveText Notification Service (Mercure)
+    App\Service\LiveTextNotificationService:
+        arguments:
+            $httpClient: '@http_client'
+            $logger: '@logger'
+            $mercureUrl: '%env(MERCURE_URL)%'
+            $mercurePublisherJwt: '%env(MERCURE_JWT_SECRET)%'
+
+    # Embed Controller
+    App\Controller\EmbedController:
+        arguments:
+            $frontendUrl: '%env(FRONTEND_URL)%'
+
+    # Social Media Service
+    App\Service\SocialMediaService:
+        arguments:
+            $frontendUrl: '%env(FRONTEND_URL)%'
+            $twitterApiKey: '%env(TWITTER_API_KEY)%'
+            $twitterApiSecret: '%env(TWITTER_API_SECRET)%'
+            $twitterAccessToken: '%env(TWITTER_ACCESS_TOKEN)%'
+            $twitterAccessSecret: '%env(TWITTER_ACCESS_SECRET)%'
+            $facebookPageId: '%env(FACEBOOK_PAGE_ID)%'
+            $facebookAccessToken: '%env(FACEBOOK_ACCESS_TOKEN)%'
+            $telegramBotToken: '%env(TELEGRAM_BOT_TOKEN)%'
+            $telegramChannelId: '%env(TELEGRAM_CHANNEL_ID)%'
+
+    # Varnish Cache Service (HTTP Cache Layer)
+    App\Service\VarnishCacheService:
+        arguments:
+            $varnishHost: '%varnish.host%'
+            $varnishPort: '%varnish.port%'
+            $varnishEnabled: '%varnish.enabled%'
+
+    # Cloudflare CDN Service (Global Edge Cache)
+    App\Service\CloudflareCacheService:
+        arguments:
+            $cloudflareApiToken: '%cloudflare.api_token%'
+            $cloudflareZoneId: '%cloudflare.zone_id%'
+            $cloudflareEnabled: '%cloudflare.enabled%'
+
+    # Multi-tier cache invalidation subscriber (Cloudflare + Varnish)
+    App\EventSubscriber\MultiTierCacheInvalidationSubscriber:
+        arguments:
+            $apiDomain: '%cloudflare.domain%'
+        tags:
+            - { name: kernel.event_subscriber }

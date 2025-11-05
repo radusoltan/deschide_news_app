@@ -32,9 +32,7 @@ class ImportantArticlesListDeleteListener
         $currentCount = $this->repository->count([]);
 
         if ($currentCount <= self::MIN_ARTICLES) {
-            throw new UnprocessableEntityHttpException(
-                sprintf('Cannot delete this article. The important articles list must have at least %d articles.', self::MIN_ARTICLES)
-            );
+            throw new UnprocessableEntityHttpException(\sprintf('Cannot delete this article. The important articles list must have at least %d articles.', self::MIN_ARTICLES));
         }
     }
 }

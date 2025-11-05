@@ -6,7 +6,10 @@ namespace App\Command;
 
 use App\Entity\Article;
 use App\Enum\ArticleStatus;
+use DateTimeImmutable;
+use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -32,10 +35,10 @@ class PublishScheduledArticlesCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         // Get current time (rounded to the minute, ignore seconds)
-        $now = new \DateTimeImmutable('now', new \DateTimeZone('Europe/Chisinau'));
+        $now = new DateTimeImmutable('now', new DateTimeZone('Europe/Chisinau'));
         $currentMinute = $now->format('Y-m-d H:i');
 
-        $io->note(sprintf('Checking for articles scheduled at: %s (Europe/Chisinau)', $currentMinute));
+        $io->note(\sprintf('Checking for articles scheduled at: %s (Europe/Chisinau)', $currentMinute));
 
         try {
             // Find articles that:
@@ -55,6 +58,7 @@ class PublishScheduledArticlesCommand extends Command
 
             if (empty($articles)) {
                 $io->success('No articles to publish at this time.');
+
                 return Command::SUCCESS;
             }
 
@@ -64,7 +68,7 @@ class PublishScheduledArticlesCommand extends Command
                 try {
                     // Publish the article
                     $article->setStatus(ArticleStatus::PUBLISHED);
-                    $article->setPublishedAt(new \DateTimeImmutable('now', new \DateTimeZone('Europe/Chisinau')));
+                    $article->setPublishedAt(new DateTimeImmutable('now', new DateTimeZone('Europe/Chisinau')));
 
                     $this->entityManager->persist($article);
 
@@ -75,21 +79,21 @@ class PublishScheduledArticlesCommand extends Command
                         'published_at' => $article->getPublishedAt()?->format('Y-m-d H:i:s'),
                     ]);
 
-                    $publishedCount++;
+                    ++$publishedCount;
 
-                    $io->writeln(sprintf(
+                    $io->writeln(\sprintf(
                         '✓ Published: [%d] %s (scheduled for %s)',
                         $article->getId(),
                         $article->getTitle(),
                         $article->getPublishAt()?->format('Y-m-d H:i')
                     ));
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $this->logger->error('Failed to publish scheduled article', [
                         'article_id' => $article->getId(),
                         'error' => $e->getMessage(),
                     ]);
 
-                    $io->error(sprintf(
+                    $io->error(\sprintf(
                         'Failed to publish article [%d]: %s',
                         $article->getId(),
                         $e->getMessage()
@@ -100,16 +104,16 @@ class PublishScheduledArticlesCommand extends Command
             // Flush all changes at once
             $this->entityManager->flush();
 
-            $io->success(sprintf('Successfully published %d article(s).', $publishedCount));
+            $io->success(\sprintf('Successfully published %d article(s).', $publishedCount));
 
             return Command::SUCCESS;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Error in publish scheduled articles command', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            $io->error(sprintf('Error: %s', $e->getMessage()));
+            $io->error(\sprintf('Error: %s', $e->getMessage()));
 
             return Command::FAILURE;
         }

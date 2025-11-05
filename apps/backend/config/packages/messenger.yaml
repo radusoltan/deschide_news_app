@@ -1,17 +1,27 @@
 framework:
     messenger:
         # Uncomment this (and the failed transport below) to send failed messages to this transport for later handling.
-        # failure_transport: failed
+        failure_transport: failed
 
         transports:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
-            # async: '%env(MESSENGER_TRANSPORT_DSN)%'
-            # failed: 'doctrine://default?queue_name=failed'
-            # sync: 'sync://'
+            async: '%env(MESSENGER_TRANSPORT_DSN)%'
+            failed: 'doctrine://default?queue_name=failed'
+
+            # Cache operations transport (high priority)
+            cache_async: '%env(MESSENGER_TRANSPORT_DSN)%'
+
+            # Statistics operations transport (medium priority)
+            stats_async: '%env(MESSENGER_TRANSPORT_DSN)%'
 
         routing:
             # Route your messages to the transports
-            # 'App\Message\YourMessage': async
+            # Cache messages (Sprint 2)
+            # 'App\Message\CacheWarmEvent': cache_async
+
+            # Statistics messages (Sprint 3)
+            'App\Message\PageViewEvent': stats_async
+            'App\Message\SessionEndEvent': stats_async
 
 # when@test:
 #    framework:

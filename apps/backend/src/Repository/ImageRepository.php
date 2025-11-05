@@ -19,7 +19,7 @@ class ImageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find image by filename
+     * Find image by filename.
      */
     public function findOneByFilename(string $filename): ?Image
     {
@@ -31,7 +31,7 @@ class ImageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find recent images
+     * Find recent images.
      *
      * @return Image[]
      */
@@ -45,7 +45,7 @@ class ImageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find images by MIME type
+     * Find images by MIME type.
      *
      * @return Image[]
      */
@@ -60,7 +60,7 @@ class ImageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find large images (for optimization)
+     * Find large images (for optimization).
      *
      * @return Image[]
      */

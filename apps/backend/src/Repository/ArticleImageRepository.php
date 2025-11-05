@@ -21,7 +21,7 @@ class ArticleImageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find featured image for article
+     * Find featured image for article.
      */
     public function findFeaturedForArticle(Article $article): ?ArticleImage
     {
@@ -35,7 +35,7 @@ class ArticleImageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find all images for article ordered by position
+     * Find all images for article ordered by position.
      *
      * @return ArticleImage[]
      */
@@ -50,7 +50,7 @@ class ArticleImageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find articles using an image
+     * Find articles using an image.
      *
      * @return Article[]
      */
@@ -66,7 +66,7 @@ class ArticleImageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Check if image is already attached to article
+     * Check if image is already attached to article.
      */
     public function isImageAttachedToArticle(Article $article, Image $image): bool
     {
@@ -83,7 +83,7 @@ class ArticleImageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find by article and image
+     * Find by article and image.
      */
     public function findOneByArticleAndImage(Article $article, Image $image): ?ArticleImage
     {

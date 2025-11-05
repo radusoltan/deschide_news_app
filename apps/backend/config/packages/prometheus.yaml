@@ -1,0 +1,11 @@
+parameters:
+    prometheus.storage.adapter: 'redis'
+    prometheus.storage.redis.host: '127.0.0.1'
+    prometheus.storage.redis.port: 6379
+    prometheus.storage.redis.database: 1
+    prometheus.namespace: 'deschide_news'
+    prometheus.storage.redis.password: ~
+    prometheus.storage.redis.timeout: 0.1
+    prometheus.storage.redis.read_timeout: 10
+    prometheus.storage.redis.persistent_connections: false
+    prometheus.storage.redis.prefix: 'PROMETHEUS_'

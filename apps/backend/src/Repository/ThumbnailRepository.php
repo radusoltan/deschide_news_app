@@ -21,7 +21,7 @@ class ThumbnailRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find all thumbnails for an image
+     * Find all thumbnails for an image.
      *
      * @return Thumbnail[]
      */
@@ -36,7 +36,7 @@ class ThumbnailRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find thumbnail for image and profile
+     * Find thumbnail for image and profile.
      */
     public function findOneByImageAndProfile(Image $image, ThumbnailProfile $profile): ?Thumbnail
     {
@@ -50,7 +50,7 @@ class ThumbnailRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find all thumbnails for a profile
+     * Find all thumbnails for a profile.
      *
      * @return Thumbnail[]
      */
@@ -65,7 +65,7 @@ class ThumbnailRepository extends ServiceEntityRepository
     }
 
     /**
-     * Check if thumbnail exists for image and profile
+     * Check if thumbnail exists for image and profile.
      */
     public function existsForImageAndProfile(Image $image, ThumbnailProfile $profile): bool
     {
@@ -82,7 +82,7 @@ class ThumbnailRepository extends ServiceEntityRepository
     }
 
     /**
-     * Delete all thumbnails for an image
+     * Delete all thumbnails for an image.
      */
     public function deleteByImage(Image $image): int
     {
@@ -95,7 +95,7 @@ class ThumbnailRepository extends ServiceEntityRepository
     }
 
     /**
-     * Delete all thumbnails for a profile
+     * Delete all thumbnails for a profile.
      */
     public function deleteByProfile(ThumbnailProfile $profile): int
     {

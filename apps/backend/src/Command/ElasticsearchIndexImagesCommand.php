@@ -7,6 +7,7 @@ namespace App\Command;
 use App\Entity\Image;
 use App\Service\ImageElasticService;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -32,6 +33,7 @@ class ElasticsearchIndexImagesCommand extends Command
 
         if (!$this->imageElasticService->isEnabled()) {
             $io->error('Elasticsearch is not enabled. Check your configuration.');
+
             return Command::FAILURE;
         }
 
@@ -41,10 +43,10 @@ class ElasticsearchIndexImagesCommand extends Command
             $repository = $this->entityManager->getRepository(Image::class);
             $images = $repository->findAll();
 
-            $io->info(sprintf('Found %d images to index', count($images)));
+            $io->info(\sprintf('Found %d images to index', \count($images)));
 
             $indexed = 0;
-            $io->progressStart(count($images));
+            $io->progressStart(\count($images));
 
             foreach ($images as $image) {
                 // Build suggest input from various fields
@@ -73,16 +75,17 @@ class ElasticsearchIndexImagesCommand extends Command
                 ];
 
                 $this->imageElasticService->indexDocument($document);
-                $indexed++;
+                ++$indexed;
                 $io->progressAdvance();
             }
 
             $io->progressFinish();
-            $io->success(sprintf('Successfully indexed %d images!', $indexed));
+            $io->success(\sprintf('Successfully indexed %d images!', $indexed));
 
             return Command::SUCCESS;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $io->error('Failed to index images: ' . $e->getMessage());
+
             return Command::FAILURE;
         }
     }

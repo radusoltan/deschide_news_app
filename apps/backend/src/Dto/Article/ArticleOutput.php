@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Dto\Article;
 
+use DateTimeImmutable;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 
 /**
  * DTO for reading article details (single item)
- * Maps from Article entity
+ * Maps from Article entity.
  */
 #[Map(source: \App\Entity\Article::class)]
 final class ArticleOutput
@@ -41,19 +42,19 @@ final class ArticleOutput
     public int $viewCount = 0;
 
     #[Map(source: 'createdAt')]
-    public ?\DateTimeImmutable $createdAt = null;
+    public ?DateTimeImmutable $createdAt = null;
 
     #[Map(source: 'updatedAt')]
-    public ?\DateTimeImmutable $updatedAt = null;
+    public ?DateTimeImmutable $updatedAt = null;
 
     #[Map(source: 'publishedAt')]
-    public ?\DateTimeImmutable $publishedAt = null;
+    public ?DateTimeImmutable $publishedAt = null;
 
     #[Map(source: 'locale')]
     public ?string $locale = null;
 
     /**
-     * Computed property - reading time in minutes
+     * Computed property - reading time in minutes.
      */
     #[Map(transform: \App\Transformer\Article\ReadingTimeTransformer::class)]
     public ?int $readingTime = null;

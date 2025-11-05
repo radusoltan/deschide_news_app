@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Delete;
 use App\Enum\ArticleStatus;
 use App\Enum\AuthorStatus;
 use App\Repository\AuthorRepository;
 use App\State\AuthorProcessor;
 use App\State\AuthorProvider;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -30,10 +31,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity('email')]
 #[UniqueEntity('slug')]
+// Single column indexes
 #[ORM\Index(name: 'idx_author_slug', columns: ['slug'])]
 #[ORM\Index(name: 'idx_author_email', columns: ['email'])]
 #[ORM\Index(name: 'idx_author_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_author_is_active', columns: ['is_active'])]
+// Composite indexes for common queries
+#[ORM\Index(name: 'idx_author_active_status', columns: ['is_active', 'status'])]
 #[ApiResource(
     operations: [
         new Get(
@@ -55,7 +59,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Delete(
             uriTemplate: '/authors/{id}'
-        )
+        ),
     ],
     provider: AuthorProvider::class,
     processor: AuthorProcessor::class
@@ -136,12 +140,12 @@ class Author implements Translatable
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['author:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[Gedmo\Timestampable(on: 'update')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['author:read'])]
-    private ?\DateTimeImmutable $updatedAt = null;
+    private ?DateTimeImmutable $updatedAt = null;
 
     // For translations
     #[Gedmo\Locale]
@@ -168,6 +172,7 @@ class Author implements Translatable
     public function setFirstName(string $firstName): self
     {
         $this->firstName = $firstName;
+
         return $this;
     }
 
@@ -179,6 +184,7 @@ class Author implements Translatable
     public function setLastName(string $lastName): self
     {
         $this->lastName = $lastName;
+
         return $this;
     }
 
@@ -190,6 +196,7 @@ class Author implements Translatable
     public function setEmail(string $email): self
     {
         $this->email = $email;
+
         return $this;
     }
 
@@ -201,6 +208,7 @@ class Author implements Translatable
     public function setSlug(string $slug): self
     {
         $this->slug = $slug;
+
         return $this;
     }
 
@@ -212,6 +220,7 @@ class Author implements Translatable
     public function setBio(?string $bio): self
     {
         $this->bio = $bio;
+
         return $this;
     }
 
@@ -250,6 +259,7 @@ class Author implements Translatable
     public function setStatus(AuthorStatus $status): self
     {
         $this->status = $status;
+
         return $this;
     }
 
@@ -261,6 +271,7 @@ class Author implements Translatable
     public function setIsActive(bool $isActive): self
     {
         $this->isActive = $isActive;
+
         return $this;
     }
 
@@ -272,6 +283,7 @@ class Author implements Translatable
     public function setTwitter(?string $twitter): self
     {
         $this->twitter = $twitter;
+
         return $this;
     }
 
@@ -283,6 +295,7 @@ class Author implements Translatable
     public function setFacebook(?string $facebook): self
     {
         $this->facebook = $facebook;
+
         return $this;
     }
 
@@ -294,6 +307,7 @@ class Author implements Translatable
     public function setLinkedin(?string $linkedin): self
     {
         $this->linkedin = $linkedin;
+
         return $this;
     }
 
@@ -305,15 +319,16 @@ class Author implements Translatable
     public function setWebsite(?string $website): self
     {
         $this->website = $website;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable
+    public function getUpdatedAt(): ?DateTimeImmutable
     {
         return $this->updatedAt;
     }
@@ -329,7 +344,7 @@ class Author implements Translatable
     }
 
     /**
-     * Computed property - full name
+     * Computed property - full name.
      */
     #[Groups(['author:read'])]
     public function getFullName(): string
@@ -339,23 +354,25 @@ class Author implements Translatable
 
     /**
      * Computed property - article count
+     * OPTIMIZATION: Only include in author detail view, not when embedded in articles.
      */
-    #[Groups(['author:read'])]
+    #[Groups(['author:detail'])]
     public function getArticleCount(): int
     {
         return $this->articles
-            ->filter(fn($article) => $article->getStatus() === ArticleStatus::PUBLISHED)
+            ->filter(fn ($article) => $article->getStatus() === ArticleStatus::PUBLISHED)
             ->count();
     }
 
     /**
-     * Computed property - initials
+     * Computed property - initials.
      */
     #[Groups(['author:read'])]
     public function getInitials(): string
     {
         $first = mb_substr($this->firstName ?? '', 0, 1);
         $last = mb_substr($this->lastName ?? '', 0, 1);
+
         return mb_strtoupper($first . $last);
     }
 }

@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Delete;
 use App\Repository\ArticleImageRepository;
 use App\State\ArticleImageProcessor;
 use App\State\ArticleImageProvider;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -47,7 +48,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Delete(
             uriTemplate: '/article_images/{id}'
-        )
+        ),
     ],
     provider: ArticleImageProvider::class,
     processor: ArticleImageProcessor::class
@@ -85,7 +86,7 @@ class ArticleImage
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['article_image:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     public function __construct(?Article $article = null, ?Image $image = null, int $position = 0, bool $isFeatured = false)
     {
@@ -110,6 +111,7 @@ class ArticleImage
     public function setArticle(?Article $article): self
     {
         $this->article = $article;
+
         return $this;
     }
 
@@ -121,6 +123,7 @@ class ArticleImage
     public function setImage(?Image $image): self
     {
         $this->image = $image;
+
         return $this;
     }
 
@@ -132,6 +135,7 @@ class ArticleImage
     public function setPosition(int $position): self
     {
         $this->position = $position;
+
         return $this;
     }
 
@@ -148,10 +152,11 @@ class ArticleImage
     public function setIsFeatured(bool $isFeatured): self
     {
         $this->isFeatured = $isFeatured;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }

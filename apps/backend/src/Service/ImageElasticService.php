@@ -6,11 +6,14 @@ namespace App\Service;
 
 use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\ClientBuilder;
+use Exception;
 
 class ImageElasticService
 {
     private ?Client $client;
+
     private string $indexName = 'deschide_images';
+
     private readonly bool $enabled;
 
     public function __construct(
@@ -236,7 +239,7 @@ class ImageElasticService
                 'index' => $this->indexName,
                 'id' => $id,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Document might not exist, ignore
         }
     }

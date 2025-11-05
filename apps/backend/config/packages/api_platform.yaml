@@ -10,3 +10,8 @@ api_platform:
         stateless: true
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin', 'Accept-Language']
+            # HTTP Cache - public endpoints can be cached
+            max_age: 3600                    # 1 hour browser cache
+            shared_max_age: 7200             # 2 hours CDN/proxy cache
+            public: true                     # Allow caching by proxies/CDN
+            # For private/authenticated data, these will be overridden per-resource

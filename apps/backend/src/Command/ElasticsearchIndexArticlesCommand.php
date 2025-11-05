@@ -8,6 +8,7 @@ use App\Entity\Article;
 use App\Enum\ArticleStatus;
 use App\Service\ElasticService;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -34,7 +35,8 @@ class ElasticsearchIndexArticlesCommand extends Command
     {
         $this
             ->addOption('locale', 'l', InputOption::VALUE_OPTIONAL, 'Index articles for specific locale only', null)
-            ->addOption('status', 's', InputOption::VALUE_OPTIONAL, 'Index only articles with specific status', null);
+            ->addOption('status', 's', InputOption::VALUE_OPTIONAL, 'Index only articles with specific status', null)
+            ->addOption('batch-size', 'b', InputOption::VALUE_OPTIONAL, 'Batch size for bulk indexing', '100');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -45,6 +47,7 @@ class ElasticsearchIndexArticlesCommand extends Command
 
         if (!$this->elasticService->isEnabled()) {
             $io->warning('Elasticsearch is disabled. Check ELASTICSEARCH_HOST configuration.');
+
             return Command::SUCCESS;
         }
 
@@ -53,7 +56,7 @@ class ElasticsearchIndexArticlesCommand extends Command
             $totalIndexed = 0;
 
             foreach ($locales as $currentLocale) {
-                $io->section(sprintf('Indexing articles for locale: %s', $currentLocale));
+                $io->section(\sprintf('Indexing articles for locale: %s', $currentLocale));
 
                 // Fetch articles from database
                 $qb = $this->entityManager->getRepository(Article::class)->createQueryBuilder('a');
@@ -69,9 +72,17 @@ class ElasticsearchIndexArticlesCommand extends Command
 
                 $articles = $qb->getQuery()->getResult();
 
-                $io->info(sprintf('Found %d articles to index', count($articles)));
+                $io->info(\sprintf('Found %d articles to index', \count($articles)));
 
+                $batchSize = (int) $input->getOption('batch-size');
                 $indexed = 0;
+                $errors = 0;
+                $batch = [];
+                $totalArticles = \count($articles);
+
+                $progressBar = $io->createProgressBar($totalArticles);
+                $progressBar->start();
+
                 foreach ($articles as $article) {
                     // Set locale for translatable fields
                     $article->setTranslatableLocale($currentLocale);
@@ -103,7 +114,7 @@ class ElasticsearchIndexArticlesCommand extends Command
                     $text = $article->getLead() ?? $article->getContent() ?? '';
                     if ($text) {
                         $contentWords = str_word_count(strip_tags($text), 1);
-                        $keywords = array_slice($contentWords, 0, 10);
+                        $keywords = \array_slice($contentWords, 0, 10);
                         $suggestInput = array_merge($suggestInput, $keywords);
                     }
 
@@ -134,24 +145,39 @@ class ElasticsearchIndexArticlesCommand extends Command
                         'related_ids' => $relatedIds,
                     ];
 
-                    $this->elasticService->indexDocument($document, $currentLocale);
-                    ++$indexed;
+                    $batch[] = $document;
 
-                    if (0 === $indexed % 10) {
-                        $io->text(sprintf('Indexed %d articles...', $indexed));
+                    // Bulk index when batch is full
+                    if (\count($batch) >= $batchSize) {
+                        $result = $this->elasticService->bulkIndexDocuments($batch, $currentLocale);
+                        $indexed += $result['indexed'];
+                        $errors += $result['errors'];
+                        $batch = [];
+                        $progressBar->advance($result['indexed']);
                     }
                 }
 
-                $io->success(sprintf('Successfully indexed %d articles for locale "%s"!', $indexed, $currentLocale));
+                // Index remaining documents in batch
+                if (!empty($batch)) {
+                    $result = $this->elasticService->bulkIndexDocuments($batch, $currentLocale);
+                    $indexed += $result['indexed'];
+                    $errors += $result['errors'];
+                    $progressBar->advance($result['indexed']);
+                }
+
+                $progressBar->finish();
+                $io->newLine(2);
+
+                $io->success(\sprintf('Successfully indexed %d articles for locale "%s"! (Errors: %d)', $indexed, $currentLocale, $errors));
                 $totalIndexed += $indexed;
             }
 
-            $io->success(sprintf('Total articles indexed: %d', $totalIndexed));
+            $io->success(\sprintf('Total articles indexed: %d', $totalIndexed));
 
             return Command::SUCCESS;
-        } catch (\Exception $e) {
-            $io->error('Failed to index articles: '.$e->getMessage());
-            $io->text('Stack trace: '.$e->getTraceAsString());
+        } catch (Exception $e) {
+            $io->error('Failed to index articles: ' . $e->getMessage());
+            $io->text('Stack trace: ' . $e->getTraceAsString());
 
             return Command::FAILURE;
         }

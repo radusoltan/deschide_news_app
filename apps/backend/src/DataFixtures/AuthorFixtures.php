@@ -20,7 +20,7 @@ class AuthorFixtures extends Fixture
         $fakerEn = Factory::create('en_US');
         $fakerRu = Factory::create('ru_RU');
 
-        for ($i = 0; $i < self::AUTHOR_COUNT; $i++) {
+        for ($i = 0; $i < self::AUTHOR_COUNT; ++$i) {
             $author = new Author();
 
             // Basic info (non-translatable)
@@ -64,6 +64,6 @@ class AuthorFixtures extends Fixture
             $this->addReference('author_' . $i, $author);
         }
 
-        echo "✅ Created " . self::AUTHOR_COUNT . " authors with bio translations (ro/en/ru)\n";
+        echo '✅ Created ' . self::AUTHOR_COUNT . " authors with bio translations (ro/en/ru)\n";
     }
 }

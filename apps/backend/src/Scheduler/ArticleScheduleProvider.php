@@ -15,7 +15,7 @@ final class ArticleScheduleProvider implements ScheduleProviderInterface
 {
     public function getSchedule(): Schedule
     {
-        return (new Schedule())
+        return new Schedule()
             ->add(
                 // Run every minute to check for scheduled articles
                 RecurringMessage::every('1 minute', new PublishScheduledArticles())

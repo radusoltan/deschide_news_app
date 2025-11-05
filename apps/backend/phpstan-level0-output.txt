@@ -1,0 +1,700 @@
+PHP Warning:  JIT is incompatible with third party extensions that override zend_execute_ex(). JIT disabled. in Unknown on line 0
+Note: Using configuration file /var/www/deschide_news_app/deschide_backend/phpstan.neon.
+   0/203 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   0%[1G[2K  20/203 [▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░]   9%[1G[2K  40/203 [▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░]  19%[1G[2K  60/203 [▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░]  29%[1G[2K  80/203 [▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░]  39%[1G[2K 100/203 [▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░]  49%[1G[2K 120/203 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░]  59%[1G[2K 140/203 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░]  68%[1G[2K 163/203 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░]  80%[1G[2K 183/203 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░]  90%[1G[2K 203/203 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
+
+ ------ --------------------------------------------------------------------- 
+  Line   Command/DatabaseQueryAuditCommand.php                                
+ ------ --------------------------------------------------------------------- 
+  51     Call to method __construct() of deprecated class                     
+         Doctrine\DBAL\Logging\DebugStack.                                    
+         🪪  method.deprecatedClass                                           
+         ✏️  src/Command/DatabaseQueryAuditCommand.php:51                     
+  51     Instantiation of deprecated class Doctrine\DBAL\Logging\DebugStack.  
+         🪪  new.deprecatedClass                                              
+         ✏️  src/Command/DatabaseQueryAuditCommand.php:51                     
+  85     Access to property $queries of deprecated class                      
+         Doctrine\DBAL\Logging\DebugStack.                                    
+         🪪  property.deprecatedClass                                         
+         ✏️  src/Command/DatabaseQueryAuditCommand.php:85                     
+ ------ --------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------- 
+  Line   Command/Import/ImportCsvArticlesCommand.php             
+ ------ -------------------------------------------------------- 
+  179    Call to deprecated method createFromPath() of class     
+         League\Csv\Reader:                                      
+         since version 9.27.0                                    
+                                                                 
+         Returns a new instance from a file path.                
+         🪪  staticMethod.deprecated                             
+         ✏️  src/Command/Import/ImportCsvArticlesCommand.php:179  
+ ------ -------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Controller/Api/StatsController.php                                     
+ ------ ----------------------------------------------------------------------- 
+  108    Access to undefined constant                                           
+         Gedmo\Translatable\Query\TreeWalker\TranslationWalker::HINT_TRANSLATA  
+         BLE_LOCALE.                                                            
+         🪪  classConstant.notFound                                             
+         ✏️  src/Controller/Api/StatsController.php:108                         
+  112    Access to undefined constant                                           
+         Gedmo\Translatable\Query\TreeWalker\TranslationWalker::HINT_INNER_JOI  
+         N.                                                                     
+         🪪  classConstant.notFound                                             
+         ✏️  src/Controller/Api/StatsController.php:112                         
+  252    Access to undefined constant                                           
+         Gedmo\Translatable\Query\TreeWalker\TranslationWalker::HINT_TRANSLATA  
+         BLE_LOCALE.                                                            
+         🪪  classConstant.notFound                                             
+         ✏️  src/Controller/Api/StatsController.php:252                         
+  256    Access to undefined constant                                           
+         Gedmo\Translatable\Query\TreeWalker\TranslationWalker::HINT_INNER_JOI  
+         N.                                                                     
+         🪪  classConstant.notFound                                             
+         ✏️  src/Controller/Api/StatsController.php:256                         
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   Controller/RedirectManagementController.php                           
+ ------ ---------------------------------------------------------------------- 
+  436    Call to method App\Repository\UrlRedirectRepository::findOneBy() -    
+         entity App\Entity\UrlRedirect does not have a field named $isActive.  
+         🪪  doctrine.findOneByArgument                                        
+         ✏️  src/Controller/RedirectManagementController.php:436               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/Article.php                                                     
+ ------ ----------------------------------------------------------------------- 
+  105    Property App\Entity\Article::$title type mapping mismatch: property    
+         can contain string|null but database expects string.                   
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Article.php:105                                         
+  112    Property App\Entity\Article::$slug type mapping mismatch: property     
+         can contain string|null but database expects string.                   
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Article.php:112                                         
+  134    Property App\Entity\Article::$authors type mapping mismatch: property  
+         can contain Doctrine\Common\Collections\Collection but database        
+         expects Doctrine\Common\Collections\Collection&iterable<App\Entity\Au  
+         thor>.                                                                 
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/Article.php:134                                         
+  140    Property App\Entity\Article::$articleImages type mapping mismatch:     
+         property can contain Doctrine\Common\Collections\Collection but        
+         database expects Doctrine\Common\Collections\Collection&iterable<App\  
+         Entity\ArticleImage>.                                                  
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/Article.php:140                                         
+  148    Property App\Entity\Article::$relatedArticles type mapping mismatch:   
+         property can contain Doctrine\Common\Collections\Collection but        
+         database expects Doctrine\Common\Collections\Collection&iterable<App\  
+         Entity\Article>.                                                       
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/Article.php:148                                         
+  171    Property App\Entity\Article::$createdAt type mapping mismatch:         
+         property can contain DateTimeImmutable|null but database expects       
+         DateTimeImmutable.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Article.php:171                                         
+  176    Property App\Entity\Article::$updatedAt type mapping mismatch:         
+         property can contain DateTimeImmutable|null but database expects       
+         DateTimeImmutable.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Article.php:176                                         
+ ------ ----------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------- 
+  Line   Entity/ArticleImage.php                                              
+ ------ --------------------------------------------------------------------- 
+  67     Property App\Entity\ArticleImage::$article type mapping mismatch:    
+         property can contain App\Entity\Article|null but database expects    
+         App\Entity\Article.                                                  
+         🪪  doctrine.associationType                                         
+         ✏️  src/Entity/ArticleImage.php:67                                   
+  72     Property App\Entity\ArticleImage::$image type mapping mismatch:      
+         property can contain App\Entity\Image|null but database expects      
+         App\Entity\Image.                                                    
+         🪪  doctrine.associationType                                         
+         ✏️  src/Entity/ArticleImage.php:72                                   
+  88     Property App\Entity\ArticleImage::$createdAt type mapping mismatch:  
+         property can contain DateTimeImmutable|null but database expects     
+         DateTimeImmutable.                                                   
+         🪪  doctrine.columnType                                              
+         ✏️  src/Entity/ArticleImage.php:88                                   
+ ------ --------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------- 
+  Line   Entity/ArticleLock.php                                              
+ ------ -------------------------------------------------------------------- 
+  48     Property App\Entity\ArticleLock::$article type mapping mismatch:    
+         property can contain App\Entity\Article|null but database expects   
+         App\Entity\Article.                                                 
+         🪪  doctrine.associationType                                        
+         ✏️  src/Entity/ArticleLock.php:48                                   
+  53     Property App\Entity\ArticleLock::$lockedBy type mapping mismatch:   
+         property can contain App\Entity\User|null but database expects      
+         App\Entity\User.                                                    
+         🪪  doctrine.associationType                                        
+         ✏️  src/Entity/ArticleLock.php:53                                   
+  57     Property App\Entity\ArticleLock::$lockedAt type mapping mismatch:   
+         property can contain DateTimeImmutable|null but database expects    
+         DateTimeImmutable.                                                  
+         🪪  doctrine.columnType                                             
+         ✏️  src/Entity/ArticleLock.php:57                                   
+  61     Property App\Entity\ArticleLock::$expiresAt type mapping mismatch:  
+         property can contain DateTimeImmutable|null but database expects    
+         DateTimeImmutable.                                                  
+         🪪  doctrine.columnType                                             
+         ✏️  src/Entity/ArticleLock.php:61                                   
+ ------ -------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/Author.php                                                      
+ ------ ----------------------------------------------------------------------- 
+  79     Property App\Entity\Author::$firstName type mapping mismatch:          
+         property can contain string|null but database expects string.          
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Author.php:79                                           
+  85     Property App\Entity\Author::$lastName type mapping mismatch: property  
+         can contain string|null but database expects string.                   
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Author.php:85                                           
+  90     Property App\Entity\Author::$email type mapping mismatch: property     
+         can contain string|null but database expects string.                   
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Author.php:90                                           
+  95     Property App\Entity\Author::$slug type mapping mismatch: property can  
+         contain string|null but database expects string.                       
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Author.php:95                                           
+  106    Property App\Entity\Author::$articles type mapping mismatch: property  
+         can contain Doctrine\Common\Collections\Collection but database        
+         expects Doctrine\Common\Collections\Collection&iterable<App\Entity\Ar  
+         ticle>.                                                                
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/Author.php:106                                          
+  142    Property App\Entity\Author::$createdAt type mapping mismatch:          
+         property can contain DateTimeImmutable|null but database expects       
+         DateTimeImmutable.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Author.php:142                                          
+  147    Property App\Entity\Author::$updatedAt type mapping mismatch:          
+         property can contain DateTimeImmutable|null but database expects       
+         DateTimeImmutable.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Author.php:147                                          
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/Category.php                                                    
+ ------ ----------------------------------------------------------------------- 
+  84     Property App\Entity\Category::$title type mapping mismatch: property   
+         can contain string|null but database expects string.                   
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Category.php:84                                         
+  92     Property App\Entity\Category::$slug type mapping mismatch: property    
+         can contain string|null but database expects string.                   
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Category.php:92                                         
+  96     Property App\Entity\Category::$articles type mapping mismatch:         
+         property can contain Doctrine\Common\Collections\Collection but        
+         database expects Doctrine\Common\Collections\Collection&iterable<App\  
+         Entity\Article>.                                                       
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/Category.php:96                                         
+  111    Property App\Entity\Category::$createdAt type mapping mismatch:        
+         property can contain DateTimeImmutable|null but database expects       
+         DateTimeImmutable.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Category.php:111                                        
+  116    Property App\Entity\Category::$updatedAt type mapping mismatch:        
+         property can contain DateTimeImmutable|null but database expects       
+         DateTimeImmutable.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Category.php:116                                        
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   Entity/ExternalArticleMapping.php                                     
+ ------ ---------------------------------------------------------------------- 
+  25     Property App\Entity\ExternalArticleMapping::$article type mapping     
+         mismatch: property can contain App\Entity\Article|null but database   
+         expects App\Entity\Article.                                           
+         🪪  doctrine.associationType                                          
+         ✏️  src/Entity/ExternalArticleMapping.php:25                          
+  28     Property App\Entity\ExternalArticleMapping::$source type mapping      
+         mismatch: property can contain string|null but database expects       
+         string.                                                               
+         🪪  doctrine.columnType                                               
+         ✏️  src/Entity/ExternalArticleMapping.php:28                          
+  31     Property App\Entity\ExternalArticleMapping::$externalId type mapping  
+         mismatch: property can contain string|null but database expects       
+         string.                                                               
+         🪪  doctrine.columnType                                               
+         ✏️  src/Entity/ExternalArticleMapping.php:31                          
+  38     Property App\Entity\ExternalArticleMapping::$createdAt type mapping   
+         mismatch: property can contain DateTimeImmutable|null but database    
+         expects DateTimeImmutable.                                            
+         🪪  doctrine.columnType                                               
+         ✏️  src/Entity/ExternalArticleMapping.php:38                          
+  42     Property App\Entity\ExternalArticleMapping::$updatedAt type mapping   
+         mismatch: property can contain DateTimeImmutable|null but database    
+         expects DateTimeImmutable.                                            
+         🪪  doctrine.columnType                                               
+         ✏️  src/Entity/ExternalArticleMapping.php:42                          
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/Image.php                                                       
+ ------ ----------------------------------------------------------------------- 
+  111    Property App\Entity\Image::$filename type mapping mismatch: property   
+         can contain string|null but database expects string.                   
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Image.php:111                                           
+  115    Property App\Entity\Image::$originalFilename type mapping mismatch:    
+         property can contain string|null but database expects string.          
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Image.php:115                                           
+  131    Property App\Entity\Image::$width type mapping mismatch: property can  
+         contain int|null but database expects int.                             
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Image.php:131                                           
+  135    Property App\Entity\Image::$height type mapping mismatch: property     
+         can contain int|null but database expects int.                         
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Image.php:135                                           
+  163    Property App\Entity\Image::$articleImages type mapping mismatch:       
+         property can contain Doctrine\Common\Collections\Collection but        
+         database expects Doctrine\Common\Collections\Collection&iterable<App\  
+         Entity\ArticleImage>.                                                  
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/Image.php:163                                           
+  168    Property App\Entity\Image::$thumbnails type mapping mismatch:          
+         property can contain Doctrine\Common\Collections\Collection but        
+         database expects Doctrine\Common\Collections\Collection&iterable<App\  
+         Entity\Thumbnail>.                                                     
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/Image.php:168                                           
+  174    Property App\Entity\Image::$createdAt type mapping mismatch: property  
+         can contain DateTimeImmutable|null but database expects                
+         DateTimeImmutable.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Image.php:174                                           
+  179    Property App\Entity\Image::$updatedAt type mapping mismatch: property  
+         can contain DateTimeImmutable|null but database expects                
+         DateTimeImmutable.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Image.php:179                                           
+ ------ ----------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------- 
+  Line   Entity/ImportantArticlesList.php                                     
+ ------ --------------------------------------------------------------------- 
+  59     Property App\Entity\ImportantArticlesList::$article type mapping     
+         mismatch: property can contain App\Entity\Article|null but database  
+         expects App\Entity\Article.                                          
+         🪪  doctrine.associationType                                         
+         ✏️  src/Entity/ImportantArticlesList.php:59                          
+  64     Property App\Entity\ImportantArticlesList::$position type mapping    
+         mismatch: property can contain int|null but database expects int.    
+         🪪  doctrine.columnType                                              
+         ✏️  src/Entity/ImportantArticlesList.php:64                          
+  69     Property App\Entity\ImportantArticlesList::$createdAt type mapping   
+         mismatch: property can contain DateTimeImmutable|null but database   
+         expects DateTimeImmutable.                                           
+         🪪  doctrine.columnType                                              
+         ✏️  src/Entity/ImportantArticlesList.php:69                          
+ ------ --------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/LiveText.php                                                    
+ ------ ----------------------------------------------------------------------- 
+  109    Property App\Entity\LiveText::$title type mapping mismatch: property   
+         can contain string|null but database expects string.                   
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveText.php:109                                        
+  114    Property App\Entity\LiveText::$slug type mapping mismatch: property    
+         can contain string|null but database expects string.                   
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveText.php:114                                        
+  143    Property App\Entity\LiveText::$author type mapping mismatch: property  
+         can contain App\Entity\User|null but database expects                  
+         App\Entity\User.                                                       
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/LiveText.php:143                                        
+  185    Property App\Entity\LiveText::$createdAt type mapping mismatch:        
+         property can contain DateTimeInterface|null but database expects       
+         DateTimeInterface.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveText.php:185                                        
+  190    Property App\Entity\LiveText::$updatedAt type mapping mismatch:        
+         property can contain DateTimeInterface|null but database expects       
+         DateTimeInterface.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveText.php:190                                        
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/LiveTextAbTest.php                                              
+ ------ ----------------------------------------------------------------------- 
+  31     Property App\Entity\LiveTextAbTest::$name type mapping mismatch:       
+         property can contain string|null but database expects string.          
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextAbTest.php:31                                   
+  55     Property App\Entity\LiveTextAbTest::$variantType type mapping          
+         mismatch: property can contain string|null but database expects        
+         string.                                                                
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextAbTest.php:55                                   
+  79     Property App\Entity\LiveTextAbTest::$targetMetric type mapping         
+         mismatch: property can contain string|null but database expects        
+         string.                                                                
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextAbTest.php:79                                   
+  128    Property App\Entity\LiveTextAbTest::$liveTexts type mapping mismatch:  
+         property can contain Doctrine\Common\Collections\Collection but        
+         database expects Doctrine\Common\Collections\Collection&iterable<App\  
+         Entity\LiveText>.                                                      
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/LiveTextAbTest.php:128                                  
+  135    Property App\Entity\LiveTextAbTest::$createdBy type mapping mismatch:  
+         property can contain App\Entity\User|null but database expects         
+         App\Entity\User.                                                       
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/LiveTextAbTest.php:135                                  
+  141    Property App\Entity\LiveTextAbTest::$createdAt type mapping mismatch:  
+         property can contain DateTimeInterface|null but database expects       
+         DateTimeInterface.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextAbTest.php:141                                  
+  144    Property App\Entity\LiveTextAbTest::$updatedAt type mapping mismatch:  
+         property can contain DateTimeInterface|null but database expects       
+         DateTimeInterface.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextAbTest.php:144                                  
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   Entity/LiveTextCollaborator.php                                       
+ ------ ---------------------------------------------------------------------- 
+  65     Property App\Entity\LiveTextCollaborator::$liveText type mapping      
+         mismatch: property can contain App\Entity\LiveText|null but database  
+         expects App\Entity\LiveText.                                          
+         🪪  doctrine.associationType                                          
+         ✏️  src/Entity/LiveTextCollaborator.php:65                            
+  72     Property App\Entity\LiveTextCollaborator::$user type mapping          
+         mismatch: property can contain App\Entity\User|null but database      
+         expects App\Entity\User.                                              
+         🪪  doctrine.associationType                                          
+         ✏️  src/Entity/LiveTextCollaborator.php:72                            
+  78     Property App\Entity\LiveTextCollaborator::$createdAt type mapping     
+         mismatch: property can contain DateTimeInterface|null but database    
+         expects DateTimeInterface.                                            
+         🪪  doctrine.columnType                                               
+         ✏️  src/Entity/LiveTextCollaborator.php:78                            
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/LiveTextMatchEvent.php                                          
+ ------ ----------------------------------------------------------------------- 
+  53     Property App\Entity\LiveTextMatchEvent::$sportMatch type mapping       
+         mismatch: property can contain App\Entity\LiveTextSportMatch|null but  
+         database expects App\Entity\LiveTextSportMatch.                        
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/LiveTextMatchEvent.php:53                               
+  71     Property App\Entity\LiveTextMatchEvent::$eventType type mapping        
+         mismatch: property can contain string|null but database expects        
+         string.                                                                
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextMatchEvent.php:71                               
+  79     Property App\Entity\LiveTextMatchEvent::$team type mapping mismatch:   
+         property can contain string|null but database expects string.          
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextMatchEvent.php:79                               
+  101    Property App\Entity\LiveTextMatchEvent::$eventMinute type mapping      
+         mismatch: property can contain int|null but database expects int.      
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextMatchEvent.php:101                              
+  136    Property App\Entity\LiveTextMatchEvent::$createdAt type mapping        
+         mismatch: property can contain DateTimeInterface|null but database     
+         expects DateTimeInterface.                                             
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextMatchEvent.php:136                              
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/LiveTextPost.php                                                
+ ------ ----------------------------------------------------------------------- 
+  90     Property App\Entity\LiveTextPost::$content type mapping mismatch:      
+         property can contain string|null but database expects string.          
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextPost.php:90                                     
+  106    Property App\Entity\LiveTextPost::$publishedAt type mapping mismatch:  
+         property can contain DateTimeInterface|null but database expects       
+         DateTimeInterface.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextPost.php:106                                    
+  114    Property App\Entity\LiveTextPost::$liveText type mapping mismatch:     
+         property can contain App\Entity\LiveText|null but database expects     
+         App\Entity\LiveText.                                                   
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/LiveTextPost.php:114                                    
+  121    Property App\Entity\LiveTextPost::$author type mapping mismatch:       
+         property can contain App\Entity\User|null but database expects         
+         App\Entity\User.                                                       
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/LiveTextPost.php:121                                    
+  127    Property App\Entity\LiveTextPost::$createdAt type mapping mismatch:    
+         property can contain DateTimeInterface|null but database expects       
+         DateTimeInterface.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextPost.php:127                                    
+  132    Property App\Entity\LiveTextPost::$updatedAt type mapping mismatch:    
+         property can contain DateTimeInterface|null but database expects       
+         DateTimeInterface.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextPost.php:132                                    
+ ------ ----------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------- 
+  Line   Entity/LiveTextPostEngagement.php                                    
+ ------ --------------------------------------------------------------------- 
+  31     Property App\Entity\LiveTextPostEngagement::$post type mapping       
+         mismatch: property can contain App\Entity\LiveTextPost|null but      
+         database expects App\Entity\LiveTextPost.                            
+         🪪  doctrine.associationType                                         
+         ✏️  src/Entity/LiveTextPostEngagement.php:31                         
+  37     Property App\Entity\LiveTextPostEngagement::$sessionId type mapping  
+         mismatch: property can contain string|null but database expects      
+         string.                                                              
+         🪪  doctrine.columnType                                              
+         ✏️  src/Entity/LiveTextPostEngagement.php:37                         
+  50     Property App\Entity\LiveTextPostEngagement::$engagementType type     
+         mapping mismatch: property can contain string|null but database      
+         expects string.                                                      
+         🪪  doctrine.columnType                                              
+         ✏️  src/Entity/LiveTextPostEngagement.php:50                         
+  92     Property App\Entity\LiveTextPostEngagement::$createdAt type mapping  
+         mismatch: property can contain DateTimeInterface|null but database   
+         expects DateTimeInterface.                                           
+         🪪  doctrine.columnType                                              
+         ✏️  src/Entity/LiveTextPostEngagement.php:92                         
+ ------ --------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------- 
+  Line   Entity/LiveTextReaction.php                                         
+ ------ -------------------------------------------------------------------- 
+  63     Property App\Entity\LiveTextReaction::$liveTextPost type mapping    
+         mismatch: property can contain App\Entity\LiveTextPost|null but     
+         database expects App\Entity\LiveTextPost.                           
+         🪪  doctrine.associationType                                        
+         ✏️  src/Entity/LiveTextReaction.php:63                              
+  86     Property App\Entity\LiveTextReaction::$createdAt type mapping       
+         mismatch: property can contain DateTimeInterface|null but database  
+         expects DateTimeInterface.                                          
+         🪪  doctrine.columnType                                             
+         ✏️  src/Entity/LiveTextReaction.php:86                              
+ ------ -------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/LiveTextSportMatch.php                                          
+ ------ ----------------------------------------------------------------------- 
+  55     Property App\Entity\LiveTextSportMatch::$liveText type mapping         
+         mismatch: property can contain App\Entity\LiveText|null but database   
+         expects App\Entity\LiveText.                                           
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/LiveTextSportMatch.php:55                               
+  64     Property App\Entity\LiveTextSportMatch::$sportType type mapping        
+         mismatch: property can contain string|null but database expects        
+         string.                                                                
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextSportMatch.php:64                               
+  72     Property App\Entity\LiveTextSportMatch::$homeTeam type mapping         
+         mismatch: property can contain string|null but database expects        
+         string.                                                                
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextSportMatch.php:72                               
+  80     Property App\Entity\LiveTextSportMatch::$awayTeam type mapping         
+         mismatch: property can contain string|null but database expects        
+         string.                                                                
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextSportMatch.php:80                               
+  180    Property App\Entity\LiveTextSportMatch::$events type mapping           
+         mismatch: property can contain Doctrine\Common\Collections\Collection  
+         but database expects Doctrine\Common\Collections\Collection&iterable<  
+         App\Entity\LiveTextMatchEvent>.                                        
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/LiveTextSportMatch.php:180                              
+  187    Property App\Entity\LiveTextSportMatch::$createdAt type mapping        
+         mismatch: property can contain DateTimeInterface|null but database     
+         expects DateTimeInterface.                                             
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextSportMatch.php:187                              
+  191    Property App\Entity\LiveTextSportMatch::$updatedAt type mapping        
+         mismatch: property can contain DateTimeInterface|null but database     
+         expects DateTimeInterface.                                             
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/LiveTextSportMatch.php:191                              
+ ------ ----------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------- 
+  Line   Entity/LiveTextView.php                                              
+ ------ --------------------------------------------------------------------- 
+  35     Property App\Entity\LiveTextView::$liveText type mapping mismatch:   
+         property can contain App\Entity\LiveText|null but database expects   
+         App\Entity\LiveText.                                                 
+         🪪  doctrine.associationType                                         
+         ✏️  src/Entity/LiveTextView.php:35                                   
+  47     Property App\Entity\LiveTextView::$sessionId type mapping mismatch:  
+         property can contain string|null but database expects string.        
+         🪪  doctrine.columnType                                              
+         ✏️  src/Entity/LiveTextView.php:47                                   
+  75     Property App\Entity\LiveTextView::$viewedAt type mapping mismatch:   
+         property can contain DateTimeInterface|null but database expects     
+         DateTimeInterface.                                                   
+         🪪  doctrine.columnType                                              
+         ✏️  src/Entity/LiveTextView.php:75                                   
+  82     Property App\Entity\LiveTextView::$lastActivityAt type mapping       
+         mismatch: property can contain DateTimeInterface|null but database   
+         expects DateTimeInterface.                                           
+         🪪  doctrine.columnType                                              
+         ✏️  src/Entity/LiveTextView.php:82                                   
+ ------ --------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/PageView.php                                                    
+ ------ ----------------------------------------------------------------------- 
+  20     Property App\Entity\PageView::$id type mapping mismatch: database can  
+         contain string but property expects int|null.                          
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/PageView.php:20                                         
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   Entity/Session.php                                                    
+ ------ ---------------------------------------------------------------------- 
+  47     Call to static method uuid4() on an unknown class Ramsey\Uuid\Uuid.   
+         🪪  class.notFound                                                    
+         💡  Learn more at https://phpstan.org/user-guide/discovering-symbols  
+         ✏️  src/Entity/Session.php:47                                         
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/Thumbnail.php                                                   
+ ------ ----------------------------------------------------------------------- 
+  74     Property App\Entity\Thumbnail::$filename type mapping mismatch:        
+         property can contain string|null but database expects string.          
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Thumbnail.php:74                                        
+  78     Property App\Entity\Thumbnail::$path type mapping mismatch: property   
+         can contain string|null but database expects string.                   
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Thumbnail.php:78                                        
+  83     Property App\Entity\Thumbnail::$width type mapping mismatch: property  
+         can contain int|null but database expects int.                         
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Thumbnail.php:83                                        
+  88     Property App\Entity\Thumbnail::$height type mapping mismatch:          
+         property can contain int|null but database expects int.                
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Thumbnail.php:88                                        
+  93     Property App\Entity\Thumbnail::$size type mapping mismatch: property   
+         can contain int|null but database expects int.                         
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Thumbnail.php:93                                        
+  106    Property App\Entity\Thumbnail::$image type mapping mismatch: property  
+         can contain App\Entity\Image|null but database expects                 
+         App\Entity\Image.                                                      
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/Thumbnail.php:106                                       
+  112    Property App\Entity\Thumbnail::$profile type mapping mismatch:         
+         property can contain App\Entity\ThumbnailProfile|null but database     
+         expects App\Entity\ThumbnailProfile.                                   
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/Thumbnail.php:112                                       
+  118    Property App\Entity\Thumbnail::$createdAt type mapping mismatch:       
+         property can contain DateTimeImmutable|null but database expects       
+         DateTimeImmutable.                                                     
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/Thumbnail.php:118                                       
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   Entity/ThumbnailProfile.php                                            
+ ------ ----------------------------------------------------------------------- 
+  74     Property App\Entity\ThumbnailProfile::$name type mapping mismatch:     
+         property can contain string|null but database expects string.          
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/ThumbnailProfile.php:74                                 
+  81     Property App\Entity\ThumbnailProfile::$displayName type mapping        
+         mismatch: property can contain string|null but database expects        
+         string.                                                                
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/ThumbnailProfile.php:81                                 
+  92     Property App\Entity\ThumbnailProfile::$width type mapping mismatch:    
+         property can contain int|null but database expects int.                
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/ThumbnailProfile.php:92                                 
+  97     Property App\Entity\ThumbnailProfile::$height type mapping mismatch:   
+         property can contain int|null but database expects int.                
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/ThumbnailProfile.php:97                                 
+  124    Property App\Entity\ThumbnailProfile::$thumbnails type mapping         
+         mismatch: property can contain Doctrine\Common\Collections\Collection  
+         but database expects Doctrine\Common\Collections\Collection&iterable<  
+         App\Entity\Thumbnail>.                                                 
+         🪪  doctrine.associationType                                           
+         ✏️  src/Entity/ThumbnailProfile.php:124                                
+  130    Property App\Entity\ThumbnailProfile::$createdAt type mapping          
+         mismatch: property can contain DateTimeImmutable|null but database     
+         expects DateTimeImmutable.                                             
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/ThumbnailProfile.php:130                                
+  135    Property App\Entity\ThumbnailProfile::$updatedAt type mapping          
+         mismatch: property can contain DateTimeImmutable|null but database     
+         expects DateTimeImmutable.                                             
+         🪪  doctrine.columnType                                                
+         ✏️  src/Entity/ThumbnailProfile.php:135                                
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   Entity/User.php                                                       
+ ------ ---------------------------------------------------------------------- 
+  21     Property App\Entity\User::$username type mapping mismatch: property   
+         can contain string|null but database expects string.                  
+         🪪  doctrine.columnType                                               
+         ✏️  src/Entity/User.php:21                                            
+  24     Property App\Entity\User::$email type mapping mismatch: property can  
+         contain string|null but database expects string.                      
+         🪪  doctrine.columnType                                               
+         ✏️  src/Entity/User.php:24                                            
+  42     Property App\Entity\User::$password type mapping mismatch: property   
+         can contain string|null but database expects string.                  
+         🪪  doctrine.columnType                                               
+         ✏️  src/Entity/User.php:42                                            
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------- 
+  Line   Service/LiveTextNotificationService.php                            
+ ------ ------------------------------------------------------------------- 
+  105    Instantiated class App\Dto\LiveText\LiveTextEventDto is abstract.  
+         🪪  new.abstract                                                   
+         ✏️  src/Service/LiveTextNotificationService.php:105                
+  132    Instantiated class App\Dto\LiveText\LiveTextEventDto is abstract.  
+         🪪  new.abstract                                                   
+         ✏️  src/Service/LiveTextNotificationService.php:132                
+  160    Instantiated class App\Dto\LiveText\LiveTextEventDto is abstract.  
+         🪪  new.abstract                                                   
+         ✏️  src/Service/LiveTextNotificationService.php:160                
+  190    Instantiated class App\Dto\LiveText\LiveTextEventDto is abstract.  
+         🪪  new.abstract                                                   
+         ✏️  src/Service/LiveTextNotificationService.php:190                
+  209    Instantiated class App\Dto\LiveText\LiveTextEventDto is abstract.  
+         🪪  new.abstract                                                   
+         ✏️  src/Service/LiveTextNotificationService.php:209                
+ ------ ------------------------------------------------------------------- 
+
+ [ERROR] Found 119 errors                                                       
+

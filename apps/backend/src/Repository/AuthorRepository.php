@@ -20,7 +20,7 @@ class AuthorRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find active authors
+     * Find active authors.
      *
      * @return Author[]
      */
@@ -37,7 +37,7 @@ class AuthorRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find authors with published articles
+     * Find authors with published articles.
      *
      * @return array<int, array{author: Author, articleCount: int}>
      */
@@ -56,7 +56,7 @@ class AuthorRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find author by slug
+     * Find author by slug.
      */
     public function findOneBySlug(string $slug): ?Author
     {
@@ -68,7 +68,7 @@ class AuthorRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find top authors (most articles)
+     * Find top authors (most articles).
      *
      * @return Author[]
      */

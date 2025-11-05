@@ -9,7 +9,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * DTO for creating/updating articles
- * Maps to Article entity
+ * Maps to Article entity.
  */
 #[Map(target: \App\Entity\Article::class)]
 final class ArticleInput

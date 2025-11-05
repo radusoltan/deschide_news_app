@@ -6,10 +6,8 @@ namespace App\State;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
-use App\Entity\ImportantArticlesList;
 use App\Repository\ImportantArticlesListRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Gedmo\Translatable\Query\TreeWalker\TranslationWalker;
 use Gedmo\Translatable\TranslatableListener;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -32,6 +30,7 @@ class ImportantArticlesListProvider implements ProviderInterface
             if ($item && $item->getArticle()) {
                 $this->loadArticleTranslation($item->getArticle(), $locale);
             }
+
             return $item;
         }
 
@@ -51,14 +50,18 @@ class ImportantArticlesListProvider implements ProviderInterface
             ->addOrderBy('ai.position', 'ASC');
 
         $query = $qb->getQuery();
-        $query->setHint(
-            \Doctrine\ORM\Query::HINT_CUSTOM_OUTPUT_WALKER,
-            TranslationWalker::class
-        );
         $query->setHint(TranslatableListener::HINT_TRANSLATABLE_LOCALE, $locale);
-        $query->setHint(TranslatableListener::HINT_FALLBACK, 1);
 
-        return $query->getResult();
+        $results = $query->getResult();
+
+        // Load translations for each article and related entities
+        foreach ($results as $item) {
+            if ($item && $item->getArticle()) {
+                $this->loadArticleTranslation($item->getArticle(), $locale);
+            }
+        }
+
+        return $results;
     }
 
     private function loadArticleTranslation($article, string $locale): void

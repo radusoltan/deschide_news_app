@@ -1,0 +1,76 @@
+# PHPStan Configuration
+# Static Analysis for Deschide News Backend
+# Documentation: https://phpstan.org/config-reference
+
+parameters:
+    # Analysis level (0-9, max is strictest)
+    # TARGET: Level 6 achieved!
+    level: 6
+
+    # Paths to analyze
+    paths:
+        - src/
+
+    # Symfony-specific configuration
+    symfony:
+        # Path to Symfony container XML file for service analysis
+        containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
+
+    # Doctrine-specific configuration
+    doctrine:
+        # Repository class analysis
+        repositoryClass: Doctrine\ORM\EntityRepository
+
+    # Rules and checks
+    reportUnmatchedIgnoredErrors: false  # Will enable later
+
+    # Directories to exclude
+    excludePaths:
+        - vendor
+        - var
+        - public
+        - migrations
+
+    # Ignore specific errors (patterns)
+    ignoreErrors:
+        # Temporarily ignore symfony/console deprecated warnings
+        # Will be fixed in future sprints
+        - '#Call to deprecated method.*Symfony\\Component\\Console#'
+
+        # Gedmo Translatable hints are dynamic
+        - '#Call to an undefined method.*TranslatableListener#'
+
+        # VichUploader dynamic properties
+        - '#Access to an undefined property.*imageFile#'
+
+        # API Platform state providers/processors
+        - '#Method.*State.*Provider.*should return.*but returns void#'
+
+    # Bootstrap file for autoloading and initialization
+    # Not needed for Symfony - using container XML instead
+    # bootstrapFiles:
+    #     - config/bootstrap.php
+
+    # Parallel processing (faster analysis)
+    parallel:
+        # Auto-detect number of CPU cores
+        jobSize: 20
+        maximumNumberOfProcesses: 32
+        minimumNumberOfJobsPerProcess: 2
+
+    # Error formatting
+    editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
+    editorUrlTitle: '%%relFile%%:%%line%%'
+
+    # Memory limit for analysis
+    # Increase if analysis runs out of memory
+    # memoryLimit: 1G
+
+    # Custom extensions (auto-loaded by extension-installer)
+    # - phpstan/phpstan-symfony
+    # - phpstan/phpstan-doctrine
+    # - phpstan/phpstan-deprecation-rules
+
+# Include baseline file (ignores existing errors)
+includes:
+    - phpstan-baseline.neon

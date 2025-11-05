@@ -96,6 +96,6 @@ class CategoryFixtures extends Fixture
             $this->addReference('category_' . $index, $category);
         }
 
-        echo "✅ Created " . count(self::CATEGORIES) . " categories with translations (ro/en/ru)\n";
+        echo '✅ Created ' . \count(self::CATEGORIES) . " categories with translations (ro/en/ru)\n";
     }
 }

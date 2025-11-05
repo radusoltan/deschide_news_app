@@ -75,15 +75,12 @@ final class ArticleLockProcessor implements ProcessorInterface
             if ($existingLock->getLockedBy()->getId() === $user->getId()) {
                 $existingLock->refreshExpiration();
                 $this->entityManager->flush();
+
                 return $existingLock;
             }
 
             // Locked by someone else
-            throw new ConflictHttpException(sprintf(
-                'Article is currently being edited by %s %s',
-                $existingLock->getLockedBy()->getFirstName(),
-                $existingLock->getLockedBy()->getLastName()
-            ));
+            throw new ConflictHttpException(\sprintf('Article is currently being edited by %s %s', $existingLock->getLockedBy()->getFirstName(), $existingLock->getLockedBy()->getLastName()));
         }
 
         // Create new lock

@@ -2,8 +2,16 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
-    # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    # Session configuration with Redis storage
+    session:
+        handler_id: Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler
+        cookie_secure: auto
+        cookie_samesite: lax
+        cookie_lifetime: 86400 # 24 hours
+
+    # Serializer optimizations
+    serializer:
+        enable_attributes: true                # Use PHP 8 attributes (faster)
 
     #esi: true
     #fragments: true

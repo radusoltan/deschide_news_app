@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Metadata\Post;
 use App\Repository\ArticleLockRepository;
-use App\State\ArticleLockProcessor;
 use App\State\ArticleLockProvider;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -31,7 +29,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
             uriTemplate: '/article_locks',
             normalizationContext: ['groups' => ['article_lock:read']],
             provider: ArticleLockProvider::class
-        )
+        ),
     ]
 )]
 class ArticleLock
@@ -54,11 +52,11 @@ class ArticleLock
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['article_lock:read'])]
-    private ?\DateTimeImmutable $lockedAt = null;
+    private ?DateTimeImmutable $lockedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['article_lock:read'])]
-    private ?\DateTimeImmutable $expiresAt = null;
+    private ?DateTimeImmutable $expiresAt = null;
 
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     #[Groups(['article_lock:read'])]
@@ -66,19 +64,19 @@ class ArticleLock
 
     public function __construct()
     {
-        $this->lockedAt = new \DateTimeImmutable();
+        $this->lockedAt = new DateTimeImmutable();
         $this->refreshExpiration();
     }
 
     public function refreshExpiration(): void
     {
         // Lock expires after 15 minutes of inactivity
-        $this->expiresAt = new \DateTimeImmutable('+15 minutes');
+        $this->expiresAt = new DateTimeImmutable('+15 minutes');
     }
 
     public function isExpired(): bool
     {
-        return $this->expiresAt < new \DateTimeImmutable();
+        return $this->expiresAt < new DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -110,24 +108,24 @@ class ArticleLock
         return $this;
     }
 
-    public function getLockedAt(): ?\DateTimeImmutable
+    public function getLockedAt(): ?DateTimeImmutable
     {
         return $this->lockedAt;
     }
 
-    public function setLockedAt(\DateTimeImmutable $lockedAt): self
+    public function setLockedAt(DateTimeImmutable $lockedAt): self
     {
         $this->lockedAt = $lockedAt;
 
         return $this;
     }
 
-    public function getExpiresAt(): ?\DateTimeImmutable
+    public function getExpiresAt(): ?DateTimeImmutable
     {
         return $this->expiresAt;
     }
 
-    public function setExpiresAt(\DateTimeImmutable $expiresAt): self
+    public function setExpiresAt(DateTimeImmutable $expiresAt): self
     {
         $this->expiresAt = $expiresAt;
 

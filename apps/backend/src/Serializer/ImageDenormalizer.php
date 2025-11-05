@@ -22,9 +22,6 @@ final class ImageDenormalizer implements DenormalizerInterface, DenormalizerAwar
 
     private const ALREADY_CALLED = 'IMAGE_DENORMALIZER_ALREADY_CALLED';
 
-    /**
-     * {@inheritdoc}
-     */
     public function denormalize(mixed $data, string $type, ?string $format = null, array $context = []): Image
     {
         // Prevent infinite recursion
@@ -50,9 +47,6 @@ final class ImageDenormalizer implements DenormalizerInterface, DenormalizerAwar
         return $object;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function supportsDenormalization(mixed $data, string $type, ?string $format = null, array $context = []): bool
     {
         // Avoid infinite recursion
@@ -63,9 +57,6 @@ final class ImageDenormalizer implements DenormalizerInterface, DenormalizerAwar
         return Image::class === $type && isset($data['file']);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getSupportedTypes(?string $format): array
     {
         return [

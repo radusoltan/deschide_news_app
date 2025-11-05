@@ -4,48 +4,71 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
-use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Delete;
 use App\Enum\ArticleBadge;
 use App\Enum\ArticleStatus;
 use App\Repository\ArticleRepository;
 use App\State\ArticleProcessor;
 use App\State\ArticleProvider;
+use App\Validator\ReservedSlug;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Translatable\Translatable;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\MaxDepth;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
+#[UniqueEntity('slug', message: 'This slug is already in use. Please choose a different slug.')]
 #[ORM\Table(name: 'articles')]
 #[ORM\HasLifecycleCallbacks]
+// Single column indexes
 #[ORM\Index(name: 'idx_article_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_article_published_at', columns: ['published_at'])]
 #[ORM\Index(name: 'idx_article_publish_at', columns: ['publish_at'])]
 #[ORM\Index(name: 'idx_article_featured', columns: ['is_featured'])]
+// Composite indexes for common queries
+#[ORM\Index(name: 'idx_article_status_category', columns: ['status', 'category_id'])]
+#[ORM\Index(name: 'idx_article_status_published', columns: ['status', 'published_at'])]
+#[ORM\Index(name: 'idx_article_featured_published', columns: ['is_featured', 'published_at'])]
+#[ORM\Index(name: 'idx_article_category_status_published', columns: ['category_id', 'status', 'published_at'])]
 #[ApiResource(
     operations: [
         new Get(
             uriTemplate: '/articles/{id}',
-            normalizationContext: ['groups' => ['article:read', 'article:detail', 'category:read', 'author:read'], 'enable_max_depth' => true]
+            normalizationContext: ['groups' => ['article:read', 'article:detail', 'category:read', 'author:read'], 'enable_max_depth' => true],
+            cacheHeaders: [
+                'max_age' => 3600,           // 1 hour client cache
+                'shared_max_age' => 7200,    // 2 hours proxy/CDN cache
+                'vary' => ['Accept', 'Accept-Language'],
+            ]
         ),
         new GetCollection(
             uriTemplate: '/articles',
             normalizationContext: ['groups' => ['article:read', 'article:list', 'category:read', 'author:read'], 'enable_max_depth' => true],
-            paginationItemsPerPage: 20
+            paginationItemsPerPage: 20,
+            paginationPartial: true,
+            paginationClientEnabled: true,
+            paginationClientItemsPerPage: true,
+            cacheHeaders: [
+                'max_age' => 1800,           // 30 minutes client cache (lists change more often)
+                'shared_max_age' => 3600,    // 1 hour proxy/CDN cache
+                'vary' => ['Accept', 'Accept-Language'],
+            ]
         ),
         new Post(
             uriTemplate: '/articles',
@@ -57,7 +80,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Delete(
             uriTemplate: '/articles/{id}'
-        )
+        ),
     ],
     provider: ArticleProvider::class,
     processor: ArticleProcessor::class
@@ -67,13 +90,13 @@ use Symfony\Component\Validator\Constraints as Assert;
     'category.id' => 'exact',
     'status' => 'exact',
     'title' => 'partial',
-    'slug' => 'exact'
+    'slug' => 'exact',
 ])]
 #[ApiFilter(OrderFilter::class, properties: [
     'publishedAt' => 'DESC',
     'createdAt' => 'DESC',
     'viewCount' => 'DESC',
-    'title' => 'ASC'
+    'title' => 'ASC',
 ])]
 #[ApiFilter(BooleanFilter::class, properties: ['isFeatured'])]
 class Article implements Translatable
@@ -93,8 +116,9 @@ class Article implements Translatable
     private ?string $title = null;
 
     #[Gedmo\Translatable]
-    #[Gedmo\Slug(fields: ['title'])]
-    #[ORM\Column(type: Types::STRING, length: 255)]
+    #[Gedmo\Slug(fields: ['title'], unique: true, updatable: true)]
+    #[ORM\Column(type: Types::STRING, length: 255, unique: true)]
+    #[ReservedSlug]
     #[Groups(['article:read'])]
     private ?string $slug = null;
 
@@ -122,7 +146,7 @@ class Article implements Translatable
 
     #[ORM\OneToMany(targetEntity: ArticleImage::class, mappedBy: 'article', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
-    #[Groups(['article:read', 'article:detail'])]
+    #[Groups(['article:detail'])] // OPTIMIZATION: Only load images in detail view, not in list
     #[MaxDepth(2)]
     private Collection $articleImages;
 
@@ -155,21 +179,21 @@ class Article implements Translatable
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['article:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[Gedmo\Timestampable(on: 'update')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['article:read'])]
-    private ?\DateTimeImmutable $updatedAt = null;
+    private ?DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     #[Groups(['article:read'])]
-    private ?\DateTimeImmutable $publishedAt = null;
+    private ?DateTimeImmutable $publishedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
     #[Assert\GreaterThan('now', message: 'Publish date must be in the future.')]
     #[Groups(['article:read', 'article:write'])]
-    private ?\DateTimeImmutable $publishAt = null;
+    private ?DateTimeImmutable $publishAt = null;
 
     // For translations
     #[Gedmo\Locale]
@@ -198,6 +222,7 @@ class Article implements Translatable
     public function setTitle(string $title): self
     {
         $this->title = $title;
+
         return $this;
     }
 
@@ -209,6 +234,7 @@ class Article implements Translatable
     public function setSlug(string $slug): self
     {
         $this->slug = $slug;
+
         return $this;
     }
 
@@ -220,6 +246,7 @@ class Article implements Translatable
     public function setLead(?string $lead): self
     {
         $this->lead = $lead;
+
         return $this;
     }
 
@@ -231,6 +258,7 @@ class Article implements Translatable
     public function setContent(string $content): self
     {
         $this->content = $content;
+
         return $this;
     }
 
@@ -242,6 +270,7 @@ class Article implements Translatable
     public function setStatus(ArticleStatus $status): self
     {
         $this->status = $status;
+
         return $this;
     }
 
@@ -253,6 +282,7 @@ class Article implements Translatable
     public function setBadge(?ArticleBadge $badge): self
     {
         $this->badge = $badge;
+
         return $this;
     }
 
@@ -264,6 +294,7 @@ class Article implements Translatable
     public function setIsFeatured(bool $isFeatured): self
     {
         $this->isFeatured = $isFeatured;
+
         return $this;
     }
 
@@ -275,38 +306,41 @@ class Article implements Translatable
     public function setViewCount(int $viewCount): self
     {
         $this->viewCount = $viewCount;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable
+    public function getUpdatedAt(): ?DateTimeImmutable
     {
         return $this->updatedAt;
     }
 
-    public function getPublishedAt(): ?\DateTimeImmutable
+    public function getPublishedAt(): ?DateTimeImmutable
     {
         return $this->publishedAt;
     }
 
-    public function setPublishedAt(?\DateTimeImmutable $publishedAt): self
+    public function setPublishedAt(?DateTimeImmutable $publishedAt): self
     {
         $this->publishedAt = $publishedAt;
+
         return $this;
     }
 
-    public function getPublishAt(): ?\DateTimeImmutable
+    public function getPublishAt(): ?DateTimeImmutable
     {
         return $this->publishAt;
     }
 
-    public function setPublishAt(?\DateTimeImmutable $publishAt): self
+    public function setPublishAt(?DateTimeImmutable $publishAt): self
     {
         $this->publishAt = $publishAt;
+
         return $this;
     }
 
@@ -328,6 +362,7 @@ class Article implements Translatable
     public function setCategory(?Category $category): self
     {
         $this->category = $category;
+
         return $this;
     }
 
@@ -351,23 +386,24 @@ class Article implements Translatable
     public function removeAuthor(Author $author): self
     {
         $this->authors->removeElement($author);
+
         return $this;
     }
 
     /**
-     * Lifecycle callback to set publishedAt when status becomes published
+     * Lifecycle callback to set publishedAt when status becomes published.
      */
     #[ORM\PrePersist]
     #[ORM\PreUpdate]
     public function updatePublishedAt(): void
     {
         if ($this->status === ArticleStatus::PUBLISHED && $this->publishedAt === null) {
-            $this->publishedAt = new \DateTimeImmutable();
+            $this->publishedAt = new DateTimeImmutable();
         }
     }
 
     /**
-     * Computed property - reading time
+     * Computed property - reading time.
      */
     public function getReadingTime(): int
     {
@@ -375,6 +411,7 @@ class Article implements Translatable
             return 0;
         }
         $wordCount = str_word_count(strip_tags($this->content));
+
         return (int) ceil($wordCount / 200);
     }
 
@@ -398,6 +435,7 @@ class Article implements Translatable
     public function removeRelatedArticle(Article $article): self
     {
         $this->relatedArticles->removeElement($article);
+
         return $this;
     }
 

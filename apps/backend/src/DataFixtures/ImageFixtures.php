@@ -11,11 +11,14 @@ use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 use Faker\Factory;
+use RuntimeException;
 
 class ImageFixtures extends Fixture implements DependentFixtureInterface
 {
     private const IMAGE_COUNT = 40;
+
     private const UPLOAD_DIR = __DIR__ . '/../../public/uploads/images';
+
     private const THUMBNAIL_DIR = __DIR__ . '/../../public/uploads/thumbnails';
 
     // Color palette for varied backgrounds
@@ -43,10 +46,10 @@ class ImageFixtures extends Fixture implements DependentFixtureInterface
     {
         // Ensure upload directories exist
         if (!is_dir(self::UPLOAD_DIR)) {
-            mkdir(self::UPLOAD_DIR, 0755, true);
+            mkdir(self::UPLOAD_DIR, 0o755, true);
         }
         if (!is_dir(self::THUMBNAIL_DIR)) {
-            mkdir(self::THUMBNAIL_DIR, 0755, true);
+            mkdir(self::THUMBNAIL_DIR, 0o755, true);
         }
 
         $fakerRo = Factory::create('ro_RO');
@@ -58,16 +61,16 @@ class ImageFixtures extends Fixture implements DependentFixtureInterface
         $profileNames = [
             'article_card', 'article_card_small', 'article_hero', 'article_hero_mobile',
             'article_wide', 'article_wide_medium', 'article_square', 'article_portrait',
-            'article_thumbnail', 'og_image'
+            'article_thumbnail', 'og_image',
         ];
         foreach ($profileNames as $profileName) {
-            $thumbnailProfiles[] = $this->getReference('thumbnail_profile_' . $profileName, \App\Entity\ThumbnailProfile::class);
+            $thumbnailProfiles[] = $this->getReference('thumbnail_profile_' . $profileName, ThumbnailProfile::class);
         }
 
-        for ($i = 1; $i <= self::IMAGE_COUNT; $i++) {
+        for ($i = 1; $i <= self::IMAGE_COUNT; ++$i) {
             // Select random dimensions and color
-            $dimension = self::DIMENSIONS[($i - 1) % count(self::DIMENSIONS)];
-            $color = self::COLORS[($i - 1) % count(self::COLORS)];
+            $dimension = self::DIMENSIONS[($i - 1) % \count(self::DIMENSIONS)];
+            $color = self::COLORS[($i - 1) % \count(self::COLORS)];
 
             // Download original image from dummyimage.com
             $imageData = $this->downloadDummyImage(
@@ -186,12 +189,12 @@ class ImageFixtures extends Fixture implements DependentFixtureInterface
             }
         }
 
-        echo "✅ Created " . self::IMAGE_COUNT . " images with " . (self::IMAGE_COUNT * count($thumbnailProfiles)) . " thumbnails\n";
+        echo '✅ Created ' . self::IMAGE_COUNT . ' images with ' . (self::IMAGE_COUNT * \count($thumbnailProfiles)) . " thumbnails\n";
     }
 
     private function downloadDummyImage(int $width, int $height, string $color, string $text): array
     {
-        $url = sprintf(
+        $url = \sprintf(
             'https://dummyimage.com/%dx%d/%s/ffffff&text=%s',
             $width,
             $height,
@@ -199,13 +202,13 @@ class ImageFixtures extends Fixture implements DependentFixtureInterface
             urlencode($text)
         );
 
-        $filename = sprintf('image_%s_%dx%d_%s.png', uniqid(), $width, $height, substr($color, 0, 6));
+        $filename = \sprintf('image_%s_%dx%d_%s.png', uniqid(), $width, $height, substr($color, 0, 6));
         $destinationPath = self::UPLOAD_DIR . '/' . $filename;
 
         $imageData = @file_get_contents($url);
 
         if ($imageData === false) {
-            throw new \RuntimeException("Failed to download image from $url");
+            throw new RuntimeException("Failed to download image from $url");
         }
 
         file_put_contents($destinationPath, $imageData);
@@ -218,7 +221,7 @@ class ImageFixtures extends Fixture implements DependentFixtureInterface
 
     private function downloadThumbnail(ThumbnailProfile $profile, string $color, string $text): array
     {
-        $url = sprintf(
+        $url = \sprintf(
             'https://dummyimage.com/%dx%d/%s/ffffff&text=%s',
             $profile->getWidth(),
             $profile->getHeight(),
@@ -226,13 +229,13 @@ class ImageFixtures extends Fixture implements DependentFixtureInterface
             urlencode($text)
         );
 
-        $filename = sprintf('thumb_%s_%s_%s.png', $profile->getName(), uniqid(), substr($color, 0, 6));
+        $filename = \sprintf('thumb_%s_%s_%s.png', $profile->getName(), uniqid(), substr($color, 0, 6));
         $destinationPath = self::THUMBNAIL_DIR . '/' . $filename;
 
         $imageData = @file_get_contents($url);
 
         if ($imageData === false) {
-            throw new \RuntimeException("Failed to download thumbnail from $url");
+            throw new RuntimeException("Failed to download thumbnail from $url");
         }
 
         file_put_contents($destinationPath, $imageData);

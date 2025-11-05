@@ -26,6 +26,7 @@ final class MultipartDecoder implements DecoderInterface
         $result = array_map(static function (string $element) {
             // Decode JSON-encoded values for complex fields
             $decoded = json_decode($element, true);
+
             return \is_array($decoded) ? $decoded : $element;
         }, $request->request->all());
 

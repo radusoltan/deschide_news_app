@@ -11,6 +11,9 @@ use App\Entity\ThumbnailProfile;
 use App\Repository\ThumbnailProfileRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
+use InvalidArgumentException;
+use LogicException;
+use RuntimeException;
 
 /**
  * @implements ProcessorInterface<ThumbnailProfile>
@@ -30,12 +33,13 @@ final class ThumbnailProfileProcessor implements ProcessorInterface
             if ($data instanceof ThumbnailProfile) {
                 // Check if profile has associated thumbnails
                 if ($data->getThumbnails()->count() > 0) {
-                    throw new \LogicException('Cannot delete profile that has associated thumbnails');
+                    throw new LogicException('Cannot delete profile that has associated thumbnails');
                 }
 
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
             }
+
             return null;
         }
 
@@ -49,12 +53,12 @@ final class ThumbnailProfileProcessor implements ProcessorInterface
 
                 // Validate required fields
                 if (!$data->getName()) {
-                    throw new \InvalidArgumentException('Name is required');
+                    throw new InvalidArgumentException('Name is required');
                 }
 
                 // Validate unique name
                 if ($this->thumbnailProfileRepository->findOneByName($data->getName())) {
-                    throw new \LogicException('Profile with this name already exists');
+                    throw new LogicException('Profile with this name already exists');
                 }
 
                 // Validate unique dimensions + mode
@@ -63,7 +67,7 @@ final class ThumbnailProfileProcessor implements ProcessorInterface
                     $data->getHeight(),
                     $data->getMode()->value
                 )) {
-                    throw new \LogicException('Profile with these dimensions and mode already exists');
+                    throw new LogicException('Profile with these dimensions and mode already exists');
                 }
 
                 $this->entityManager->persist($data);
@@ -73,7 +77,7 @@ final class ThumbnailProfileProcessor implements ProcessorInterface
                 $existingEntity = $this->entityManager->getRepository(ThumbnailProfile::class)->find($uriVariables['id']);
 
                 if (!$existingEntity) {
-                    throw new \RuntimeException('ThumbnailProfile not found');
+                    throw new RuntimeException('ThumbnailProfile not found');
                 }
 
                 // Extract locale from context (set by denormalization)
@@ -110,7 +114,7 @@ final class ThumbnailProfileProcessor implements ProcessorInterface
                         $data->getMode()->value,
                         $existingEntity->getId()
                     )) {
-                        throw new \LogicException('Profile with these dimensions and mode already exists');
+                        throw new LogicException('Profile with these dimensions and mode already exists');
                     }
                     $existingEntity->setWidth($data->getWidth());
                 }

@@ -42,22 +42,15 @@ final class CategoryProvider implements ProviderInterface
                 ->where('c.id = :id')
                 ->setParameter('id', $uriVariables['id']);
 
-            // Apply Gedmo Translatable hint
+            // Apply Gedmo Translatable hints - translations loaded directly
             $query = $queryBuilder->getQuery();
             $query->setHint(
                 \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
                 $locale
             );
 
-            $result = $query->getOneOrNullResult();
-
-            if ($result) {
-                $result->setTranslatableLocale($locale);
-                // Force refresh to load translations
-                $this->entityManager->refresh($result);
-            }
-
-            return $result;
+            // No refresh needed - Gedmo loads translations via hints
+            return $query->getOneOrNullResult();
         }
 
         // Handle collection retrieval
@@ -83,18 +76,14 @@ final class CategoryProvider implements ProviderInterface
         $queryBuilder->orderBy('c.title', 'ASC');
 
         $query = $queryBuilder->getQuery();
+
+        // OPTIMIZATION: Gedmo hints load translations directly - no need to refresh!
         $query->setHint(
             \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
             $locale
         );
 
-        $results = $query->getResult();
-
-        foreach ($results as $result) {
-            $result->setTranslatableLocale($locale);
-            $this->entityManager->refresh($result);
-        }
-
-        return $results;
+        // Translations are loaded by Gedmo - no refresh needed (eliminates N queries)
+        return $query->getResult();
     }
 }

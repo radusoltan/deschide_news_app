@@ -12,8 +12,11 @@ use App\Entity\Image;
 use App\Enum\ArticleStatus;
 use App\Enum\AuthorStatus;
 use App\Enum\CategoryStatus;
+use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -47,8 +50,11 @@ class SampleImportCommand extends Command
 
     /** ID mapping for imported entities */
     private array $categoryIdMap = [];
+
     private array $authorIdMap = [];
+
     private array $articleIdMap = [];
+
     private array $imageIdMap = [];
 
     public function __construct(
@@ -100,23 +106,23 @@ class SampleImportCommand extends Command
             // Step 2: Import categories with translations
             $io->section('[2/6] Importing categories with ALL translations');
             $categoriesImported = $this->importCategories($io);
-            $io->success(sprintf('Imported %d categories with translations', $categoriesImported));
+            $io->success(\sprintf('Imported %d categories with translations', $categoriesImported));
 
             // Step 3: Import articles (BEFORE authors)
             $io->section('[3/6] Importing articles');
             $articlesImported = $this->importArticles($io, $articlesPerCategory, $withTranslations);
-            $io->success(sprintf('Imported %d articles', $articlesImported));
+            $io->success(\sprintf('Imported %d articles', $articlesImported));
 
             // Step 4: Import authors (AFTER articles, so we know which authors are needed)
             $io->section('[4/6] Importing authors for imported articles');
             $authorsImported = $this->importAuthors($io, $articlesPerCategory);
-            $io->success(sprintf('Imported %d authors', $authorsImported));
+            $io->success(\sprintf('Imported %d authors', $authorsImported));
 
             // Step 5: Import images (if enabled)
             if ($withImages) {
                 $io->section('[5/6] Importing images and generating thumbnails');
                 $imagesImported = $this->importImages($io, $input->getOption('thumbnail-format'));
-                $io->success(sprintf('Imported %d images', $imagesImported));
+                $io->success(\sprintf('Imported %d images', $imagesImported));
             } else {
                 $io->writeln('[5/6] Skipping images import (use --with-images to enable)');
                 $imagesImported = 0;
@@ -126,7 +132,7 @@ class SampleImportCommand extends Command
             if ($withRelated) {
                 $io->section('[6/6] Importing related articles');
                 $relationsImported = $this->importRelatedArticles($io);
-                $io->success(sprintf('Imported %d relations', $relationsImported));
+                $io->success(\sprintf('Imported %d relations', $relationsImported));
             } else {
                 $io->writeln('[6/6] Skipping related articles (use --with-related to enable)');
                 $relationsImported = 0;
@@ -135,7 +141,7 @@ class SampleImportCommand extends Command
             // Summary
             $duration = round(microtime(true) - $startTime, 2);
             $io->title('Import Completed Successfully');
-            $io->success(sprintf('Total time: %.2f seconds (%.2f minutes)', $duration, $duration / 60));
+            $io->success(\sprintf('Total time: %.2f seconds (%.2f minutes)', $duration, $duration / 60));
 
             $io->table(['Entity', 'Count'], [
                 ['Categories', $categoriesImported],
@@ -146,9 +152,10 @@ class SampleImportCommand extends Command
             ]);
 
             return Command::SUCCESS;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $io->error('Import failed: ' . $e->getMessage());
             $io->writeln($e->getTraceAsString());
+
             return Command::FAILURE;
         }
     }
@@ -156,27 +163,27 @@ class SampleImportCommand extends Command
     private function resetDatabase(SymfonyStyle $io): void
     {
         $io->writeln('Dropping database...');
-        exec('cd ' . dirname(__DIR__, 2) . ' && php bin/console doctrine:database:drop --force --if-exists', $output, $returnCode);
+        exec('cd ' . \dirname(__DIR__, 2) . ' && php bin/console doctrine:database:drop --force --if-exists', $output, $returnCode);
         if ($returnCode !== 0) {
-            throw new \RuntimeException('Failed to drop database');
+            throw new RuntimeException('Failed to drop database');
         }
 
         $io->writeln('Creating database...');
-        exec('cd ' . dirname(__DIR__, 2) . ' && php bin/console doctrine:database:create', $output, $returnCode);
+        exec('cd ' . \dirname(__DIR__, 2) . ' && php bin/console doctrine:database:create', $output, $returnCode);
         if ($returnCode !== 0) {
-            throw new \RuntimeException('Failed to create database');
+            throw new RuntimeException('Failed to create database');
         }
 
         $io->writeln('Creating schema...');
-        exec('cd ' . dirname(__DIR__, 2) . ' && php bin/console doctrine:schema:create', $output, $returnCode);
+        exec('cd ' . \dirname(__DIR__, 2) . ' && php bin/console doctrine:schema:create', $output, $returnCode);
         if ($returnCode !== 0) {
-            throw new \RuntimeException('Failed to create schema');
+            throw new RuntimeException('Failed to create schema');
         }
 
         $io->writeln('Loading fixtures (thumbnail profiles)...');
-        exec('cd ' . dirname(__DIR__, 2) . ' && php bin/console doctrine:fixtures:load --group=thumbnail_profiles --no-interaction --append', $output, $returnCode);
+        exec('cd ' . \dirname(__DIR__, 2) . ' && php bin/console doctrine:fixtures:load --group=thumbnail_profiles --no-interaction --append', $output, $returnCode);
         if ($returnCode !== 0) {
-            throw new \RuntimeException('Failed to load fixtures');
+            throw new RuntimeException('Failed to load fixtures');
         }
     }
 
@@ -185,7 +192,7 @@ class SampleImportCommand extends Command
         $count = 0;
 
         foreach (self::CATEGORY_MAPPING as $groupName => [$roId, $enId, $ruId, $slug]) {
-            $io->writeln(sprintf('Importing category: %s', $groupName));
+            $io->writeln(\sprintf('Importing category: %s', $groupName));
 
             // Fetch sections from Newscoop
             $roSection = $this->fetchSection($roId);
@@ -223,7 +230,7 @@ class SampleImportCommand extends Command
             $this->categoryIdMap[$enId] = $category->getId();
             $this->categoryIdMap[$ruId] = $category->getId();
 
-            $count++;
+            ++$count;
         }
 
         return $count;
@@ -232,6 +239,7 @@ class SampleImportCommand extends Command
     private function fetchSection(int $sectionId): array
     {
         $sql = 'SELECT id, Name, IdLanguage FROM newscoop.Sections WHERE id = :id';
+
         return $this->newscoopConnection->fetchAssociative($sql, ['id' => $sectionId]);
     }
 
@@ -239,16 +247,17 @@ class SampleImportCommand extends Command
     {
         if (empty($this->articleIdMap)) {
             $io->writeln('No articles imported yet. Import articles first.');
+
             return 0;
         }
 
         $count = 0;
         $newscoopArticleNumbers = array_keys($this->articleIdMap);
 
-        $io->writeln(sprintf('Finding authors for %d imported articles...', count($newscoopArticleNumbers)));
+        $io->writeln(\sprintf('Finding authors for %d imported articles...', \count($newscoopArticleNumbers)));
 
         // Fetch unique authors for imported articles
-        $sql = "
+        $sql = '
             SELECT DISTINCT
                 au.id,
                 au.first_name,
@@ -258,14 +267,14 @@ class SampleImportCommand extends Command
                 au.image
             FROM Authors au
             INNER JOIN ArticleAuthors aa ON aa.fk_author_id = au.id
-            WHERE aa.fk_article_number IN (" . implode(',', $newscoopArticleNumbers) . ")
+            WHERE aa.fk_article_number IN (' . implode(',', $newscoopArticleNumbers) . ')
             ORDER BY au.last_name, au.first_name
-        ";
+        ';
 
         $authors = $this->newscoopConnection->fetchAllAssociative($sql);
 
-        $io->writeln(sprintf('Found %d unique authors to import', count($authors)));
-        $io->progressStart(count($authors));
+        $io->writeln(\sprintf('Found %d unique authors to import', \count($authors)));
+        $io->progressStart(\count($authors));
 
         foreach ($authors as $authorData) {
             try {
@@ -307,10 +316,10 @@ class SampleImportCommand extends Command
                 // Map author ID
                 $this->authorIdMap[$authorData['id']] = $author->getId();
 
-                $count++;
+                ++$count;
                 $io->progressAdvance();
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $io->writeln("\nError importing author {$authorData['first_name']} {$authorData['last_name']}: " . $e->getMessage());
                 $io->progressAdvance();
                 continue;
@@ -329,19 +338,19 @@ class SampleImportCommand extends Command
     private function associateAuthorsWithArticles(SymfonyStyle $io, array $newscoopArticleNumbers): void
     {
         // Fetch article-author associations
-        $sql = "
+        $sql = '
             SELECT
                 aa.fk_article_number,
                 aa.fk_author_id,
                 aa.order
             FROM ArticleAuthors aa
-            WHERE aa.fk_article_number IN (" . implode(',', $newscoopArticleNumbers) . ")
+            WHERE aa.fk_article_number IN (' . implode(',', $newscoopArticleNumbers) . ')
             ORDER BY aa.fk_article_number, aa.order
-        ";
+        ';
 
         $associations = $this->newscoopConnection->fetchAllAssociative($sql);
 
-        $io->progressStart(count($associations));
+        $io->progressStart(\count($associations));
 
         foreach ($associations as $assoc) {
             try {
@@ -370,7 +379,7 @@ class SampleImportCommand extends Command
 
                 $io->progressAdvance();
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $io->writeln("\nError associating author with article: " . $e->getMessage());
                 continue;
             }
@@ -379,15 +388,15 @@ class SampleImportCommand extends Command
         $io->progressFinish();
         $this->entityManager->flush();
 
-        $io->writeln(sprintf('Associated %d author-article relations', count($associations)));
+        $io->writeln(\sprintf('Associated %d author-article relations', \count($associations)));
     }
 
     private function importArticles(SymfonyStyle $io, int $articlesPerCategory, bool $withTranslations): int
     {
         $count = 0;
-        $sectionIds = array_map(fn($mapping) => $mapping[0], self::CATEGORY_MAPPING); // RO section IDs
+        $sectionIds = array_map(fn ($mapping) => $mapping[0], self::CATEGORY_MAPPING); // RO section IDs
 
-        $io->writeln(sprintf('Fetching %d articles per category (total %d)...', $articlesPerCategory, $articlesPerCategory * count($sectionIds)));
+        $io->writeln(\sprintf('Fetching %d articles per category (total %d)...', $articlesPerCategory, $articlesPerCategory * \count($sectionIds)));
 
         // Fetch articles (50 per category)
         $sql = "
@@ -403,7 +412,7 @@ class SampleImportCommand extends Command
                 WHERE a.Type = 'stiri'
                     AND a.Published = 'Y'
                     AND a.IdLanguage = 2
-                    AND a.NrSection IN (" . implode(',', $sectionIds) . ")
+                    AND a.NrSection IN (" . implode(',', $sectionIds) . ')
             )
             SELECT
                 Number,
@@ -414,12 +423,12 @@ class SampleImportCommand extends Command
             FROM RankedArticles
             WHERE rn <= :limit
             ORDER BY NrSection, PublishDate DESC
-        ";
+        ';
 
         $articles = $this->newscoopConnection->fetchAllAssociative($sql, ['limit' => $articlesPerCategory]);
 
-        $io->writeln(sprintf('Found %d articles to import', count($articles)));
-        $io->progressStart(count($articles));
+        $io->writeln(\sprintf('Found %d articles to import', \count($articles)));
+        $io->progressStart(\count($articles));
 
         foreach ($articles as $articleData) {
             try {
@@ -446,7 +455,7 @@ class SampleImportCommand extends Command
                     $article->setContent($content['FContinut']);
                 }
 
-                $article->setPublishedAt(new \DateTimeImmutable($articleData['PublishDate']));
+                $article->setPublishedAt(new DateTimeImmutable($articleData['PublishDate']));
                 $article->setStatus(ArticleStatus::PUBLISHED);
                 $article->setViewCount(rand(100, 5000)); // Random for demo
 
@@ -469,7 +478,7 @@ class SampleImportCommand extends Command
                     $this->importArticleTranslations($article, $articleData['Number']);
                 }
 
-                $count++;
+                ++$count;
                 $io->progressAdvance();
 
                 // Flush every 10 articles to avoid memory issues
@@ -477,7 +486,7 @@ class SampleImportCommand extends Command
                     $this->entityManager->clear();
                 }
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $io->writeln("\nError importing article {$articleData['Number']}: " . $e->getMessage());
                 continue;
             }
@@ -491,7 +500,7 @@ class SampleImportCommand extends Command
 
     private function fetchXstiriContent(int $articleNumber, int $languageId): ?array
     {
-        $sql = "
+        $sql = '
             SELECT
                 NrArticle,
                 IdLanguage,
@@ -501,7 +510,7 @@ class SampleImportCommand extends Command
                 Flead
             FROM Xstiri
             WHERE NrArticle = :number AND IdLanguage = :lang
-        ";
+        ';
 
         $content = $this->newscoopConnection->fetchAssociative($sql, [
             'number' => $articleNumber,
@@ -514,12 +523,12 @@ class SampleImportCommand extends Command
 
         // Decode BLOBs (handle both resource and string types)
         if (isset($content['FContinut']) && $content['FContinut']) {
-            $content['FContinut'] = is_resource($content['FContinut'])
+            $content['FContinut'] = \is_resource($content['FContinut'])
                 ? stream_get_contents($content['FContinut'])
                 : $content['FContinut'];
         }
         if (isset($content['Flead']) && $content['Flead']) {
-            $content['Flead'] = is_resource($content['Flead'])
+            $content['Flead'] = \is_resource($content['Flead'])
                 ? stream_get_contents($content['Flead'])
                 : $content['Flead'];
         }
@@ -561,23 +570,24 @@ class SampleImportCommand extends Command
     {
         if (empty($this->articleIdMap)) {
             $io->writeln('No articles imported yet. Import articles first.');
+
             return 0;
         }
 
         $count = 0;
         $newscoopArticleNumbers = array_keys($this->articleIdMap);
         $sourceImagesPath = '/home/radu/ext-hdd/backups/alpha/newscoop/images';
-        $targetImagesPath = dirname(__DIR__, 2) . '/public/uploads/images';
+        $targetImagesPath = \dirname(__DIR__, 2) . '/public/uploads/images';
 
         // Create target directory if not exists
         if (!is_dir($targetImagesPath)) {
-            mkdir($targetImagesPath, 0755, true);
+            mkdir($targetImagesPath, 0o755, true);
         }
 
-        $io->writeln(sprintf('Finding images for %d imported articles...', count($newscoopArticleNumbers)));
+        $io->writeln(\sprintf('Finding images for %d imported articles...', \count($newscoopArticleNumbers)));
 
         // Fetch images for imported articles, grouped by article
-        $sql = "
+        $sql = '
             SELECT
                 img.Id,
                 img.ImageFileName,
@@ -590,9 +600,9 @@ class SampleImportCommand extends Command
                 ai.Number as image_order
             FROM Images img
             INNER JOIN ArticleImages ai ON ai.IdImage = img.Id
-            WHERE ai.NrArticle IN (" . implode(',', $newscoopArticleNumbers) . ")
+            WHERE ai.NrArticle IN (' . implode(',', $newscoopArticleNumbers) . ')
             ORDER BY ai.NrArticle, ai.Number ASC
-        ";
+        ';
 
         $images = $this->newscoopConnection->fetchAllAssociative($sql);
 
@@ -606,8 +616,8 @@ class SampleImportCommand extends Command
             $imagesByArticle[$newscoopArticleId][] = $imageData;
         }
 
-        $io->writeln(sprintf('Found %d images for %d articles', count($images), count($imagesByArticle)));
-        $io->progressStart(count($images));
+        $io->writeln(\sprintf('Found %d images for %d articles', \count($images), \count($imagesByArticle)));
+        $io->progressStart(\count($images));
 
         foreach ($imagesByArticle as $newscoopArticleId => $articleImages) {
             if (!isset($this->articleIdMap[$newscoopArticleId])) {
@@ -675,10 +685,10 @@ class SampleImportCommand extends Command
                     $this->entityManager->persist($articleImage);
 
                     $isFirst = false; // Only first image is featured
-                    $count++;
+                    ++$count;
                     $io->progressAdvance();
 
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $io->writeln("\nError importing image {$imageData['ImageFileName']}: " . $e->getMessage());
                     $io->progressAdvance();
                     continue;
@@ -691,7 +701,7 @@ class SampleImportCommand extends Command
 
         $io->progressFinish();
 
-        $io->writeln(sprintf('Imported %d images and associated with articles', $count));
+        $io->writeln(\sprintf('Imported %d images and associated with articles', $count));
 
         return $count;
     }
@@ -700,29 +710,30 @@ class SampleImportCommand extends Command
     {
         if (empty($this->articleIdMap)) {
             $io->writeln('No articles imported yet. Import articles first.');
+
             return 0;
         }
 
         $count = 0;
         $newscoopArticleNumbers = array_keys($this->articleIdMap);
 
-        $io->writeln(sprintf('Finding related articles for %d imported articles...', count($newscoopArticleNumbers)));
+        $io->writeln(\sprintf('Finding related articles for %d imported articles...', \count($newscoopArticleNumbers)));
 
         // Fetch related articles through context_boxes and context_articles
-        $sql = "
+        $sql = '
             SELECT
                 cb.fk_article_no as main_article,
                 ca.fk_article_no as related_article
             FROM context_boxes cb
             INNER JOIN context_articles ca ON ca.fk_context_id = cb.id
-            WHERE cb.fk_article_no IN (" . implode(',', $newscoopArticleNumbers) . ")
+            WHERE cb.fk_article_no IN (' . implode(',', $newscoopArticleNumbers) . ')
             ORDER BY cb.fk_article_no, ca.order_number
-        ";
+        ';
 
         $relations = $this->newscoopConnection->fetchAllAssociative($sql);
 
-        $io->writeln(sprintf('Found %d related article relations', count($relations)));
-        $io->progressStart(count($relations));
+        $io->writeln(\sprintf('Found %d related article relations', \count($relations)));
+        $io->progressStart(\count($relations));
 
         foreach ($relations as $relation) {
             try {
@@ -749,7 +760,7 @@ class SampleImportCommand extends Command
                 if ($mainArticle && $relatedArticle && $mainArticle !== $relatedArticle) {
                     $mainArticle->addRelatedArticle($relatedArticle);
                     $this->entityManager->persist($mainArticle);
-                    $count++;
+                    ++$count;
                 }
 
                 $io->progressAdvance();
@@ -759,7 +770,7 @@ class SampleImportCommand extends Command
                     $this->entityManager->flush();
                 }
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $io->writeln("\nError importing related article relation: " . $e->getMessage());
                 continue;
             }
@@ -768,7 +779,7 @@ class SampleImportCommand extends Command
         $io->progressFinish();
         $this->entityManager->flush();
 
-        $io->writeln(sprintf('Imported %d related article relations (only between imported articles)', $count));
+        $io->writeln(\sprintf('Imported %d related article relations (only between imported articles)', $count));
 
         return $count;
     }

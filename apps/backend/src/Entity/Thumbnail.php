@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Delete;
 use App\Repository\ThumbnailRepository;
 use App\State\ThumbnailProcessor;
 use App\State\ThumbnailProvider;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -55,7 +56,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Delete(
             uriTemplate: '/thumbnails/{id}',
             description: 'Delete thumbnail'
-        )
+        ),
     ],
     provider: ThumbnailProvider::class,
     processor: ThumbnailProcessor::class
@@ -115,7 +116,7 @@ class Thumbnail
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['thumbnail:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     // Getters and setters
 
@@ -132,6 +133,7 @@ class Thumbnail
     public function setFilename(?string $filename): self
     {
         $this->filename = $filename;
+
         return $this;
     }
 
@@ -143,6 +145,7 @@ class Thumbnail
     public function setPath(?string $path): self
     {
         $this->path = $path;
+
         return $this;
     }
 
@@ -154,6 +157,7 @@ class Thumbnail
     public function setWidth(?int $width): self
     {
         $this->width = $width;
+
         return $this;
     }
 
@@ -165,6 +169,7 @@ class Thumbnail
     public function setHeight(?int $height): self
     {
         $this->height = $height;
+
         return $this;
     }
 
@@ -176,6 +181,7 @@ class Thumbnail
     public function setSize(?int $size): self
     {
         $this->size = $size;
+
         return $this;
     }
 
@@ -187,6 +193,7 @@ class Thumbnail
     public function setImage(?Image $image): self
     {
         $this->image = $image;
+
         return $this;
     }
 
@@ -198,10 +205,11 @@ class Thumbnail
     public function setProfile(?ThumbnailProfile $profile): self
     {
         $this->profile = $profile;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
@@ -214,11 +222,12 @@ class Thumbnail
     public function setCropData(?array $cropData): self
     {
         $this->cropData = $cropData;
+
         return $this;
     }
 
     /**
-     * Computed property - URL
+     * Computed property - URL.
      */
     #[Groups(['thumbnail:read'])]
     public function getUrl(): string
@@ -227,7 +236,7 @@ class Thumbnail
     }
 
     /**
-     * Computed property - formatted size
+     * Computed property - formatted size.
      */
     #[Groups(['thumbnail:read'])]
     public function getFormattedSize(): string
@@ -236,16 +245,16 @@ class Thumbnail
         $size = $this->size ?? 0;
         $unit = 0;
 
-        while ($size >= 1024 && $unit < count($units) - 1) {
+        while ($size >= 1024 && $unit < \count($units) - 1) {
             $size /= 1024;
-            $unit++;
+            ++$unit;
         }
 
         return round($size, 2) . ' ' . $units[$unit];
     }
 
     /**
-     * Computed property - aspect ratio
+     * Computed property - aspect ratio.
      */
     #[Groups(['thumbnail:read'])]
     public function getAspectRatio(): float

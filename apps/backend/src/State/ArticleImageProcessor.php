@@ -10,6 +10,9 @@ use ApiPlatform\State\ProcessorInterface;
 use App\Entity\ArticleImage;
 use App\Repository\ArticleImageRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
+use LogicException;
+use RuntimeException;
 
 /**
  * @implements ProcessorInterface<ArticleImage>
@@ -30,6 +33,7 @@ final class ArticleImageProcessor implements ProcessorInterface
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
             }
+
             return null;
         }
 
@@ -40,12 +44,12 @@ final class ArticleImageProcessor implements ProcessorInterface
             if (!$isUpdate) {
                 // CREATE: Validate required fields
                 if (!$data->getArticle() || !$data->getImage()) {
-                    throw new \InvalidArgumentException('Article and Image are required');
+                    throw new InvalidArgumentException('Article and Image are required');
                 }
 
                 // CREATE: Validate unique constraint
                 if ($this->articleImageRepository->isImageAttachedToArticle($data->getArticle(), $data->getImage())) {
-                    throw new \LogicException('Image is already attached to this article');
+                    throw new LogicException('Image is already attached to this article');
                 }
 
                 // If setting as featured, unfeatured others
@@ -55,7 +59,7 @@ final class ArticleImageProcessor implements ProcessorInterface
 
                 // Auto-position if not provided
                 if ($data->getPosition() === 0) {
-                    $count = count($this->articleImageRepository->findByArticleOrdered($data->getArticle()));
+                    $count = \count($this->articleImageRepository->findByArticleOrdered($data->getArticle()));
                     $data->setPosition($count);
                 }
 
@@ -66,7 +70,7 @@ final class ArticleImageProcessor implements ProcessorInterface
                 $existingEntity = $this->entityManager->getRepository(ArticleImage::class)->find($uriVariables['id']);
 
                 if (!$existingEntity) {
-                    throw new \RuntimeException('ArticleImage not found');
+                    throw new RuntimeException('ArticleImage not found');
                 }
 
                 // Update position if provided (non-zero or explicitly set)

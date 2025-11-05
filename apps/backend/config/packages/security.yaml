@@ -40,12 +40,40 @@ security:
         # Public access endpoints
         - { path: ^/api/(login_check|token/refresh), roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+        - { path: ^/api/slug, roles: PUBLIC_ACCESS }
+        - { path: ^/api/redirects, roles: PUBLIC_ACCESS }
+
+        # Prometheus metrics endpoint (consider restricting by IP in production)
+        - { path: ^/metrics, roles: PUBLIC_ACCESS }
+
+        # Public trending endpoint (for frontend) - MUST come before admin stats
+        - { path: ^/api/admin/stats/trending, roles: PUBLIC_ACCESS }
+
+        # Admin statistics endpoints (require ROLE_ADMIN) - MUST come before general /api/stats
+        - { path: ^/api/admin/stats, roles: ROLE_ADMIN }
+
+        # Public tracking endpoints (analytics) - general catch-all for /api/track and /api/stats
+        - { path: ^/api/track, roles: PUBLIC_ACCESS }
+        - { path: ^/api/stats, roles: PUBLIC_ACCESS }
+
+        # LiveText test endpoints (for development/testing Mercure)
+        - { path: ^/api/live-texts/test-mercure, roles: PUBLIC_ACCESS }
+        - { path: ^/api/live-texts/mercure-info, roles: PUBLIC_ACCESS }
+
+        # LiveText analytics and view tracking (public access for viewers)
+        - { path: ^/api/live_texts/.+/track_view, roles: PUBLIC_ACCESS }
+        - { path: ^/api/live_texts/.+/viewers, roles: PUBLIC_ACCESS }
+        - { path: ^/api/live_texts/generate_session, roles: PUBLIC_ACCESS }
+
+        # Embed API (public access for external sites)
+        - { path: ^/api/embed, roles: PUBLIC_ACCESS }
 
         # Public READ access for frontend (GET only)
-        - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles), roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles|live_texts|live_text_posts|live_text_collaborators|live_text_templates|live_text_reactions), roles: PUBLIC_ACCESS, methods: [GET] }
 
-        # Admin/Editor access for write operations (POST, PUT, PATCH, DELETE)
-        - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles), roles: [ROLE_ADMIN, ROLE_EDITOR], methods: [POST, PUT, PATCH, DELETE] }
+        # Admin/Editor access for write operations (POST, PUT, PATCH, DELETE) - templates allow POST for reactions
+        - { path: ^/api/live_text_reactions, roles: PUBLIC_ACCESS, methods: [POST] }
+        - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles|live_texts|live_text_posts|live_text_collaborators|live_text_templates), roles: [ROLE_ADMIN, ROLE_EDITOR], methods: [POST, PUT, PATCH, DELETE] }
 
         # All other API routes require authentication
         - { path: ^/api, roles: ROLE_USER }

@@ -1,0 +1,1207 @@
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Command/CacheWarmCommand.php                                                                                   
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  81     Method App\Command\CacheWarmCommand::warmArticles() has parameter $articleIds with no value type specified in  
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Command/CacheWarmCommand.php:81                                                                        
+  81     Method App\Command\CacheWarmCommand::warmArticles() has parameter $locales with no value type specified in     
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Command/CacheWarmCommand.php:81                                                                        
+  113    Method App\Command\CacheWarmCommand::warmCategories() has parameter $locales with no value type specified in   
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Command/CacheWarmCommand.php:113                                                                       
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Command/ElasticsearchIndexArticlesCommand.php                                                                  
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  24     Property App\Command\ElasticsearchIndexArticlesCommand::$supportedLocales type has no value type specified in  
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Command/ElasticsearchIndexArticlesCommand.php:24                                                       
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------- 
+  Line   Command/Import/ImportArticlesCommand.php                                                                   
+ ------ ----------------------------------------------------------------------------------------------------------- 
+  221    Method App\Command\Import\ImportArticlesCommand::buildArticlePayload() has parameter $articleData with no  
+         value type specified in iterable type array.                                                               
+         🪪  missingType.iterableValue                                                                              
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                 
+         ✏️  src/Command/Import/ImportArticlesCommand.php:221                                                       
+  221    Method App\Command\Import\ImportArticlesCommand::buildArticlePayload() return type has no value type       
+         specified in iterable type array.                                                                          
+         🪪  missingType.iterableValue                                                                              
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                 
+         ✏️  src/Command/Import/ImportArticlesCommand.php:221                                                       
+ ------ ----------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Command/Import/ImportAuthorsCommand.php                                                                       
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  209    Method App\Command\Import\ImportAuthorsCommand::buildAuthorPayload() has parameter $authorData with no value  
+         type specified in iterable type array.                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/Import/ImportAuthorsCommand.php:209                                                           
+  209    Method App\Command\Import\ImportAuthorsCommand::buildAuthorPayload() return type has no value type specified  
+         in iterable type array.                                                                                       
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/Import/ImportAuthorsCommand.php:209                                                           
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Command/Import/ImportCategoriesCommand.php                                                                     
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  204    Method App\Command\Import\ImportCategoriesCommand::buildCategoryPayload() has parameter $categoryData with no  
+         value type specified in iterable type array.                                                                   
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Command/Import/ImportCategoriesCommand.php:204                                                         
+  204    Method App\Command\Import\ImportCategoriesCommand::buildCategoryPayload() return type has no value type        
+         specified in iterable type array.                                                                              
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Command/Import/ImportCategoriesCommand.php:204                                                         
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Command/Import/ImportCsvArticlesCommand.php                                                                   
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  45     Property App\Command\Import\ImportCsvArticlesCommand::$categoryCache type has no value type specified in      
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/Import/ImportCsvArticlesCommand.php:45                                                        
+  46     Property App\Command\Import\ImportCsvArticlesCommand::$authorCache type has no value type specified in        
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/Import/ImportCsvArticlesCommand.php:46                                                        
+  47     Property App\Command\Import\ImportCsvArticlesCommand::$imageCache type has no value type specified in         
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/Import/ImportCsvArticlesCommand.php:47                                                        
+  177    Method App\Command\Import\ImportCsvArticlesCommand::processCsvFile() return type has no value type specified  
+         in iterable type array.                                                                                       
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/Import/ImportCsvArticlesCommand.php:177                                                       
+  316    Method App\Command\Import\ImportCsvArticlesCommand::importArticle() has parameter $record with no value type  
+         specified in iterable type array.                                                                             
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/Import/ImportCsvArticlesCommand.php:316                                                       
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Command/Import/ImportTranslationsCommand.php                                                                   
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  282    Method App\Command\Import\ImportTranslationsCommand::buildTranslationPayload() has parameter $articleData      
+         with no value type specified in iterable type array.                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Command/Import/ImportTranslationsCommand.php:282                                                       
+  282    Method App\Command\Import\ImportTranslationsCommand::buildTranslationPayload() has parameter $translationData  
+         with no value type specified in iterable type array.                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Command/Import/ImportTranslationsCommand.php:282                                                       
+  282    Method App\Command\Import\ImportTranslationsCommand::buildTranslationPayload() return type has no value type   
+         specified in iterable type array.                                                                              
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Command/Import/ImportTranslationsCommand.php:282                                                       
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------------------------------------------- 
+  Line   Command/RedirectHealthCommand.php                                                                         
+ ------ ---------------------------------------------------------------------------------------------------------- 
+  257    Method App\Command\RedirectHealthCommand::displayHealthReport() has parameter $report with no value type  
+         specified in iterable type array.                                                                         
+         🪪  missingType.iterableValue                                                                             
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                
+         ✏️  src/Command/RedirectHealthCommand.php:257                                                             
+ ------ ---------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Command/RedirectStatsCommand.php                                                                              
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  174    Method App\Command\RedirectStatsCommand::displayTable() has parameter $stats with no value type specified in  
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/RedirectStatsCommand.php:174                                                                  
+  264    Method App\Command\RedirectStatsCommand::convertToCSV() has parameter $stats with no value type specified in  
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/RedirectStatsCommand.php:264                                                                  
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Command/SampleImportCommand.php                                                                               
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  49     Property App\Command\SampleImportCommand::$categoryIdMap type has no value type specified in iterable type    
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/SampleImportCommand.php:49                                                                    
+  50     Property App\Command\SampleImportCommand::$authorIdMap type has no value type specified in iterable type      
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/SampleImportCommand.php:50                                                                    
+  51     Property App\Command\SampleImportCommand::$articleIdMap type has no value type specified in iterable type     
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/SampleImportCommand.php:51                                                                    
+  52     Property App\Command\SampleImportCommand::$imageIdMap type has no value type specified in iterable type       
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/SampleImportCommand.php:52                                                                    
+  232    Method App\Command\SampleImportCommand::fetchSection() return type has no value type specified in iterable    
+         type array.                                                                                                   
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/SampleImportCommand.php:232                                                                   
+  329    Method App\Command\SampleImportCommand::associateAuthorsWithArticles() has parameter $newscoopArticleNumbers  
+         with no value type specified in iterable type array.                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/SampleImportCommand.php:329                                                                   
+  492    Method App\Command\SampleImportCommand::fetchXstiriContent() return type has no value type specified in       
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Command/SampleImportCommand.php:492                                                                   
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------- 
+  Line   Command/SeedLiveTextTemplatesCommand.php                                                                 
+ ------ --------------------------------------------------------------------------------------------------------- 
+  97     Method App\Command\SeedLiveTextTemplatesCommand::getTemplateDefinitions() return type has no value type  
+         specified in iterable type array.                                                                        
+         🪪  missingType.iterableValue                                                                            
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type               
+         ✏️  src/Command/SeedLiveTextTemplatesCommand.php:97                                                      
+ ------ --------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------- 
+  Line   Controller/Api/StatsController.php                                                                      
+ ------ -------------------------------------------------------------------------------------------------------- 
+  342    Method App\Controller\Api\StatsController::parseDateRange() return type has no value type specified in  
+         iterable type array.                                                                                    
+         🪪  missingType.iterableValue                                                                           
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type              
+         ✏️  src/Controller/Api/StatsController.php:342                                                          
+ ------ -------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   DataFixtures/ArticleFixtures.php                                                                              
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  140    Method App\DataFixtures\ArticleFixtures::generateContent() has parameter $faker with no type specified.       
+         🪪  missingType.parameter                                                                                     
+         ✏️  src/DataFixtures/ArticleFixtures.php:140                                                                  
+  175    Method App\DataFixtures\ArticleFixtures::addRelatedArticles() has parameter $publishedArticles with no value  
+         type specified in iterable type array.                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/DataFixtures/ArticleFixtures.php:175                                                                  
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------- 
+  Line   DataFixtures/ImageFixtures.php                                                                          
+ ------ -------------------------------------------------------------------------------------------------------- 
+  192    Method App\DataFixtures\ImageFixtures::downloadDummyImage() return type has no value type specified in  
+         iterable type array.                                                                                    
+         🪪  missingType.iterableValue                                                                           
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type              
+         ✏️  src/DataFixtures/ImageFixtures.php:192                                                              
+  219    Method App\DataFixtures\ImageFixtures::downloadThumbnail() return type has no value type specified in   
+         iterable type array.                                                                                    
+         🪪  missingType.iterableValue                                                                           
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type              
+         ✏️  src/DataFixtures/ImageFixtures.php:219                                                              
+ ------ -------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Dto/LiveText/LiveTextAnalyticsDto.php                                                                         
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  39     Property App\Dto\LiveText\LiveTextAnalyticsDto::$viewsOverTime type has no value type specified in iterable   
+         type array.                                                                                                   
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Dto/LiveText/LiveTextAnalyticsDto.php:39                                                              
+  42     Property App\Dto\LiveText\LiveTextAnalyticsDto::$postEngagement type has no value type specified in iterable  
+         type array.                                                                                                   
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Dto/LiveText/LiveTextAnalyticsDto.php:42                                                              
+  45     Property App\Dto\LiveText\LiveTextAnalyticsDto::$viewersByPlatform type has no value type specified in        
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Dto/LiveText/LiveTextAnalyticsDto.php:45                                                              
+  47     Method App\Dto\LiveText\LiveTextAnalyticsDto::__construct() has parameter $data with no value type specified  
+         in iterable type array.                                                                                       
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Dto/LiveText/LiveTextAnalyticsDto.php:47                                                              
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Dto/LiveText/LiveTextEventDto.php                                                                             
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  19     Method App\Dto\LiveText\LiveTextEventDto::toArray() return type has no value type specified in iterable type  
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Dto/LiveText/LiveTextEventDto.php:19                                                                  
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Dto/LiveText/PostCreatedEventDto.php                                                                           
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  14     Method App\Dto\LiveText\PostCreatedEventDto::__construct() has parameter $author with no value type specified  
+         in iterable type array.                                                                                        
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Dto/LiveText/PostCreatedEventDto.php:14                                                                
+  47     Method App\Dto\LiveText\PostCreatedEventDto::toArray() return type has no value type specified in iterable     
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Dto/LiveText/PostCreatedEventDto.php:47                                                                
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------ 
+  Line   Dto/LiveText/PostDeletedEventDto.php                                                                        
+ ------ ------------------------------------------------------------------------------------------------------------ 
+  20     Method App\Dto\LiveText\PostDeletedEventDto::toArray() return type has no value type specified in iterable  
+         type array.                                                                                                 
+         🪪  missingType.iterableValue                                                                               
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                  
+         ✏️  src/Dto/LiveText/PostDeletedEventDto.php:20                                                             
+ ------ ------------------------------------------------------------------------------------------------------------ 
+
+ ------ ------------------------------------------------------------------------------------------------------------ 
+  Line   Dto/LiveText/PostUpdatedEventDto.php                                                                        
+ ------ ------------------------------------------------------------------------------------------------------------ 
+  39     Method App\Dto\LiveText\PostUpdatedEventDto::toArray() return type has no value type specified in iterable  
+         type array.                                                                                                 
+         🪪  missingType.iterableValue                                                                               
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                  
+         ✏️  src/Dto/LiveText/PostUpdatedEventDto.php:39                                                             
+ ------ ------------------------------------------------------------------------------------------------------------ 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Dto/LiveText/StatusChangedEventDto.php                                                                        
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  34     Method App\Dto\LiveText\StatusChangedEventDto::toArray() return type has no value type specified in iterable  
+         type array.                                                                                                   
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Dto/LiveText/StatusChangedEventDto.php:34                                                             
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------- 
+  Line   Dto/LiveText/ViewersCountEventDto.php                                                                        
+ ------ ------------------------------------------------------------------------------------------------------------- 
+  20     Method App\Dto\LiveText\ViewersCountEventDto::toArray() return type has no value type specified in iterable  
+         type array.                                                                                                  
+         🪪  missingType.iterableValue                                                                                
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                   
+         ✏️  src/Dto/LiveText/ViewersCountEventDto.php:20                                                             
+ ------ ------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Entity/Article.php                                                                                            
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  134    Property App\Entity\Article::$authors with generic interface Doctrine\Common\Collections\Collection does not  
+         specify its types: TKey, T                                                                                    
+         🪪  missingType.generics                                                                                      
+         ✏️  src/Entity/Article.php:134                                                                                
+  140    Property App\Entity\Article::$articleImages with generic interface Doctrine\Common\Collections\Collection     
+         does not specify its types: TKey, T                                                                           
+         🪪  missingType.generics                                                                                      
+         ✏️  src/Entity/Article.php:140                                                                                
+  148    Property App\Entity\Article::$relatedArticles with generic interface Doctrine\Common\Collections\Collection   
+         does not specify its types: TKey, T                                                                           
+         🪪  missingType.generics                                                                                      
+         ✏️  src/Entity/Article.php:148                                                                                
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Entity/Author.php                                                                                             
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  106    Property App\Entity\Author::$articles with generic interface Doctrine\Common\Collections\Collection does not  
+         specify its types: TKey, T                                                                                    
+         🪪  missingType.generics                                                                                      
+         ✏️  src/Entity/Author.php:106                                                                                 
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------ 
+  Line   Entity/Category.php                                                                                         
+ ------ ------------------------------------------------------------------------------------------------------------ 
+  96     Property App\Entity\Category::$articles with generic interface Doctrine\Common\Collections\Collection does  
+         not specify its types: TKey, T                                                                              
+         🪪  missingType.generics                                                                                    
+         ✏️  src/Entity/Category.php:96                                                                              
+ ------ ------------------------------------------------------------------------------------------------------------ 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Entity/ExternalArticleMapping.php                                                                             
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  34     Property App\Entity\ExternalArticleMapping::$metadata type has no value type specified in iterable type       
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/ExternalArticleMapping.php:34                                                                  
+  85     Method App\Entity\ExternalArticleMapping::getMetadata() return type has no value type specified in iterable   
+         type array.                                                                                                   
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/ExternalArticleMapping.php:85                                                                  
+  90     Method App\Entity\ExternalArticleMapping::setMetadata() has parameter $metadata with no value type specified  
+         in iterable type array.                                                                                       
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/ExternalArticleMapping.php:90                                                                  
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Entity/Image.php                                                                                               
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  163    Property App\Entity\Image::$articleImages with generic interface Doctrine\Common\Collections\Collection does   
+         not specify its types: TKey, T                                                                                 
+         🪪  missingType.generics                                                                                       
+         ✏️  src/Entity/Image.php:163                                                                                   
+  168    Property App\Entity\Image::$thumbnails with generic interface Doctrine\Common\Collections\Collection does not  
+         specify its types: TKey, T                                                                                     
+         🪪  missingType.generics                                                                                       
+         ✏️  src/Entity/Image.php:168                                                                                   
+  430    Property App\Entity\Image::$cropData type has no value type specified in iterable type array.                  
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Entity/Image.php:430                                                                                   
+  454    Method App\Entity\Image::getCropData() return type has no value type specified in iterable type array.         
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Entity/Image.php:454                                                                                   
+  459    Method App\Entity\Image::setCropData() has parameter $cropData with no value type specified in iterable type   
+         array.                                                                                                         
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Entity/Image.php:459                                                                                   
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Entity/LiveTextAbTest.php                                                                                     
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  61     Property App\Entity\LiveTextAbTest::$controlVariant type has no value type specified in iterable type array.  
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextAbTest.php:61                                                                          
+  67     Property App\Entity\LiveTextAbTest::$testVariants type has no value type specified in iterable type array.    
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextAbTest.php:67                                                                          
+  109    Property App\Entity\LiveTextAbTest::$results type has no value type specified in iterable type array.         
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextAbTest.php:109                                                                         
+  128    Property App\Entity\LiveTextAbTest::$liveTexts with generic interface Doctrine\Common\Collections\Collection  
+         does not specify its types: TKey, T                                                                           
+         🪪  missingType.generics                                                                                      
+         ✏️  src/Entity/LiveTextAbTest.php:128                                                                         
+  216    Method App\Entity\LiveTextAbTest::getControlVariant() return type has no value type specified in iterable     
+         type array.                                                                                                   
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextAbTest.php:216                                                                         
+  221    Method App\Entity\LiveTextAbTest::setControlVariant() has parameter $controlVariant with no value type        
+         specified in iterable type array.                                                                             
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextAbTest.php:221                                                                         
+  227    Method App\Entity\LiveTextAbTest::getTestVariants() return type has no value type specified in iterable type  
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextAbTest.php:227                                                                         
+  232    Method App\Entity\LiveTextAbTest::setTestVariants() has parameter $testVariants with no value type specified  
+         in iterable type array.                                                                                       
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextAbTest.php:232                                                                         
+  304    Method App\Entity\LiveTextAbTest::getResults() return type has no value type specified in iterable type       
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextAbTest.php:304                                                                         
+  309    Method App\Entity\LiveTextAbTest::setResults() has parameter $results with no value type specified in         
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextAbTest.php:309                                                                         
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Entity/LiveTextMatchEvent.php                                                                                 
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  129    Property App\Entity\LiveTextMatchEvent::$metadata type has no value type specified in iterable type array.    
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextMatchEvent.php:129                                                                     
+  249    Method App\Entity\LiveTextMatchEvent::getMetadata() return type has no value type specified in iterable type  
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextMatchEvent.php:249                                                                     
+  254    Method App\Entity\LiveTextMatchEvent::setMetadata() has parameter $metadata with no value type specified in   
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextMatchEvent.php:254                                                                     
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Entity/LiveTextPostEngagement.php                                                                             
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  74     Property App\Entity\LiveTextPostEngagement::$metadata type has no value type specified in iterable type       
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextPostEngagement.php:74                                                                  
+  183    Method App\Entity\LiveTextPostEngagement::getMetadata() return type has no value type specified in iterable   
+         type array.                                                                                                   
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextPostEngagement.php:183                                                                 
+  188    Method App\Entity\LiveTextPostEngagement::setMetadata() has parameter $metadata with no value type specified  
+         in iterable type array.                                                                                       
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Entity/LiveTextPostEngagement.php:188                                                                 
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Entity/LiveTextSportMatch.php                                                                                  
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  172    Property App\Entity\LiveTextSportMatch::$statistics type has no value type specified in iterable type array.   
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Entity/LiveTextSportMatch.php:172                                                                      
+  180    Property App\Entity\LiveTextSportMatch::$events with generic interface Doctrine\Common\Collections\Collection  
+         does not specify its types: TKey, T                                                                            
+         🪪  missingType.generics                                                                                       
+         ✏️  src/Entity/LiveTextSportMatch.php:180                                                                      
+  387    Method App\Entity\LiveTextSportMatch::getStatistics() return type has no value type specified in iterable      
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Entity/LiveTextSportMatch.php:387                                                                      
+  392    Method App\Entity\LiveTextSportMatch::setStatistics() has parameter $statistics with no value type specified   
+         in iterable type array.                                                                                        
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Entity/LiveTextSportMatch.php:392                                                                      
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------------------------------------------- 
+  Line   Entity/LiveTextTemplate.php                                                                               
+ ------ ---------------------------------------------------------------------------------------------------------- 
+  109    Property App\Entity\LiveTextTemplate::$config type has no value type specified in iterable type array.    
+         🪪  missingType.iterableValue                                                                             
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                
+         ✏️  src/Entity/LiveTextTemplate.php:109                                                                   
+  156    Method App\Entity\LiveTextTemplate::getConfig() return type has no value type specified in iterable type  
+         array.                                                                                                    
+         🪪  missingType.iterableValue                                                                             
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                
+         ✏️  src/Entity/LiveTextTemplate.php:156                                                                   
+  161    Method App\Entity\LiveTextTemplate::setConfig() has parameter $config with no value type specified in     
+         iterable type array.                                                                                      
+         🪪  missingType.iterableValue                                                                             
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                
+         ✏️  src/Entity/LiveTextTemplate.php:161                                                                   
+ ------ ---------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------- 
+  Line   Entity/Thumbnail.php                                                                                         
+ ------ ------------------------------------------------------------------------------------------------------------- 
+  99     Property App\Entity\Thumbnail::$cropData type has no value type specified in iterable type array.            
+         🪪  missingType.iterableValue                                                                                
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                   
+         ✏️  src/Entity/Thumbnail.php:99                                                                              
+  209    Method App\Entity\Thumbnail::getCropData() return type has no value type specified in iterable type array.   
+         🪪  missingType.iterableValue                                                                                
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                   
+         ✏️  src/Entity/Thumbnail.php:209                                                                             
+  214    Method App\Entity\Thumbnail::setCropData() has parameter $cropData with no value type specified in iterable  
+         type array.                                                                                                  
+         🪪  missingType.iterableValue                                                                                
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                   
+         ✏️  src/Entity/Thumbnail.php:214                                                                             
+ ------ ------------------------------------------------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------------- 
+  Line   Entity/ThumbnailProfile.php                                                 
+ ------ ---------------------------------------------------------------------------- 
+  124    Property App\Entity\ThumbnailProfile::$thumbnails with generic interface    
+         Doctrine\Common\Collections\Collection does not specify its types: TKey, T  
+         🪪  missingType.generics                                                    
+         ✏️  src/Entity/ThumbnailProfile.php:124                                     
+ ------ ---------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------- 
+  Line   Enum/ReactionType.php                                                                                   
+ ------ -------------------------------------------------------------------------------------------------------- 
+  18     Method App\Enum\ReactionType::values() return type has no value type specified in iterable type array.  
+         🪪  missingType.iterableValue                                                                           
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type              
+         ✏️  src/Enum/ReactionType.php:18                                                                        
+ ------ -------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------- 
+  Line   Enum/TemplateType.php                                                                                   
+ ------ -------------------------------------------------------------------------------------------------------- 
+  17     Method App\Enum\TemplateType::values() return type has no value type specified in iterable type array.  
+         🪪  missingType.iterableValue                                                                           
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type              
+         ✏️  src/Enum/TemplateType.php:17                                                                        
+ ------ -------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   EventListener/ArticleCategoryChangeListener.php                                                               
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  38     Property App\EventListener\ArticleCategoryChangeListener::$pendingRedirects type has no value type specified  
+         in iterable type array.                                                                                       
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/EventListener/ArticleCategoryChangeListener.php:38                                                    
+  130    Method App\EventListener\ArticleCategoryChangeListener::createRedirectForLocale() has parameter $em with no   
+         type specified.                                                                                               
+         🪪  missingType.parameter                                                                                     
+         ✏️  src/EventListener/ArticleCategoryChangeListener.php:130                                                   
+  199    Method App\EventListener\ArticleCategoryChangeListener::getTranslatedSlug() has parameter $em with no type    
+         specified.                                                                                                    
+         🪪  missingType.parameter                                                                                     
+         ✏️  src/EventListener/ArticleCategoryChangeListener.php:199                                                   
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   EventListener/ArticleSlugChangeListener.php                                                                   
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  42     Property App\EventListener\ArticleSlugChangeListener::$pendingRedirects type has no value type specified in   
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/EventListener/ArticleSlugChangeListener.php:42                                                        
+  134    Method App\EventListener\ArticleSlugChangeListener::createRedirectForLocale() has parameter $em with no type  
+         specified.                                                                                                    
+         🪪  missingType.parameter                                                                                     
+         ✏️  src/EventListener/ArticleSlugChangeListener.php:134                                                       
+  210    Method App\EventListener\ArticleSlugChangeListener::getTranslatedSlug() has parameter $em with no type        
+         specified.                                                                                                    
+         🪪  missingType.parameter                                                                                     
+         ✏️  src/EventListener/ArticleSlugChangeListener.php:210                                                       
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   EventListener/CategorySlugChangeListener.php                                                                   
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  41     Property App\EventListener\CategorySlugChangeListener::$pendingRedirects type has no value type specified in   
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/EventListener/CategorySlugChangeListener.php:41                                                        
+  145    Method App\EventListener\CategorySlugChangeListener::createRedirectForLocale() has parameter $em with no type  
+         specified.                                                                                                     
+         🪪  missingType.parameter                                                                                      
+         ✏️  src/EventListener/CategorySlugChangeListener.php:145                                                       
+  212    Method App\EventListener\CategorySlugChangeListener::getTranslatedSlug() has parameter $em with no type        
+         specified.                                                                                                     
+         🪪  missingType.parameter                                                                                      
+         ✏️  src/EventListener/CategorySlugChangeListener.php:212                                                       
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------ 
+  Line   EventSubscriber/HttpMetricsSubscriber.php                                                                   
+ ------ ------------------------------------------------------------------------------------------------------------ 
+  15     Property App\EventSubscriber\HttpMetricsSubscriber::$requestStartTimes type has no value type specified in  
+         iterable type array.                                                                                        
+         🪪  missingType.iterableValue                                                                               
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                  
+         ✏️  src/EventSubscriber/HttpMetricsSubscriber.php:15                                                        
+ ------ ------------------------------------------------------------------------------------------------------------ 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Repository/ArticleLockRepository.php                                                                           
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  71     Method App\Repository\ArticleLockRepository::findActiveLocksForUser() return type has no value type specified  
+         in iterable type array.                                                                                        
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Repository/ArticleLockRepository.php:71                                                                
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------------------------------------------- 
+  Line   Repository/ExternalArticleMappingRepository.php                                                           
+ ------ ---------------------------------------------------------------------------------------------------------- 
+  49     Method App\Repository\ExternalArticleMappingRepository::findBySource() return type has no value type      
+         specified in iterable type array.                                                                         
+         🪪  missingType.iterableValue                                                                             
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                
+         ✏️  src/Repository/ExternalArticleMappingRepository.php:49                                                
+  57     Method App\Repository\ExternalArticleMappingRepository::getStatsBySource() return type has no value type  
+         specified in iterable type array.                                                                         
+         🪪  missingType.iterableValue                                                                             
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                
+         ✏️  src/Repository/ExternalArticleMappingRepository.php:57                                                
+ ------ ---------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Repository/LiveTextAbTestRepository.php                                                                        
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  22     Method App\Repository\LiveTextAbTestRepository::findRunningTests() return type has no value type specified in  
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Repository/LiveTextAbTestRepository.php:22                                                             
+  37     Method App\Repository\LiveTextAbTestRepository::findByStatus() return type has no value type specified in      
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Repository/LiveTextAbTestRepository.php:37                                                             
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------- 
+  Line   Repository/LiveTextPostEngagementRepository.php                                                              
+ ------ ------------------------------------------------------------------------------------------------------------- 
+  25     Method App\Repository\LiveTextPostEngagementRepository::getHeatmapData() return type has no value type       
+         specified in iterable type array.                                                                            
+         🪪  missingType.iterableValue                                                                                
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                   
+         ✏️  src/Repository/LiveTextPostEngagementRepository.php:25                                                   
+  51     Method App\Repository\LiveTextPostEngagementRepository::getEngagementFunnel() return type has no value type  
+         specified in iterable type array.                                                                            
+         🪪  missingType.iterableValue                                                                                
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                   
+         ✏️  src/Repository/LiveTextPostEngagementRepository.php:51                                                   
+  82     Method App\Repository\LiveTextPostEngagementRepository::getTopEngagedPosts() return type has no value type   
+         specified in iterable type array.                                                                            
+         🪪  missingType.iterableValue                                                                                
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                   
+         ✏️  src/Repository/LiveTextPostEngagementRepository.php:82                                                   
+ ------ ------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------- 
+  Line   Security/Voter/LiveTextPostVoter.php                                                                   
+ ------ ------------------------------------------------------------------------------------------------------- 
+  16     Class App\Security\Voter\LiveTextPostVoter extends generic class                                       
+         Symfony\Component\Security\Core\Authorization\Voter\Voter but does not specify its types: TAttribute,  
+         TSubject                                                                                               
+         🪪  missingType.generics                                                                               
+         ✏️  src/Security/Voter/LiveTextPostVoter.php:16                                                        
+ ------ ------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------- 
+  Line   Security/Voter/LiveTextVoter.php                                                                       
+ ------ ------------------------------------------------------------------------------------------------------- 
+  15     Class App\Security\Voter\LiveTextVoter extends generic class                                           
+         Symfony\Component\Security\Core\Authorization\Voter\Voter but does not specify its types: TAttribute,  
+         TSubject                                                                                               
+         🪪  missingType.generics                                                                               
+         ✏️  src/Security/Voter/LiveTextVoter.php:15                                                            
+ ------ ------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------- 
+  Line   Serializer/MultipartDecoder.php                                                                            
+ ------ ----------------------------------------------------------------------------------------------------------- 
+  18     Method App\Serializer\MultipartDecoder::decode() return type has no value type specified in iterable type  
+         array.                                                                                                     
+         🪪  missingType.iterableValue                                                                              
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                 
+         ✏️  src/Serializer/MultipartDecoder.php:18                                                                 
+ ------ ----------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Service/ElasticService.php                                                                                     
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  14     Property App\Service\ElasticService::$supportedLocales type has no value type specified in iterable type       
+         array.                                                                                                         
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:14                                                                          
+  155    Method App\Service\ElasticService::getAnalyzerForLocale() return type has no value type specified in iterable  
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:155                                                                         
+  193    Method App\Service\ElasticService::indexDocument() has parameter $document with no value type specified in     
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:193                                                                         
+  246    Method App\Service\ElasticService::search() has parameter $filters with no value type specified in iterable    
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:246                                                                         
+  246    Method App\Service\ElasticService::search() has parameter $sort with no value type specified in iterable type  
+         array.                                                                                                         
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:246                                                                         
+  246    Method App\Service\ElasticService::search() return type has no value type specified in iterable type array.    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:246                                                                         
+  359    Method App\Service\ElasticService::suggest() return type has no value type specified in iterable type array.   
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:359                                                                         
+  419    Method App\Service\ElasticService::getClusterHealth() return type has no value type specified in iterable      
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:419                                                                         
+  441    Method App\Service\ElasticService::bulkIndexDocuments() has parameter $documents with no value type specified  
+         in iterable type array.                                                                                        
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:441                                                                         
+  441    Method App\Service\ElasticService::bulkIndexDocuments() return type has no value type specified in iterable    
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:441                                                                         
+  556    Method App\Service\ElasticService::getAliases() return type has no value type specified in iterable type       
+         array.                                                                                                         
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:556                                                                         
+  597    Method App\Service\ElasticService::reindex() return type has no value type specified in iterable type array.   
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:597                                                                         
+  625    Method App\Service\ElasticService::getIndexStats() return type has no value type specified in iterable type    
+         array.                                                                                                         
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ElasticService.php:625                                                                         
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Service/ImageElasticService.php                                                                               
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  124    Method App\Service\ImageElasticService::indexDocument() has parameter $document with no value type specified  
+         in iterable type array.                                                                                       
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/ImageElasticService.php:124                                                                   
+  142    Method App\Service\ImageElasticService::search() return type has no value type specified in iterable type     
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/ImageElasticService.php:142                                                                   
+  191    Method App\Service\ImageElasticService::suggest() return type has no value type specified in iterable type    
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/ImageElasticService.php:191                                                                   
+  247    Method App\Service\ImageElasticService::getHealth() return type has no value type specified in iterable type  
+         array.                                                                                                        
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/ImageElasticService.php:247                                                                   
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Service/ImageService.php                                                                                       
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  24     Property App\Service\ImageService::$thumbnailFormats type has no value type specified in iterable type array.  
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ImageService.php:24                                                                            
+  25     Property App\Service\ImageService::$qualitySettings type has no value type specified in iterable type array.   
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ImageService.php:25                                                                            
+  56     Method App\Service\ImageService::calculateAutoCrop() return type has no value type specified in iterable type  
+         array.                                                                                                         
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ImageService.php:56                                                                            
+  106    Method App\Service\ImageService::generateThumbnail() has parameter $cropData with no value type specified in   
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ImageService.php:106                                                                           
+  230    Method App\Service\ImageService::generateAllThumbnails() return type has no value type specified in iterable   
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ImageService.php:230                                                                           
+  259    Method App\Service\ImageService::applyCrop() has parameter $cropData with no value type specified in iterable  
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ImageService.php:259                                                                           
+  304    Method App\Service\ImageService::convertPercentageCrop() has parameter $cropData with no value type specified  
+         in iterable type array.                                                                                        
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ImageService.php:304                                                                           
+  304    Method App\Service\ImageService::convertPercentageCrop() return type has no value type specified in iterable   
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ImageService.php:304                                                                           
+  330    Method App\Service\ImageService::validateCropData() has parameter $cropData with no value type specified in    
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/ImageService.php:330                                                                           
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   Service/LiveTextAbTestService.php                                                                             
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  33     Method App\Service\LiveTextAbTestService::createTest() has parameter $controlVariant with no value type       
+         specified in iterable type array.                                                                             
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/LiveTextAbTestService.php:33                                                                  
+  33     Method App\Service\LiveTextAbTestService::createTest() has parameter $testVariants with no value type         
+         specified in iterable type array.                                                                             
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/LiveTextAbTestService.php:33                                                                  
+  174    Method App\Service\LiveTextAbTestService::getVariantConfig() return type has no value type specified in       
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/LiveTextAbTestService.php:174                                                                 
+  187    Method App\Service\LiveTextAbTestService::calculateResults() return type has no value type specified in       
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/LiveTextAbTestService.php:187                                                                 
+  250    Method App\Service\LiveTextAbTestService::collectVariantMetrics() return type has no value type specified in  
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/LiveTextAbTestService.php:250                                                                 
+  269    Method App\Service\LiveTextAbTestService::compareVariants() has parameter $control with no value type         
+         specified in iterable type array.                                                                             
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/LiveTextAbTestService.php:269                                                                 
+  269    Method App\Service\LiveTextAbTestService::compareVariants() has parameter $test with no value type specified  
+         in iterable type array.                                                                                       
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/LiveTextAbTestService.php:269                                                                 
+  269    Method App\Service\LiveTextAbTestService::compareVariants() return type has no value type specified in        
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/LiveTextAbTestService.php:269                                                                 
+  376    Method App\Service\LiveTextAbTestService::getRunningTestsForLiveText() return type has no value type          
+         specified in iterable type array.                                                                             
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/LiveTextAbTestService.php:376                                                                 
+  421    Method App\Service\LiveTextAbTestService::getTestSummary() return type has no value type specified in         
+         iterable type array.                                                                                          
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/Service/LiveTextAbTestService.php:421                                                                 
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Service/LiveTextAdvancedAnalyticsService.php                                                                   
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  32     Method App\Service\LiveTextAdvancedAnalyticsService::trackEngagement() has parameter $metadata with no value   
+         type specified in iterable type array.                                                                         
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextAdvancedAnalyticsService.php:32                                                        
+  75     Method App\Service\LiveTextAdvancedAnalyticsService::getHeatmapData() return type has no value type specified  
+         in iterable type array.                                                                                        
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextAdvancedAnalyticsService.php:75                                                        
+  116    Method App\Service\LiveTextAdvancedAnalyticsService::getEngagementFunnel() return type has no value type       
+         specified in iterable type array.                                                                              
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextAdvancedAnalyticsService.php:116                                                       
+  161    Method App\Service\LiveTextAdvancedAnalyticsService::getTopEngagedPosts() return type has no value type        
+         specified in iterable type array.                                                                              
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextAdvancedAnalyticsService.php:161                                                       
+  179    Method App\Service\LiveTextAdvancedAnalyticsService::getEngagementSummary() return type has no value type      
+         specified in iterable type array.                                                                              
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextAdvancedAnalyticsService.php:179                                                       
+  221    Method App\Service\LiveTextAdvancedAnalyticsService::getOrCreateSessionId() has parameter $request with no     
+         type specified.                                                                                                
+         🪪  missingType.parameter                                                                                      
+         ✏️  src/Service/LiveTextAdvancedAnalyticsService.php:221                                                       
+  275    Method App\Service\LiveTextAdvancedAnalyticsService::trackReaction() has parameter $metadata with no value     
+         type specified in iterable type array.                                                                         
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextAdvancedAnalyticsService.php:275                                                       
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------- 
+  Line   Service/LiveTextAnalyticsService.php                                                                    
+ ------ -------------------------------------------------------------------------------------------------------- 
+  156    Method App\Service\LiveTextAnalyticsService::getAnalytics() return type has no value type specified in  
+         iterable type array.                                                                                    
+         🪪  missingType.iterableValue                                                                           
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type              
+         ✏️  src/Service/LiveTextAnalyticsService.php:156                                                        
+  156    Method App\Service\LiveTextAnalyticsService::getAnalytics() return type has no value type specified in  
+         iterable type array.                                                                                    
+         🪪  missingType.iterableValue                                                                           
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type              
+         ✏️  src/Service/LiveTextAnalyticsService.php:156                                                        
+  156    Method App\Service\LiveTextAnalyticsService::getAnalytics() return type has no value type specified in  
+         iterable type array.                                                                                    
+         🪪  missingType.iterableValue                                                                           
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type              
+         ✏️  src/Service/LiveTextAnalyticsService.php:156                                                        
+ ------ -------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Service/LiveTextSportService.php                                                                               
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  101    Method App\Service\LiveTextSportService::addMatchEvent() has parameter $eventData with no value type           
+         specified in iterable type array.                                                                              
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextSportService.php:101                                                                   
+  200    Method App\Service\LiveTextSportService::updateStatistics() has parameter $statistics with no value type       
+         specified in iterable type array.                                                                              
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextSportService.php:200                                                                   
+  223    Method App\Service\LiveTextSportService::getMatchTimeline() return type has no value type specified in         
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextSportService.php:223                                                                   
+  234    Method App\Service\LiveTextSportService::getMatchSummary() return type has no value type specified in          
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextSportService.php:234                                                                   
+  277    Method App\Service\LiveTextSportService::getLiveMatches() return type has no value type specified in iterable  
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextSportService.php:277                                                                   
+  288    Method App\Service\LiveTextSportService::getUpcomingMatches() return type has no value type specified in       
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/LiveTextSportService.php:288                                                                   
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------- 
+  Line   Service/PerformanceService.php                                                                           
+ ------ --------------------------------------------------------------------------------------------------------- 
+  261    Method App\Service\PerformanceService::getTrendingArticles() return type has no value type specified in  
+         iterable type array.                                                                                     
+         🪪  missingType.iterableValue                                                                            
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type               
+         ✏️  src/Service/PerformanceService.php:261                                                               
+ ------ --------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   Service/SlugLookupService.php                                                                                  
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  124    Method App\Service\SlugLookupService::findViaElasticsearch() return type has no value type specified in        
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/SlugLookupService.php:124                                                                      
+  168    Method App\Service\SlugLookupService::findViaDatabase() return type has no value type specified in iterable    
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/SlugLookupService.php:168                                                                      
+  357    Method App\Service\SlugLookupService::bulkValidate() has parameter $slugs with no value type specified in      
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/SlugLookupService.php:357                                                                      
+  357    Method App\Service\SlugLookupService::bulkValidate() return type has no value type specified in iterable type  
+         array.                                                                                                         
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/SlugLookupService.php:357                                                                      
+  382    Method App\Service\SlugLookupService::generateSlugSuggestions() return type has no value type specified in     
+         iterable type array.                                                                                           
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/Service/SlugLookupService.php:382                                                                      
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------- 
+  Line   Service/SocialMediaService.php                                                                          
+ ------ -------------------------------------------------------------------------------------------------------- 
+  297    Method App\Service\SocialMediaService::getSharingMetadata() return type has no value type specified in  
+         iterable type array.                                                                                    
+         🪪  missingType.iterableValue                                                                           
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type              
+         ✏️  src/Service/SocialMediaService.php:297                                                              
+ ------ -------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------- 
+  Line   State/ArticleImageProcessor.php                                                                        
+ ------ ------------------------------------------------------------------------------------------------------- 
+  98     Method App\State\ArticleImageProcessor::unfeaturedAllForArticle() has parameter $article with no type  
+         specified.                                                                                             
+         🪪  missingType.parameter                                                                              
+         ✏️  src/State/ArticleImageProcessor.php:98                                                             
+ ------ ------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------- 
+  Line   State/ArticleLockProcessor.php                                                                    
+ ------ -------------------------------------------------------------------------------------------------- 
+  68     Method App\State\ArticleLockProcessor::acquireLock() has parameter $user with no type specified.  
+         🪪  missingType.parameter                                                                         
+         ✏️  src/State/ArticleLockProcessor.php:68                                                         
+  100    Method App\State\ArticleLockProcessor::refreshLock() has parameter $user with no type specified.  
+         🪪  missingType.parameter                                                                         
+         ✏️  src/State/ArticleLockProcessor.php:100                                                        
+  114    Method App\State\ArticleLockProcessor::releaseLock() has parameter $user with no type specified.  
+         🪪  missingType.parameter                                                                         
+         ✏️  src/State/ArticleLockProcessor.php:114                                                        
+ ------ -------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------- 
+  Line   State/CachedArticleProvider.php                                                                        
+ ------ ------------------------------------------------------------------------------------------------------- 
+  21     Method App\State\CachedArticleProvider::__construct() has parameter $decorated with generic interface  
+         ApiPlatform\State\ProviderInterface but does not specify its types: T                                  
+         🪪  missingType.generics                                                                               
+         ✏️  src/State/CachedArticleProvider.php:21                                                             
+ ------ ------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------- 
+  Line   State/CachedCategoryProvider.php                                                                        
+ ------ -------------------------------------------------------------------------------------------------------- 
+  20     Method App\State\CachedCategoryProvider::__construct() has parameter $decorated with generic interface  
+         ApiPlatform\State\ProviderInterface but does not specify its types: T                                   
+         🪪  missingType.generics                                                                                
+         ✏️  src/State/CachedCategoryProvider.php:20                                                             
+ ------ -------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   State/ImageProcessor.php                                                                                      
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  189    Method App\State\ImageProcessor::handleCropOperation() has no return type specified.                          
+         🪪  missingType.return                                                                                        
+         ✏️  src/State/ImageProcessor.php:189                                                                          
+  189    Method App\State\ImageProcessor::handleCropOperation() has parameter $uriVariables with no value type         
+         specified in iterable type array.                                                                             
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/State/ImageProcessor.php:189                                                                          
+  242    Method App\State\ImageProcessor::handleResetCropOperation() has no return type specified.                     
+         🪪  missingType.return                                                                                        
+         ✏️  src/State/ImageProcessor.php:242                                                                          
+  242    Method App\State\ImageProcessor::handleResetCropOperation() has parameter $uriVariables with no value type    
+         specified in iterable type array.                                                                             
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/State/ImageProcessor.php:242                                                                          
+  288    Method App\State\ImageProcessor::handleGenerateThumbnailsOperation() has parameter $uriVariables with no      
+         value type specified in iterable type array.                                                                  
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/State/ImageProcessor.php:288                                                                          
+  288    Method App\State\ImageProcessor::handleGenerateThumbnailsOperation() return type has no value type specified  
+         in iterable type array.                                                                                       
+         🪪  missingType.iterableValue                                                                                 
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                    
+         ✏️  src/State/ImageProcessor.php:288                                                                          
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  Line   State/ImportantArticlesListProvider.php                                                                       
+ ------ -------------------------------------------------------------------------------------------------------------- 
+  16     Class App\State\ImportantArticlesListProvider implements generic interface                                    
+         ApiPlatform\State\ProviderInterface but does not specify its types: T                                         
+         🪪  missingType.generics                                                                                      
+         ✏️  src/State/ImportantArticlesListProvider.php:16                                                            
+  68     Method App\State\ImportantArticlesListProvider::loadArticleTranslation() has parameter $article with no type  
+         specified.                                                                                                    
+         🪪  missingType.parameter                                                                                     
+         ✏️  src/State/ImportantArticlesListProvider.php:68                                                            
+ ------ -------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------ 
+  Line   State/LiveTextAnalyticsProvider.php                                                                         
+ ------ ------------------------------------------------------------------------------------------------------------ 
+  17     Class App\State\LiveTextAnalyticsProvider implements generic interface ApiPlatform\State\ProviderInterface  
+         but does not specify its types: T                                                                           
+         🪪  missingType.generics                                                                                    
+         ✏️  src/State/LiveTextAnalyticsProvider.php:17                                                              
+ ------ ------------------------------------------------------------------------------------------------------------ 
+
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  Line   State/LiveTextPostReactionsProvider.php                                                                        
+ ------ --------------------------------------------------------------------------------------------------------------- 
+  25     Method App\State\LiveTextPostReactionsProvider::provide() return type has no value type specified in iterable  
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/State/LiveTextPostReactionsProvider.php:25                                                             
+  25     Method App\State\LiveTextPostReactionsProvider::provide() return type has no value type specified in iterable  
+         type array.                                                                                                    
+         🪪  missingType.iterableValue                                                                                  
+         💡  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                     
+         ✏️  src/State/LiveTextPostReactionsProvider.php:25                                                             
+ ------ --------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------- 
+  Line   State/LiveTextReactionProcessor.php                                                                        
+ ------ ----------------------------------------------------------------------------------------------------------- 
+  47     Method App\State\LiveTextReactionProcessor::handleCreate() has parameter $request with no type specified.  
+         🪪  missingType.parameter                                                                                  
+         ✏️  src/State/LiveTextReactionProcessor.php:47                                                             
+ ------ ----------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------- 
+  Line   Transformer/Article/ReadingTimeTransformer.php                                                   
+ ------ ------------------------------------------------------------------------------------------------- 
+  13     Class App\Transformer\Article\ReadingTimeTransformer implements generic interface                
+         Symfony\Component\ObjectMapper\TransformCallableInterface but does not specify its types: T, T2  
+         🪪  missingType.generics                                                                         
+         ✏️  src/Transformer/Article/ReadingTimeTransformer.php:13                                        
+ ------ ------------------------------------------------------------------------------------------------- 
+
+ [ERROR] Found 186 errors                                                                                               
+

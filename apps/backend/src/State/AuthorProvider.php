@@ -73,9 +73,11 @@ final class AuthorProvider implements ProviderInterface
 
         $results = $query->getResult();
 
+        // Set locale on each result
+        // Note: We don't refresh() here to avoid loading all lazy relationships
+        // which would cause memory issues with large collections
         foreach ($results as $result) {
             $result->setTranslatableLocale($locale);
-            $this->entityManager->refresh($result);
         }
 
         return $results;

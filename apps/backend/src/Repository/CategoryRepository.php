@@ -20,7 +20,7 @@ class CategoryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find active categories for front page
+     * Find active categories for front page.
      *
      * @return Category[]
      */
@@ -36,7 +36,7 @@ class CategoryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find all active categories
+     * Find all active categories.
      *
      * @return Category[]
      */
@@ -51,7 +51,7 @@ class CategoryRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find categories with article count
+     * Find categories with article count.
      *
      * @return array<int, array{category: Category, articleCount: int}>
      */

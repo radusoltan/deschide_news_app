@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Repository\ArticleLockRepository;
+use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -33,14 +34,15 @@ class CleanupExpiredLocksCommand extends Command
             $deletedCount = $this->lockRepository->deleteExpiredLocks();
 
             if ($deletedCount > 0) {
-                $io->success(sprintf('Deleted %d expired lock(s)', $deletedCount));
+                $io->success(\sprintf('Deleted %d expired lock(s)', $deletedCount));
             } else {
                 $io->info('No expired locks found');
             }
 
             return Command::SUCCESS;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $io->error('Failed to cleanup locks: ' . $e->getMessage());
+
             return Command::FAILURE;
         }
     }

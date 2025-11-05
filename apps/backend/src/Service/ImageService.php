@@ -8,22 +8,32 @@ use App\Entity\Image;
 use App\Entity\Thumbnail;
 use App\Entity\ThumbnailProfile;
 use Doctrine\ORM\EntityManagerInterface;
-use Intervention\Image\ImageManager;
+use Exception;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 class ImageService
 {
     private readonly string $storageRoot;
+
     private readonly string $originalsDir;
+
     private readonly string $thumbnailsDir;
+
     private readonly string $publicPath;
+
     private readonly array $thumbnailFormats;
+
     private readonly array $qualitySettings;
+
     private readonly bool $progressive;
+
     private readonly ImageManager $imageManager;
 
     public function __construct(
@@ -45,14 +55,64 @@ class ImageService
     }
 
     /**
+     * Calculate automatic crop area centered on image.
+     * Strategy: Use full image height, calculate width from aspect ratio, center horizontally.
+     * If calculated width > image width, use full width and calculate height instead.
+     *
+     * @param Image $image The source image
+     * @param ThumbnailProfile $profile The thumbnail profile with aspect ratio
+     *
+     * @return array Crop data: ['x' => int, 'y' => int, 'width' => int, 'height' => int]
+     */
+    public function calculateAutoCrop(Image $image, ThumbnailProfile $profile): array
+    {
+        $imageWidth = $image->getWidth();
+        $imageHeight = $image->getHeight();
+
+        // Parse aspect ratio (e.g., "16:9" -> [16, 9])
+        $aspectRatio = $profile->getAspectRatio() ?? $profile->getCalculatedAspectRatio();
+        [$arWidth, $arHeight] = array_map('intval', explode(':', $aspectRatio));
+
+        // Calculate crop dimensions
+        // Strategy 1: Use full height, calculate width
+        $cropHeight = $imageHeight;
+        $cropWidth = (int) round($cropHeight * ($arWidth / $arHeight));
+
+        // If crop width exceeds image width, use Strategy 2: full width, calculate height
+        if ($cropWidth > $imageWidth) {
+            $cropWidth = $imageWidth;
+            $cropHeight = (int) round($cropWidth * ($arHeight / $arWidth));
+        }
+
+        // Center the crop area
+        $cropX = (int) round(($imageWidth - $cropWidth) / 2);
+        $cropY = (int) round(($imageHeight - $cropHeight) / 2);
+
+        $this->logger->debug('Calculated auto-crop', [
+            'image' => ['width' => $imageWidth, 'height' => $imageHeight],
+            'aspectRatio' => $aspectRatio,
+            'crop' => ['x' => $cropX, 'y' => $cropY, 'width' => $cropWidth, 'height' => $cropHeight],
+        ]);
+
+        return [
+            'x' => max(0, $cropX),
+            'y' => max(0, $cropY),
+            'width' => $cropWidth,
+            'height' => $cropHeight,
+        ];
+    }
+
+    /**
      * Generate a single thumbnail with optional custom crop.
+     * If no cropData provided, auto-crop will be calculated and applied.
      *
      * @param Image $image The source image
      * @param ThumbnailProfile $profile The thumbnail profile
      * @param string $format Output format (webp, jpg, png)
      * @param array|null $cropData Custom crop coordinates from react-cropper
-     *        Format: {"x": 10, "y": 20, "width": 300, "height": 200, "unit": "px"}
-     *        or {"p": {"x": 5.5, "y": 10.2, "width": 80.5, "height": 70.3}, "unit": "percent"}
+     *                             Format: {"x": 10, "y": 20, "width": 300, "height": 200, "unit": "px"}
+     *                             or {"p": {"x": 5.5, "y": 10.2, "width": 80.5, "height": 70.3}, "unit": "percent"}
+     *                             If null, auto-crop will be calculated
      */
     public function generateThumbnail(
         Image $image,
@@ -60,6 +120,16 @@ class ImageService
         string $format = 'webp',
         ?array $cropData = null,
     ): Thumbnail {
+        // Calculate auto-crop if no custom crop provided
+        if (null === $cropData) {
+            $cropData = $this->calculateAutoCrop($image, $profile);
+            $this->logger->info('Using auto-crop', [
+                'imageId' => $image->getId(),
+                'profile' => $profile->getName(),
+                'autoCrop' => $cropData,
+            ]);
+        }
+
         $this->logger->info('Generating thumbnail', [
             'imageId' => $image->getId(),
             'profile' => $profile->getName(),
@@ -71,18 +141,18 @@ class ImageService
         $imagePath = $this->storageRoot . '/' . $image->getPath();
 
         if (!file_exists($imagePath)) {
-            throw new \RuntimeException(sprintf('Image file not found: %s', $imagePath));
+            throw new RuntimeException(\sprintf('Image file not found: %s', $imagePath));
         }
 
         // Load image
         $img = $this->imageManager->read($imagePath);
 
-        // Apply custom crop if provided
+        // Apply crop (either auto-calculated or custom)
         if (null !== $cropData) {
             $this->validateCropData($image, $cropData);
             $absoluteCrop = $this->convertPercentageCrop($image, $cropData);
 
-            $this->logger->debug('Applying custom crop', [
+            $this->logger->debug('Applying crop', [
                 'cropData' => $absoluteCrop,
             ]);
 
@@ -118,8 +188,8 @@ class ImageService
         // Generate thumbnail filename and path
         // Format: {imageId}_{profileName}.{format}
         // Example: 14_article_card.jpg
-        $filename = sprintf('%s_%s.%s', $image->getId(), $profile->getName(), $format);
-        $relativePath = sprintf(
+        $filename = \sprintf('%s_%s.%s', $image->getId(), $profile->getName(), $format);
+        $relativePath = \sprintf(
             '%s/%s',
             $this->thumbnailsDir,
             $filename
@@ -127,7 +197,7 @@ class ImageService
         $absolutePath = $this->storageRoot . '/' . $relativePath;
 
         // Ensure directory exists
-        $this->ensureDirectory(dirname($absolutePath));
+        $this->ensureDirectory(\dirname($absolutePath));
 
         // Save thumbnail
         $this->saveThumbnail($img, $absolutePath, $format);
@@ -180,7 +250,7 @@ class ImageService
                 try {
                     $thumbnail = $this->generateThumbnail($image, $profile, $format);
                     $thumbnails[] = $thumbnail;
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $this->logger->error('Failed to generate thumbnail', [
                         'imageId' => $image->getId(),
                         'profile' => $profile->getName(),
@@ -275,25 +345,25 @@ class ImageService
         $required = ['x', 'y', 'width', 'height'];
         foreach ($required as $key) {
             if (!isset($absolute[$key])) {
-                throw new \InvalidArgumentException(sprintf('Missing crop coordinate: %s', $key));
+                throw new InvalidArgumentException(\sprintf('Missing crop coordinate: %s', $key));
             }
         }
 
         // Validate boundaries
         if ($absolute['x'] < 0 || $absolute['y'] < 0) {
-            throw new \InvalidArgumentException('Crop coordinates must be positive');
+            throw new InvalidArgumentException('Crop coordinates must be positive');
         }
 
         if ($absolute['width'] <= 0 || $absolute['height'] <= 0) {
-            throw new \InvalidArgumentException('Crop dimensions must be positive');
+            throw new InvalidArgumentException('Crop dimensions must be positive');
         }
 
         if ($absolute['x'] + $absolute['width'] > $image->getWidth()) {
-            throw new \InvalidArgumentException('Crop width exceeds image width');
+            throw new InvalidArgumentException('Crop width exceeds image width');
         }
 
         if ($absolute['y'] + $absolute['height'] > $image->getHeight()) {
-            throw new \InvalidArgumentException('Crop height exceeds image height');
+            throw new InvalidArgumentException('Crop height exceeds image height');
         }
     }
 
@@ -308,7 +378,7 @@ class ImageService
             'jpg', 'jpeg' => $img->toJpeg($quality)->save($path),
             'webp' => $img->toWebp($quality)->save($path),
             'png' => $img->toPng()->save($path),
-            default => throw new \InvalidArgumentException(sprintf('Unsupported format: %s', $format)),
+            default => throw new InvalidArgumentException(\sprintf('Unsupported format: %s', $format)),
         };
     }
 
@@ -318,7 +388,7 @@ class ImageService
     private function ensureDirectory(string $path): void
     {
         if (!is_dir($path)) {
-            $this->filesystem->mkdir($path, 0755);
+            $this->filesystem->mkdir($path, 0o755);
         }
     }
 }

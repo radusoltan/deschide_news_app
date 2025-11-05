@@ -14,48 +14,37 @@ parameters:
         - 'image/gif'
         - 'image/webp'
 
-    # Thumbnail profiles (can be synced with ThumbnailProfile entity)
+    # Thumbnail profiles (synced with ThumbnailProfile entity via fixtures)
+    # Only 4 essential profiles for optimal performance
     image.thumbnail.profiles:
-        thumb_small:
-            width: 150
-            height: 150
-            mode: 'cover'  # cover, contain, crop, scale
-        thumb_medium:
-            width: 300
-            height: 300
-            mode: 'cover'
-        thumb_large:
-            width: 600
-            height: 600
-            mode: 'cover'
-        card_small:
+        article_thumbnail:
             width: 320
             height: 180
-            mode: 'cover'
-        card_medium:
+            aspect_ratio: '16:9'
+            mode: 'cover'  # cover, contain, crop, scale
+            quality: 80
+            description: 'Small thumbnail 16:9 ratio for previews and lists'
+        article_card:
             width: 640
-            height: 360
+            height: 427
+            aspect_ratio: '3:2'
             mode: 'cover'
-        card_large:
-            width: 1280
-            height: 720
+            quality: 85
+            description: 'Card thumbnail 3:2 ratio for article lists and grids'
+        article_square:
+            width: 800
+            height: 800
+            aspect_ratio: '1:1'
             mode: 'cover'
-        hero_small:
-            width: 960
-            height: 540
+            quality: 85
+            description: 'Square 1:1 ratio for social media sharing'
+        article_hero:
+            width: 1600
+            height: 600
+            aspect_ratio: '8:3'
             mode: 'cover'
-        hero_medium:
-            width: 1920
-            height: 1080
-            mode: 'cover'
-        hero_large:
-            width: 2560
-            height: 1440
-            mode: 'cover'
-        full:
-            width: 3840
-            height: 2160
-            mode: 'contain'
+            quality: 90
+            description: 'Hero banner 8:3 ratio for article headers and featured content'
 
     # Output formats
     image.thumbnail.formats:

@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
-use ApiPlatform\Metadata\Delete;
 use App\Repository\ImportantArticlesListRepository;
 use App\State\ImportantArticlesListProvider;
 use App\Validator\ImportantArticlesCount;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -40,7 +41,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Delete(
             uriTemplate: '/important_articles/{id}'
-        )
+        ),
     ]
 )]
 #[ImportantArticlesCount]
@@ -66,7 +67,7 @@ class ImportantArticlesList
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['important_articles:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     public function getId(): ?int
     {
@@ -81,6 +82,7 @@ class ImportantArticlesList
     public function setArticle(?Article $article): self
     {
         $this->article = $article;
+
         return $this;
     }
 
@@ -92,10 +94,11 @@ class ImportantArticlesList
     public function setPosition(int $position): self
     {
         $this->position = $position;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }

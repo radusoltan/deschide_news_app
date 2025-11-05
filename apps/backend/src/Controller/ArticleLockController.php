@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\Article;
 use App\Entity\ArticleLock;
 use App\Repository\ArticleLockRepository;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -34,7 +35,7 @@ class ArticleLockController extends AbstractController
             ->join('al.article', 'a')
             ->join('al.lockedBy', 'u')
             ->where('al.expiresAt > :now')
-            ->setParameter('now', new \DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable())
             ->orderBy('al.lockedAt', 'DESC');
 
         $locks = $qb->getQuery()->getResult();
@@ -121,7 +122,7 @@ class ArticleLockController extends AbstractController
 
             // Locked by someone else
             return $this->json([
-                'error' => sprintf(
+                'error' => \sprintf(
                     'Article is currently being edited by %s %s',
                     $existingLock->getLockedBy()->getFirstName(),
                     $existingLock->getLockedBy()->getLastName()

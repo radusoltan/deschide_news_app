@@ -7,6 +7,7 @@ namespace App\DataFixtures;
 use App\Entity\Article;
 use App\Enum\ArticleBadge;
 use App\Enum\ArticleStatus;
+use DateTimeImmutable;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -15,7 +16,9 @@ use Faker\Factory;
 class ArticleFixtures extends Fixture implements DependentFixtureInterface
 {
     private const ARTICLE_COUNT = 80;
+
     private const CATEGORY_COUNT = 8;
+
     private const AUTHOR_COUNT = 12;
 
     public function getDependencies(): array
@@ -34,7 +37,7 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
 
         $publishedArticles = [];
 
-        for ($i = 1; $i <= self::ARTICLE_COUNT; $i++) {
+        for ($i = 1; $i <= self::ARTICLE_COUNT; ++$i) {
             $article = new Article();
 
             // Assign category (uniform distribution)
@@ -44,7 +47,7 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
 
             // Assign 1-3 authors
             $authorCount = rand(1, 3);
-            for ($j = 0; $j < $authorCount; $j++) {
+            for ($j = 0; $j < $authorCount; ++$j) {
                 $authorIndex = rand(0, self::AUTHOR_COUNT - 1);
                 $author = $this->getReference('author_' . $authorIndex, \App\Entity\Author::class);
                 $article->addAuthor($author);
@@ -83,7 +86,7 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
             // Published date for PUBLISHED articles (last 30 days)
             if ($status === ArticleStatus::PUBLISHED) {
                 $daysAgo = $this->getRandomDaysAgo();
-                $publishedAt = new \DateTimeImmutable("-$daysAgo days");
+                $publishedAt = new DateTimeImmutable("-$daysAgo days");
                 $article->setPublishedAt($publishedAt);
                 $publishedArticles[] = $i;
             }
@@ -91,7 +94,7 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
             // Publish at for SUBMITTED/NEW (30% have future dates)
             if (($status === ArticleStatus::SUBMITTED || $status === ArticleStatus::NEW) && rand(1, 100) <= 30) {
                 $daysAhead = rand(1, 7);
-                $publishAt = new \DateTimeImmutable("+$daysAhead days");
+                $publishAt = new DateTimeImmutable("+$daysAhead days");
                 $article->setPublishAt($publishAt);
             }
 
@@ -134,7 +137,7 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
         // Add related articles to 40% of PUBLISHED articles
         $this->addRelatedArticles($manager, $publishedArticles);
 
-        echo "✅ Created " . self::ARTICLE_COUNT . " articles (" . count($publishedArticles) . " published)\n";
+        echo '✅ Created ' . self::ARTICLE_COUNT . ' articles (' . \count($publishedArticles) . " published)\n";
     }
 
     private function generateContent($faker): string
@@ -142,7 +145,7 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
         $paragraphCount = rand(3, 8);
         $paragraphs = [];
 
-        for ($i = 0; $i < $paragraphCount; $i++) {
+        for ($i = 0; $i < $paragraphCount; ++$i) {
             $paragraphs[] = $faker->paragraph(rand(4, 8));
         }
 
@@ -175,21 +178,21 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
     private function addRelatedArticles(ObjectManager $manager, array $publishedArticles): void
     {
         // 40% of published articles get related articles
-        $articlesWithRelated = array_slice($publishedArticles, 0, (int) (count($publishedArticles) * 0.4));
+        $articlesWithRelated = \array_slice($publishedArticles, 0, (int) (\count($publishedArticles) * 0.4));
 
         foreach ($articlesWithRelated as $articleIndex) {
-            $article = $this->getReference('article_' . $articleIndex, \App\Entity\Article::class);
+            $article = $this->getReference('article_' . $articleIndex, Article::class);
 
             // Get number of related articles (1-5)
             $relatedCount = $this->getRandomRelatedCount();
 
             // Pick random published articles (excluding self)
-            $availableArticles = array_filter($publishedArticles, fn($idx) => $idx !== $articleIndex);
+            $availableArticles = array_filter($publishedArticles, fn ($idx) => $idx !== $articleIndex);
             shuffle($availableArticles);
-            $selectedArticles = array_slice($availableArticles, 0, $relatedCount);
+            $selectedArticles = \array_slice($availableArticles, 0, $relatedCount);
 
             foreach ($selectedArticles as $relatedIndex) {
-                $relatedArticle = $this->getReference('article_' . $relatedIndex, \App\Entity\Article::class);
+                $relatedArticle = $this->getReference('article_' . $relatedIndex, Article::class);
                 $article->addRelatedArticle($relatedArticle);
             }
 
@@ -198,17 +201,26 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
 
         $manager->flush();
 
-        echo "  Added related articles to " . count($articlesWithRelated) . " articles\n";
+        echo '  Added related articles to ' . \count($articlesWithRelated) . " articles\n";
     }
 
     private function getRandomRelatedCount(): int
     {
         $rand = rand(1, 100);
 
-        if ($rand <= 30) return 1;  // 30%
-        if ($rand <= 60) return 2;  // 30%
-        if ($rand <= 80) return 3;  // 20%
-        if ($rand <= 95) return 4;  // 15%
+        if ($rand <= 30) {
+            return 1;
+        }  // 30%
+        if ($rand <= 60) {
+            return 2;
+        }  // 30%
+        if ($rand <= 80) {
+            return 3;
+        }  // 20%
+        if ($rand <= 95) {
+            return 4;
+        }  // 15%
+
         return 5;                    // 5%
     }
 }

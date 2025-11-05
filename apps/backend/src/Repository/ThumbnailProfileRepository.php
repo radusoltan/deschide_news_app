@@ -20,9 +20,10 @@ class ThumbnailProfileRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find active profiles by category
+     * Find active profiles by category.
      *
      * @param ThumbnailCategory[] $categories
+     *
      * @return ThumbnailProfile[]
      */
     public function findActiveByCategories(array $categories): array
@@ -37,7 +38,7 @@ class ThumbnailProfileRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find active profiles for articles
+     * Find active profiles for articles.
      *
      * @return ThumbnailProfile[]
      */
@@ -45,12 +46,12 @@ class ThumbnailProfileRepository extends ServiceEntityRepository
     {
         return $this->findActiveByCategories([
             ThumbnailCategory::ARTICLE,
-            ThumbnailCategory::GENERAL
+            ThumbnailCategory::GENERAL,
         ]);
     }
 
     /**
-     * Find active profiles for author profiles
+     * Find active profiles for author profiles.
      *
      * @return ThumbnailProfile[]
      */
@@ -58,12 +59,12 @@ class ThumbnailProfileRepository extends ServiceEntityRepository
     {
         return $this->findActiveByCategories([
             ThumbnailCategory::PROFILE,
-            ThumbnailCategory::GENERAL
+            ThumbnailCategory::GENERAL,
         ]);
     }
 
     /**
-     * Find profile by name
+     * Find profile by name.
      */
     public function findOneByName(string $name): ?ThumbnailProfile
     {
@@ -71,7 +72,7 @@ class ThumbnailProfileRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find all active profiles
+     * Find all active profiles.
      *
      * @return ThumbnailProfile[]
      */
@@ -86,7 +87,7 @@ class ThumbnailProfileRepository extends ServiceEntityRepository
     }
 
     /**
-     * Check if profile exists by dimensions and mode
+     * Check if profile exists by dimensions and mode.
      */
     public function existsByDimensionsAndMode(int $width, int $height, string $mode, ?int $excludeId = null): bool
     {

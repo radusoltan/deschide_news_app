@@ -1,0 +1,26 @@
+# Varnish Cache Service Configuration
+# Include this in config/services.yaml or load separately
+
+parameters:
+    # Varnish configuration
+    varnish.host: '%env(default::VARNISH_HOST)%'
+    varnish.port: '%env(int:default::VARNISH_PORT)%'
+    varnish.enabled: '%env(bool:default::VARNISH_ENABLED)%'
+
+services:
+    # Varnish Cache Service
+    App\Service\VarnishCacheService:
+        arguments:
+            $varnishHost: '%varnish.host%'
+            $varnishPort: '%varnish.port%'
+            $varnishEnabled: '%varnish.enabled%'
+
+    # Event subscriber for automatic cache invalidation
+    App\EventSubscriber\VarnishCacheInvalidationSubscriber:
+        tags:
+            - { name: kernel.event_subscriber }
+
+# Default values (override in .env.local)
+# VARNISH_HOST=127.0.0.1
+# VARNISH_PORT=6081
+# VARNISH_ENABLED=true

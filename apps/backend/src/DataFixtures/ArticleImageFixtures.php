@@ -12,6 +12,7 @@ use Doctrine\Persistence\ObjectManager;
 class ArticleImageFixtures extends Fixture implements DependentFixtureInterface
 {
     private const ARTICLE_COUNT = 80;
+
     private const IMAGE_COUNT = 40;
 
     public function getDependencies(): array
@@ -26,7 +27,7 @@ class ArticleImageFixtures extends Fixture implements DependentFixtureInterface
     {
         $totalAssociations = 0;
 
-        for ($i = 1; $i <= self::ARTICLE_COUNT; $i++) {
+        for ($i = 1; $i <= self::ARTICLE_COUNT; ++$i) {
             $article = $this->getReference('article_' . $i, \App\Entity\Article::class);
 
             // All articles have at least 1 image (featured)
@@ -35,7 +36,7 @@ class ArticleImageFixtures extends Fixture implements DependentFixtureInterface
             // Select random images (no duplicates within same article)
             $availableImages = range(1, self::IMAGE_COUNT);
             shuffle($availableImages);
-            $selectedImages = array_slice($availableImages, 0, $imageCount);
+            $selectedImages = \array_slice($availableImages, 0, $imageCount);
 
             foreach ($selectedImages as $position => $imageIndex) {
                 $image = $this->getReference('image_' . $imageIndex, \App\Entity\Image::class);
@@ -48,7 +49,7 @@ class ArticleImageFixtures extends Fixture implements DependentFixtureInterface
                 );
 
                 $manager->persist($articleImage);
-                $totalAssociations++;
+                ++$totalAssociations;
             }
 
             if ($i % 20 === 0) {
@@ -66,10 +67,19 @@ class ArticleImageFixtures extends Fixture implements DependentFixtureInterface
     {
         $rand = rand(1, 100);
 
-        if ($rand <= 40) return 1;  // 40% - 1 image only
-        if ($rand <= 70) return 2;  // 30% - 2 images
-        if ($rand <= 90) return 3;  // 20% - 3 images
-        if ($rand <= 97) return 4;  // 7% - 4 images
+        if ($rand <= 40) {
+            return 1;
+        }  // 40% - 1 image only
+        if ($rand <= 70) {
+            return 2;
+        }  // 30% - 2 images
+        if ($rand <= 90) {
+            return 3;
+        }  // 20% - 3 images
+        if ($rand <= 97) {
+            return 4;
+        }  // 7% - 4 images
+
         return 5;                    // 3% - 5 images
     }
 }

@@ -7,6 +7,7 @@ namespace App\Repository;
 use App\Entity\Article;
 use App\Entity\ArticleLock;
 use App\Entity\User;
+use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -29,7 +30,7 @@ class ArticleLockRepository extends ServiceEntityRepository
             ->where('al.article = :article')
             ->andWhere('al.expiresAt > :now')
             ->setParameter('article', $article)
-            ->setParameter('now', new \DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable())
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
@@ -46,7 +47,7 @@ class ArticleLockRepository extends ServiceEntityRepository
             ->andWhere('al.expiresAt > :now')
             ->setParameter('article', $article)
             ->setParameter('user', $user)
-            ->setParameter('now', new \DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable())
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
@@ -60,7 +61,7 @@ class ArticleLockRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('al')
             ->delete()
             ->where('al.expiresAt <= :now')
-            ->setParameter('now', new \DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable())
             ->getQuery()
             ->execute();
     }
@@ -74,7 +75,7 @@ class ArticleLockRepository extends ServiceEntityRepository
             ->where('al.lockedBy = :user')
             ->andWhere('al.expiresAt > :now')
             ->setParameter('user', $user)
-            ->setParameter('now', new \DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable())
             ->getQuery()
             ->getResult();
     }

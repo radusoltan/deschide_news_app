@@ -12,6 +12,8 @@ use App\Entity\ThumbnailProfile;
 use App\Service\ImageService;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
+use InvalidArgumentException;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -50,24 +52,24 @@ final class ImageProcessor implements ProcessorInterface
             return $this->handleResetCropOperation($data, $uriVariables);
         }
 
+        if ($uriTemplate === '/images/{id}/generate-thumbnails') {
+            return $this->handleGenerateThumbnailsOperation($uriVariables);
+        }
+
         // Handle DELETE operation
         if ($operation instanceof DeleteOperationInterface) {
             if ($data instanceof Image) {
                 // Check if image is attached to any articles
                 $articleImages = $data->getArticleImages();
-                if ($articleImages && count($articleImages) > 0) {
-                    throw new \RuntimeException(
-                        sprintf(
-                            'Cannot delete image: it is attached to %d article(s). Please detach it from all articles first.',
-                            count($articleImages)
-                        )
-                    );
+                if ($articleImages && \count($articleImages) > 0) {
+                    throw new RuntimeException(\sprintf('Cannot delete image: it is attached to %d article(s). Please detach it from all articles first.', \count($articleImages)));
                 }
 
                 // TODO: Delete physical file from storage
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
             }
+
             return null;
         }
 
@@ -98,7 +100,7 @@ final class ImageProcessor implements ProcessorInterface
                 $existingEntity = $this->entityManager->getRepository(Image::class)->find($uriVariables['id']);
 
                 if (!$existingEntity) {
-                    throw new \RuntimeException('Image not found');
+                    throw new RuntimeException('Image not found');
                 }
 
                 // Update translatable and metadata fields from deserialized data
@@ -156,7 +158,7 @@ final class ImageProcessor implements ProcessorInterface
     private function addTranslation(Image $image, string $locale): void
     {
         /** @var TranslationRepository $translationRepo */
-        $translationRepo = $this->entityManager->getRepository('Gedmo\\Translatable\\Entity\\Translation');
+        $translationRepo = $this->entityManager->getRepository('Gedmo\Translatable\Entity\Translation');
 
         if ($image->getAlt()) {
             $translationRepo->translate($image, 'alt', $locale, $image->getAlt());
@@ -174,7 +176,7 @@ final class ImageProcessor implements ProcessorInterface
     }
 
     /**
-     * Handle crop operation: POST /images/{id}/thumbnails/crop
+     * Handle crop operation: POST /images/{id}/thumbnails/crop.
      *
      * Expected payload: {
      *   "profile": "article_card",
@@ -187,17 +189,17 @@ final class ImageProcessor implements ProcessorInterface
         // Load image entity
         $imageId = $uriVariables['id'] ?? null;
         if (!$imageId) {
-            throw new \InvalidArgumentException('Image ID is required');
+            throw new InvalidArgumentException('Image ID is required');
         }
 
         $image = $this->entityManager->getRepository(Image::class)->find($imageId);
         if (!$image) {
-            throw new \RuntimeException('Image not found');
+            throw new RuntimeException('Image not found');
         }
 
         // Extract request data from Image entity (denormalized with 'image:crop' group)
         if (!$data instanceof Image) {
-            throw new \InvalidArgumentException('Invalid request data - expected Image entity');
+            throw new InvalidArgumentException('Invalid request data - expected Image entity');
         }
 
         $profileName = $data->getProfile();
@@ -205,11 +207,11 @@ final class ImageProcessor implements ProcessorInterface
         $cropData = $data->getCropData();
 
         if (!$profileName) {
-            throw new \InvalidArgumentException('Profile name is required');
+            throw new InvalidArgumentException('Profile name is required');
         }
 
         if (!$cropData) {
-            throw new \InvalidArgumentException('Crop data is required');
+            throw new InvalidArgumentException('Crop data is required');
         }
 
         // Load profile
@@ -217,7 +219,7 @@ final class ImageProcessor implements ProcessorInterface
             ->findOneBy(['name' => $profileName]);
 
         if (!$profile) {
-            throw new \InvalidArgumentException(sprintf('Profile "%s" not found', $profileName));
+            throw new InvalidArgumentException(\sprintf('Profile "%s" not found', $profileName));
         }
 
         // Generate thumbnail with crop
@@ -228,7 +230,7 @@ final class ImageProcessor implements ProcessorInterface
     }
 
     /**
-     * Handle reset crop operation: POST /images/{id}/thumbnails/reset-crop
+     * Handle reset crop operation: POST /images/{id}/thumbnails/reset-crop.
      *
      * Expected payload: {
      *   "profile": "article_card",
@@ -240,24 +242,24 @@ final class ImageProcessor implements ProcessorInterface
         // Load image entity
         $imageId = $uriVariables['id'] ?? null;
         if (!$imageId) {
-            throw new \InvalidArgumentException('Image ID is required');
+            throw new InvalidArgumentException('Image ID is required');
         }
 
         $image = $this->entityManager->getRepository(Image::class)->find($imageId);
         if (!$image) {
-            throw new \RuntimeException('Image not found');
+            throw new RuntimeException('Image not found');
         }
 
         // Extract request data from Image entity
         if (!$data instanceof Image) {
-            throw new \InvalidArgumentException('Invalid request data - expected Image entity');
+            throw new InvalidArgumentException('Invalid request data - expected Image entity');
         }
 
         $profileName = $data->getProfile();
         $format = $data->getFormat() ?? 'webp';
 
         if (!$profileName) {
-            throw new \InvalidArgumentException('Profile name is required');
+            throw new InvalidArgumentException('Profile name is required');
         }
 
         // Load profile
@@ -265,7 +267,7 @@ final class ImageProcessor implements ProcessorInterface
             ->findOneBy(['name' => $profileName]);
 
         if (!$profile) {
-            throw new \InvalidArgumentException(sprintf('Profile "%s" not found', $profileName));
+            throw new InvalidArgumentException(\sprintf('Profile "%s" not found', $profileName));
         }
 
         // Generate thumbnail WITHOUT crop (cropData = null)
@@ -273,5 +275,32 @@ final class ImageProcessor implements ProcessorInterface
 
         // Return the thumbnail
         return $thumbnail;
+    }
+
+    /**
+     * Handle generate-thumbnails operation: POST /images/{id}/generate-thumbnails.
+     *
+     * Generates all thumbnails for all active profiles in all formats (webp, jpg).
+     * Uses auto-crop calculation for optimal framing.
+     */
+    private function handleGenerateThumbnailsOperation(array $uriVariables): array
+    {
+        // Load image entity
+        $imageId = $uriVariables['id'] ?? null;
+        if (!$imageId) {
+            throw new InvalidArgumentException('Image ID is required');
+        }
+
+        $image = $this->entityManager->getRepository(Image::class)->find($imageId);
+        if (!$image) {
+            throw new RuntimeException('Image not found');
+        }
+
+        // Generate all thumbnails using ImageService
+        // This will use auto-crop for all thumbnails
+        $thumbnails = $this->imageService->generateAllThumbnails($image);
+
+        // Return array of thumbnails (will be serialized with 'thumbnail:read' group)
+        return $thumbnails;
     }
 }

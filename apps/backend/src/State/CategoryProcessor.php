@@ -10,6 +10,8 @@ use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Category;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
+use LogicException;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -41,12 +43,13 @@ final class CategoryProcessor implements ProcessorInterface
             if ($data instanceof Category) {
                 // Check if category has articles
                 if ($data->getArticles()->count() > 0) {
-                    throw new \LogicException('Cannot delete category with existing articles');
+                    throw new LogicException('Cannot delete category with existing articles');
                 }
 
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
             }
+
             return null;
         }
 
@@ -60,7 +63,7 @@ final class CategoryProcessor implements ProcessorInterface
                 $existingEntity = $this->entityManager->getRepository(Category::class)->find($uriVariables['id']);
 
                 if (!$existingEntity) {
-                    throw new \RuntimeException('Category not found');
+                    throw new RuntimeException('Category not found');
                 }
 
                 // Update fields from deserialized data
@@ -109,7 +112,7 @@ final class CategoryProcessor implements ProcessorInterface
     private function addTranslation(Category $category, string $locale): void
     {
         /** @var TranslationRepository $translationRepo */
-        $translationRepo = $this->entityManager->getRepository('Gedmo\\Translatable\\Entity\\Translation');
+        $translationRepo = $this->entityManager->getRepository('Gedmo\Translatable\Entity\Translation');
 
         if ($category->getTitle()) {
             $translationRepo->translate($category, 'title', $locale, $category->getTitle());

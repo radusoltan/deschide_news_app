@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use ApiPlatform\Metadata\Delete;
 use App\Repository\ImageRepository;
 use App\State\ImageProcessor;
 use App\State\ImageProvider;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -38,7 +39,7 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
             uriTemplate: '/images/{id}',
             normalizationContext: [
                 'groups' => ['image:read', 'image:detail', 'thumbnail:read', 'thumbnail_profile:read'],
-                'enable_max_depth' => true
+                'enable_max_depth' => true,
             ]
         ),
         new GetCollection(
@@ -72,7 +73,15 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
             denormalizationContext: ['groups' => ['image:crop:reset']],
             normalizationContext: ['groups' => ['thumbnail:read']],
             description: 'Reset crop to default (regenerate thumbnail without custom crop data)'
-        )
+        ),
+        new Post(
+            uriTemplate: '/images/{id}/generate-thumbnails',
+            normalizationContext: [
+                'groups' => ['thumbnail:read', 'thumbnail_profile:read'],
+                'enable_max_depth' => true,
+            ],
+            description: 'Generate all thumbnails for all active profiles (auto-crop applied)'
+        ),
     ],
     provider: ImageProvider::class,
     processor: ImageProcessor::class
@@ -163,17 +172,27 @@ class Image implements Translatable
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['image:read'])]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?DateTimeImmutable $createdAt = null;
 
     #[Gedmo\Timestampable(on: 'update')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['image:read'])]
-    private ?\DateTimeImmutable $updatedAt = null;
+    private ?DateTimeImmutable $updatedAt = null;
 
     // For translations
     #[Gedmo\Locale]
     #[Groups(['image:read'])]
     private ?string $locale = null;
+
+    // Temporary properties for crop operations (not persisted)
+    #[Groups(['image:crop'])]
+    private ?string $profile = null;
+
+    #[Groups(['image:crop'])]
+    private ?string $format = null;
+
+    #[Groups(['image:crop'])]
+    private ?array $cropData = null;
 
     public function __construct()
     {
@@ -199,7 +218,7 @@ class Image implements Translatable
 
         // Update updatedAt to trigger Gedmo update and extract dimensions
         if ($file) {
-            $this->updatedAt = new \DateTimeImmutable();
+            $this->updatedAt = new DateTimeImmutable();
 
             // Extract image dimensions if it's an image file
             if (str_starts_with($file->getMimeType() ?? '', 'image/')) {
@@ -222,6 +241,7 @@ class Image implements Translatable
     public function setFilename(?string $filename): self
     {
         $this->filename = $filename;
+
         return $this;
     }
 
@@ -233,6 +253,7 @@ class Image implements Translatable
     public function setOriginalFilename(string $originalFilename): self
     {
         $this->originalFilename = $originalFilename;
+
         return $this;
     }
 
@@ -244,11 +265,12 @@ class Image implements Translatable
     public function setPath(?string $path): self
     {
         $this->path = $path;
+
         return $this;
     }
 
     /**
-     * Lifecycle callback to set path after file upload
+     * Lifecycle callback to set path after file upload.
      */
     #[ORM\PostLoad]
     #[ORM\PostPersist]
@@ -268,6 +290,7 @@ class Image implements Translatable
     public function setMimeType(?string $mimeType): self
     {
         $this->mimeType = $mimeType;
+
         return $this;
     }
 
@@ -279,6 +302,7 @@ class Image implements Translatable
     public function setSize(?int $size): self
     {
         $this->size = $size;
+
         return $this;
     }
 
@@ -290,6 +314,7 @@ class Image implements Translatable
     public function setWidth(int $width): self
     {
         $this->width = $width;
+
         return $this;
     }
 
@@ -301,6 +326,7 @@ class Image implements Translatable
     public function setHeight(int $height): self
     {
         $this->height = $height;
+
         return $this;
     }
 
@@ -312,6 +338,7 @@ class Image implements Translatable
     public function setAlt(?string $alt): self
     {
         $this->alt = $alt;
+
         return $this;
     }
 
@@ -323,6 +350,7 @@ class Image implements Translatable
     public function setCaption(?string $caption): self
     {
         $this->caption = $caption;
+
         return $this;
     }
 
@@ -334,6 +362,7 @@ class Image implements Translatable
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -345,15 +374,16 @@ class Image implements Translatable
     public function setImageAuthor(?string $imageAuthor): self
     {
         $this->imageAuthor = $imageAuthor;
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable
+    public function getUpdatedAt(): ?DateTimeImmutable
     {
         return $this->updatedAt;
     }
@@ -385,7 +415,7 @@ class Image implements Translatable
     }
 
     /**
-     * Computed property - aspect ratio
+     * Computed property - aspect ratio.
      */
     #[Groups(['image:read'])]
     public function getAspectRatio(): float
@@ -394,7 +424,7 @@ class Image implements Translatable
     }
 
     /**
-     * Computed property - formatted size
+     * Computed property - formatted size.
      */
     #[Groups(['image:read'])]
     public function getFormattedSize(): string
@@ -403,23 +433,13 @@ class Image implements Translatable
         $size = $this->size ?? 0;
         $unit = 0;
 
-        while ($size >= 1024 && $unit < count($units) - 1) {
+        while ($size >= 1024 && $unit < \count($units) - 1) {
             $size /= 1024;
-            $unit++;
+            ++$unit;
         }
 
         return round($size, 2) . ' ' . $units[$unit];
     }
-
-    // Temporary properties for crop operations (not persisted)
-    #[Groups(['image:crop'])]
-    private ?string $profile = null;
-
-    #[Groups(['image:crop'])]
-    private ?string $format = null;
-
-    #[Groups(['image:crop'])]
-    private ?array $cropData = null;
 
     public function getProfile(): ?string
     {
@@ -429,6 +449,7 @@ class Image implements Translatable
     public function setProfile(?string $profile): self
     {
         $this->profile = $profile;
+
         return $this;
     }
 
@@ -440,6 +461,7 @@ class Image implements Translatable
     public function setFormat(?string $format): self
     {
         $this->format = $format;
+
         return $this;
     }
 
@@ -451,6 +473,7 @@ class Image implements Translatable
     public function setCropData(?array $cropData): self
     {
         $this->cropData = $cropData;
+
         return $this;
     }
 }

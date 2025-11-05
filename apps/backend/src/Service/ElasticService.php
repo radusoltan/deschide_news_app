@@ -6,12 +6,18 @@ namespace App\Service;
 
 use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\ClientBuilder;
+use Exception;
+use RuntimeException;
+use stdClass;
 
 class ElasticService
 {
     private ?Client $client;
+
     private string $indexPrefix = 'deschide_articles';
+
     private array $supportedLocales = ['ro', 'en', 'ru'];
+
     private readonly bool $enabled;
 
     public function __construct(
@@ -40,14 +46,6 @@ class ElasticService
     public function isEnabled(): bool
     {
         return $this->enabled;
-    }
-
-    /**
-     * Get index name for a specific locale.
-     */
-    private function getIndexName(string $locale): string
-    {
-        return $this->indexPrefix.'_'.$locale;
     }
 
     /**
@@ -134,8 +132,8 @@ class ElasticService
             }
 
             $this->client->indices()->create($params);
-        } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to create Elasticsearch index: '.$e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new RuntimeException('Failed to create Elasticsearch index: ' . $e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -147,44 +145,6 @@ class ElasticService
         foreach ($this->supportedLocales as $locale) {
             $this->createIndex($locale);
         }
-    }
-
-    /**
-     * Get analyzer configuration for a specific locale.
-     */
-    private function getAnalyzerForLocale(string $locale): array
-    {
-        return match ($locale) {
-            'en' => [
-                'analyzer' => [
-                    'article_analyzer' => [
-                        'type' => 'english',
-                    ],
-                ],
-            ],
-            'ro' => [
-                'analyzer' => [
-                    'article_analyzer' => [
-                        'type' => 'romanian',
-                    ],
-                ],
-            ],
-            'ru' => [
-                'analyzer' => [
-                    'article_analyzer' => [
-                        'type' => 'russian',
-                    ],
-                ],
-            ],
-            default => [
-                'analyzer' => [
-                    'article_analyzer' => [
-                        'type' => 'standard',
-                        'filter' => ['lowercase', 'asciifolding'],
-                    ],
-                ],
-            ],
-        };
     }
 
     /**
@@ -206,8 +166,8 @@ class ElasticService
 
         try {
             $this->client->index($params);
-        } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to index document: '.$e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new RuntimeException('Failed to index document: ' . $e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -231,10 +191,10 @@ class ElasticService
 
             try {
                 $this->client->delete($params);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Ignore if document doesn't exist
                 if (!str_contains($e->getMessage(), 'not_found')) {
-                    error_log("Failed to delete document {$id} from {$indexName}: ".$e->getMessage());
+                    error_log("Failed to delete document {$id} from {$indexName}: " . $e->getMessage());
                 }
             }
         }
@@ -304,7 +264,7 @@ class ElasticService
         }
 
         // Build base query
-        $baseQuery = [] === $must ? ['match_all' => new \stdClass()] : ['bool' => ['must' => $must]];
+        $baseQuery = [] === $must ? ['match_all' => new stdClass()] : ['bool' => ['must' => $must]];
 
         // Wrap in function_score for featured articles boost
         $queryBody = [
@@ -329,7 +289,7 @@ class ElasticService
                 'query' => $queryBody,
                 'highlight' => [
                     'fields' => [
-                        'title' => new \stdClass(),
+                        'title' => new stdClass(),
                         'lead' => [
                             'fragment_size' => 150,
                             'number_of_fragments' => 2,
@@ -348,8 +308,8 @@ class ElasticService
             $response = $this->client->search($params);
 
             return $response->asArray();
-        } catch (\Exception $e) {
-            throw new \RuntimeException('Search failed: '.$e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new RuntimeException('Search failed: ' . $e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -400,8 +360,8 @@ class ElasticService
             }
 
             return $suggestions;
-        } catch (\Exception $e) {
-            throw new \RuntimeException('Suggest failed: '.$e->getMessage(), $e->getCode(), $e);
+        } catch (Exception $e) {
+            throw new RuntimeException('Suggest failed: ' . $e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -426,8 +386,264 @@ class ElasticService
             $response = $this->client->cluster()->health();
 
             return $response->asArray();
-        } catch (\Exception) {
+        } catch (Exception) {
             return null;
         }
+    }
+
+    /**
+     * Bulk index multiple documents for better performance.
+     *
+     * @param array $documents Array of documents to index
+     * @param string $locale Target locale
+     *
+     * @return array Stats about bulk operation (indexed, errors)
+     */
+    public function bulkIndexDocuments(array $documents, string $locale = 'ro'): array
+    {
+        if (!$this->enabled || empty($documents)) {
+            return ['indexed' => 0, 'errors' => 0];
+        }
+
+        $indexName = $this->getIndexName($locale);
+        $params = ['body' => []];
+
+        foreach ($documents as $document) {
+            // Add index action
+            $params['body'][] = [
+                'index' => [
+                    '_index' => $indexName,
+                    '_id' => $document['id'],
+                ],
+            ];
+
+            // Add document body
+            $params['body'][] = $document;
+        }
+
+        try {
+            $response = $this->client->bulk($params);
+            $result = $response->asArray();
+
+            $indexed = 0;
+            $errors = 0;
+
+            if (isset($result['items'])) {
+                foreach ($result['items'] as $item) {
+                    if (isset($item['index']['error'])) {
+                        ++$errors;
+                    } else {
+                        ++$indexed;
+                    }
+                }
+            }
+
+            return [
+                'indexed' => $indexed,
+                'errors' => $errors,
+                'took' => $result['took'] ?? 0,
+            ];
+        } catch (Exception $e) {
+            throw new RuntimeException('Bulk indexing failed: ' . $e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Create an alias pointing to an index.
+     *
+     * @param string $aliasName Alias name
+     * @param string $indexName Index name
+     */
+    public function createAlias(string $aliasName, string $indexName): void
+    {
+        if (!$this->enabled) {
+            return;
+        }
+
+        $params = [
+            'index' => $indexName,
+            'name' => $aliasName,
+        ];
+
+        try {
+            $this->client->indices()->putAlias($params);
+        } catch (Exception $e) {
+            throw new RuntimeException("Failed to create alias: {$e->getMessage()}", $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Atomic alias swap for zero-downtime reindex.
+     *
+     * @param string $aliasName Alias name
+     * @param string $oldIndexName Old index to remove from alias
+     * @param string $newIndexName New index to add to alias
+     */
+    public function swapAlias(string $aliasName, string $oldIndexName, string $newIndexName): void
+    {
+        if (!$this->enabled) {
+            return;
+        }
+
+        $params = [
+            'body' => [
+                'actions' => [
+                    [
+                        'remove' => [
+                            'index' => $oldIndexName,
+                            'alias' => $aliasName,
+                        ],
+                    ],
+                    [
+                        'add' => [
+                            'index' => $newIndexName,
+                            'alias' => $aliasName,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        try {
+            $this->client->indices()->updateAliases($params);
+        } catch (Exception $e) {
+            throw new RuntimeException("Failed to swap alias: {$e->getMessage()}", $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Get all aliases for an index or all indices.
+     */
+    public function getAliases(?string $indexName = null): array
+    {
+        if (!$this->enabled) {
+            return [];
+        }
+
+        $params = $indexName ? ['index' => $indexName] : [];
+
+        try {
+            $response = $this->client->indices()->getAlias($params);
+
+            return $response->asArray();
+        } catch (Exception) {
+            return [];
+        }
+    }
+
+    /**
+     * Delete an index.
+     */
+    public function deleteIndex(string $indexName): void
+    {
+        if (!$this->enabled) {
+            return;
+        }
+
+        try {
+            if ($this->client->indices()->exists(['index' => $indexName])->asBool()) {
+                $this->client->indices()->delete(['index' => $indexName]);
+            }
+        } catch (Exception $e) {
+            throw new RuntimeException("Failed to delete index: {$e->getMessage()}", $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Reindex all documents from old index to new index.
+     *
+     * @param string $sourceIndex Source index name
+     * @param string $destIndex Destination index name
+     *
+     * @return array Reindex statistics
+     */
+    public function reindex(string $sourceIndex, string $destIndex): array
+    {
+        if (!$this->enabled) {
+            return ['total' => 0, 'created' => 0];
+        }
+
+        $params = [
+            'body' => [
+                'source' => [
+                    'index' => $sourceIndex,
+                ],
+                'dest' => [
+                    'index' => $destIndex,
+                ],
+            ],
+        ];
+
+        try {
+            $response = $this->client->reindex($params);
+
+            return $response->asArray();
+        } catch (Exception $e) {
+            throw new RuntimeException("Reindex failed: {$e->getMessage()}", $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Get index statistics.
+     */
+    public function getIndexStats(string $indexName): ?array
+    {
+        if (!$this->enabled) {
+            return null;
+        }
+
+        try {
+            $response = $this->client->indices()->stats(['index' => $indexName]);
+
+            return $response->asArray();
+        } catch (Exception) {
+            return null;
+        }
+    }
+
+    /**
+     * Get index name for a specific locale.
+     */
+    private function getIndexName(string $locale): string
+    {
+        return $this->indexPrefix . '_' . $locale;
+    }
+
+    /**
+     * Get analyzer configuration for a specific locale.
+     */
+    private function getAnalyzerForLocale(string $locale): array
+    {
+        return match ($locale) {
+            'en' => [
+                'analyzer' => [
+                    'article_analyzer' => [
+                        'type' => 'english',
+                    ],
+                ],
+            ],
+            'ro' => [
+                'analyzer' => [
+                    'article_analyzer' => [
+                        'type' => 'romanian',
+                    ],
+                ],
+            ],
+            'ru' => [
+                'analyzer' => [
+                    'article_analyzer' => [
+                        'type' => 'russian',
+                    ],
+                ],
+            ],
+            default => [
+                'analyzer' => [
+                    'article_analyzer' => [
+                        'type' => 'standard',
+                        'filter' => ['lowercase', 'asciifolding'],
+                    ],
+                ],
+            ],
+        };
     }
 }

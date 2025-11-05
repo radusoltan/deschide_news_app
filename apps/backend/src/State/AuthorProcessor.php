@@ -10,6 +10,7 @@ use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Author;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -42,6 +43,7 @@ final class AuthorProcessor implements ProcessorInterface
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
             }
+
             return null;
         }
 
@@ -55,7 +57,7 @@ final class AuthorProcessor implements ProcessorInterface
                 $existingEntity = $this->entityManager->getRepository(Author::class)->find($uriVariables['id']);
 
                 if (!$existingEntity) {
-                    throw new \RuntimeException('Author not found');
+                    throw new RuntimeException('Author not found');
                 }
 
                 // Update fields from deserialized data
@@ -116,7 +118,7 @@ final class AuthorProcessor implements ProcessorInterface
     private function addTranslation(Author $author, string $locale): void
     {
         /** @var TranslationRepository $translationRepo */
-        $translationRepo = $this->entityManager->getRepository('Gedmo\\Translatable\\Entity\\Translation');
+        $translationRepo = $this->entityManager->getRepository('Gedmo\Translatable\Entity\Translation');
 
         if ($author->getBio()) {
             $translationRepo->translate($author, 'bio', $locale, $author->getBio());

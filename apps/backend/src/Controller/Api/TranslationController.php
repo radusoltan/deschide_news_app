@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * Translation API Controller
+ * Translation API Controller.
  *
  * Provides endpoints for fetching all locale translations of entities.
  * This enables proper language switching with translated slugs in the frontend.
@@ -33,11 +33,12 @@ class TranslationController extends AbstractController
     }
 
     /**
-     * Get all locale translations for an article
+     * Get all locale translations for an article.
      *
      * Returns the article slug and category slug in all available locales (ro, en, ru)
      *
      * @param int $id Article ID
+     *
      * @return JsonResponse
      *
      * Success Response (200):
@@ -134,11 +135,12 @@ class TranslationController extends AbstractController
     }
 
     /**
-     * Get all locale translations for a category
+     * Get all locale translations for a category.
      *
      * Returns the category slug in all available locales (ro, en, ru)
      *
      * @param int $id Category ID
+     *
      * @return JsonResponse
      *
      * Success Response (200):
@@ -218,13 +220,12 @@ class TranslationController extends AbstractController
     }
 
     /**
-     * Get all locale translations for an author
+     * Get all locale translations for an author.
      *
      * Note: Authors are not translatable, so this returns the same slug for all locales
      * This endpoint exists for API consistency
      *
      * @param int $id Author ID
-     * @return JsonResponse
      */
     #[Route('/authors/{id}/translations', name: 'author_translations', methods: ['GET'])]
     public function getAuthorTranslations(int $id): JsonResponse

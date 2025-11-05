@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Service\ElasticService;
+use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -37,14 +38,15 @@ class ElasticsearchCreateIndexCommand extends Command
 
         if (!$this->elasticService->isEnabled()) {
             $io->warning('Elasticsearch is disabled. Check ELASTICSEARCH_HOST configuration.');
+
             return Command::SUCCESS;
         }
 
         try {
             if ($locale) {
-                $io->info(sprintf('Creating Elasticsearch index for locale: %s', $locale));
+                $io->info(\sprintf('Creating Elasticsearch index for locale: %s', $locale));
                 $this->elasticService->createIndex($locale);
-                $io->success(sprintf('Index for locale "%s" created successfully!', $locale));
+                $io->success(\sprintf('Index for locale "%s" created successfully!', $locale));
             } else {
                 $io->info('Creating Elasticsearch indices for all locales (ro, en, ru)...');
                 $this->elasticService->createAllIndices();
@@ -65,8 +67,8 @@ class ElasticsearchCreateIndexCommand extends Command
             }
 
             return Command::SUCCESS;
-        } catch (\Exception $e) {
-            $io->error('Failed to create index: '.$e->getMessage());
+        } catch (Exception $e) {
+            $io->error('Failed to create index: ' . $e->getMessage());
 
             return Command::FAILURE;
         }
