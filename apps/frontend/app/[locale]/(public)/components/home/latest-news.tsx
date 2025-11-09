@@ -30,7 +30,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
   // First article is the featured article (full width)
   const featuredArticle = articles[0];
   const featuredImage = getFeaturedImage(featuredArticle.articleImages);
-  const featuredThumbnail = featuredImage ? getThumbnailByProfile(featuredImage, 'article_wide') : null;
+  const featuredThumbnail = featuredImage ? getThumbnailByProfile(featuredImage, 'article_hero') : null;
 
   // Remaining articles (up to 6) are displayed in 3-column grid
   const gridArticles = articles.slice(1, 7);

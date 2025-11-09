@@ -37,9 +37,9 @@ export default function CategoryHeroArticle({ article, locale }: CategoryHeroArt
   // Get featured image
   const featuredImage = getFeaturedImage(article.articleImages || []);
 
-  // Get thumbnail with article_wide profile (1920x1080)
+  // Get thumbnail with article_hero profile (1600x600)
   const thumbnail = featuredImage
-    ? getThumbnailByProfile(featuredImage, 'article_wide')
+    ? getThumbnailByProfile(featuredImage, 'article_hero')
     : null;
 
   // Use thumbnail if available, fallback to original image

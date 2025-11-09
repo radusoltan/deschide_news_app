@@ -3,6 +3,7 @@
  */
 
 import { ArticleImage } from './image';
+import { Tag } from './tag';
 
 export type ArticleStatus = 'draft' | 'published' | 'archived';
 
@@ -29,6 +30,7 @@ export interface Article {
   authors: string[]; // IRIs to Authors
   articleImages: ArticleImage[];
   relatedArticles?: (Article | string)[]; // Full Article objects or IRIs
+  tags?: (Tag | string)[]; // Full Tag objects or IRIs
   status: ArticleStatus;
   viewCount: number;
   createdAt: string;

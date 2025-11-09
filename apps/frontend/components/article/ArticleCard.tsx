@@ -57,7 +57,7 @@ export default function ArticleCard({
   // Get featured image
   const featuredImage = getFeaturedImage(article.articleImages || []);
   const thumbnail = featuredImage
-    ? getThumbnailByProfile(featuredImage, 'card_medium')
+    ? getThumbnailByProfile(featuredImage, 'article_card')
     : null;
   const imageToUse = thumbnail || featuredImage;
   const imageUrl = imageToUse ? buildImageUrl(imageToUse.path) : null;

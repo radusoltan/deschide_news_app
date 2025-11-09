@@ -21,3 +21,4 @@ export * from './article-images';
 export * from './important-articles';
 export * from './statistics';
 export * from './livetext';
+export * from './tags';

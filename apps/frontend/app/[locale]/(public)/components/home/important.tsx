@@ -31,8 +31,8 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
   const mainArticle = importantArticles[0];
   const mainImage = getFeaturedImage(mainArticle.article.articleImages);
 
-  // Get article_wide thumbnail for main article
-  const mainThumbnail = mainImage ? getThumbnailByProfile(mainImage, 'article_wide') : null;
+  // Get article_hero thumbnail for main article
+  const mainThumbnail = mainImage ? getThumbnailByProfile(mainImage, 'article_hero') : null;
 
   // Remaining articles (up to 4) are displayed in grid (right side)
   const gridArticles = importantArticles.slice(1, 5);
@@ -104,7 +104,7 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
           <div className="box-one flex flex-row flex-wrap">
             {gridArticles.map((importantArticle) => {
               const image = getFeaturedImage(importantArticle.article.articleImages);
-              const thumbnail = image ? getThumbnailByProfile(image, 'article_wide') : null;
+              const thumbnail = image ? getThumbnailByProfile(image, 'article_card') : null;
 
               return (
                 <article key={importantArticle.id} className="flex-shrink max-w-full w-full sm:w-1/2">

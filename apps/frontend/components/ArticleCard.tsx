@@ -5,10 +5,11 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Article, Category } from '@/lib/types/article';
+import { Article, Category, Tag } from '@/lib/types/article';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
 import { buildArticleUrl, buildCategoryUrl, getCategorySlug as getSlug } from '@/lib/utils/url-builder';
 import { ViewCountBadge } from '@/components/public/ViewCountBadge';
+import { TagList } from '@/components/tags';
 import type { Locale } from '@/lib/types';
 
 interface ArticleCardProps {
@@ -113,6 +114,19 @@ export default function ArticleCard({
               <ViewCountBadge views={article.viewCount} />
             )}
           </div>
+          {/* Tags */}
+          {article.tags && article.tags.length > 0 && (
+            <div className="mt-3">
+              <TagList
+                tags={article.tags.filter((tag): tag is Tag => typeof tag !== 'string')}
+                locale={locale}
+                variant="default"
+                size="sm"
+                maxTags={3}
+                showHash={true}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
