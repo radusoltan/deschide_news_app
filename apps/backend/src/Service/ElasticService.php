@@ -120,6 +120,25 @@ class ElasticService
                         'is_featured' => ['type' => 'boolean'],
                         'status' => ['type' => 'keyword'],
                         'related_ids' => ['type' => 'integer'],
+                        // Tags fields for enhanced search
+                        'tags' => [
+                            'type' => 'nested',
+                            'properties' => [
+                                'id' => ['type' => 'integer'],
+                                'name' => [
+                                    'type' => 'text',
+                                    'analyzer' => 'article_analyzer',
+                                    'fields' => [
+                                        'keyword' => ['type' => 'keyword'],
+                                    ],
+                                ],
+                                'slug' => ['type' => 'keyword'],
+                            ],
+                        ],
+                        'tag_names' => [
+                            'type' => 'text',
+                            'analyzer' => 'article_analyzer',
+                        ],
                     ],
                 ],
             ],
@@ -217,7 +236,7 @@ class ElasticService
             $must[] = [
                 'multi_match' => [
                     'query' => $query,
-                    'fields' => ['title^3', 'lead^2', 'content'],
+                    'fields' => ['title^3', 'tag_names^2.5', 'lead^2', 'content'],
                     'type' => 'best_fields',
                     'fuzziness' => 'AUTO',
                 ],
@@ -239,6 +258,22 @@ class ElasticService
 
         if (!empty($filters['badge'])) {
             $must[] = ['term' => ['badge' => $filters['badge']]];
+        }
+
+        // Add filter for tags
+        if (!empty($filters['tag_ids'])) {
+            $tagIds = is_array($filters['tag_ids']) ? $filters['tag_ids'] : [$filters['tag_ids']];
+
+            $must[] = [
+                'nested' => [
+                    'path' => 'tags',
+                    'query' => [
+                        'terms' => [
+                            'tags.id' => $tagIds,
+                        ],
+                    ],
+                ],
+            ];
         }
 
         // Build sort array

@@ -27,12 +27,12 @@ use Symfony\Component\Validator\Constraints as Assert;
     operations: [
         new Get(
             uriTemplate: '/important_articles/{id}',
-            normalizationContext: ['groups' => ['important_articles:read', 'article:read'], 'enable_max_depth' => true],
+            normalizationContext: ['groups' => ['important_articles:read', 'article:read', 'article:detail'], 'enable_max_depth' => true],
             provider: ImportantArticlesListProvider::class
         ),
         new GetCollection(
             uriTemplate: '/important_articles',
-            normalizationContext: ['groups' => ['important_articles:read', 'article:read'], 'enable_max_depth' => true],
+            normalizationContext: ['groups' => ['important_articles:read', 'article:read', 'article:detail'], 'enable_max_depth' => true],
             provider: ImportantArticlesListProvider::class
         ),
         new Post(

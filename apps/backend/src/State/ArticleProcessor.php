@@ -8,10 +8,12 @@ use ApiPlatform\Metadata\DeleteOperationInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Article;
+use App\Message\CheckOrphanedTagsMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * @implements ProcessorInterface<Article>
@@ -20,7 +22,8 @@ final class ArticleProcessor implements ProcessorInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly RequestStack $requestStack
+        private readonly RequestStack $requestStack,
+        private readonly MessageBusInterface $messageBus
     ) {
     }
 
@@ -40,8 +43,20 @@ final class ArticleProcessor implements ProcessorInterface
         // Handle DELETE operation
         if ($operation instanceof DeleteOperationInterface) {
             if ($data instanceof Article) {
+                // Collect tag IDs before deletion
+                $tagIds = [];
+                foreach ($data->getTags() as $tag) {
+                    $tagIds[] = $tag->getId();
+                    $tag->setUsageCount(max(0, $tag->getUsageCount() - 1));
+                }
+
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
+
+                // Dispatch async message to check for orphaned tags
+                if (!empty($tagIds)) {
+                    $this->messageBus->dispatch(new CheckOrphanedTagsMessage($tagIds));
+                }
             }
 
             return null;
@@ -108,6 +123,22 @@ final class ArticleProcessor implements ProcessorInterface
                     }
                 }
 
+                // Sync tags collection
+                // Remove tags that are not in the new list and decrement their usage count
+                foreach ($existingEntity->getTags() as $tag) {
+                    if (!$data->getTags()->contains($tag)) {
+                        $existingEntity->removeTag($tag);
+                        $tag->setUsageCount(max(0, $tag->getUsageCount() - 1));
+                    }
+                }
+                // Add new tags and increment their usage count
+                foreach ($data->getTags() as $tag) {
+                    if (!$existingEntity->getTags()->contains($tag)) {
+                        $existingEntity->addTag($tag);
+                        $tag->setUsageCount($tag->getUsageCount() + 1);
+                    }
+                }
+
                 // Use existing entity instead of deserialized one
                 $data = $existingEntity;
             }
@@ -118,6 +149,12 @@ final class ArticleProcessor implements ProcessorInterface
                 // CREATE: New entity - always save in default locale
                 $data->setTranslatableLocale('ro');
                 $this->entityManager->persist($data);
+                $this->entityManager->flush();
+
+                // Increment usage count for all tags on new article
+                foreach ($data->getTags() as $tag) {
+                    $tag->setUsageCount($tag->getUsageCount() + 1);
+                }
                 $this->entityManager->flush();
 
                 // If created with non-default locale, also add translation

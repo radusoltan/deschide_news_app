@@ -63,7 +63,8 @@ class ElasticsearchIndexArticlesCommand extends Command
                 $qb->leftJoin('a.authors', 'authors')
                     ->leftJoin('a.category', 'category')
                     ->leftJoin('a.relatedArticles', 'related')
-                    ->addSelect('authors', 'category', 'related');
+                    ->leftJoin('a.tags', 'tags')
+                    ->addSelect('authors', 'category', 'related', 'tags');
 
                 if ($status) {
                     $qb->where('a.status = :status')
@@ -103,12 +104,31 @@ class ElasticsearchIndexArticlesCommand extends Command
                         $relatedIds[] = $related->getId();
                     }
 
-                    // Build suggest input: title + category name + keywords
+                    // Build tags array
+                    $tags = [];
+                    $tagNames = [];
+                    foreach ($article->getTags() as $tag) {
+                        // Set locale for tag translation
+                        $tag->setTranslatableLocale($currentLocale);
+                        $this->entityManager->refresh($tag);
+
+                        $tags[] = [
+                            'id' => $tag->getId(),
+                            'name' => $tag->getName(),
+                            'slug' => $tag->getSlug(),
+                        ];
+                        $tagNames[] = $tag->getName();
+                    }
+
+                    // Build suggest input: title + category name + tag names + keywords
                     $suggestInput = [$article->getTitle()];
 
                     if ($article->getCategory()) {
                         $suggestInput[] = $article->getCategory()->getTitle();
                     }
+
+                    // Add tag names to suggest input
+                    $suggestInput = array_merge($suggestInput, $tagNames);
 
                     // Extract first few words from lead/content as additional keywords
                     $text = $article->getLead() ?? $article->getContent() ?? '';
@@ -143,6 +163,8 @@ class ElasticsearchIndexArticlesCommand extends Command
                         'is_featured' => $article->isFeatured(),
                         'status' => $article->getStatus()->value,
                         'related_ids' => $relatedIds,
+                        'tags' => $tags,
+                        'tag_names' => implode(' ', $tagNames),
                     ];
 
                     $batch[] = $document;

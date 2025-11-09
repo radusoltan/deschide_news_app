@@ -2,3 +2,6 @@ framework:
     scheduler:
         # Enable the scheduler
         enabled: true
+
+# Note: Scheduled tasks are defined in src/Scheduler/TagMaintenanceScheduleProvider.php
+# To run the scheduler: symfony console messenger:consume scheduler_default

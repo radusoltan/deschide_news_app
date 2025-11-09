@@ -23,6 +23,11 @@ framework:
             'App\Message\PageViewEvent': stats_async
             'App\Message\SessionEndEvent': stats_async
 
+            # Tag maintenance messages (async processing)
+            'App\Message\CleanupUnusedTagsMessage': async
+            'App\Message\RecalculateTagCountsMessage': async
+            'App\Message\CheckOrphanedTagsMessage': async
+
 # when@test:
 #    framework:
 #        messenger:

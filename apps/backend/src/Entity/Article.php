@@ -91,6 +91,9 @@ use Symfony\Component\Validator\Constraints as Assert;
     'status' => 'exact',
     'title' => 'partial',
     'slug' => 'exact',
+    'tags' => 'exact',
+    'tags.id' => 'exact',
+    'tags.slug' => 'exact',
 ])]
 #[ApiFilter(OrderFilter::class, properties: [
     'publishedAt' => 'DESC',
@@ -158,6 +161,12 @@ class Article implements Translatable
     #[Groups(['article:detail', 'article:write'])]
     private Collection $relatedArticles;
 
+    #[ORM\ManyToMany(targetEntity: Tag::class, inversedBy: 'articles')]
+    #[ORM\JoinTable(name: 'article_tag')]
+    #[Groups(['article:read', 'article:write'])]
+    #[MaxDepth(2)]
+    private Collection $tags;
+
     // Non-translatable fields
     #[ORM\Column(type: Types::STRING, length: 20, enumType: ArticleStatus::class)]
     #[Groups(['article:read', 'article:write'])]
@@ -205,6 +214,7 @@ class Article implements Translatable
         $this->authors = new ArrayCollection();
         $this->articleImages = new ArrayCollection();
         $this->relatedArticles = new ArrayCollection();
+        $this->tags = new ArrayCollection();
     }
 
     // Getters and setters
@@ -465,6 +475,30 @@ class Article implements Translatable
                 $articleImage->setArticle(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Tag>
+     */
+    public function getTags(): Collection
+    {
+        return $this->tags;
+    }
+
+    public function addTag(Tag $tag): self
+    {
+        if (!$this->tags->contains($tag)) {
+            $this->tags->add($tag);
+        }
+
+        return $this;
+    }
+
+    public function removeTag(Tag $tag): self
+    {
+        $this->tags->removeElement($tag);
 
         return $this;
     }

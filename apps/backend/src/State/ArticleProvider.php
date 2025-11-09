@@ -49,6 +49,8 @@ final class ArticleProvider implements ProviderInterface
                 ->addSelect('ai')
                 ->leftJoin('ai.image', 'img')
                 ->addSelect('img')
+                ->leftJoin('a.tags', 't')
+                ->addSelect('t')
                 ->where('a.id = :id')
                 ->setParameter('id', $uriVariables['id'])
                 ->orderBy('ai.position', 'ASC');
@@ -81,19 +83,27 @@ final class ArticleProvider implements ProviderInterface
                     $author->setTranslatableLocale($locale);
                     $this->entityManager->refresh($author);
                 }
+
+                // Refresh tags for translatable fields (name, slug, description)
+                foreach ($result->getTags() as $tag) {
+                    $tag->setTranslatableLocale($locale);
+                    $this->entityManager->refresh($tag);
+                }
             }
 
             return $result;
         }
 
         // Handle collection retrieval
-        // OPTIMIZATION: Eager load category and authors to avoid N+1 queries
+        // OPTIMIZATION: Eager load category, authors, and tags to avoid N+1 queries
         // Images/thumbnails are loaded separately if needed by serialization groups
         $queryBuilder = $repository->createQueryBuilder('a')
             ->leftJoin('a.category', 'c')
             ->addSelect('c')
             ->leftJoin('a.authors', 'au')
-            ->addSelect('au');
+            ->addSelect('au')
+            ->leftJoin('a.tags', 't')
+            ->addSelect('t');
 
         // Apply filters from query parameters
         if ($request) {
@@ -198,6 +208,12 @@ final class ArticleProvider implements ProviderInterface
             foreach ($article->getAuthors() as $author) {
                 $author->setTranslatableLocale($locale);
                 $this->entityManager->refresh($author);
+            }
+
+            // Refresh tags for translatable fields (name, slug, description)
+            foreach ($article->getTags() as $tag) {
+                $tag->setTranslatableLocale($locale);
+                $this->entityManager->refresh($tag);
             }
         }
 
