@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\State;
 
 use ApiPlatform\Metadata\Operation;
-use ApiPlatform\State\Pagination\Pagination;
 use ApiPlatform\State\ProviderInterface;
 use App\Entity\Article;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,9 +12,11 @@ use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
+ * Provider for archived articles only.
+ *
  * @implements ProviderInterface<Article>
  */
-final class ArticleProvider implements ProviderInterface
+final class ArchivedArticleProvider implements ProviderInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -52,27 +53,25 @@ final class ArticleProvider implements ProviderInterface
                 ->leftJoin('a.tags', 't')
                 ->addSelect('t')
                 ->where('a.id = :id')
-                ->andWhere('a.status != :archived_status')
+                ->andWhere('a.status = :archived_status')
                 ->setParameter('id', $uriVariables['id'])
                 ->setParameter('archived_status', 'archived')
                 ->orderBy('ai.position', 'ASC');
 
-            // Apply Gedmo Translatable hint
             $query = $queryBuilder->getQuery();
             $query->setHint(
                 \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
                 $locale
             );
 
-            // Enable result cache for single article GET (1 hour)
-            $cacheKey = \sprintf('article_%d_%s', $uriVariables['id'], $locale);
-            $query->enableResultCache(3600, $cacheKey);
+            // Enable result cache for single archived article (2 hours - archives change rarely)
+            $cacheKey = \sprintf('archived_article_%d_%s', $uriVariables['id'], $locale);
+            $query->enableResultCache(7200, $cacheKey);
 
             $result = $query->getOneOrNullResult();
 
             if ($result) {
                 $result->setTranslatableLocale($locale);
-                // Force refresh to load translations
                 $this->entityManager->refresh($result);
 
                 // Set locale for related entities
@@ -86,7 +85,6 @@ final class ArticleProvider implements ProviderInterface
                     $this->entityManager->refresh($author);
                 }
 
-                // Refresh tags for translatable fields (name, slug, description)
                 foreach ($result->getTags() as $tag) {
                     $tag->setTranslatableLocale($locale);
                     $this->entityManager->refresh($tag);
@@ -96,9 +94,7 @@ final class ArticleProvider implements ProviderInterface
             return $result;
         }
 
-        // Handle collection retrieval
-        // OPTIMIZATION: Eager load category, authors, and tags to avoid N+1 queries
-        // Images/thumbnails are loaded separately if needed by serialization groups
+        // Handle collection retrieval - only archived articles
         $queryBuilder = $repository->createQueryBuilder('a')
             ->leftJoin('a.category', 'c')
             ->addSelect('c')
@@ -106,7 +102,7 @@ final class ArticleProvider implements ProviderInterface
             ->addSelect('au')
             ->leftJoin('a.tags', 't')
             ->addSelect('t')
-            ->andWhere('a.status != :archived_status')
+            ->andWhere('a.status = :archived_status')
             ->setParameter('archived_status', 'archived');
 
         // Apply filters from query parameters
@@ -133,17 +129,10 @@ final class ArticleProvider implements ProviderInterface
                     ->setParameter('categoryId', $categoryId);
             }
 
-            // Filter by status
-            if ($status = $request->query->get('status')) {
-                $queryBuilder->andWhere('a.status = :status')
-                    ->setParameter('status', $status);
-            }
-
-            // Filter by featured
-            if ($request->query->has('isFeatured')) {
-                $isFeatured = filter_var($request->query->get('isFeatured'), FILTER_VALIDATE_BOOLEAN);
-                $queryBuilder->andWhere('a.isFeatured = :isFeatured')
-                    ->setParameter('isFeatured', $isFeatured);
+            // Filter by archive reason
+            if ($archiveReason = $request->query->get('archiveReason')) {
+                $queryBuilder->andWhere('a.archiveReason = :archiveReason')
+                    ->setParameter('archiveReason', $archiveReason);
             }
 
             // Order by
@@ -156,8 +145,8 @@ final class ArticleProvider implements ProviderInterface
                     }
                 }
             } else {
-                // Default ordering
-                $queryBuilder->addOrderBy('a.publishedAt', 'DESC');
+                // Default ordering for archives: most recently archived first
+                $queryBuilder->addOrderBy('a.archivedAt', 'DESC');
             }
 
             // Pagination
@@ -177,44 +166,36 @@ final class ArticleProvider implements ProviderInterface
             $locale
         );
 
-        // Enable result cache for collection (30 minutes)
-        // Cache key includes page, itemsPerPage, filters, and locale
+        // Enable result cache for archived collection (1 hour - archives change rarely)
         $cacheKey = \sprintf(
-            'articles_list_%s_p%d_ipp%d_%s_%s_%s',
+            'archived_articles_list_%s_p%d_ipp%d_%s_%s',
             $locale,
             $page ?? 1,
             $itemsPerPage ?? 20,
             md5($request?->query->get('category', '')),
-            $request?->query->get('status', 'all'),
-            $request?->query->get('isFeatured', 'all')
+            $request?->query->get('archiveReason', 'all')
         );
-        $query->enableResultCache(1800, $cacheKey);  // 30 minutes
+        $query->enableResultCache(3600, $cacheKey);
 
         // Use Doctrine Paginator to get correct total count
-        // fetchJoinCollection=true because we're joining collections (authors)
         $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: true);
 
-        // OPTIMIZATION: Refresh entities to load translations, but avoid N+1 by using eager-loaded data
-        // Since we removed articleCount from serialization groups, this won't cause collection loading
+        // Refresh entities to load translations
         $results = iterator_to_array($doctrinePaginator);
         foreach ($results as $article) {
-            // Refresh article for translatable fields (title, slug, lead)
             $article->setTranslatableLocale($locale);
             $this->entityManager->refresh($article);
 
-            // Refresh category for translatable fields (title, slug) - SAFE because no articleCount
             if ($article->getCategory()) {
                 $article->getCategory()->setTranslatableLocale($locale);
                 $this->entityManager->refresh($article->getCategory());
             }
 
-            // Refresh authors for translatable fields (bio) - SAFE because no articleCount
             foreach ($article->getAuthors() as $author) {
                 $author->setTranslatableLocale($locale);
                 $this->entityManager->refresh($author);
             }
 
-            // Refresh tags for translatable fields (name, slug, description)
             foreach ($article->getTags() as $tag) {
                 $tag->setTranslatableLocale($locale);
                 $this->entityManager->refresh($tag);

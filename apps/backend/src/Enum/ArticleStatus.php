@@ -9,4 +9,5 @@ enum ArticleStatus: string
     case NEW = 'new';
     case SUBMITTED = 'submitted';
     case PUBLISHED = 'published';
+    case ARCHIVED = 'archived';
 }

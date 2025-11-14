@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Entity\Category;
 use Doctrine\ORM\EntityManagerInterface;
+use Gedmo\Translatable\TranslatableListener;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -17,24 +18,18 @@ final class CategoryProvider implements ProviderInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly RequestStack $requestStack
+        private readonly RequestStack $requestStack,
+        private readonly TranslatableListener $translatableListener
     ) {
     }
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
     {
         $request = $this->requestStack->getCurrentRequest();
-        $locale = $request?->headers->get('Accept-Language', 'ro') ?? 'ro';
-
-        // Extract just the language code (e.g., 'en' from 'en-US')
-        if (str_contains($locale, '-')) {
-            $locale = explode('-', $locale)[0];
-        }
-        if (str_contains($locale, ',')) {
-            $locale = explode(',', $locale)[0];
-        }
-
         $repository = $this->entityManager->getRepository(Category::class);
+
+        // Get the current locale from request (LocaleSubscriber sets it globally)
+        $locale = $request?->getLocale() ?? 'ro';
 
         // Handle single item retrieval
         if (isset($uriVariables['id'])) {
@@ -42,14 +37,14 @@ final class CategoryProvider implements ProviderInterface
                 ->where('c.id = :id')
                 ->setParameter('id', $uriVariables['id']);
 
-            // Apply Gedmo Translatable hints - translations loaded directly
             $query = $queryBuilder->getQuery();
+
+            // Apply Gedmo hint to load translations
             $query->setHint(
-                \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
+                TranslatableListener::HINT_TRANSLATABLE_LOCALE,
                 $locale
             );
 
-            // No refresh needed - Gedmo loads translations via hints
             return $query->getOneOrNullResult();
         }
 
@@ -77,13 +72,12 @@ final class CategoryProvider implements ProviderInterface
 
         $query = $queryBuilder->getQuery();
 
-        // OPTIMIZATION: Gedmo hints load translations directly - no need to refresh!
+        // Apply Gedmo hint to load translations
         $query->setHint(
-            \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
+            TranslatableListener::HINT_TRANSLATABLE_LOCALE,
             $locale
         );
 
-        // Translations are loaded by Gedmo - no refresh needed (eliminates N queries)
         return $query->getResult();
     }
 }

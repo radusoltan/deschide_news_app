@@ -14,9 +14,11 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use App\Enum\ArchiveReason;
 use App\Enum\ArticleBadge;
 use App\Enum\ArticleStatus;
 use App\Repository\ArticleRepository;
+use App\State\ArchivedArticleProvider;
 use App\State\ArticleProcessor;
 use App\State\ArticleProvider;
 use App\Validator\ReservedSlug;
@@ -41,11 +43,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_article_published_at', columns: ['published_at'])]
 #[ORM\Index(name: 'idx_article_publish_at', columns: ['publish_at'])]
 #[ORM\Index(name: 'idx_article_featured', columns: ['is_featured'])]
+#[ORM\Index(name: 'idx_article_archived_at', columns: ['archived_at'])]
 // Composite indexes for common queries
 #[ORM\Index(name: 'idx_article_status_category', columns: ['status', 'category_id'])]
 #[ORM\Index(name: 'idx_article_status_published', columns: ['status', 'published_at'])]
 #[ORM\Index(name: 'idx_article_featured_published', columns: ['is_featured', 'published_at'])]
 #[ORM\Index(name: 'idx_article_category_status_published', columns: ['category_id', 'status', 'published_at'])]
+#[ORM\Index(name: 'idx_article_status_archived', columns: ['status', 'archived_at'])]
 #[ApiResource(
     operations: [
         new Get(
@@ -84,6 +88,33 @@ use Symfony\Component\Validator\Constraints as Assert;
     ],
     provider: ArticleProvider::class,
     processor: ArticleProcessor::class
+)]
+#[ApiResource(
+    operations: [
+        new Get(
+            uriTemplate: '/archived_articles/{id}',
+            normalizationContext: ['groups' => ['article:read', 'article:detail', 'category:read', 'author:read'], 'enable_max_depth' => true],
+            cacheHeaders: [
+                'max_age' => 7200,           // 2 hours client cache (archives change rarely)
+                'shared_max_age' => 14400,   // 4 hours proxy/CDN cache
+                'vary' => ['Accept', 'Accept-Language'],
+            ]
+        ),
+        new GetCollection(
+            uriTemplate: '/archived_articles',
+            normalizationContext: ['groups' => ['article:read', 'article:list', 'category:read', 'author:read'], 'enable_max_depth' => true],
+            paginationItemsPerPage: 20,
+            paginationPartial: true,
+            paginationClientEnabled: true,
+            paginationClientItemsPerPage: true,
+            cacheHeaders: [
+                'max_age' => 3600,           // 1 hour client cache
+                'shared_max_age' => 7200,    // 2 hours proxy/CDN cache
+                'vary' => ['Accept', 'Accept-Language'],
+            ]
+        ),
+    ],
+    provider: ArchivedArticleProvider::class
 )]
 #[ApiFilter(SearchFilter::class, properties: [
     'category' => 'exact',
@@ -203,6 +234,15 @@ class Article implements Translatable
     #[Assert\GreaterThan('now', message: 'Publish date must be in the future.')]
     #[Groups(['article:read', 'article:write'])]
     private ?DateTimeImmutable $publishAt = null;
+
+    // Archive fields
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['article:read'])]
+    private ?DateTimeImmutable $archivedAt = null;
+
+    #[ORM\Column(type: Types::STRING, length: 30, nullable: true, enumType: ArchiveReason::class)]
+    #[Groups(['article:read', 'article:write'])]
+    private ?ArchiveReason $archiveReason = null;
 
     // For translations
     #[Gedmo\Locale]
@@ -499,6 +539,53 @@ class Article implements Translatable
     public function removeTag(Tag $tag): self
     {
         $this->tags->removeElement($tag);
+
+        return $this;
+    }
+
+    public function getArchivedAt(): ?DateTimeImmutable
+    {
+        return $this->archivedAt;
+    }
+
+    public function setArchivedAt(?DateTimeImmutable $archivedAt): self
+    {
+        $this->archivedAt = $archivedAt;
+
+        return $this;
+    }
+
+    public function getArchiveReason(): ?ArchiveReason
+    {
+        return $this->archiveReason;
+    }
+
+    public function setArchiveReason(?ArchiveReason $archiveReason): self
+    {
+        $this->archiveReason = $archiveReason;
+
+        return $this;
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->status === ArticleStatus::ARCHIVED;
+    }
+
+    public function archive(ArchiveReason $reason): self
+    {
+        $this->status = ArticleStatus::ARCHIVED;
+        $this->archivedAt = new DateTimeImmutable();
+        $this->archiveReason = $reason;
+
+        return $this;
+    }
+
+    public function unarchive(): self
+    {
+        $this->status = ArticleStatus::PUBLISHED;
+        $this->archivedAt = null;
+        $this->archiveReason = null;
 
         return $this;
     }

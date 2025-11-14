@@ -8,4 +8,5 @@ enum CategoryStatus: string
 {
     case ACTIVE = 'active';
     case INACTIVE = 'inactive';
+    case ARCHIVED = 'archived';
 }

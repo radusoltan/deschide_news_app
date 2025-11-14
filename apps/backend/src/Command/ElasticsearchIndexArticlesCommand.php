@@ -36,6 +36,7 @@ class ElasticsearchIndexArticlesCommand extends Command
         $this
             ->addOption('locale', 'l', InputOption::VALUE_OPTIONAL, 'Index articles for specific locale only', null)
             ->addOption('status', 's', InputOption::VALUE_OPTIONAL, 'Index only articles with specific status', null)
+            ->addOption('include-archived', null, InputOption::VALUE_NONE, 'Include archived articles in indexing')
             ->addOption('batch-size', 'b', InputOption::VALUE_OPTIONAL, 'Batch size for bulk indexing', '100');
     }
 
@@ -44,6 +45,7 @@ class ElasticsearchIndexArticlesCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $locale = $input->getOption('locale');
         $status = $input->getOption('status');
+        $includeArchived = $input->getOption('include-archived');
 
         if (!$this->elasticService->isEnabled()) {
             $io->warning('Elasticsearch is disabled. Check ELASTICSEARCH_HOST configuration.');
@@ -69,6 +71,10 @@ class ElasticsearchIndexArticlesCommand extends Command
                 if ($status) {
                     $qb->where('a.status = :status')
                         ->setParameter('status', ArticleStatus::from($status));
+                } elseif (!$includeArchived) {
+                    // By default, exclude archived articles unless --include-archived is specified
+                    $qb->where('a.status != :archived_status')
+                        ->setParameter('archived_status', ArticleStatus::ARCHIVED);
                 }
 
                 $articles = $qb->getQuery()->getResult();
@@ -153,6 +159,8 @@ class ElasticsearchIndexArticlesCommand extends Command
                         'published_at' => $article->getPublishedAt()?->format('c'),
                         'publish_at' => $article->getPublishAt()?->format('c'),
                         'created_at' => $article->getCreatedAt()->format('c'),
+                        'archived_at' => $article->getArchivedAt()?->format('c'),
+                        'archive_reason' => $article->getArchiveReason()?->value,
                         'authors' => $authors,
                         'category' => $article->getCategory() ? [
                             'id' => $article->getCategory()->getId(),

@@ -46,6 +46,8 @@ class ImportantArticlesListProvider implements ProviderInterface
             ->addSelect('ai')
             ->leftJoin('ai.image', 'img')
             ->addSelect('img')
+            ->andWhere('a.status != :archived_status')
+            ->setParameter('archived_status', 'archived')
             ->orderBy('ial.position', 'ASC')
             ->addOrderBy('ai.position', 'ASC');
 

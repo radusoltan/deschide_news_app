@@ -102,6 +102,8 @@ class ElasticService
                         'published_at' => ['type' => 'date'],
                         'publish_at' => ['type' => 'date'],
                         'created_at' => ['type' => 'date'],
+                        'archived_at' => ['type' => 'date'],
+                        'archive_reason' => ['type' => 'keyword'],
                         'authors' => [
                             'type' => 'nested',
                             'properties' => [
@@ -633,6 +635,123 @@ class ElasticService
             return $response->asArray();
         } catch (Exception) {
             return null;
+        }
+    }
+
+    /**
+     * Search for archived articles in a specific locale index.
+     * This method automatically filters for archived status and adds archive-specific sorting.
+     */
+    public function searchArchivedArticles(
+        string $query = '',
+        int $from = 0,
+        int $size = 20,
+        array $filters = [],
+        array $sort = [],
+        string $locale = 'ro'
+    ): array {
+        if (!$this->enabled) {
+            return ['hits' => ['hits' => [], 'total' => ['value' => 0]]];
+        }
+
+        // Force archived status filter
+        $filters['status'] = 'archived';
+
+        // Default sort for archives: most recently archived first
+        if (empty($sort)) {
+            $sort = ['archivedAt' => 'desc'];
+        }
+
+        // Add archive reason filter if provided
+        $indexName = $this->getIndexName($locale);
+        $must = [];
+
+        // Add archived status filter
+        $must[] = ['term' => ['status' => 'archived']];
+
+        // Add search query if provided
+        if ('' !== $query && '0' !== $query) {
+            $must[] = [
+                'multi_match' => [
+                    'query' => $query,
+                    'fields' => ['title^3', 'tag_names^2.5', 'lead^2', 'content'],
+                    'type' => 'best_fields',
+                    'fuzziness' => 'AUTO',
+                ],
+            ];
+        }
+
+        // Add archive reason filter
+        if (!empty($filters['archive_reason'])) {
+            $must[] = ['term' => ['archive_reason' => $filters['archive_reason']]];
+        }
+
+        // Add category filter
+        if (!empty($filters['category_id'])) {
+            $must[] = ['term' => ['category.id' => $filters['category_id']]];
+        }
+
+        // Add date range filter for archived_at
+        if (!empty($filters['archived_from']) || !empty($filters['archived_to'])) {
+            $rangeFilter = ['range' => ['archived_at' => []]];
+            if (!empty($filters['archived_from'])) {
+                $rangeFilter['range']['archived_at']['gte'] = $filters['archived_from'];
+            }
+            if (!empty($filters['archived_to'])) {
+                $rangeFilter['range']['archived_at']['lte'] = $filters['archived_to'];
+            }
+            $must[] = $rangeFilter;
+        }
+
+        // Build sort array
+        $esSort = [];
+        if ([] !== $sort) {
+            foreach ($sort as $field => $direction) {
+                $esField = match ($field) {
+                    'archivedAt' => 'archived_at',
+                    'publishedAt' => 'published_at',
+                    'createdAt' => 'created_at',
+                    'viewCount' => 'view_count',
+                    'title' => 'title.keyword',
+                    '_score' => '_score',
+                    default => $field,
+                };
+                $esSort[] = [$esField => ['order' => $direction]];
+            }
+        } else {
+            // Default sorting for archived articles
+            $esSort[] = ['archived_at' => ['order' => 'desc']];
+        }
+
+        $params = [
+            'index' => $indexName,
+            'body' => [
+                'from' => $from,
+                'size' => $size,
+                'query' => ['bool' => ['must' => $must]],
+                'highlight' => [
+                    'fields' => [
+                        'title' => new stdClass(),
+                        'lead' => [
+                            'fragment_size' => 150,
+                            'number_of_fragments' => 2,
+                        ],
+                        'content' => [
+                            'fragment_size' => 150,
+                            'number_of_fragments' => 3,
+                        ],
+                    ],
+                ],
+                'sort' => $esSort,
+            ],
+        ];
+
+        try {
+            $response = $this->client->search($params);
+
+            return $response->asArray();
+        } catch (Exception $e) {
+            throw new RuntimeException('Archived articles search failed: ' . $e->getMessage(), $e->getCode(), $e);
         }
     }
 

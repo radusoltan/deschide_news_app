@@ -84,10 +84,8 @@ class Category implements Translatable
     #[Groups(['category:read', 'category:write', 'article:read'])]
     private ?string $title = null;
 
-    #[Gedmo\Translatable]
     #[Gedmo\Slug(fields: ['title'], unique: true, updatable: true)]
     #[ORM\Column(type: Types::STRING, length: 255, unique: true)]
-    #[Assert\NotBlank]
     #[AppAssert\ReservedSlug]
     #[Groups(['category:read', 'article:read'])]
     private ?string $slug = null;
