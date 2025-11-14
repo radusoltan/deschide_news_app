@@ -1,0 +1,26 @@
+# IDEs
+.idea/
+.vscode/
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Backups and old directories
+*.backup
+*_OLD/
+archive/
+archive_old/
+
+# Logs
+*.log
+
+# Environment files (app-specific .env files handled in subdirectories)
+.env.local
+.env*.local
+
+# Build artifacts (app-specific ignores in subdirs)
+# See apps/backend/.gitignore and apps/frontend/.gitignore
