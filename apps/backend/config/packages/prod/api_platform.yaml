@@ -1,0 +1,28 @@
+api_platform:
+    # Production-specific API Platform configuration
+    # Optimized caching for public endpoints
+
+    defaults:
+        cache_headers:
+            # Longer cache times in production
+            max_age: 3600                    # 1 hour browser cache
+            shared_max_age: 14400            # 4 hours CDN/proxy cache (production)
+            public: true
+
+            # Vary headers ensure correct cache keys
+            vary: ['Content-Type', 'Authorization', 'Origin', 'Accept-Language']
+
+            # Enable Last-Modified and ETag validation
+            etag: true
+            last_modified: true
+
+    # Enable HTTP cache invalidation
+    http_cache:
+        invalidation:
+            enabled: true
+            varnish_urls: ['http://127.0.0.1:6081']  # Varnish cache server
+
+    # Optimize error handling (don't cache errors)
+    exception_to_status:
+        Symfony\Component\Serializer\Exception\ExceptionInterface: 400
+        ApiPlatform\Exception\InvalidArgumentException: 400

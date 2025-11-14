@@ -1,0 +1,56 @@
+framework:
+    # Production-specific framework optimizations
+
+    # Serializer cache in production
+    serializer:
+        enable_attributes: true                # PHP 8 attributes (fastest)
+        # Metadata caching is automatic via doctrine.system_cache_pool
+
+    # HTTP Cache configuration
+    http_cache: true
+
+    # Cache configuration for production
+    cache:
+        # Default cache adapter (Redis in production)
+        app: cache.adapter.redis
+        system: cache.adapter.redis
+
+        # Redis connection
+        default_redis_provider: 'redis://localhost:6379/1'
+
+        # Cache pools
+        pools:
+            # Doctrine metadata cache
+            doctrine.system_cache_pool:
+                adapter: cache.adapter.redis
+                default_lifetime: 86400  # 24 hours
+
+            # Doctrine query cache
+            doctrine.query_cache_pool:
+                adapter: cache.adapter.redis
+                default_lifetime: 3600   # 1 hour
+
+            # Doctrine result cache
+            doctrine.result_cache_pool:
+                adapter: cache.adapter.redis
+                default_lifetime: 1800   # 30 minutes
+
+            # Serializer metadata cache
+            serializer.mapping.cache.symfony:
+                adapter: cache.adapter.redis
+                default_lifetime: 86400  # 24 hours
+
+    # Router cache
+    router:
+        strict_requirements: null  # Disable strict requirements check in production
+        utf8: true
+
+    # Enable ESI for fragment caching (optional, for Varnish)
+    esi: { enabled: true }
+
+    # Fragments support
+    fragments: { enabled: true, path: /_fragment }
+
+    # PHP errors handling in production
+    php_errors:
+        log: true

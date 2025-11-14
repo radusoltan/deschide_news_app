@@ -1,0 +1,45 @@
+framework:
+    cache:
+        # Unique name of your app: used to compute stable namespaces for cache keys.
+        prefix_seed: deschide_news
+
+        # Redis cache configuration for application cache
+        app: cache.adapter.redis_tag_aware
+        default_redis_provider: 'redis://localhost:6379/1'
+
+        # APCu for system and metadata cache (faster for small data)
+        system: cache.adapter.apcu
+
+        # Namespaced pools for cache and statistics
+        pools:
+            # Cache pool for application data with tag support (256MB allocation)
+            deschide.cache:
+                adapter: cache.adapter.redis_tag_aware
+                provider: 'redis://localhost:6379/1'
+                default_lifetime: 3600
+
+            # Stats pool for real-time statistics (256MB allocation)
+            deschide.stats:
+                adapter: cache.adapter.redis_tag_aware
+                provider: 'redis://localhost:6379/1'
+                default_lifetime: 86400
+
+            # APCu pool for metadata and small frequently accessed data
+            cache.metadata:
+                adapter: cache.adapter.apcu
+                default_lifetime: 86400
+
+            # Doctrine cache pools with tag support for granular invalidation
+            doctrine.result_cache_pool:
+                adapter: cache.adapter.redis_tag_aware
+                provider: 'redis://localhost:6379/1'
+                default_lifetime: 3600
+
+            doctrine.query_cache_pool:
+                adapter: cache.adapter.redis_tag_aware
+                provider: 'redis://localhost:6379/1'
+                default_lifetime: 3600
+
+            doctrine.system_cache_pool:
+                adapter: cache.adapter.apcu
+                default_lifetime: 86400

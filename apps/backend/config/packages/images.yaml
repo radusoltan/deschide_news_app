@@ -1,0 +1,68 @@
+parameters:
+    # Storage paths
+    image.storage.root: '%kernel.project_dir%/public/uploads'
+    image.storage.originals_dir: 'images/originals'
+    image.storage.thumbnails_dir: 'images/thumbnails'
+    image.storage.public_path: '/uploads'
+
+    # Upload constraints
+    image.upload.max_size: 10485760  # 10MB in bytes
+    image.upload.allowed_types:
+        - 'image/jpeg'
+        - 'image/jpg'
+        - 'image/png'
+        - 'image/gif'
+        - 'image/webp'
+
+    # Thumbnail profiles (synced with ThumbnailProfile entity via fixtures)
+    # Only 4 essential profiles for optimal performance
+    image.thumbnail.profiles:
+        article_thumbnail:
+            width: 320
+            height: 180
+            aspect_ratio: '16:9'
+            mode: 'cover'  # cover, contain, crop, scale
+            quality: 80
+            description: 'Small thumbnail 16:9 ratio for previews and lists'
+        article_card:
+            width: 640
+            height: 427
+            aspect_ratio: '3:2'
+            mode: 'cover'
+            quality: 85
+            description: 'Card thumbnail 3:2 ratio for article lists and grids'
+        article_square:
+            width: 800
+            height: 800
+            aspect_ratio: '1:1'
+            mode: 'cover'
+            quality: 85
+            description: 'Square 1:1 ratio for social media sharing'
+        article_hero:
+            width: 1600
+            height: 600
+            aspect_ratio: '8:3'
+            mode: 'cover'
+            quality: 90
+            description: 'Hero banner 8:3 ratio for article headers and featured content'
+
+    # Output formats
+    image.thumbnail.formats:
+        - 'webp'
+        - 'jpg'
+
+    # Quality settings per format (0-100)
+    image.thumbnail.quality:
+        jpg: 85
+        jpeg: 85
+        webp: 85
+        png: 9  # PNG uses compression level 0-9
+        avif: 80
+
+    # Progressive JPEG
+    image.thumbnail.progressive: true
+
+    # Blur placeholder (for progressive loading)
+    image.blur_placeholder.size: 20  # pixels
+    image.blur_placeholder.blur: 5   # blur intensity
+    image.blur_placeholder.quality: 60  # JPEG quality

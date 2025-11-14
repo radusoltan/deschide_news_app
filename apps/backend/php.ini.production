@@ -1,0 +1,153 @@
+; PHP Production Configuration for Deschide News Backend
+; Copy this file to your production PHP configuration directory
+; Typical locations:
+;   - /etc/php/8.4/fpm/conf.d/99-deschide-production.ini
+;   - /etc/php/8.4/cli/conf.d/99-deschide-production.ini
+
+; ==============================================================================
+; PERFORMANCE OPTIMIZATIONS
+; ==============================================================================
+
+; Memory Management
+memory_limit = 256M                          ; Reasonable limit (not unlimited)
+
+; ==============================================================================
+; OPCACHE CONFIGURATION
+; ==============================================================================
+
+; Enable OPcache
+opcache.enable = 1
+opcache.enable_cli = 1
+
+; Memory
+opcache.memory_consumption = 256             ; Increase for large codebases
+opcache.interned_strings_buffer = 16         ; String interning buffer
+
+; Files
+opcache.max_accelerated_files = 20000        ; Max PHP files to cache
+opcache.validate_timestamps = 0              ; IMPORTANT: Disable in production
+                                             ; Use php-fpm reload after deploy
+
+; Optimization
+opcache.save_comments = 0                    ; Don't cache docblocks (not needed)
+opcache.fast_shutdown = 1                    ; Faster process shutdown
+
+; ==============================================================================
+; JIT (Just-In-Time Compilation) - PHP 8.0+
+; ==============================================================================
+
+; IMPORTANT: Disable XDebug and other debugging extensions in production!
+; JIT is incompatible with extensions that override zend_execute_ex()
+
+; Enable JIT
+opcache.jit = tracing                        ; Tracing mode (best for web apps)
+; Alternative modes:
+;   - function: JIT at function level
+;   - tracing: JIT with runtime type information (RECOMMENDED)
+;   - off: Disable JIT
+
+opcache.jit_buffer_size = 128M               ; JIT memory buffer
+                                             ; 50-200M recommended for web apps
+
+; JIT triggers (when to compile)
+opcache.jit_threshold = 3                    ; Compile after 3 executions
+                                             ; Lower = more aggressive JIT
+
+; JIT optimization level
+; Bitmask: CRTO (C=CPU-specific, R=register allocation, T=type inference, O=optimization)
+; Default: 1255 (all optimizations)
+opcache.jit_opt_level = 1255
+
+; JIT debugging (disable in production)
+opcache.jit_debug = 0
+
+; ==============================================================================
+; REALPATH CACHE
+; ==============================================================================
+
+; Increase realpath cache for better filesystem performance
+realpath_cache_size = 4096K                  ; 4MB cache
+realpath_cache_ttl = 600                     ; 10 minutes TTL
+
+; ==============================================================================
+; PERFORMANCE TUNING
+; ==============================================================================
+
+; Assertions (disable in production)
+zend.assertions = -1                         ; Completely disable assertions
+assert.active = 0
+
+; Error reporting (production)
+display_errors = Off
+display_startup_errors = Off
+error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
+log_errors = On
+error_log = /var/log/php/error.log
+
+; Session optimization
+session.save_handler = redis
+session.save_path = "tcp://127.0.0.1:6379?database=1&prefix=deschide_sess:"
+
+; ==============================================================================
+; SECURITY
+; ==============================================================================
+
+; Disable dangerous functions
+disable_functions = exec,passthru,shell_exec,system,proc_open,popen,curl_exec,curl_multi_exec,parse_ini_file,show_source
+
+; Expose PHP version
+expose_php = Off
+
+; ==============================================================================
+; VERIFICATION
+; ==============================================================================
+
+; To verify JIT is enabled after configuration:
+; php -v
+; Should show: "with Zend JIT"
+;
+; php -i | grep -i jit
+; Should show: opcache.jit => tracing
+;
+; Check JIT stats:
+; php -r "var_dump(opcache_get_status()['jit']);"
+
+; ==============================================================================
+; EXPECTED PERFORMANCE IMPROVEMENT
+; ==============================================================================
+
+; With JIT enabled:
+; - 5-15% overall performance improvement
+; - 20-60ms reduction in response time
+; - Better CPU cache utilization
+; - Reduced memory allocations for hot code paths
+;
+; Without JIT (current state):
+; - PHP Warning: JIT is incompatible with third party extensions
+;   that override zend_execute_ex(). JIT disabled.
+;
+; This is typically caused by XDebug or similar debugging extensions.
+; SOLUTION: Disable XDebug in production!
+
+; ==============================================================================
+; DEPLOYMENT CHECKLIST
+; ==============================================================================
+
+; 1. Copy this file to PHP configuration:
+;    sudo cp php.ini.production /etc/php/8.4/fpm/conf.d/99-deschide-production.ini
+;    sudo cp php.ini.production /etc/php/8.4/cli/conf.d/99-deschide-production.ini
+;
+; 2. Disable XDebug:
+;    sudo phpdismod xdebug
+;
+; 3. Restart PHP-FPM:
+;    sudo systemctl restart php8.4-fpm
+;
+; 4. Verify JIT is enabled:
+;    php -v | grep JIT
+;    php -i | grep opcache.jit
+;
+; 5. Clear OPcache after deployment:
+;    symfony console cache:clear --env=prod
+;    sudo systemctl reload php8.4-fpm
+;    # Or use: opcache_reset() in admin panel

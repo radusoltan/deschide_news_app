@@ -1,0 +1,81 @@
+doctrine:
+    dbal:
+        default_connection: default
+        connections:
+            default:
+                url: '%env(resolve:DATABASE_URL)%'
+                driver: 'pdo_pgsql'
+                server_version: '17'
+                profiling_collect_backtrace: '%kernel.debug%'
+                use_savepoints: true
+
+            newscoop:
+                url: '%env(resolve:NEWSCOOP_DATABASE_URL)%'
+                driver: 'pdo_mysql'
+                server_version: '10.11'
+                charset: utf8mb4
+    orm:
+        auto_generate_proxy_classes: true
+        enable_lazy_ghost_objects: true
+        report_fields_where_declared: true
+        validate_xml_mapping: true
+        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        identity_generation_preferences:
+            Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
+        auto_mapping: true
+        metadata_cache_driver:
+            type: pool
+            pool: doctrine.system_cache_pool
+        query_cache_driver:
+            type: pool
+            pool: doctrine.query_cache_pool
+        result_cache_driver:
+            type: pool
+            pool: doctrine.result_cache_pool
+        mappings:
+            App:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Entity'
+                prefix: 'App\Entity'
+                alias: App
+            gedmo_translatable:
+                type: attribute
+                prefix: Gedmo\Translatable\Entity
+                dir: '%kernel.project_dir%/vendor/gedmo/doctrine-extensions/src/Translatable/Entity'
+                alias: GedmoTranslatable
+                is_bundle: false
+            gedmo_translator:
+                type: attribute
+                prefix: Gedmo\Translator\Entity
+                dir: '%kernel.project_dir%/vendor/gedmo/doctrine-extensions/src/Translator/Entity'
+                alias: GedmoTranslator
+                is_bundle: false
+        controller_resolver:
+            auto_mapping: false
+
+when@test:
+    doctrine:
+        dbal:
+            # "TEST_TOKEN" is typically set by ParaTest
+            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+
+when@prod:
+    doctrine:
+        orm:
+            auto_generate_proxy_classes: false
+            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

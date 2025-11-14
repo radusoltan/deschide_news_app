@@ -1,0 +1,7 @@
+PHP Warning:  JIT is incompatible with third party extensions that override zend_execute_ex(). JIT disabled. in Unknown on line 0
+{
+    "advisories": [],
+    "abandoned": {
+        "behat/transliterator": null
+    }
+}
