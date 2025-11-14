@@ -377,3 +377,138 @@ export async function updateCategory(
 
   return response.json();
 }
+
+// ============================================================================
+// Authors Data Access
+// ============================================================================
+
+export interface Author {
+  '@id': string;
+  '@type': string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  slug: string;
+  email: string;
+  bio?: string;
+  status: string;
+  isActive: boolean;
+  twitter?: string;
+  facebook?: string;
+  linkedin?: string;
+  website?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthorsCollection {
+  '@context': string;
+  '@id': string;
+  '@type': string;
+  totalItems: number;
+  member: Author[];
+}
+
+export async function getAuthors(
+  params: GetArticlesParams = {}
+): Promise<AuthorsCollection> {
+  const { page = 1, itemsPerPage = 30, locale = 'ro' } = params;
+
+  const queryParams = new URLSearchParams();
+  queryParams.set('page', page.toString());
+  queryParams.set('itemsPerPage', itemsPerPage.toString());
+
+  const response = await authenticatedFetch(
+    `/api/authors?${queryParams.toString()}`,
+    {
+      locale,
+      cache: 'no-store',
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to fetch authors: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function getAuthor(id: number, locale: string = 'ro'): Promise<Author> {
+  const response = await authenticatedFetch(`/api/authors/${id}`, {
+    locale,
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch author: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function createAuthor(
+  data: Partial<Author>,
+  locale: string = 'ro'
+): Promise<Author> {
+  const response = await authenticatedFetch('/api/authors', {
+    method: 'POST',
+    locale,
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error response:', errorText);
+
+    let error;
+    try {
+      error = JSON.parse(errorText);
+    } catch {
+      error = { message: errorText };
+    }
+
+    throw new Error(error.message || error['hydra:description'] || `Failed to create author: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function updateAuthor(
+  id: number,
+  data: Partial<Author>,
+  locale: string = 'ro'
+): Promise<Author> {
+  const response = await authenticatedFetch(`/api/authors/${id}`, {
+    method: 'PUT',
+    locale,
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error response:', errorText);
+
+    let error;
+    try {
+      error = JSON.parse(errorText);
+    } catch {
+      error = { message: errorText };
+    }
+
+    throw new Error(error.message || error['hydra:description'] || `Failed to update author: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function deleteAuthor(id: number, locale: string = 'ro'): Promise<void> {
+  const response = await authenticatedFetch(`/api/authors/${id}`, {
+    method: 'DELETE',
+    locale,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete author: ${response.status}`);
+  }
+}
