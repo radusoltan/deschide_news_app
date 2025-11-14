@@ -585,28 +585,258 @@ The system supports 10 thumbnail profiles for different use cases:
 
 **Note:** Thumbnails are generated asynchronously after image upload using Symfony Messenger and stored separately from originals.
 
+## Git Workflow (Git-Flow)
+
+This repository uses **Git-Flow** branching model for organized development and releases.
+
+### Branch Strategy
+
+- **`main`** - Production-ready code (protected, no direct commits)
+- **`develop`** - Integration branch for ongoing development (protected)
+- **`feature/*`** - Feature development branches (branched from `develop`)
+- **`release/*`** - Release preparation branches (branched from `develop`)
+- **`hotfix/*`** - Production hotfix branches (branched from `main`)
+- **`bugfix/*`** - Bug fixes during development (branched from `develop`)
+
+### Git-Flow Configuration
+
+```bash
+# Git-flow is initialized with these settings:
+gitflow.branch.master = main
+gitflow.branch.develop = develop
+gitflow.prefix.feature = feature/
+gitflow.prefix.bugfix = bugfix/
+gitflow.prefix.release = release/
+gitflow.prefix.hotfix = hotfix/
+gitflow.prefix.support = support/
+```
+
+### Common Git-Flow Commands
+
+**Starting a new feature:**
+```bash
+# Start new feature from develop
+git flow feature start DESK-123-my-feature
+
+# Work on feature...
+git add .
+git commit -m "feat(backend): implement feature"
+
+# Finish feature (merges to develop and deletes feature branch)
+git flow feature finish DESK-123-my-feature
+
+# Push develop
+git push origin develop
+```
+
+**Creating a release:**
+```bash
+# Start release from develop
+git flow release start 1.1.0
+
+# Update version numbers, CHANGELOG, etc.
+# Make final adjustments
+
+# Finish release (merges to main and develop, creates tag)
+git flow release finish 1.1.0
+
+# Push everything
+git push origin main develop --tags
+```
+
+**Emergency hotfix:**
+```bash
+# Start hotfix from main
+git flow hotfix start 1.0.1
+
+# Fix the critical issue
+git add .
+git commit -m "fix: critical production bug"
+
+# Finish hotfix (merges to main and develop, creates tag)
+git flow hotfix finish 1.0.1
+
+# Push everything
+git push origin main develop --tags
+```
+
+**Bug fix during development:**
+```bash
+# Start bugfix from develop
+git flow bugfix start fix-validation-error
+
+# Fix the bug
+git add .
+git commit -m "fix(backend): validation error in article form"
+
+# Finish bugfix (merges to develop)
+git flow bugfix finish fix-validation-error
+```
+
+### Branch Naming Conventions
+
+**For Monorepo (with scope):**
+
+| Type | Pattern | Example | Purpose |
+|------|---------|---------|---------|
+| Feature | `feature/[scope]-[description]` | `feature/backend-article-reactions` | New features |
+| Feature | `feature/[scope]-[description]` | `feature/frontend-admin-dashboard` | Frontend features |
+| Feature | `feature/fullstack-[description]` | `feature/fullstack-user-auth` | Full-stack features |
+| Bugfix | `bugfix/[description]` | `bugfix/fix-image-upload` | Bug fixes in development |
+| Release | `release/[version]` | `release/1.1.0` | Release preparation |
+| Hotfix | `hotfix/[version]` | `hotfix/1.0.1` | Production hotfixes |
+
+### Commit Message Convention
+
+Follow **Conventional Commits** specification:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types:**
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation changes
+- `style` - Code style changes (formatting, no code change)
+- `refactor` - Code refactoring
+- `perf` - Performance improvements
+- `test` - Adding or updating tests
+- `chore` - Maintenance tasks (dependencies, config)
+- `ci` - CI/CD changes
+- `build` - Build system changes
+
+**Scopes:**
+- `backend` - Backend (Symfony) changes
+- `frontend` - Frontend (Next.js) changes
+- `docs` - Documentation
+- `ci` - CI/CD
+- `infra` - Infrastructure
+
+**Examples:**
+```bash
+git commit -m "feat(backend): add article reaction system"
+git commit -m "fix(frontend): resolve image loading issue in gallery"
+git commit -m "docs: update API documentation for categories"
+git commit -m "chore(backend): upgrade Symfony to 7.3.1"
+```
+
+### Pull Request Process
+
+1. **Create feature branch** from `develop`:
+   ```bash
+   git flow feature start my-feature
+   ```
+
+2. **Make changes and commit** following commit conventions
+
+3. **Push branch** to origin:
+   ```bash
+   git flow feature publish my-feature
+   # OR manually:
+   git push -u origin feature/my-feature
+   ```
+
+4. **Create Pull Request** on GitHub:
+   - **Base:** `develop` (NOT `main`)
+   - **Title:** Use conventional commit format
+   - **Description:** Explain changes, add screenshots if applicable
+   - **Link issues:** Reference related issues/tickets
+
+5. **Request review** from team members
+
+6. **Merge after approval**:
+   - Use "Squash and merge" for clean history
+   - Delete branch after merge
+
+### Manual Git-Flow (without git-flow tool)
+
+If `git flow` command is not available, you can use standard git commands:
+
+**Feature workflow:**
+```bash
+# Start feature
+git checkout develop
+git pull origin develop
+git checkout -b feature/my-feature
+
+# Finish feature
+git checkout develop
+git merge --no-ff feature/my-feature
+git branch -d feature/my-feature
+git push origin develop
+```
+
+**Release workflow:**
+```bash
+# Start release
+git checkout develop
+git checkout -b release/1.1.0
+# Make version updates...
+
+# Finish release
+git checkout main
+git merge --no-ff release/1.1.0
+git tag -a v1.1.0 -m "Release version 1.1.0"
+git checkout develop
+git merge --no-ff release/1.1.0
+git branch -d release/1.1.0
+git push origin main develop --tags
+```
+
+### Branch Protection Rules
+
+**Configured on GitHub:**
+
+**`main` branch:**
+- ✅ Require pull request reviews before merging (1-2 reviewers)
+- ✅ Require status checks to pass before merging
+- ✅ Require branches to be up to date before merging
+- ✅ Require conversation resolution before merging
+- ❌ Do not allow force pushes
+- ❌ Do not allow deletions
+
+**`develop` branch:**
+- ✅ Require pull request reviews (recommended)
+- ✅ Require status checks to pass
+- ⚠️ Allow force pushes from admins only (for rebasing, if needed)
+
 ## Development Workflow
 
 1. **Backend changes**:
+   - Create feature branch: `git flow feature start backend-my-feature`
    - Modify entities → `symfony console make:migration` → `symfony console doctrine:migrations:migrate`
    - Update controllers/services → Clear cache if needed
    - Test with curl or Postman
+   - Commit using conventional commits: `git commit -m "feat(backend): description"`
+   - Finish feature: `git flow feature finish backend-my-feature`
 
 2. **Frontend changes**:
+   - Create feature branch: `git flow feature start frontend-my-feature`
    - Update pages/components in `app/` directory
    - Verify API integration with backend
    - Test responsive design (mobile/tablet/desktop)
    - Check multilanguage support
+   - Commit: `git commit -m "feat(frontend): description"`
+   - Finish feature: `git flow feature finish frontend-my-feature`
 
 3. **Full-stack features**:
+   - Create feature branch: `git flow feature start fullstack-my-feature`
    - Start with backend (entities, migrations, controllers, services)
    - Then frontend (pages, components, API integration)
    - Test end-to-end flow
+   - Commit: `git commit -m "feat(fullstack): description"`
+   - Finish feature: `git flow feature finish fullstack-my-feature`
 
 4. **Database schema changes**:
    - Always use Doctrine migrations
    - Never manual SQL in production
    - Test migrations on staging first
+   - Commit: `git commit -m "feat(backend): add new entity for X"`
 
 5. **Async processing**:
    - Create Message class in `src/Message/`
