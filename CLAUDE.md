@@ -846,12 +846,46 @@ git push origin main develop --tags
 
 ## Testing Strategy
 
-- **Backend**: PHPUnit tests not yet configured (planned)
+### Automated Testing Agents (Playwright MCP)
+
+**Comprehensive test coverage** using specialized agents:
+
+- **Backend API Tester** - Tests all Symfony API endpoints
+- **Frontend E2E Tester** - Tests Next.js user interfaces
+- **Full-Stack Integration Tester** - Tests complete workflows
+- **Multilanguage Tester** - Tests i18n/l10n functionality
+- **Admin Panel Tester** - Tests administrative interface
+- **Performance Tester** - Tests performance metrics
+
+**Documentation**: `docs/TESTING_AGENTS_GUIDE.md`
+**Agent Specs**: `.claude/agents/*.md`
+
+**Quick Commands:**
+```bash
+# Run existing Playwright tests
+cd apps/frontend
+pnpm test:e2e              # E2E tests
+pnpm test:integration      # Integration tests
+pnpm test:e2e:ui          # UI mode (visual debugging)
+```
+
+**Agent Invocations:**
+```
+@backend-api-tester test all endpoints
+@frontend-e2e-tester test all user flows
+@fullstack-integration-tester test article lifecycle
+@multilanguage-tester test all locales
+@admin-panel-tester test admin functionality
+@performance-tester test performance
+```
+
+### Backend Testing
+
+- **PHPUnit**: Not yet configured (planned)
 - **Test Commands**: Development test commands available in `src/Command/Test/`:
   - `app:test:jwt-token` - Test JWT token generation
   - `app:test:newscoop-connection` - Test Newscoop API connection
   - `app:test:migration-logger` - Test migration logger functionality
-- **Frontend**: To be configured
 - **Static Analysis**: PHPStan not yet configured (planned for level 8)
 - **Code Style**: PHP-CS-Fixer not yet configured (planned)
 - **Architecture**: Deptrac not yet configured (planned for layer validation)
