@@ -63,6 +63,12 @@ final class ArticleProvider implements ProviderInterface
                 \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
                 $locale
             );
+            // Set HINT_INNER_JOIN to false to allow articles without explicit translations
+            // Articles in the default locale (ro) don't have entries in ext_translations table
+            $query->setHint(
+                \Gedmo\Translatable\TranslatableListener::HINT_INNER_JOIN,
+                false
+            );
 
             // Enable result cache for single article GET (1 hour)
             $cacheKey = \sprintf('article_%d_%s', $uriVariables['id'], $locale);
@@ -70,35 +76,14 @@ final class ArticleProvider implements ProviderInterface
 
             $result = $query->getOneOrNullResult();
 
-            if ($result) {
-                $result->setTranslatableLocale($locale);
-                // Force refresh to load translations
-                $this->entityManager->refresh($result);
-
-                // Set locale for related entities
-                if ($result->getCategory()) {
-                    $result->getCategory()->setTranslatableLocale($locale);
-                    $this->entityManager->refresh($result->getCategory());
-                }
-
-                foreach ($result->getAuthors() as $author) {
-                    $author->setTranslatableLocale($locale);
-                    $this->entityManager->refresh($author);
-                }
-
-                // Refresh tags for translatable fields (name, slug, description)
-                foreach ($result->getTags() as $tag) {
-                    $tag->setTranslatableLocale($locale);
-                    $this->entityManager->refresh($tag);
-                }
-            }
+            // Translation loading is handled by HINT_TRANSLATABLE_LOCALE set above
+            // No need to manually refresh entities
 
             return $result;
         }
 
         // Handle collection retrieval
-        // OPTIMIZATION: Eager load category, authors, and tags to avoid N+1 queries
-        // Images/thumbnails are loaded separately if needed by serialization groups
+        // OPTIMIZATION: Eager load all related entities to avoid N+1 queries
         $queryBuilder = $repository->createQueryBuilder('a')
             ->leftJoin('a.category', 'c')
             ->addSelect('c')
@@ -106,6 +91,10 @@ final class ArticleProvider implements ProviderInterface
             ->addSelect('au')
             ->leftJoin('a.tags', 't')
             ->addSelect('t')
+            ->leftJoin('a.articleImages', 'ai')
+            ->addSelect('ai')
+            ->leftJoin('ai.image', 'img')
+            ->addSelect('img')
             ->andWhere('a.status != :archived_status')
             ->setParameter('archived_status', 'archived');
 
@@ -114,13 +103,23 @@ final class ArticleProvider implements ProviderInterface
             // Filter by category ID
             $categoryId = null;
 
-            // Method 1: category[id]=X parsed as nested array
-            $categoryArray = $request->query->all('category');
-            if (\is_array($categoryArray) && isset($categoryArray['id'])) {
-                $categoryId = (int) $categoryArray['id'];
+            // Method 1: categoryId=X (recommended - avoids SearchFilter conflicts)
+            if ($request->query->has('categoryId')) {
+                $catValue = $request->query->get('categoryId');
+                if (is_numeric($catValue)) {
+                    $categoryId = (int) $catValue;
+                }
             }
 
-            // Method 2: Direct category=X
+            // Method 2: category[id]=X parsed as nested array (legacy support)
+            if (!$categoryId) {
+                $categoryArray = $request->query->all('category');
+                if (\is_array($categoryArray) && isset($categoryArray['id'])) {
+                    $categoryId = (int) $categoryArray['id'];
+                }
+            }
+
+            // Method 3: Direct category=X (legacy support)
             if (!$categoryId && $request->query->has('category')) {
                 $catValue = $request->query->get('category');
                 if (is_numeric($catValue)) {
@@ -176,6 +175,12 @@ final class ArticleProvider implements ProviderInterface
             \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
             $locale
         );
+        // Set HINT_INNER_JOIN to false to allow articles without explicit translations
+        // Articles in the default locale (ro) don't have entries in ext_translations table
+        $query->setHint(
+            \Gedmo\Translatable\TranslatableListener::HINT_INNER_JOIN,
+            false
+        );
 
         // Enable result cache for collection (30 minutes)
         // Cache key includes page, itemsPerPage, filters, and locale
@@ -191,35 +196,13 @@ final class ArticleProvider implements ProviderInterface
         $query->enableResultCache(1800, $cacheKey);  // 30 minutes
 
         // Use Doctrine Paginator to get correct total count
-        // fetchJoinCollection=true because we're joining collections (authors)
+        // fetchJoinCollection=true because we're joining collections (authors, tags)
         $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: true);
 
-        // OPTIMIZATION: Refresh entities to load translations, but avoid N+1 by using eager-loaded data
-        // Since we removed articleCount from serialization groups, this won't cause collection loading
-        $results = iterator_to_array($doctrinePaginator);
-        foreach ($results as $article) {
-            // Refresh article for translatable fields (title, slug, lead)
-            $article->setTranslatableLocale($locale);
-            $this->entityManager->refresh($article);
-
-            // Refresh category for translatable fields (title, slug) - SAFE because no articleCount
-            if ($article->getCategory()) {
-                $article->getCategory()->setTranslatableLocale($locale);
-                $this->entityManager->refresh($article->getCategory());
-            }
-
-            // Refresh authors for translatable fields (bio) - SAFE because no articleCount
-            foreach ($article->getAuthors() as $author) {
-                $author->setTranslatableLocale($locale);
-                $this->entityManager->refresh($author);
-            }
-
-            // Refresh tags for translatable fields (name, slug, description)
-            foreach ($article->getTags() as $tag) {
-                $tag->setTranslatableLocale($locale);
-                $this->entityManager->refresh($tag);
-            }
-        }
+        // NOTE: We cannot iterate the paginator here and then return it,
+        // because the iterator will be exhausted. API Platform needs to iterate it itself.
+        // Translation loading is handled by the HINT_TRANSLATABLE_LOCALE set above.
+        // If we need to refresh entities for translations, we should use an EventSubscriber instead.
 
         // Return the paginator (API Platform handles the iteration)
         return $doctrinePaginator;

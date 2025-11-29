@@ -271,6 +271,7 @@ class Image implements Translatable
 
     /**
      * Lifecycle callback to set path after file upload.
+     * Path is relative to uploads directory: images/originals/{filename}
      */
     #[ORM\PostLoad]
     #[ORM\PostPersist]
@@ -278,7 +279,7 @@ class Image implements Translatable
     public function updatePath(): void
     {
         if ($this->filename && !$this->path) {
-            $this->path = 'images/' . $this->filename;
+            $this->path = 'images/originals/' . $this->filename;
         }
     }
 
