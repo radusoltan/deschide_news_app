@@ -1,26 +1,128 @@
-# IDEs
+# ==============================================================================
+# Deschide News App Monorepo - Root .gitignore
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# IDEs & Editors
+# ------------------------------------------------------------------------------
 .idea/
 .vscode/
-.claude/
+*.sublime-project
+*.sublime-workspace
+.fleet/
 
-# OS
+# ------------------------------------------------------------------------------
+# Operating Systems
+# ------------------------------------------------------------------------------
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 *.swp
+*.swo
 *~
 
-# Backups and old directories
-*.backup
-*_OLD/
-archive/
-archive_old/
-
-# Logs
-*.log
-
-# Environment files (app-specific .env files handled in subdirectories)
+# ------------------------------------------------------------------------------
+# Environment & Secrets (Monorepo Level)
+# ------------------------------------------------------------------------------
 .env.local
 .env*.local
+.env.backup
+*.pem
+*.key
+*.crt
 
-# Build artifacts (app-specific ignores in subdirs)
-# See apps/backend/.gitignore and apps/frontend/.gitignore
+# ------------------------------------------------------------------------------
+# Testing & QA Artifacts (CRITICAL)
+# ------------------------------------------------------------------------------
+.playwright-mcp/
+**/screenshots/
+**/test-results/
+**/.playwright/
+coverage/
+.nyc_output/
+**/__snapshots__/
+*.spec.js.snap
+playwright-report/
+test-results/
+
+# ------------------------------------------------------------------------------
+# UI/UX Layout References (CRITICAL - 230MB)
+# ------------------------------------------------------------------------------
+layouts/
+# Note: Reference templates only - see docs/guides/ui-templates.md for sources
+
+# ------------------------------------------------------------------------------
+# Context & Implementation Notes (Temporary)
+# ------------------------------------------------------------------------------
+context/
+.context/
+*.context.md
+notes/
+scratch/
+TODO.local.md
+
+# ------------------------------------------------------------------------------
+# Build Artifacts (Monorepo Level)
+# ------------------------------------------------------------------------------
+/node_modules/
+/dist/
+/build/
+/out/
+
+# ------------------------------------------------------------------------------
+# Package Manager Locks (Monorepo)
+# ------------------------------------------------------------------------------
+# Note: Apps have their own lock files
+/pnpm-lock.yaml
+/package-lock.json
+/yarn.lock
+
+# ------------------------------------------------------------------------------
+# Archives & Backups
+# ------------------------------------------------------------------------------
+*.backup
+*_OLD/
+archive_old/
+*.tar.gz
+*.zip
+*.rar
+
+# Note: archive/ contains historical migration docs - KEEP COMMITTED
+
+# ------------------------------------------------------------------------------
+# Logs
+# ------------------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------------------------------------------------------
+# Temporary Files
+# ------------------------------------------------------------------------------
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+.turbo/
+
+# ------------------------------------------------------------------------------
+# AI/LLM Development Tools
+# ------------------------------------------------------------------------------
+.cursor/
+.claude-cache/
+# .mcp.json - INCLUDED: Standard dev tool for Playwright testing
+
+# ------------------------------------------------------------------------------
+# Database Files (Development)
+# ------------------------------------------------------------------------------
+*.db
+*.sqlite
+*.sqlite3
