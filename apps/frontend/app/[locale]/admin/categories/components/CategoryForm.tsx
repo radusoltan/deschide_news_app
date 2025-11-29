@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Label, TextInput, Select, Button, Spinner, Checkbox } from 'flowbite-react';
 import { createCategoryAction, updateCategoryAction } from '@/app/actions/categories';
+import { generateSlug } from '@/lib/utils/slug';
 
 interface CategoryFormProps {
   locale: string;
@@ -60,13 +61,8 @@ export default function CategoryForm({ locale, category }: CategoryFormProps) {
     router.push(`/${locale}/admin/categories`);
   };
 
-  const generateSlug = () => {
-    const slug = formData.title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .trim();
+  const handleGenerateSlug = () => {
+    const slug = generateSlug(formData.title);
     setFormData({ ...formData, slug });
   };
 
@@ -93,7 +89,7 @@ export default function CategoryForm({ locale, category }: CategoryFormProps) {
           <Label htmlFor="slug">Slug *</Label>
           <button
             type="button"
-            onClick={generateSlug}
+            onClick={handleGenerateSlug}
             className="text-xs text-blue-600 hover:underline dark:text-blue-500"
             disabled={loading || !formData.title}
           >
