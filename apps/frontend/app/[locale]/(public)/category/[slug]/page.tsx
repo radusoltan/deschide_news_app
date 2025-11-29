@@ -56,7 +56,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <main id="content">
+    <>
       {/* Category Section */}
       <div className="bg-gray-50 py-6">
         <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
@@ -144,6 +144,6 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           </div>
         </div>
       </div>
-    </main>
+    </>
   );
 }

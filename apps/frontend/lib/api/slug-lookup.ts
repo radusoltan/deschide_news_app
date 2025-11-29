@@ -94,15 +94,23 @@ export async function lookupCategory(
 }
 
 /**
+ * Author lookup result interface
+ */
+interface AuthorLookupResult {
+  found: boolean;
+  entity: any | null;
+}
+
+/**
  * Lookup author by slug
  * Note: Authors are not translatable, so no locale parameter needed
  *
  * @param slug - Author slug
- * @returns Author data or null
+ * @returns Object with found flag and entity data
  */
 export async function lookupAuthor(
   slug: string
-): Promise<any | null> {
+): Promise<AuthorLookupResult> {
   try {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -121,14 +129,15 @@ export async function lookupAuthor(
     if (!response.ok) {
       if (response.status === 404) {
         console.error(`Author with slug "${slug}" not found`);
-        return null;
+        return { found: false, entity: null };
       }
       throw new Error(`Failed to lookup author: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    const entity = await response.json();
+    return { found: true, entity };
   } catch (error) {
     console.error('Error looking up author:', error);
-    return null;
+    return { found: false, entity: null };
   }
 }

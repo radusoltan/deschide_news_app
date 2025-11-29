@@ -41,7 +41,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
     // Fetch author's articles
     const queryParams = new URLSearchParams({
       status: 'published',
-      'authors.id': author.id.toString(),
+      'authors': author.id.toString(),
       page: currentPage.toString(),
       itemsPerPage: itemsPerPage.toString(),
       'order[publishedAt]': 'DESC',
@@ -60,8 +60,8 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
     }
 
     const data = await response.json();
-    const articles = data['hydra:member'] || [];
-    const totalItems = data['hydra:totalItems'] || 0;
+    const articles = data.member || data['hydra:member'] || [];
+    const totalItems = data.totalItems || data['hydra:totalItems'] || 0;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     const texts = {

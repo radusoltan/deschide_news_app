@@ -8,6 +8,8 @@ import type { Metadata } from 'next';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
+const DEFAULT_OG_IMAGE = `${SITE_URL}/images/og-default.jpg`;
+const DEFAULT_OG_IMAGE_ALT = 'Deschide News - Portal de știri';
 
 export interface MetaTagsConfig {
   title: string;
@@ -78,7 +80,7 @@ export function generatePageMetadata(config: MetaTagsConfig): Metadata {
     keywords: keywords.length > 0 ? keywords.join(', ') : undefined,
     authors: author ? [{ name: author }] : undefined,
 
-    // Open Graph
+    // Open Graph - always include an image (use default if none provided)
     openGraph: {
       type: publishedTime ? 'article' : 'website',
       title,
@@ -86,16 +88,14 @@ export function generatePageMetadata(config: MetaTagsConfig): Metadata {
       url: canonicalUrl || SITE_URL,
       siteName: SITE_NAME,
       locale: ogLocaleMap[locale],
-      images: imageUrl
-        ? [
-            {
-              url: imageUrl,
-              width: 1200,
-              height: 630,
-              alt: imageAlt || title,
-            },
-          ]
-        : [],
+      images: [
+        {
+          url: imageUrl || DEFAULT_OG_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: imageAlt || (imageUrl ? title : DEFAULT_OG_IMAGE_ALT),
+        },
+      ],
       ...(publishedTime && {
         publishedTime,
         modifiedTime: modifiedTime || publishedTime,
@@ -103,12 +103,12 @@ export function generatePageMetadata(config: MetaTagsConfig): Metadata {
       ...(section && { section }),
     },
 
-    // Twitter Card
+    // Twitter Card - always include an image (use default if none provided)
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: imageUrl ? [imageUrl] : [],
+      images: [imageUrl || DEFAULT_OG_IMAGE],
       site: '@deschidenews', // Replace with actual Twitter handle
     },
 

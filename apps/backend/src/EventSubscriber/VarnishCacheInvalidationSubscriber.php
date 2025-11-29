@@ -59,8 +59,11 @@ final class VarnishCacheInvalidationSubscriber implements EventSubscriberInterfa
             return;
         }
 
-        // Get resource ID if available
+        // Get resource ID if available (cast to int for numeric IDs)
         $resourceId = $attributes->get('id');
+        if ($resourceId !== null && is_numeric($resourceId)) {
+            $resourceId = (int) $resourceId;
+        }
 
         // Invalidate cache based on resource type
         $this->invalidateResourceCache($resourceClass, $resourceId, $method);

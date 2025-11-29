@@ -5,11 +5,19 @@ import LatestNews from "./components/home/latest-news";
 import CategorySection from '@/components/CategorySection';
 import { TrendingArticles } from '@/components/public/TrendingArticles';
 import { fetchFrontPageCategories } from '@/lib/api/categories';
+import { generateHomepageMetadata } from '@/lib/seo/meta-tags';
 
-export const metadata: Metadata = {
-  title: 'Acasă',
-  description: 'Portal de știri în limba română',
+type Locale = 'ro' | 'en' | 'ru';
+
+// Generate dynamic metadata based on locale
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const validLocale = (['ro', 'en', 'ru'].includes(locale) ? locale : 'ro') as Locale;
+  return generateHomepageMetadata(validLocale);
 }
+
+// Homepage uses dynamic metadata based on locale - see generateMetadata below
+// Static metadata removed to allow dynamic generation
 
 interface PageProps {
   params: Promise<{ locale: string }>
@@ -29,8 +37,18 @@ export default async function HomePage({ params }: PageProps) {
     frontPageCategories = [];
   }
 
+  // H1 titles per locale for SEO
+  const h1Titles: Record<string, string> = {
+    ro: 'Deschide News - Știri de Ultimă Oră din Moldova și din Lume',
+    en: 'Deschide News - Breaking News from Moldova and Worldwide',
+    ru: 'Deschide News - Последние Новости из Молдовы и Мира',
+  };
+
   return (
-    <main id="content">
+    <>
+      {/* SEO H1 - visually hidden but present for search engines */}
+      <h1 className="sr-only">{h1Titles[locale] || h1Titles.ro}</h1>
+
       {/* Hero / Important Articles Section */}
       <ImportantList locale={locale} />
 
@@ -55,6 +73,6 @@ export default async function HomePage({ params }: PageProps) {
           )}
         </div>
       ))}
-    </main>
+    </>
   )
 }

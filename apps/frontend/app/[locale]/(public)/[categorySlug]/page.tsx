@@ -9,15 +9,65 @@
  */
 
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { fetchCategories } from '@/lib/api/categories';
 import { fetchArticlesByCategory } from '@/lib/api/articles';
 import CategoryHeroArticle from '@/components/CategoryHeroArticle';
 import ArticleCard from '@/components/ArticleCard';
 import MostPopular from '@/components/MostPopular';
 import { isReservedSlug } from '@/lib/constants/reserved-slugs';
+import { generateCategoryMetadata } from '@/lib/seo/meta-tags';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 120;
+
+type Locale = 'ro' | 'en' | 'ru';
+
+// Generate dynamic SEO metadata for category pages
+export async function generateMetadata({
+  params,
+}: CategoryPageProps): Promise<Metadata> {
+  const { locale, categorySlug } = await params;
+
+  // Validate locale
+  const validLocale = (['ro', 'en', 'ru'].includes(locale) ? locale : 'ro') as Locale;
+
+  // Check if slug is reserved
+  if (isReservedSlug(categorySlug)) {
+    return {
+      title: 'Page Not Found',
+      description: 'The requested page could not be found.',
+    };
+  }
+
+  try {
+    // Fetch category data
+    const categoriesResponse = await fetchCategories(validLocale);
+    const categories = categoriesResponse.member || [];
+    const category = categories.find((cat: any) => cat.slug === categorySlug);
+
+    if (!category) {
+      return {
+        title: 'Category Not Found',
+        description: 'The requested category could not be found.',
+      };
+    }
+
+    // Generate category-specific metadata
+    return generateCategoryMetadata(
+      category.title,
+      category.slug,
+      validLocale,
+      category.description
+    );
+  } catch (error) {
+    console.error('Error generating category metadata:', error);
+    return {
+      title: 'Category | Deschide News',
+      description: 'Browse articles by category.',
+    };
+  }
+}
 
 interface CategoryPageProps {
   params: Promise<{
@@ -83,19 +133,19 @@ export default async function CategoryPage({
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <main id="content">
+    <>
       {/* Category Section */}
       <div className="bg-gray-50 py-6">
         <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
           <div className="flex flex-row flex-wrap">
             {/* Left - Main Content */}
             <div className="flex-shrink max-w-full w-full lg:w-2/3 overflow-hidden">
-              {/* Category Title */}
+              {/* Category Title - H1 for SEO */}
               <div className="w-full py-3">
-                <h2 className="text-gray-800 text-2xl font-bold">
+                <h1 className="text-gray-800 text-2xl font-bold">
                   <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
                   {category.title}
-                </h2>
+                </h1>
               </div>
 
               <div className="flex flex-row flex-wrap -mx-3">
@@ -173,6 +223,6 @@ export default async function CategoryPage({
           </div>
         </div>
       </div>
-    </main>
+    </>
   );
 }

@@ -210,8 +210,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       {/* Structured Data (JSON-LD) */}
       <StructuredData data={structuredData} />
 
-      <main id="content">
-        <ArticleLayout
+      <ArticleLayout
           sidebar={
             <ArticleSidebar
               relatedArticles={relatedArticles}
@@ -252,7 +251,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           {/* Article Meta (author bio, social share) */}
           <ArticleMeta article={article} locale={locale} />
         </ArticleLayout>
-      </main>
     </>
   );
 }
