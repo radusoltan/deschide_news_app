@@ -56,12 +56,13 @@ class ImageFixtures extends Fixture implements DependentFixtureInterface
         $fakerEn = Factory::create('en_US');
         $fakerRu = Factory::create('ru_RU');
 
-        // Get all thumbnail profiles
+        // Get all thumbnail profiles (must match ThumbnailProfileFixtures)
         $thumbnailProfiles = [];
         $profileNames = [
-            'article_card', 'article_card_small', 'article_hero', 'article_hero_mobile',
-            'article_wide', 'article_wide_medium', 'article_square', 'article_portrait',
-            'article_thumbnail', 'og_image',
+            'article_thumbnail',
+            'article_card',
+            'article_square',
+            'article_hero',
         ];
         foreach ($profileNames as $profileName) {
             $thumbnailProfiles[] = $this->getReference('thumbnail_profile_' . $profileName, ThumbnailProfile::class);

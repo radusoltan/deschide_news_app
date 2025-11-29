@@ -90,7 +90,7 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
       // Show success toast
       setToast({
         type: 'success',
-        message: `Thumbnail generated successfully! Profile: ${selectedProfile.displayName}, Format: ${selectedFormat.toUpperCase()}`,
+        message: `Thumbnail generated successfully! Profile: ${selectedProfile.displayName || selectedProfile.name}, Format: ${selectedFormat.toUpperCase()}`,
       });
 
       // Auto-hide toast after 5 seconds
@@ -135,10 +135,12 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
     }
   }, []);
 
-  // Get image URL from CDN
-  const imageUrl = image.filename
-    ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${image.filename}`
-    : '';
+  // Get image URL from CDN using the path property which includes the correct subdirectory
+  const imageUrl = image.path
+    ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/${image.path}`
+    : (image.filename
+        ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${image.filename}`
+        : '');
 
   return (
     <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">

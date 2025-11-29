@@ -129,7 +129,7 @@ export default function ArticleImage({
 
           {/* Zoom indicator overlay */}
           {enableLightbox && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-20 transition-all">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-all">
               <svg
                 className="w-12 h-12 text-white opacity-0 hover:opacity-100 transition-opacity"
                 fill="none"
