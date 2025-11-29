@@ -35,6 +35,21 @@ services:
         alias: stof_doctrine_extensions.listener.translatable
         public: false
 
+    # Romanian Slugger Service
+    App\Service\RomanianSlugger:
+        public: true
+
+    # Gedmo Sluggable Listener with Romanian transliterator
+    Gedmo\Sluggable\SluggableListener:
+        alias: stof_doctrine_extensions.listener.sluggable
+        public: false
+
+    # Configure the sluggable listener with Romanian transliterator
+    # TEMPORARILY DISABLED - causing service definition issues
+    # stof_doctrine_extensions.listener.sluggable:
+    #     calls:
+    #         - [setTransliterator, [['App\Service\RomanianSlugger', 'slugifyStatic']]]
+
     # Elasticsearch Service
     App\Service\ElasticService:
         arguments:
@@ -154,3 +169,8 @@ services:
             $apiDomain: '%cloudflare.domain%'
         tags:
             - { name: kernel.event_subscriber }
+
+    # Article Processor with dual cache invalidation (PerformanceService + Doctrine Result Cache)
+    App\State\ArticleProcessor:
+        arguments:
+            $doctrineResultCachePool: '@doctrine.result_cache_pool'

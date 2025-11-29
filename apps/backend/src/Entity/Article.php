@@ -117,9 +117,8 @@ use Symfony\Component\Validator\Constraints as Assert;
     provider: ArchivedArticleProvider::class
 )]
 #[ApiFilter(SearchFilter::class, properties: [
-    'category' => 'exact',
-    'category.id' => 'exact',
-    'status' => 'exact',
+    // NOTE: 'category' and 'category.id' filters are handled by ArticleProvider
+    // to avoid conflicts with nested array parameter parsing
     'title' => 'partial',
     'slug' => 'exact',
     'tags' => 'exact',
@@ -180,7 +179,7 @@ class Article implements Translatable
 
     #[ORM\OneToMany(targetEntity: ArticleImage::class, mappedBy: 'article', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
-    #[Groups(['article:detail'])] // OPTIMIZATION: Only load images in detail view, not in list
+    #[Groups(['article:read', 'article:detail', 'article:list'])]
     #[MaxDepth(2)]
     private Collection $articleImages;
 

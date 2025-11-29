@@ -69,20 +69,20 @@ class Author implements Translatable
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
-    #[Groups(['author:read'])]
+    #[Groups(['author:read', 'article:read'])]
     private ?int $id = null;
 
     // Basic Information
     #[ORM\Column(type: Types::STRING, length: 100)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 100)]
-    #[Groups(['author:read', 'author:write'])]
+    #[Groups(['author:read', 'author:write', 'article:read'])]
     private ?string $firstName = null;
 
     #[ORM\Column(type: Types::STRING, length: 100)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 100)]
-    #[Groups(['author:read', 'author:write'])]
+    #[Groups(['author:read', 'author:write', 'article:read'])]
     private ?string $lastName = null;
 
     #[ORM\Column(type: Types::STRING, length: 180, unique: true)]
@@ -92,7 +92,7 @@ class Author implements Translatable
 
     #[Gedmo\Slug(fields: ['firstName', 'lastName'], unique: true, updatable: true)]
     #[ORM\Column(type: Types::STRING, length: 255, unique: true)]
-    #[Groups(['author:read'])]
+    #[Groups(['author:read', 'article:read'])]
     private ?string $slug = null;
 
     // Translatable fields
@@ -346,7 +346,7 @@ class Author implements Translatable
     /**
      * Computed property - full name.
      */
-    #[Groups(['author:read'])]
+    #[Groups(['author:read', 'article:read'])]
     public function getFullName(): string
     {
         return trim($this->firstName . ' ' . $this->lastName);
