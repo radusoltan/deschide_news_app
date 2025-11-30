@@ -52,15 +52,9 @@ final class ImageProvider implements ProviderInterface
                 $locale
             );
 
-            $result = $query->getOneOrNullResult();
-
-            if ($result) {
-                $result->setTranslatableLocale($locale);
-                // Force refresh to load translations
-                $this->entityManager->refresh($result);
-            }
-
-            return $result;
+            // Gedmo HINT_TRANSLATABLE_LOCALE already loads translations at query time
+            // No refresh() calls needed - they cause N+1 queries
+            return $query->getOneOrNullResult();
         }
 
         // Handle collection retrieval
@@ -106,11 +100,8 @@ final class ImageProvider implements ProviderInterface
                 }
             }
 
-            foreach ($orderedImages as $image) {
-                $image->setTranslatableLocale($locale);
-                $this->entityManager->refresh($image);
-            }
-
+            // Gedmo HINT_TRANSLATABLE_LOCALE already loads translations at query time
+            // No refresh() calls needed - they cause N+1 queries
             return $orderedImages;
         }
 
@@ -136,12 +127,9 @@ final class ImageProvider implements ProviderInterface
 
         // Use Doctrine Paginator to get correct total count
         $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: false);
-        $results = iterator_to_array($doctrinePaginator);
 
-        foreach ($results as $result) {
-            $result->setTranslatableLocale($locale);
-            $this->entityManager->refresh($result);
-        }
+        // Gedmo HINT_TRANSLATABLE_LOCALE already loads translations at query time
+        // No refresh() calls needed - they cause N+1 queries
 
         // Return Doctrine Paginator which API Platform will wrap automatically
         return $doctrinePaginator;

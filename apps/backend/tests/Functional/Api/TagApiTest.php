@@ -40,8 +40,8 @@ class TagApiTest extends WebTestCase
         $data = json_decode($this->client->getResponse()->getContent(), true);
 
         $this->assertArrayHasKey('@context', $data);
-        $this->assertArrayHasKey('hydra:member', $data);
-        $this->assertArrayHasKey('hydra:totalItems', $data);
+        $this->assertArrayHasKey('member', $data);
+        $this->assertArrayHasKey('totalItems', $data);
     }
 
     public function testGetTagsCollectionWithPagination(): void
@@ -54,8 +54,8 @@ class TagApiTest extends WebTestCase
 
         $data = json_decode($this->client->getResponse()->getContent(), true);
 
-        $this->assertArrayHasKey('hydra:member', $data);
-        $this->assertLessThanOrEqual(5, \count($data['hydra:member']));
+        $this->assertArrayHasKey('member', $data);
+        $this->assertLessThanOrEqual(5, \count($data['member']));
     }
 
     // ======================

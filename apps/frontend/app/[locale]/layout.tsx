@@ -67,7 +67,7 @@ export default async function LocaleLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Global Structured Data */}
+        {/* Global Structured Data - Safe: renderStructuredData uses JSON.stringify */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

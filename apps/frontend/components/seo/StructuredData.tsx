@@ -1,6 +1,9 @@
 /**
  * Structured Data Component
  * Renders JSON-LD structured data for SEO
+ *
+ * Note: JSON.stringify is safe and doesn't require sanitization
+ * as it escapes all special characters and produces valid JSON
  */
 
 import React from 'react';

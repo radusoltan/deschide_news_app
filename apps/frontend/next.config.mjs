@@ -84,8 +84,8 @@ const nextConfig = {
   // Turbopack enabled by default in Next.js 16
   turbopack: {},
 
-  // Disable strict mode in development to avoid double rendering
-  reactStrictMode: false,
+  // Enable strict mode to help detect problems in development
+  reactStrictMode: true,
 
   // Production optimizations
   productionBrowserSourceMaps: false, // Disable source maps in production for smaller bundles
@@ -101,6 +101,36 @@ const nextConfig = {
   // Experimental features for better performance
   experimental: {
     optimizePackageImports: ['lucide-react', 'date-fns', '@heroicons/react'],
+  },
+
+  // Security headers
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https: http://127.0.0.1:8082 http://127.0.0.1:8081",
+              "font-src 'self' data:",
+              "connect-src 'self' http://127.0.0.1:8081 ws://localhost:3000",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=()' },
+        ],
+      },
+    ];
   },
 };
 

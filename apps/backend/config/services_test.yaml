@@ -1,0 +1,5 @@
+services:
+    # Make password hasher service public for test fixtures
+    Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface:
+        alias: 'security.user_password_hasher'
+        public: true

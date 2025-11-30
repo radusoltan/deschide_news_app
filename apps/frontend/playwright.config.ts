@@ -9,7 +9,7 @@ export default defineConfig({
   testDir: './__tests__',
 
   // Test patterns - match both e2e and integration tests
-  testMatch: ['**/(e2e|integration)/**/*.spec.ts'],
+  testMatch: '**/*.spec.ts',
 
   // Maximum time one test can run
   timeout: 60 * 1000,

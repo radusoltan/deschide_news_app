@@ -68,6 +68,10 @@ security:
         # Embed API (public access for external sites)
         - { path: ^/api/embed, roles: PUBLIC_ACCESS }
 
+        # Archive public endpoints (navigation, stats, categories)
+        - { path: ^/api/archive, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/archived_articles, roles: PUBLIC_ACCESS, methods: [GET] }
+
         # Public READ access for frontend (GET only)
         - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles|tags|live_texts|live_text_posts|live_text_collaborators|live_text_templates|live_text_reactions), roles: PUBLIC_ACCESS, methods: [GET] }
 

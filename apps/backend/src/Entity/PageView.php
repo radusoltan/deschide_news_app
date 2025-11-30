@@ -14,6 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(name: 'idx_article_views', columns: ['article_id', 'viewed_at'])]
 #[ORM\Index(name: 'idx_visitor', columns: ['visitor_id'])]
 #[ORM\Index(name: 'idx_viewed_at', columns: ['viewed_at'])]
+#[ORM\Index(name: 'idx_page_views_category', columns: ['category_id'])]
 class PageView
 {
     #[ORM\Id]

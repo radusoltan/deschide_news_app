@@ -20,8 +20,15 @@ interface ArticleCardProps {
   showCategory?: boolean;
   showDate?: boolean;
   showLead?: boolean;
+  showArchiveBadge?: boolean;
   className?: string;
 }
+
+const archiveTranslations = {
+  ro: 'Arhivat',
+  en: 'Archived',
+  ru: 'В архиве',
+};
 
 /**
  * Format date for display
@@ -50,8 +57,12 @@ export default function ArticleCard({
   showCategory = true,
   showDate = true,
   showLead = false,
+  showArchiveBadge = false,
   className = '',
 }: ArticleCardProps) {
+  // Determine if article is archived (either passed explicitly or from article status)
+  const isArchived = showArchiveBadge || article.status === 'archived';
+  const archiveBadgeText = archiveTranslations[locale] || archiveTranslations.ro;
   const articleUrl = `/${locale}/${article.category?.slug}/${article.slug}`;
 
   // Get featured image
@@ -132,6 +143,17 @@ export default function ArticleCard({
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
+            {/* Archive Badge */}
+            {isArchived && (
+              <div className="absolute top-2 right-2 z-10">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/90 backdrop-blur-sm text-amber-50 text-xs font-bold uppercase tracking-wider shadow-lg">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  {archiveBadgeText}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

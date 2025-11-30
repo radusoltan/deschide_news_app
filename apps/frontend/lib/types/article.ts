@@ -13,6 +13,7 @@ export interface Category {
   id: number;
   title: string;
   slug: string;
+  description?: string;
   status?: string;
   onFrontPage?: boolean;
   articleCount?: number;
@@ -36,6 +37,8 @@ export interface Article {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+  archivedAt?: string | null; // When article was archived
+  archiveReason?: string; // Reason for archival (e.g., 'outdated', 'inaccurate', 'manual')
   locale?: string;
   translatableLocale?: string | null;
 }

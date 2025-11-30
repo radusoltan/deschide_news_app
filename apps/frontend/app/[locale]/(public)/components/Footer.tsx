@@ -162,6 +162,14 @@ export default function Footer({ locale }: FooterProps) {
                       <Link href={`/${locale}/trending`}>Trending</Link>
                     </li>
                     <li className="py-1 hover:text-white">
+                      <Link href={`/${locale}/archive`} className="flex items-center gap-1.5">
+                        <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                        </svg>
+                        {locale === 'ro' ? 'Arhivă' : locale === 'ru' ? 'Архив' : 'Archive'}
+                      </Link>
+                    </li>
+                    <li className="py-1 hover:text-white">
                       <Link href={`/${locale}/contact`}>Contact</Link>
                     </li>
                   </ul>

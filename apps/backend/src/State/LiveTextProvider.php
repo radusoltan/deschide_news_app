@@ -63,21 +63,9 @@ final class LiveTextProvider implements ProviderInterface
                 $locale
             );
 
-            $result = $query->getOneOrNullResult();
-
-            if ($result) {
-                $result->setTranslatableLocale($locale);
-                // Force refresh to load translations
-                $this->entityManager->refresh($result);
-
-                // Set locale for related entities
-                if ($result->getCategory()) {
-                    $result->getCategory()->setTranslatableLocale($locale);
-                    $this->entityManager->refresh($result->getCategory());
-                }
-            }
-
-            return $result;
+            // Gedmo HINT_TRANSLATABLE_LOCALE already loads translations at query time
+            // No refresh() calls needed - they cause N+1 queries
+            return $query->getOneOrNullResult();
         }
 
         // Handle collection retrieval
@@ -185,19 +173,8 @@ final class LiveTextProvider implements ProviderInterface
 
         $results = $query->getResult();
 
-        // Refresh entities to load translatable fields (title, slug, description)
-        // OPTIMIZATION: Since collaborators and category don't have computed properties
-        // that load large collections, this is safe and necessary for translations
-        foreach ($results as $liveText) {
-            $liveText->setTranslatableLocale($locale);
-            $this->entityManager->refresh($liveText);
-
-            // Refresh category for translatable fields
-            if ($liveText->getCategory()) {
-                $liveText->getCategory()->setTranslatableLocale($locale);
-                $this->entityManager->refresh($liveText->getCategory());
-            }
-        }
+        // Gedmo HINT_TRANSLATABLE_LOCALE already loads translations at query time
+        // No refresh() calls needed - they cause N+1 queries
 
         // API Platform will handle pagination automatically
         return $results;

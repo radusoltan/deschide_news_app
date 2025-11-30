@@ -94,6 +94,11 @@ archive_old/
 
 # Note: archive/ contains historical migration docs - KEEP COMMITTED
 
+# PostgreSQL backups (database dumps)
+backups/
+*.dump
+*.sql.gz
+
 # ------------------------------------------------------------------------------
 # Logs
 # ------------------------------------------------------------------------------

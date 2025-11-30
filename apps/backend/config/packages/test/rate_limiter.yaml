@@ -1,0 +1,14 @@
+# Disable rate limiting for tests to avoid failures
+framework:
+    rate_limiter:
+        # Disable general API rate limit for tests
+        api_general:
+            policy: 'no_limit'
+
+        # Disable authentication rate limit for tests
+        api_login:
+            policy: 'no_limit'
+
+        # Disable write rate limit for tests
+        api_write:
+            policy: 'no_limit'

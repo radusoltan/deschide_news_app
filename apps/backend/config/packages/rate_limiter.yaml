@@ -1,0 +1,19 @@
+framework:
+    rate_limiter:
+        # General API rate limit
+        api_general:
+            policy: 'fixed_window'
+            limit: 100
+            interval: '1 minute'
+
+        # Strict limit for authentication endpoints
+        api_login:
+            policy: 'token_bucket'
+            limit: 5
+            rate: { interval: '1 minute', amount: 5 }
+
+        # Limit for article creation/modification
+        api_write:
+            policy: 'fixed_window'
+            limit: 30
+            interval: '1 minute'

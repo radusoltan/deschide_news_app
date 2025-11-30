@@ -5,7 +5,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Article, Category, Tag } from '@/lib/types/article';
+import { Article, Category } from '@/lib/types/article';
+import type { Tag } from '@/lib/types/tag';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
 import { buildArticleUrl, buildCategoryUrl, getCategorySlug as getSlug } from '@/lib/utils/url-builder';
 import { ViewCountBadge } from '@/components/public/ViewCountBadge';

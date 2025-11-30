@@ -15,3 +15,13 @@ api_platform:
             shared_max_age: 7200             # 2 hours CDN/proxy cache
             public: true                     # Allow caching by proxies/CDN
             # For private/authenticated data, these will be overridden per-resource
+
+# Test environment: Disable default cache headers to allow controller-specific headers
+when@test:
+    api_platform:
+        defaults:
+            cache_headers:
+                vary: []                     # Empty array - don't add default Vary headers
+                max_age: null                # Disable default cache
+                shared_max_age: null
+                public: null

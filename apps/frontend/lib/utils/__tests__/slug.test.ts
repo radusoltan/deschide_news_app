@@ -10,7 +10,7 @@ describe('Slug Utilities', () => {
     });
 
     it('should handle uppercase and lowercase', () => {
-      expect(transliterate('ȘȚĂÂÎș')).toBe('STAAIst');
+      expect(transliterate('ȘȚĂÂÎș')).toBe('STAAIs');
       expect(transliterate('ȘȚĂÂÎ')).toBe('STAAI');
     });
 

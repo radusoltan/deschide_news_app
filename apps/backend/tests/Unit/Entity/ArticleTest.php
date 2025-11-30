@@ -384,10 +384,11 @@ class ArticleTest extends TestCase
     {
         $cases = ArticleStatus::cases();
 
-        $this->assertCount(3, $cases);
+        $this->assertCount(4, $cases);
         $this->assertContains(ArticleStatus::NEW, $cases);
         $this->assertContains(ArticleStatus::SUBMITTED, $cases);
         $this->assertContains(ArticleStatus::PUBLISHED, $cases);
+        $this->assertContains(ArticleStatus::ARCHIVED, $cases);
     }
 
     public function testArticleBadgeEnumCases(): void

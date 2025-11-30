@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { LiveTextTimeline } from './LiveTextTimeline';
 import { ReactionButtons } from './ReactionButtons';
 import type { LiveText, LiveTextPost } from '@/lib/types/livetext';
+import { createSafeHtml } from '@/lib/sanitize';
 
 interface LiveTextViewerProps {
   liveText: LiveText;
@@ -260,7 +261,7 @@ export function LiveTextViewer({ liveText: initialLiveText, keyPoints: initialKe
                   {/* Content */}
                   <div
                     className="prose dark:prose-invert max-w-none mb-4"
-                    dangerouslySetInnerHTML={{ __html: post.contentHtml || post.content }}
+                    dangerouslySetInnerHTML={createSafeHtml(post.contentHtml || post.content)}
                   />
 
                   {/* Reactions */}

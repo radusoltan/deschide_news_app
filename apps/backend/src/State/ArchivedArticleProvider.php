@@ -68,30 +68,9 @@ final class ArchivedArticleProvider implements ProviderInterface
             $cacheKey = \sprintf('archived_article_%d_%s', $uriVariables['id'], $locale);
             $query->enableResultCache(7200, $cacheKey);
 
-            $result = $query->getOneOrNullResult();
-
-            if ($result) {
-                $result->setTranslatableLocale($locale);
-                $this->entityManager->refresh($result);
-
-                // Set locale for related entities
-                if ($result->getCategory()) {
-                    $result->getCategory()->setTranslatableLocale($locale);
-                    $this->entityManager->refresh($result->getCategory());
-                }
-
-                foreach ($result->getAuthors() as $author) {
-                    $author->setTranslatableLocale($locale);
-                    $this->entityManager->refresh($author);
-                }
-
-                foreach ($result->getTags() as $tag) {
-                    $tag->setTranslatableLocale($locale);
-                    $this->entityManager->refresh($tag);
-                }
-            }
-
-            return $result;
+            // Gedmo HINT_TRANSLATABLE_LOCALE already loads translations at query time
+            // No refresh() calls needed - they cause N+1 queries
+            return $query->getOneOrNullResult();
         }
 
         // Handle collection retrieval - only archived articles
@@ -180,27 +159,8 @@ final class ArchivedArticleProvider implements ProviderInterface
         // Use Doctrine Paginator to get correct total count
         $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: true);
 
-        // Refresh entities to load translations
-        $results = iterator_to_array($doctrinePaginator);
-        foreach ($results as $article) {
-            $article->setTranslatableLocale($locale);
-            $this->entityManager->refresh($article);
-
-            if ($article->getCategory()) {
-                $article->getCategory()->setTranslatableLocale($locale);
-                $this->entityManager->refresh($article->getCategory());
-            }
-
-            foreach ($article->getAuthors() as $author) {
-                $author->setTranslatableLocale($locale);
-                $this->entityManager->refresh($author);
-            }
-
-            foreach ($article->getTags() as $tag) {
-                $tag->setTranslatableLocale($locale);
-                $this->entityManager->refresh($tag);
-            }
-        }
+        // Gedmo HINT_TRANSLATABLE_LOCALE already loads translations at query time
+        // No refresh() calls needed - they cause N+1 queries
 
         // Return the paginator (API Platform handles the iteration)
         return $doctrinePaginator;

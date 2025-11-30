@@ -66,7 +66,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveAction, setSaveAction] = useState<'save' | 'saveAndClose' | null>(null);
-  const [formErrors, setFormErrors] = useState<ArticleFormState['errors']>({});
+  const [formErrors, setFormErrors] = useState<NonNullable<ArticleFormState['errors']>>({});
 
   const [formData, setFormData] = useState({
     title: article?.title || '',

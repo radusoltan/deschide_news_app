@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useMercureSubscription } from '@/lib/hooks/useMercureSubscription';
+import { createSafeHtml } from '@/lib/sanitize';
 
 interface LiveTextPost {
   id: number;
@@ -311,7 +312,7 @@ export function EmbedLiveTextViewer({ liveText: initialLiveText, theme }: Props)
                     fontSize: '15px',
                     lineHeight: '1.6',
                   }}
-                  dangerouslySetInnerHTML={{ __html: post.contentHtml || post.content }}
+                  dangerouslySetInnerHTML={createSafeHtml(post.contentHtml || post.content)}
                 />
               </div>
             ))}
