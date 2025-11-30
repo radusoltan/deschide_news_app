@@ -881,7 +881,17 @@ pnpm test:e2e:ui          # UI mode (visual debugging)
 
 ### Backend Testing
 
-- **PHPUnit**: Not yet configured (planned)
+- **PHPUnit**: ✅ **376 tests, 1,351 assertions - ALL PASSING**
+- **Test Suites**:
+  - Entity tests (Article, Author, Category, Image, Tag, User)
+  - API integration tests (CRUD operations, authentication)
+  - Service tests (Image processing, Elasticsearch, translations)
+  - State Provider tests (API Platform providers)
+- **Run Tests**:
+  ```bash
+  cd /var/www/deschide_news_app/apps/backend
+  XDEBUG_MODE=off vendor/bin/phpunit tests/ --no-coverage
+  ```
 - **Test Commands**: Development test commands available in `src/Command/Test/`:
   - `app:test:jwt-token` - Test JWT token generation
   - `app:test:newscoop-connection` - Test Newscoop API connection
@@ -889,6 +899,34 @@ pnpm test:e2e:ui          # UI mode (visual debugging)
 - **Static Analysis**: PHPStan not yet configured (planned for level 8)
 - **Code Style**: PHP-CS-Fixer not yet configured (planned)
 - **Architecture**: Deptrac not yet configured (planned for layer validation)
+
+### Frontend Testing
+
+- **Jest**: ✅ **163 tests - ALL PASSING**
+- **Test Suites**:
+  - Component tests (SafeHtml, ArticleBody, StructuredData)
+  - Integration tests (API integration, navigation)
+  - Utility tests (sanitization, validation)
+- **Run Tests**:
+  ```bash
+  cd /var/www/deschide_news_app/apps/frontend
+  pnpm test
+  ```
+- **Playwright**: ⚡ **1,176 E2E tests discovered and ready**
+- **Run E2E Tests**:
+  ```bash
+  cd /var/www/deschide_news_app/apps/frontend
+  pnpm test:e2e:ui    # UI mode
+  pnpm test:e2e       # Headless
+  ```
+
+### Test Status
+
+📊 **Latest Report**: `docs/reports/TEST_STATUS_REPORT.md` (2025-11-30)
+- Backend: 376 tests ✅
+- Frontend Jest: 163 tests ✅
+- Frontend Playwright: 1,176 tests discovered ⚡
+- **Total: 539 tests passing (100% success rate)**
 
 ## Important Documentation
 
@@ -924,9 +962,12 @@ pnpm test:e2e:ui          # UI mode (visual debugging)
 - Image upload and thumbnail generation system
 - Article locking mechanism
 - JWT authentication configured
+- **Testing infrastructure (PHPUnit + Jest + Playwright)**
+- **All tests passing (539 tests, 100% success rate)**
 
 ⬜ **Current Focus:**
 - Frontend development and API integration
 - Admin panel features
-- Testing infrastructure (PHPUnit, PHPStan, PHP-CS-Fixer)
+- Code quality tools (PHPStan, PHP-CS-Fixer)
 - Nginx virtual hosts configuration (optional)
+- CI/CD pipeline setup
