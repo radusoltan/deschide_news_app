@@ -28,6 +28,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: ImageRepository::class)]
+#[ORM\Cache(usage: 'READ_ONLY', region: 'default')]
 #[ORM\Table(name: 'images')]
 #[ORM\HasLifecycleCallbacks]
 #[Vich\Uploadable]
@@ -45,7 +46,9 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
         new GetCollection(
             uriTemplate: '/images',
             normalizationContext: ['groups' => ['image:read', 'image:list']],
-            paginationItemsPerPage: 50
+            paginationItemsPerPage: 30,
+            paginationClientEnabled: true,
+            paginationClientItemsPerPage: true
         ),
         new Post(
             uriTemplate: '/images',
@@ -271,7 +274,7 @@ class Image implements Translatable
 
     /**
      * Lifecycle callback to set path after file upload.
-     * Path is relative to uploads directory: images/originals/{filename}
+     * Path is relative to uploads directory: images/originals/{filename}.
      */
     #[ORM\PostLoad]
     #[ORM\PostPersist]

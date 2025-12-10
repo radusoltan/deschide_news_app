@@ -7,6 +7,7 @@ namespace App\MessageHandler;
 use App\Message\RecalculateTagCountsMessage;
 use App\Repository\TagRepository;
 use App\Service\TagService;
+use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -64,7 +65,7 @@ final class RecalculateTagCountsHandler
                 $this->logger->info('Successfully recalculated usage counts for {count} tags', [
                     'count' => $updatedCount,
                 ]);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->logger->error('Failed to recalculate tag counts', [
                     'error' => $e->getMessage(),
                 ]);

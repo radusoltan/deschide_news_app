@@ -67,8 +67,8 @@ interface Props {
  * Minimal viewer for embedded LiveText with real-time updates
  */
 export function EmbedLiveTextViewer({ liveText: initialLiveText, theme }: Props) {
-  const [liveText, setLiveText] = useState(initialLiveText);
-  const [posts, setPosts] = useState(initialLiveText.posts);
+  const [liveText, setLiveText] = useState(() => initialLiveText);
+  const [posts, setPosts] = useState(() => initialLiveText.posts);
 
   // Subscribe to Mercure for real-time updates
   const { latestEvent } = useMercureSubscription(liveText.id);
@@ -77,49 +77,53 @@ export function EmbedLiveTextViewer({ liveText: initialLiveText, theme }: Props)
   useEffect(() => {
     if (!latestEvent) return;
 
-    switch (latestEvent.type) {
-      case 'post.created':
-        // Add new post to the top
-        // Type assertion needed since sport events aren't in MercureEvent union
-        setPosts((prev) => [(latestEvent as any).post, ...prev]);
-        break;
+    const handleEvent = () => {
+      switch (latestEvent.type) {
+        case 'post.created':
+          // Add new post to the top
+          // Type assertion needed since sport events aren't in MercureEvent union
+          setPosts((prev) => [(latestEvent as any).post, ...prev]);
+          break;
 
-      case 'post.updated':
-        // Update existing post
-        setPosts((prev) =>
-          prev.map((p) => (p.id === (latestEvent as any).post.id ? (latestEvent as any).post : p))
-        );
-        break;
+        case 'post.updated':
+          // Update existing post
+          setPosts((prev) =>
+            prev.map((p) => (p.id === (latestEvent as any).post.id ? (latestEvent as any).post : p))
+          );
+          break;
 
-      case 'post.deleted':
-        // Remove deleted post
-        setPosts((prev) => prev.filter((p) => p.id !== (latestEvent as any).postId));
-        break;
+        case 'post.deleted':
+          // Remove deleted post
+          setPosts((prev) => prev.filter((p) => p.id !== (latestEvent as any).postId));
+          break;
 
-      case 'status.changed':
-        // Update LiveText status
-        setLiveText((prev) => ({
-          ...prev,
-          status: (latestEvent as any).status,
-        }));
-        break;
-
-      case 'sport.score.updated':
-        // Update sport match score (sport events use .data property)
-        if (liveText.sportMatch) {
+        case 'status.changed':
+          // Update LiveText status
           setLiveText((prev) => ({
             ...prev,
-            sportMatch: prev.sportMatch ? {
-              ...prev.sportMatch,
-              homeScore: (latestEvent as any).data.home_score,
-              awayScore: (latestEvent as any).data.away_score,
-              status: (latestEvent as any).data.status,
-              currentMinute: (latestEvent as any).data.current_minute,
-            } : undefined,
+            status: (latestEvent as any).status,
           }));
-        }
-        break;
-    }
+          break;
+
+        case 'sport.score.updated':
+          // Update sport match score (sport events use .data property)
+          if (liveText.sportMatch) {
+            setLiveText((prev) => ({
+              ...prev,
+              sportMatch: prev.sportMatch ? {
+                ...prev.sportMatch,
+                homeScore: (latestEvent as any).data.home_score,
+                awayScore: (latestEvent as any).data.away_score,
+                status: (latestEvent as any).data.status,
+                currentMinute: (latestEvent as any).data.current_minute,
+              } : undefined,
+            }));
+          }
+          break;
+      }
+    };
+
+    handleEvent();
   }, [latestEvent, liveText.sportMatch]);
 
   const getStatusBadge = () => {

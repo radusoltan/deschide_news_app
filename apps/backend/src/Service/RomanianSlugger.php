@@ -7,7 +7,7 @@ namespace App\Service;
 use Behat\Transliterator\Transliterator;
 
 /**
- * Romanian-aware slug generator
+ * Romanian-aware slug generator.
  *
  * This service provides proper transliteration for Romanian characters
  * that are not handled correctly by the default Behat\Transliterator::urlize() method.
@@ -20,9 +20,9 @@ use Behat\Transliterator\Transliterator;
 class RomanianSlugger
 {
     /**
-     * Generate a URL-friendly slug from text with proper Romanian character handling
+     * Generate a URL-friendly slug from text with proper Romanian character handling.
      *
-     * @param string $text      The text to convert to a slug
+     * @param string $text The text to convert to a slug
      * @param string $separator The separator to use (default: '-')
      *
      * @return string The generated slug
@@ -40,9 +40,9 @@ class RomanianSlugger
     }
 
     /**
-     * Static method for use as a callable (e.g., in Gedmo configuration)
+     * Static method for use as a callable (e.g., in Gedmo configuration).
      *
-     * @param string $text      The text to convert to a slug
+     * @param string $text The text to convert to a slug
      * @param string $separator The separator to use (default: '-')
      *
      * @return string The generated slug

@@ -40,21 +40,22 @@ class RecalculateTagCountsCommand extends Command
                 InputOption::VALUE_NONE,
                 'Execute asynchronously via message queue'
             )
-            ->setHelp(<<<'HELP'
-The <info>%command.name%</info> command recalculates usage counts for tags.
+            ->setHelp(
+                <<<'HELP'
+                    The <info>%command.name%</info> command recalculates usage counts for tags.
 
-Recalculate all tags:
-<info>php %command.full_name%</info>
+                    Recalculate all tags:
+                    <info>php %command.full_name%</info>
 
-Recalculate specific tag:
-<info>php %command.full_name% --tag-id=5</info>
+                    Recalculate specific tag:
+                    <info>php %command.full_name% --tag-id=5</info>
 
-Execute asynchronously:
-<info>php %command.full_name% --async</info>
+                    Execute asynchronously:
+                    <info>php %command.full_name% --async</info>
 
-This command ensures data consistency by counting actual article relationships
-and updating the usageCount field accordingly.
-HELP
+                    This command ensures data consistency by counting actual article relationships
+                    and updating the usageCount field accordingly.
+                    HELP
             );
     }
 
@@ -67,7 +68,7 @@ HELP
         $io->title('Recalculate Tag Usage Counts');
 
         if ($tagId !== null) {
-            $io->info(sprintf('Recalculating usage count for tag ID: %d', $tagId));
+            $io->info(\sprintf('Recalculating usage count for tag ID: %d', $tagId));
         } else {
             $io->info('Recalculating usage counts for all tags...');
         }

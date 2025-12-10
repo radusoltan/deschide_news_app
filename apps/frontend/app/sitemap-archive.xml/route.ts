@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchAllArchivedArticlesForSitemap } from '@/lib/api/sitemap-data';
+import { fetchArchivedArticlesForSitemap } from '@/lib/api/sitemap-data';
 import { buildArticleUrl, generateLanguageAlternates } from '@/lib/seo/sitemap-utils';
 import { SITEMAP_CONFIG, Locale } from '@/lib/seo/sitemap-config';
 
@@ -30,7 +30,7 @@ const ARCHIVE_CONFIG = {
 export async function GET(request: NextRequest) {
   try {
     // Fetch all archived articles with pagination handling
-    const archivedArticles = await fetchAllArchivedArticlesForSitemap();
+    const archivedArticles = await fetchArchivedArticlesForSitemap();
 
     if (archivedArticles.length === 0) {
       console.log('No archived articles found for sitemap');

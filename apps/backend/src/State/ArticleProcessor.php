@@ -34,54 +34,6 @@ final class ArticleProcessor implements ProcessorInterface
     ) {
     }
 
-    /**
-     * Invalidate article cache for all locales (individual + list caches)
-     * Clears both PerformanceService cache AND Doctrine Result Cache
-     */
-    private function invalidateArticleCache(int $articleId): void
-    {
-        // 1. Clear PerformanceService Redis cache (used by CachedArticleProvider)
-        $this->performanceService->invalidateArticle($articleId);
-
-        // 2. Clear Doctrine Result Cache (used by ArticleProvider.enableResultCache())
-        // Clear individual article cache for all locales
-        $locales = ['ro', 'en', 'ru'];
-        foreach ($locales as $locale) {
-            $cacheKey = sprintf('article_%d_%s', $articleId, $locale);
-            $this->doctrineResultCachePool->deleteItem($cacheKey);
-        }
-
-        // 3. Clear all article list caches (they contain the article)
-        // Unfortunately Doctrine cache pool doesn't support pattern deletion,
-        // so we clear specific known patterns
-        $this->clearArticleListCaches();
-    }
-
-    /**
-     * Clear article list caches for all locales and common filter combinations
-     */
-    private function clearArticleListCaches(): void
-    {
-        $locales = ['ro', 'en', 'ru'];
-        $itemsPerPage = [10, 20, 30, 50, 100];
-
-        foreach ($locales as $locale) {
-            for ($page = 1; $page <= 10; $page++) {
-                foreach ($itemsPerPage as $ipp) {
-                    // Clear common filter combinations
-                    $patterns = [
-                        sprintf('articles_list_%s_p%d_ipp%d_%s_all_all', $locale, $page, $ipp, md5('')),
-                        sprintf('articles_list_%s_p%d_ipp%d_%s_new_all', $locale, $page, $ipp, md5('')),
-                        sprintf('articles_list_%s_p%d_ipp%d_%s_published_all', $locale, $page, $ipp, md5('')),
-                    ];
-                    foreach ($patterns as $cacheKey) {
-                        $this->doctrineResultCachePool->deleteItem($cacheKey);
-                    }
-                }
-            }
-        }
-    }
-
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): ?Article
     {
         $request = $this->requestStack->getCurrentRequest();
@@ -185,7 +137,7 @@ final class ArticleProcessor implements ProcessorInterface
                 }
                 // Remove authors that are not in the new list
                 foreach ($existingEntity->getAuthors() as $author) {
-                    if (!in_array($author->getId(), $incomingAuthorIds, true)) {
+                    if (!\in_array($author->getId(), $incomingAuthorIds, true)) {
                         $existingEntity->removeAuthor($author);
                     }
                 }
@@ -195,7 +147,7 @@ final class ArticleProcessor implements ProcessorInterface
                     $existingAuthorIds[] = $author->getId();
                 }
                 foreach ($data->getAuthors() as $author) {
-                    if (!in_array($author->getId(), $existingAuthorIds, true)) {
+                    if (!\in_array($author->getId(), $existingAuthorIds, true)) {
                         $managedAuthor = $this->getManagedAuthor($author);
                         if ($managedAuthor) {
                             $existingEntity->addAuthor($managedAuthor);
@@ -227,7 +179,7 @@ final class ArticleProcessor implements ProcessorInterface
                 }
                 // Remove tags that are not in the new list and decrement their usage count
                 foreach ($existingEntity->getTags() as $tag) {
-                    if (!in_array($tag->getId(), $incomingTagIds, true)) {
+                    if (!\in_array($tag->getId(), $incomingTagIds, true)) {
                         $existingEntity->removeTag($tag);
                         $tag->setUsageCount(max(0, $tag->getUsageCount() - 1));
                     }
@@ -238,7 +190,7 @@ final class ArticleProcessor implements ProcessorInterface
                     $existingTagIds[] = $tag->getId();
                 }
                 foreach ($data->getTags() as $tag) {
-                    if (!in_array($tag->getId(), $existingTagIds, true)) {
+                    if (!\in_array($tag->getId(), $existingTagIds, true)) {
                         $managedTag = $this->getManagedTag($tag);
                         if ($managedTag) {
                             $existingEntity->addTag($managedTag);
@@ -356,6 +308,54 @@ final class ArticleProcessor implements ProcessorInterface
         return null;
     }
 
+    /**
+     * Invalidate article cache for all locales (individual + list caches)
+     * Clears both PerformanceService cache AND Doctrine Result Cache.
+     */
+    private function invalidateArticleCache(int $articleId): void
+    {
+        // 1. Clear PerformanceService Redis cache (used by CachedArticleProvider)
+        $this->performanceService->invalidateArticle($articleId);
+
+        // 2. Clear Doctrine Result Cache (used by ArticleProvider.enableResultCache())
+        // Clear individual article cache for all locales
+        $locales = ['ro', 'en', 'ru'];
+        foreach ($locales as $locale) {
+            $cacheKey = \sprintf('article_%d_%s', $articleId, $locale);
+            $this->doctrineResultCachePool->deleteItem($cacheKey);
+        }
+
+        // 3. Clear all article list caches (they contain the article)
+        // Unfortunately Doctrine cache pool doesn't support pattern deletion,
+        // so we clear specific known patterns
+        $this->clearArticleListCaches();
+    }
+
+    /**
+     * Clear article list caches for all locales and common filter combinations.
+     */
+    private function clearArticleListCaches(): void
+    {
+        $locales = ['ro', 'en', 'ru'];
+        $itemsPerPage = [10, 20, 30, 50, 100];
+
+        foreach ($locales as $locale) {
+            for ($page = 1; $page <= 10; ++$page) {
+                foreach ($itemsPerPage as $ipp) {
+                    // Clear common filter combinations
+                    $patterns = [
+                        \sprintf('articles_list_%s_p%d_ipp%d_%s_all_all', $locale, $page, $ipp, md5('')),
+                        \sprintf('articles_list_%s_p%d_ipp%d_%s_new_all', $locale, $page, $ipp, md5('')),
+                        \sprintf('articles_list_%s_p%d_ipp%d_%s_published_all', $locale, $page, $ipp, md5('')),
+                    ];
+                    foreach ($patterns as $cacheKey) {
+                        $this->doctrineResultCachePool->deleteItem($cacheKey);
+                    }
+                }
+            }
+        }
+    }
+
     private function addTranslation(Article $article, string $locale): void
     {
         /** @var TranslationRepository $translationRepo */
@@ -377,7 +377,7 @@ final class ArticleProcessor implements ProcessorInterface
     }
 
     /**
-     * Get managed Category entity from database
+     * Get managed Category entity from database.
      */
     private function getManagedCategory(Category $category): ?Category
     {
@@ -389,7 +389,7 @@ final class ArticleProcessor implements ProcessorInterface
     }
 
     /**
-     * Get managed Author entity from database
+     * Get managed Author entity from database.
      */
     private function getManagedAuthor(Author $author): ?Author
     {
@@ -401,7 +401,7 @@ final class ArticleProcessor implements ProcessorInterface
     }
 
     /**
-     * Get managed Tag entity from database
+     * Get managed Tag entity from database.
      */
     private function getManagedTag(Tag $tag): ?Tag
     {

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Service for invalidating Varnish HTTP cache
+ * Service for invalidating Varnish HTTP cache.
  *
  * Usage:
  *   $this->varnishCache->purgeUrl('/api/articles/123');
@@ -17,7 +18,9 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class VarnishCacheService
 {
     private bool $enabled;
+
     private string $varnishHost;
+
     private int $varnishPort;
 
     public function __construct(
@@ -33,20 +36,22 @@ final class VarnishCacheService
     }
 
     /**
-     * Purge a specific URL from Varnish cache
+     * Purge a specific URL from Varnish cache.
      *
      * @param string $url URL path to purge (e.g., '/api/articles/123')
+     *
      * @return bool True if purge was successful
      */
     public function purgeUrl(string $url): bool
     {
         if (!$this->enabled) {
             $this->logger->debug('Varnish cache purge skipped (disabled)', ['url' => $url]);
+
             return false;
         }
 
         try {
-            $varnishUrl = sprintf('http://%s:%d%s', $this->varnishHost, $this->varnishPort, $url);
+            $varnishUrl = \sprintf('http://%s:%d%s', $this->varnishHost, $this->varnishPort, $url);
 
             $response = $this->httpClient->request('PURGE', $varnishUrl, [
                 'timeout' => 2,
@@ -62,6 +67,7 @@ final class VarnishCacheService
                     'url' => $url,
                     'varnish_url' => $varnishUrl,
                 ]);
+
                 return true;
             }
 
@@ -69,31 +75,35 @@ final class VarnishCacheService
                 'url' => $url,
                 'status_code' => $statusCode,
             ]);
+
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Varnish cache purge error', [
                 'url' => $url,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
-     * Ban URLs matching a pattern (bulk purge)
+     * Ban URLs matching a pattern (bulk purge).
      *
      * @param string $pattern URL pattern (regex) to ban (e.g., '/api/articles.*')
+     *
      * @return bool True if ban was successful
      */
     public function banPattern(string $pattern): bool
     {
         if (!$this->enabled) {
             $this->logger->debug('Varnish cache ban skipped (disabled)', ['pattern' => $pattern]);
+
             return false;
         }
 
         try {
-            $varnishUrl = sprintf('http://%s:%d%s', $this->varnishHost, $this->varnishPort, $pattern);
+            $varnishUrl = \sprintf('http://%s:%d%s', $this->varnishHost, $this->varnishPort, $pattern);
 
             $response = $this->httpClient->request('BAN', $varnishUrl, [
                 'timeout' => 2,
@@ -109,6 +119,7 @@ final class VarnishCacheService
                     'pattern' => $pattern,
                     'varnish_url' => $varnishUrl,
                 ]);
+
                 return true;
             }
 
@@ -116,18 +127,20 @@ final class VarnishCacheService
                 'pattern' => $pattern,
                 'status_code' => $statusCode,
             ]);
+
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Varnish cache ban error', [
                 'pattern' => $pattern,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
-     * Purge an article and related collections
+     * Purge an article and related collections.
      *
      * @param int $articleId Article ID
      */
@@ -144,7 +157,7 @@ final class VarnishCacheService
     }
 
     /**
-     * Purge a category and related collections
+     * Purge a category and related collections.
      *
      * @param int $categoryId Category ID
      */
@@ -157,11 +170,11 @@ final class VarnishCacheService
         $this->banPattern('/api/categories\?.*');
 
         // Purge articles filtered by this category
-        $this->banPattern("/api/articles\?.*category.*{$categoryId}.*");
+        $this->banPattern("/api/articles\\?.*category.*{$categoryId}.*");
     }
 
     /**
-     * Purge all articles (use sparingly!)
+     * Purge all articles (use sparingly!).
      */
     public function purgeAllArticles(): void
     {
@@ -170,7 +183,7 @@ final class VarnishCacheService
     }
 
     /**
-     * Purge all API endpoints (nuclear option - use only when necessary)
+     * Purge all API endpoints (nuclear option - use only when necessary).
      */
     public function purgeAll(): void
     {
@@ -179,7 +192,7 @@ final class VarnishCacheService
     }
 
     /**
-     * Check if Varnish is enabled
+     * Check if Varnish is enabled.
      */
     public function isEnabled(): bool
     {
@@ -187,7 +200,7 @@ final class VarnishCacheService
     }
 
     /**
-     * Enable Varnish cache invalidation
+     * Enable Varnish cache invalidation.
      */
     public function enable(): void
     {
@@ -196,7 +209,7 @@ final class VarnishCacheService
     }
 
     /**
-     * Disable Varnish cache invalidation
+     * Disable Varnish cache invalidation.
      */
     public function disable(): void
     {

@@ -1,7 +1,24 @@
+---
+name: frontend-e2e-tester
+description: |
+  Specialized agent for Deschide News multilingual news portal.
+
+Examples:
+- "@frontend-e2e-tester [task description]"
+tools:
+  - Read
+  - mcp__playwright__browser_navigate
+  - mcp__playwright__browser_snapshot
+  - mcp__playwright__browser_click
+  - mcp__playwright__browser_type
+  - mcp__playwright__browser_evaluate
+model: claude-3-5-sonnet-20241022
+permissionMode: default
+color: green
+---
+
 # Frontend E2E Tester Agent
 
-**Type**: Specialized Testing Agent
-**Purpose**: End-to-end testing of Next.js frontend application using Playwright MCP
 **Scope**: Frontend Application (http://localhost:3005)
 
 ## Agent Description

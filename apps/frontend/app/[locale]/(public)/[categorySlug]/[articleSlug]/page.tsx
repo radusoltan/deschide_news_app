@@ -211,46 +211,46 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <StructuredData data={structuredData} />
 
       <ArticleLayout
-          sidebar={
-            <ArticleSidebar
-              relatedArticles={relatedArticles}
-              // popularArticles={popularArticles}
-              locale={locale}
-            />
-          }
-        >
-          {/* Breadcrumb Navigation */}
-          <Breadcrumb items={breadcrumbItems} locale={locale} className="mb-6" />
+        sidebar={
+          <ArticleSidebar
+            relatedArticles={relatedArticles}
+            // popularArticles={popularArticles}
+            locale={locale}
+          />
+        }
+      >
+        {/* Breadcrumb Navigation */}
+        <Breadcrumb items={breadcrumbItems} locale={locale} className="mb-6" />
 
-          {/* Article Header */}
-          <ArticleHeader article={article} locale={locale} />
+        {/* Article Header */}
+        <ArticleHeader article={article} locale={locale} />
 
-          {/* Featured Image */}
-          {imageToUse && (
-            <ArticleImage
-              image={{
-                path: imageToUse.path,
-                width: imageToUse.width,
-                height: imageToUse.height,
-                alt: featuredImage?.alt,
-                title: featuredImage?.title,
-              }}
-              priority
-              enableLightbox
-            />
-          )}
+        {/* Featured Image */}
+        {imageToUse && (
+          <ArticleImage
+            image={{
+              path: imageToUse.path,
+              width: imageToUse.width,
+              height: imageToUse.height,
+              alt: featuredImage?.alt,
+              title: featuredImage?.title,
+            }}
+            priority
+            enableLightbox
+          />
+        )}
 
-          {/* Article Body */}
-          {article.content && (
-            <ArticleBody
-              content={article.content}
-              enableTableOfContents={article.content.length > 3000}
-            />
-          )}
+        {/* Article Body */}
+        {article.content && (
+          <ArticleBody
+            content={article.content}
+            enableTableOfContents={article.content.length > 3000}
+          />
+        )}
 
-          {/* Article Meta (author bio, social share) */}
-          <ArticleMeta article={article} locale={locale} />
-        </ArticleLayout>
+        {/* Article Meta (author bio, social share) */}
+        <ArticleMeta article={article} locale={locale} />
+      </ArticleLayout>
     </>
   );
 }

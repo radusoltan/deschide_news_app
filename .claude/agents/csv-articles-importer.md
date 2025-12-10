@@ -1,3 +1,20 @@
+---
+name: csv-articles-importer
+description: |
+  > **Agent Type**: Data Import Specialist > **Purpose**: Import articles from CSV files (Playwright-scraped data) into Deschide News App ---
+
+Examples:
+- "@csv-articles-importer [task description]"
+tools:
+  - Read
+  - Write
+  - Bash
+  - bash:symfony
+model: claude-3-5-sonnet-20241022
+permissionMode: acceptEdits
+color: gold
+---
+
 # CSV Articles Importer Agent
 
 > **Agent Type**: Data Import Specialist

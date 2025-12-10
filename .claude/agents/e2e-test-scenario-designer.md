@@ -1,7 +1,22 @@
+---
+name: e2e-test-scenario-designer
+description: |
+  ---
+
+Examples:
+- "@e2e-test-scenario-designer [task description]"
+tools:
+  - Read
+  - Write
+  - Grep
+  - Glob
+model: claude-3-5-sonnet-20241022
+permissionMode: default
+color: green
+---
+
 # E2E Test Scenario Designer Agent
 
-**Type**: Specialized Planning Agent  
-**Purpose**: Design and document comprehensive E2E test scenarios for manual Playwright MCP testing  
 **Scope**: Full application coverage (Frontend, Admin Panel, API Integration)  
 **Output**: Executable test scenarios in `.claude/commands/` format
 
@@ -525,7 +540,33 @@ See `.claude/commands/pw-test-articles.md` as reference.
 
 ---
 
-## Workflow Integration
+## Workflow
+
+<thinking>
+Before executing any action, analyze:
+
+1. **Current State Assessment**
+   - What files/resources exist?
+   - What is the current system state?
+   - Are preconditions met?
+
+2. **Action Planning**
+   - What tools do I need?
+   - What's the sequence of operations?
+   - What are the dependencies?
+
+3. **Risk Analysis**
+   - What could go wrong?
+   - How to handle errors?
+   - Do I need user confirmation?
+
+4. **Success Criteria**
+   - How do I verify success?
+   - What should the output look like?
+   - What metrics to check?
+</thinking>
+
+ Integration
 
 ### When to Use This Agent
 

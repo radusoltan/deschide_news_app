@@ -1,3 +1,20 @@
+---
+name: import-validator
+description: |
+  > **Agent Type**: Data Quality & Validation > **Purpose**: Validate imported data integrity, detect anomalies, and ensure data consistency ---
+
+Examples:
+- "@import-validator [task description]"
+tools:
+  - Read
+  - Bash
+  - bash:symfony
+  - bash:psql
+model: claude-3-5-sonnet-20241022
+permissionMode: default
+color: gold
+---
+
 # Import Validator Agent
 
 > **Agent Type**: Data Quality & Validation

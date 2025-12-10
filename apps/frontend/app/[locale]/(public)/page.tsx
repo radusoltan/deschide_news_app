@@ -1,11 +1,19 @@
 import type { Metadata } from 'next'
-import NewsSlider from './components/NewsSlider';
+import dynamic from 'next/dynamic';
 import ImportantList from "./components/home/important";
 import LatestNews from "./components/home/latest-news";
 import CategorySection from '@/components/CategorySection';
-import { TrendingArticles } from '@/components/public/TrendingArticles';
 import { fetchFrontPageCategories } from '@/lib/api/categories';
 import { generateHomepageMetadata } from '@/lib/seo/meta-tags';
+
+// Lazy load non-critical components for better initial load performance
+const NewsSlider = dynamic(() => import('./components/NewsSlider'), {
+  loading: () => <div className="h-96 bg-gray-100 animate-pulse" />,
+});
+
+const TrendingArticles = dynamic(() => import('@/components/public/TrendingArticles').then(mod => ({ default: mod.TrendingArticles })), {
+  loading: () => <div className="h-64 bg-gray-50 animate-pulse my-12" />,
+});
 
 type Locale = 'ro' | 'en' | 'ru';
 
@@ -18,6 +26,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 // Homepage uses dynamic metadata based on locale - see generateMetadata below
 // Static metadata removed to allow dynamic generation
+
+// Enable ISR (Incremental Static Regeneration) with 60-second revalidation
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ locale: string }>

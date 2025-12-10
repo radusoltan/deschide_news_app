@@ -144,11 +144,7 @@ class ImportCategoriesDirectCommand extends Command
                 $slug = strtolower($this->slugger->slug($slugBase)->toString());
                 $category->setSlug($slug);
 
-                // Description (if exists)
-                if (!empty($defaultLang['Description'])) {
-                    $description = $this->decodeBlobContent($defaultLang['Description']);
-                    $category->setDescription($description);
-                }
+                // Note: Category entity doesn't have a description field
 
                 $category->setStatus(CategoryStatus::ACTIVE);
                 $category->setOnFrontPage(false);
@@ -161,6 +157,7 @@ class ImportCategoriesDirectCommand extends Command
                     $this->entityManager->flush();
 
                     // Add translations for other languages
+                    // Note: Only 'title' is translatable in Category entity (slug is NOT translatable)
                     foreach ($translations as $locale => $data) {
                         if ($locale === $defaultLocale) {
                             continue; // Skip default language
@@ -168,13 +165,7 @@ class ImportCategoriesDirectCommand extends Command
 
                         $translationRepo->translate($category, 'title', $locale, $data['Name']);
 
-                        $slugLocale = strtolower($this->slugger->slug($data['ShortName'] ?: $data['Name'])->toString());
-                        $translationRepo->translate($category, 'slug', $locale, $slugLocale);
-
-                        if (!empty($data['Description'])) {
-                            $desc = $this->decodeBlobContent($data['Description']);
-                            $translationRepo->translate($category, 'description', $locale, $desc);
-                        }
+                        // Note: description field doesn't exist on Category entity, skip it
 
                         ++$translationsCount;
 

@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { fetchRealTimeStatsClient, type RealTimeStats as RealTimeStatsType } from '@/lib/api/statistics';
 
 interface Props {
@@ -19,21 +19,7 @@ export function RealTimeStats({ token, pollInterval = 5000 }: Props) {
   const [isLive, setIsLive] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Initial fetch
-    fetchData();
-
-    // Poll every interval
-    const interval = setInterval(() => {
-      if (isLive) {
-        fetchData();
-      }
-    }, pollInterval);
-
-    return () => clearInterval(interval);
-  }, [isLive, pollInterval, token]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const result = await fetchRealTimeStatsClient(token);
       setData(result);
@@ -42,7 +28,26 @@ export function RealTimeStats({ token, pollInterval = 5000 }: Props) {
       console.error('Failed to fetch real-time stats:', err);
       setError('Failed to load real-time data');
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    // Initial fetch - wrap in timeout to avoid synchronous setState
+    const timeoutId = setTimeout(() => {
+      fetchData();
+    }, 0);
+
+    // Poll every interval
+    const interval = setInterval(() => {
+      if (isLive) {
+        fetchData();
+      }
+    }, pollInterval);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(interval);
+    };
+  }, [isLive, pollInterval, fetchData]);
 
   if (error) {
     return (

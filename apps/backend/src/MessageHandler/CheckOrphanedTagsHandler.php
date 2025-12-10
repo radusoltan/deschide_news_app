@@ -54,7 +54,7 @@ final class CheckOrphanedTagsHandler
                     ]);
 
                     $this->entityManager->remove($tag);
-                    $deletedCount++;
+                    ++$deletedCount;
                 }
             }
 
@@ -85,7 +85,7 @@ final class CheckOrphanedTagsHandler
                     ]);
 
                     $this->entityManager->remove($tag);
-                    $deletedCount++;
+                    ++$deletedCount;
                 }
             }
 

@@ -119,7 +119,7 @@ export default async function TrendingPage({
               href={`/${locale}/trending?period=today`}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 period === 'today'
-                  ? 'bg-red-600 text-white'
+                  ? 'bg-deschide-tomato text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
               }`}
             >
@@ -129,7 +129,7 @@ export default async function TrendingPage({
               href={`/${locale}/trending?period=week`}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 period === 'week'
-                  ? 'bg-red-600 text-white'
+                  ? 'bg-deschide-tomato text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
               }`}
             >
@@ -139,7 +139,7 @@ export default async function TrendingPage({
               href={`/${locale}/trending?period=month`}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 period === 'month'
-                  ? 'bg-red-600 text-white'
+                  ? 'bg-deschide-tomato text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
               }`}
             >

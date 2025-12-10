@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\State;
 
+use ApiPlatform\Doctrine\Orm\Paginator;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Entity\Image;
@@ -109,29 +110,33 @@ final class ImageProvider implements ProviderInterface
         $queryBuilder = $repository->createQueryBuilder('i')
             ->orderBy('i.createdAt', 'DESC');
 
-        // Apply pagination
+        // Get pagination parameters
+        $page = 1;
+        $itemsPerPage = 30;
         if ($request) {
             $page = max(1, (int) $request->query->get('page', 1));
             $itemsPerPage = min(100, max(1, (int) $request->query->get('itemsPerPage', 30)));
-            $offset = ($page - 1) * $itemsPerPage;
-
-            $queryBuilder->setFirstResult($offset)
-                ->setMaxResults($itemsPerPage);
         }
 
+        // Calculate offset for pagination
+        $offset = ($page - 1) * $itemsPerPage;
+
+        // Apply pagination directly to query builder
+        $queryBuilder
+            ->setFirstResult($offset)
+            ->setMaxResults($itemsPerPage);
+
+        // Create the base query with locale hint
         $query = $queryBuilder->getQuery();
         $query->setHint(
             \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
             $locale
         );
 
-        // Use Doctrine Paginator to get correct total count
+        // Use Doctrine Paginator for total count
         $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: false);
 
-        // Gedmo HINT_TRANSLATABLE_LOCALE already loads translations at query time
-        // No refresh() calls needed - they cause N+1 queries
-
-        // Return Doctrine Paginator which API Platform will wrap automatically
-        return $doctrinePaginator;
+        // Wrap with API Platform Paginator with correct page/itemsPerPage
+        return new Paginator($doctrinePaginator, $page, $itemsPerPage);
     }
 }

@@ -18,6 +18,9 @@
     </php>
 
     <testsuites>
+        <testsuite name="Smoke">
+            <directory>tests/Smoke</directory>
+        </testsuite>
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
         </testsuite>
@@ -26,6 +29,9 @@
         </testsuite>
         <testsuite name="Functional">
             <directory>tests/Functional</directory>
+        </testsuite>
+        <testsuite name="Performance">
+            <directory>tests/Performance</directory>
         </testsuite>
         <!-- Legacy test directories (will be migrated) -->
         <testsuite name="Service">

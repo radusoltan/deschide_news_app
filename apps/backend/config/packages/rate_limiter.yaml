@@ -15,5 +15,11 @@ framework:
         # Limit for article creation/modification
         api_write:
             policy: 'fixed_window'
-            limit: 30
+            limit: 60
+            interval: '1 minute'
+
+        # Limit for image operations (crop, thumbnails) - higher for batch operations
+        api_image_operations:
+            policy: 'fixed_window'
+            limit: 120
             interval: '1 minute'

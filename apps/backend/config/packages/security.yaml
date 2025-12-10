@@ -13,6 +13,9 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+        health_check:
+            pattern: ^/api/health
+            security: false
         api:
             pattern: ^/api
             stateless: true
@@ -42,6 +45,9 @@ security:
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/slug, roles: PUBLIC_ACCESS }
         - { path: ^/api/redirects, roles: PUBLIC_ACCESS }
+
+        # Health check endpoints (for monitoring and Kubernetes probes)
+        - { path: ^/api/health, roles: PUBLIC_ACCESS }
 
         # Prometheus metrics endpoint (consider restricting by IP in production)
         - { path: ^/metrics, roles: PUBLIC_ACCESS }

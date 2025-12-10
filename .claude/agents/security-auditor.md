@@ -1,7 +1,22 @@
+---
+name: security-auditor
+description: |
+  ---
+
+Examples:
+- "@security-auditor [task description]"
+tools:
+  - Read
+  - Grep
+  - WebSearch
+  - bash:curl
+model: claude-3-5-sonnet-20241022
+permissionMode: default
+color: red
+---
+
 # Security Auditor Agent
 
-**Type**: Specialized Security Testing Agent  
-**Purpose**: Comprehensive security vulnerability assessment and attack surface validation  
 **Scope**: Full-stack application security (Public Frontend, API, CDN)  
 **Primary Focus**: Public-facing components protection
 

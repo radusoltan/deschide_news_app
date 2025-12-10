@@ -182,7 +182,7 @@ export default async function AboutPage({ params }: AboutPageProps) {
           {t.values.items.map((value, index) => (
             <div
               key={index}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-red-600"
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-deschide-tomato"
             >
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
                 {value.title}
@@ -214,7 +214,7 @@ export default async function AboutPage({ params }: AboutPageProps) {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <svg
-              className="w-6 h-6 text-red-600"
+              className="w-6 h-6 text-deschide-tomato"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -228,14 +228,14 @@ export default async function AboutPage({ params }: AboutPageProps) {
             </svg>
             <a
               href={`mailto:${t.contact.email}`}
-              className="text-lg text-red-600 hover:text-red-700"
+              className="text-lg text-deschide-tomato hover:text-deschide-tomato-dark"
             >
               {t.contact.email}
             </a>
           </div>
           <div className="flex items-center gap-3">
             <svg
-              className="w-6 h-6 text-red-600"
+              className="w-6 h-6 text-deschide-tomato"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

@@ -94,7 +94,7 @@ export default function CategoryHeroArticle({ article, locale }: CategoryHeroArt
           {/* Category tag */}
           <div className="pt-2">
             <div className="text-gray-100">
-              <div className="inline-block h-3 border-l-2 border-red-600 mr-2"></div>
+              <div className="inline-block h-3 border-l-2 border-deschide-tomato mr-2"></div>
               {getCategoryTitle(article.category)}
             </div>
           </div>

@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
- * Archive Navigation API Controller
+ * Archive Navigation API Controller.
  *
  * Provides supplementary endpoints for archive navigation and statistics.
  * Works alongside the /api/archived_articles endpoint (ArchivedArticleProvider)

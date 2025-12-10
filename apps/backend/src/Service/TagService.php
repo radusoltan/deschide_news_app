@@ -101,7 +101,7 @@ class TagService
         foreach ($tagIdentifiers as $identifier) {
             $tag = null;
 
-            if (is_int($identifier)) {
+            if (\is_int($identifier)) {
                 // Find by ID
                 $tag = $this->tagRepository->find($identifier);
             } else {
@@ -124,6 +124,7 @@ class TagService
      *
      * @param string $locale The locale for tag names (ro, en, ru)
      * @param int $limit Maximum number of tags to return
+     *
      * @return Tag[]
      */
     public function getPopularTags(string $locale = 'ro', int $limit = 20): array
@@ -137,6 +138,7 @@ class TagService
      * @param string $query The search query
      * @param string $locale The locale for tag names (ro, en, ru)
      * @param int $limit Maximum number of results
+     *
      * @return Tag[]
      */
     public function searchTags(string $query, string $locale = 'ro', int $limit = 10): array
@@ -160,7 +162,7 @@ class TagService
             $count = $tag->getArticles()->count();
             if ($tag->getUsageCount() !== $count) {
                 $tag->setUsageCount($count);
-                $updated++;
+                ++$updated;
             }
         }
 
@@ -183,7 +185,7 @@ class TagService
         $unusedTags = $this->tagRepository->findUnusedTags($date);
 
         if ($dryRun) {
-            return count($unusedTags);
+            return \count($unusedTags);
         }
 
         foreach ($unusedTags as $tag) {
@@ -192,7 +194,7 @@ class TagService
 
         $this->entityManager->flush();
 
-        return count($unusedTags);
+        return \count($unusedTags);
     }
 
     /**
@@ -200,7 +202,6 @@ class TagService
      *
      * @param string $name The tag name
      * @param string $locale The locale for the tag name (ro, en, ru)
-     * @return Tag
      */
     public function getOrCreateTag(string $name, string $locale = 'ro'): Tag
     {
@@ -215,7 +216,7 @@ class TagService
     public function getTagStatistics(): array
     {
         $allTags = $this->tagRepository->findAll();
-        $total = count($allTags);
+        $total = \count($allTags);
         $used = 0;
         $totalUsage = 0;
         $mostUsedTag = null;
@@ -225,7 +226,7 @@ class TagService
             $usageCount = $tag->getUsageCount();
 
             if ($usageCount > 0) {
-                $used++;
+                ++$used;
             }
 
             $totalUsage += $usageCount;

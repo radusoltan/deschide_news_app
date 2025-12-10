@@ -11,6 +11,7 @@ use App\Repository\ArticleRepository;
 use App\Service\ArticleArchiveService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use ValueError;
 
 /**
  * Article Archive Management Controller.
@@ -99,8 +101,9 @@ class ArticleArchiveController extends AbstractController
         // Validate ArchiveReason enum
         try {
             $archiveReason = ArchiveReason::from($data['reason']);
-        } catch (\ValueError $e) {
-            $validReasons = array_map(fn($case) => $case->value, ArchiveReason::cases());
+        } catch (ValueError $e) {
+            $validReasons = array_map(fn ($case) => $case->value, ArchiveReason::cases());
+
             return $this->json([
                 'success' => false,
                 'error' => 'Invalid archive reason. Must be one of: ' . implode(', ', $validReasons),
@@ -140,7 +143,7 @@ class ArticleArchiveController extends AbstractController
                     'archive_reason' => $article->getArchiveReason()?->value,
                 ],
             ], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Failed to archive article', [
                 'article_id' => $id,
                 'error' => $e->getMessage(),
@@ -228,7 +231,7 @@ class ArticleArchiveController extends AbstractController
                     'archive_reason' => $article->getArchiveReason()?->value,
                 ],
             ], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Failed to unarchive article', [
                 'article_id' => $id,
                 'error' => $e->getMessage(),
@@ -320,7 +323,7 @@ class ArticleArchiveController extends AbstractController
                     'cutoff_date' => $result['cutoff_date']->format('c'),
                 ],
             ], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Bulk archive operation failed', [
                 'years_old' => $yearsOld,
                 'batch_size' => $batchSize,
@@ -384,9 +387,9 @@ class ArticleArchiveController extends AbstractController
             return $this->json([
                 'success' => true,
                 'statistics' => $statistics,
-                'timestamp' => (new DateTimeImmutable())->format('c'),
+                'timestamp' => new DateTimeImmutable()->format('c'),
             ], Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Failed to retrieve archive statistics', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

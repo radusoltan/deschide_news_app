@@ -45,10 +45,8 @@ final class ThumbnailProfileProvider implements ProviderInterface
 
             $result = $query->getOneOrNullResult();
 
-            if ($result) {
-                $result->setTranslatableLocale($locale);
-                $this->entityManager->refresh($result);
-            }
+            // NOTE: Translation loading is handled by HINT_TRANSLATABLE_LOCALE
+            // Do NOT use refresh() as it causes N+1 queries
 
             return $result;
         }
@@ -63,10 +61,8 @@ final class ThumbnailProfileProvider implements ProviderInterface
 
         $results = $query->getResult();
 
-        foreach ($results as $result) {
-            $result->setTranslatableLocale($locale);
-            $this->entityManager->refresh($result);
-        }
+        // NOTE: Translation loading is handled by HINT_TRANSLATABLE_LOCALE
+        // Do NOT iterate and refresh() as it causes N+1 queries
 
         return $results;
     }

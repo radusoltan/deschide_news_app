@@ -187,7 +187,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-deschide-tomato focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
 
@@ -206,7 +206,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-deschide-tomato focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
 
@@ -224,7 +224,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.category}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-deschide-tomato focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 >
                   <option value="general">{t.form.categories.general}</option>
                   <option value="press">{t.form.categories.press}</option>
@@ -249,7 +249,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-deschide-tomato focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
 
@@ -268,7 +268,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   onChange={handleChange}
                   required
                   rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-deschide-tomato focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
                 />
               </div>
 
@@ -276,7 +276,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-lg"
+                className="w-full px-6 py-3 bg-deschide-tomato text-white rounded-lg hover:bg-deschide-tomato-dark disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-lg"
               >
                 {status === 'sending' ? t.form.sending : t.form.submit}
               </button>
@@ -289,7 +289,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               )}
 
               {status === 'error' && (
-                <div className="bg-red-50 border-l-4 border-red-600 p-4 rounded">
+                <div className="bg-red-50 border-l-4 border-deschide-tomato p-4 rounded">
                   <p className="text-red-800">{t.error}</p>
                 </div>
               )}
@@ -309,7 +309,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               {/* Email */}
               <div className="flex items-start gap-3">
                 <svg
-                  className="w-6 h-6 text-red-600 mt-1"
+                  className="w-6 h-6 text-deschide-tomato mt-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -325,7 +325,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   <div className="text-sm text-gray-500 dark:text-gray-400">Email</div>
                   <a
                     href={`mailto:${t.info.email}`}
-                    className="text-red-600 hover:text-red-700 font-medium"
+                    className="text-deschide-tomato hover:text-deschide-tomato-dark font-medium"
                   >
                     {t.info.email}
                   </a>
@@ -335,7 +335,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               {/* Address */}
               <div className="flex items-start gap-3">
                 <svg
-                  className="w-6 h-6 text-red-600 mt-1"
+                  className="w-6 h-6 text-deschide-tomato mt-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -368,7 +368,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               {/* Working Hours */}
               <div className="flex items-start gap-3">
                 <svg
-                  className="w-6 h-6 text-red-600 mt-1"
+                  className="w-6 h-6 text-deschide-tomato mt-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -400,19 +400,19 @@ export default function ContactPage({ params }: ContactPageProps) {
               {/* Placeholder for social media icons */}
               <a
                 href="#"
-                className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white hover:bg-red-700"
+                className="w-10 h-10 bg-deschide-tomato rounded-full flex items-center justify-center text-white hover:bg-deschide-tomato-dark"
               >
                 <span className="sr-only">Facebook</span>F
               </a>
               <a
                 href="#"
-                className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white hover:bg-red-700"
+                className="w-10 h-10 bg-deschide-tomato rounded-full flex items-center justify-center text-white hover:bg-deschide-tomato-dark"
               >
                 <span className="sr-only">Twitter</span>T
               </a>
               <a
                 href="#"
-                className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white hover:bg-red-700"
+                className="w-10 h-10 bg-deschide-tomato rounded-full flex items-center justify-center text-white hover:bg-deschide-tomato-dark"
               >
                 <span className="sr-only">Instagram</span>I
               </a>

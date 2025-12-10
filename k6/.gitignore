@@ -1,0 +1,11 @@
+# k6 Test Results
+results/*.json
+results/*.html
+results/*.csv
+
+# Keep directory structure
+!results/.gitkeep
+
+# Local test configurations
+*.local.js
+.env.local

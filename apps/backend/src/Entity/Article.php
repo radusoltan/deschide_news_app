@@ -35,6 +35,7 @@ use Symfony\Component\Serializer\Annotation\MaxDepth;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE', region: 'short_lived')]
 #[UniqueEntity('slug', message: 'This slug is already in use. Please choose a different slug.')]
 #[ORM\Table(name: 'articles')]
 #[ORM\HasLifecycleCallbacks]

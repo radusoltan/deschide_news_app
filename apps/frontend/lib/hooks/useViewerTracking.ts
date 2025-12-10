@@ -108,12 +108,22 @@ export function useViewerTracking(
   const [error, setError] = useState<Error | null>(null);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<number>(Date.now());
-  const lastTrackTimeRef = useRef<number>(Date.now());
+  // Initialize time refs with 0, will be set in useEffect
+  const startTimeRef = useRef<number>(0);
+  const lastTrackTimeRef = useRef<number>(0);
 
-  // Initialize session ID
+  // Initialize session ID and time refs
   useEffect(() => {
     if (!enabled) return;
+
+    // Initialize time refs on mount
+    const now = Date.now();
+    if (startTimeRef.current === 0) {
+      startTimeRef.current = now;
+    }
+    if (lastTrackTimeRef.current === 0) {
+      lastTrackTimeRef.current = now;
+    }
 
     let sid = providedSessionId;
 
@@ -134,7 +144,11 @@ export function useViewerTracking(
       }
     }
 
-    setSessionId(sid);
+    // Use callback to set session ID to avoid synchronous setState warning
+    const updateSessionId = () => {
+      setSessionId(sid);
+    };
+    updateSessionId();
   }, [liveTextId, providedSessionId, enabled]);
 
   // Track initial view

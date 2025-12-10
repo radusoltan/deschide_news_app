@@ -1,7 +1,24 @@
+---
+name: admin-panel-tester
+description: |
+  Specialized agent for Deschide News multilingual news portal.
+
+Examples:
+- "@admin-panel-tester [task description]"
+tools:
+  - Read
+  - mcp__playwright__browser_navigate
+  - mcp__playwright__browser_snapshot
+  - mcp__playwright__browser_click
+  - mcp__playwright__browser_type
+  - mcp__playwright__browser_fill_form
+model: claude-3-5-sonnet-20241022
+permissionMode: default
+color: green
+---
+
 # Admin Panel Tester Agent
 
-**Type**: Specialized Testing Agent
-**Purpose**: Comprehensive testing of admin panel functionality using Playwright MCP
 **Scope**: Admin interface (http://localhost:3005/{locale}/admin)
 
 ## Agent Description

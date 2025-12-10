@@ -160,7 +160,7 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
               placeholder="Describe the image for accessibility"
             />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Required for accessibility. Describe what's in the image.
+              Required for accessibility. Describe what&apos;s in the image.
             </p>
           </div>
 

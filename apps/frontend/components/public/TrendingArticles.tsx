@@ -30,7 +30,7 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
     <section className="my-12">
       <div className="flex items-center gap-3 mb-6">
         <svg
-          className="w-8 h-8 text-red-500"
+          className="w-8 h-8 text-deschide-tomato"
           fill="currentColor"
           viewBox="0 0 20 20"
           xmlns="http://www.w3.org/2000/svg"
@@ -41,7 +41,7 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
             clipRule="evenodd"
           />
         </svg>
-        <h2 className="text-3xl font-bold text-gray-900">
+        <h2 className="text-3xl font-heading uppercase text-deschide-oxford-blue">
           Trending Now
         </h2>
       </div>
@@ -53,10 +53,10 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
             href={`/${article.category?.slug}/${article.slug}`}
             className="group"
           >
-            <article className="relative border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-blue-300 bg-white">
+            <article className="relative border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-deschide-tomato bg-white">
               {/* Trending badge for #1 */}
               {index === 0 && (
-                <span className="absolute -top-3 -right-3 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                <span className="absolute -top-3 -right-3 bg-deschide-tomato text-white text-xs font-heading uppercase px-3 py-1 rounded-full shadow-lg">
                   #1 Trending
                 </span>
               )}
@@ -77,13 +77,13 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
               <div className="relative z-10">
                 {/* Category */}
                 {article.category && (
-                  <p className="text-sm text-blue-600 font-medium mb-3">
+                  <p className="text-sm text-deschide-oxford-blue font-heading uppercase tracking-wide mb-3">
                     {article.category.name}
                   </p>
                 )}
 
                 {/* Title */}
-                <h3 className="font-semibold text-lg mb-3 group-hover:text-blue-600 transition-colors leading-tight min-h-[3.5rem]">
+                <h3 className="font-semibold text-lg mb-3 group-hover:text-deschide-tomato transition-colors leading-tight min-h-[3.5rem]">
                   {article.title || 'Untitled'}
                 </h3>
 
@@ -116,7 +116,7 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
 
                   {/* Trending icon */}
                   <svg
-                    className="w-5 h-5 text-red-500"
+                    className="w-5 h-5 text-deschide-tomato"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >

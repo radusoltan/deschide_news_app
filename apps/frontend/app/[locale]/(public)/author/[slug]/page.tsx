@@ -106,7 +106,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Author Avatar */}
             <div className="flex-shrink-0">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white text-4xl font-bold">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-deschide-tomato to-deschide-tomato-dark flex items-center justify-center text-white text-4xl font-bold">
                 {author.firstName?.[0]}
                 {author.lastName?.[0]}
               </div>
@@ -143,7 +143,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                 <div className="mt-4">
                   <a
                     href={`mailto:${author.email}`}
-                    className="inline-flex items-center gap-2 text-red-600 hover:text-red-700"
+                    className="inline-flex items-center gap-2 text-deschide-tomato hover:text-deschide-tomato-dark"
                   >
                     <svg
                       className="w-5 h-5"
@@ -214,7 +214,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                           href={`/${locale}/author/${slug}?page=${pageNum}`}
                           className={`px-4 py-2 rounded ${
                             currentPage === pageNum
-                              ? 'bg-red-600 text-white'
+                              ? 'bg-deschide-tomato text-white'
                               : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                           }`}
                         >

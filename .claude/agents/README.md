@@ -34,6 +34,7 @@ This directory contains specialized agents for developing, testing, data migrati
 | **csv-articles-importer** | Import from CSV files | Data Migration | `@csv-articles-importer import buchis.csv` |
 | **import-validator** | Validate imported data | Data Migration | `@import-validator check article integrity` |
 | **import-mapper** | Manage ID mappings & deduplication | Data Migration | `@import-mapper resolve duplicates` |
+| **cache-sync-specialist** | Cache invalidation & ODR sync | Infrastructure | `@cache-sync-specialist implement ODR` |
 
 ---
 
@@ -169,9 +170,9 @@ Strategic test coverage planning:
   - Maintains test coverage matrix
   - Outputs to `.claude/commands/pw-test-*.md` format
 
-### 🗄️ Infrastructure Agent ⭐ NEW
+### 🗄️ Infrastructure Agents
 
-Database architecture, optimization, and security:
+Database architecture, caching, and optimization:
 
 - **`database-engineer`** - Multi-database management and optimization
   - PostgreSQL query optimization and indexing
@@ -182,6 +183,7 @@ Database architecture, optimization, and security:
   - Performance monitoring and reporting
   - Gedmo Translatable optimization
   - N+1 query prevention
+  - L1/L2/L3 caching hierarchy
 
 **Invocation Examples:**
 ```
@@ -191,6 +193,23 @@ Database architecture, optimization, and security:
 @database-engineer review Elasticsearch mapping
 @database-engineer audit database permissions
 @database-engineer create backup strategy
+```
+
+- **`cache-sync-specialist`** - Cache synchronization and On-Demand Revalidation
+  - L1/L2/L3 caching hierarchy management
+  - On-Demand Revalidation (ODR) implementation
+  - Symfony → Next.js cache sync via webhooks
+  - Tag-based cache invalidation
+  - Cache freshness monitoring
+  - Breaking news instant propagation
+
+**Invocation Examples:**
+```
+@cache-sync-specialist implement ODR for articles
+@cache-sync-specialist debug stale content issue
+@cache-sync-specialist optimize cache TTL strategy
+@cache-sync-specialist setup cache monitoring
+@cache-sync-specialist configure breaking news sync
 ```
 
 ### 🔐 Security Agent
@@ -411,10 +430,11 @@ symfony console app:sample-import
 | `performance-tester.md` | Performance testing specification |
 | `manual-frontend-tester.md` | Exploratory manual testing |
 
-### Infrastructure Agents ⭐ NEW
+### Infrastructure Agents
 | File | Description |
 |------|-------------|
 | `database-engineer.md` | Multi-database architecture, optimization & security |
+| `cache-sync-specialist.md` | Cache synchronization & On-Demand Revalidation (ODR) |
 
 ### Security Agents
 | File | Description |
@@ -433,17 +453,21 @@ symfony console app:sample-import
 
 Before deploying to production:
 
-### Database Health Verified ⭐ NEW
+### Database & Cache Health Verified
 - [ ] PostgreSQL query performance optimized (<100ms p95)
 - [ ] All necessary indexes created and verified
 - [ ] No N+1 query patterns detected
-- [ ] Redis cache hit ratio >95%
+- [ ] L1 cache (APCu) hit ratio >90%
+- [ ] L2 cache (Redis) hit ratio >95%
+- [ ] L3 cache (ISR/CDN) serving static pages
 - [ ] Elasticsearch indices healthy and optimized
 - [ ] Database backups configured and tested
 - [ ] Connection pooling properly configured
 - [ ] Gedmo translation queries optimized
 - [ ] Database user permissions audited
 - [ ] Slow query logging enabled for monitoring
+- [ ] On-Demand Revalidation (ODR) webhook configured
+- [ ] Cache invalidation tested (article update → fresh content)
 
 ### Security Audit Complete
 - [ ] XSS vulnerabilities tested (reflected, stored, DOM-based)

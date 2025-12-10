@@ -52,7 +52,7 @@ class LocaleSubscriber implements EventSubscriberInterface
 
         // Only allow supported locales
         $supportedLocales = ['ro', 'en', 'ru'];
-        if (!in_array($locale, $supportedLocales, true)) {
+        if (!\in_array($locale, $supportedLocales, true)) {
             $locale = 'ro'; // fallback to default
         }
 

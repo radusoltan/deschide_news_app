@@ -23,20 +23,28 @@ class TestFixtures extends Fixture
 {
     // Reference constants for accessing fixtures in tests
     public const ADMIN_USER_REFERENCE = 'admin-user';
+
     public const REGULAR_USER_REFERENCE = 'regular-user';
+
     public const EDITOR_USER_REFERENCE = 'editor-user';
 
     // Known credentials for test users
     public const ADMIN_USER_USERNAME = 'test_admin';
+
     public const ADMIN_USER_EMAIL = 'admin@test.com';
+
     public const ADMIN_USER_PASSWORD = 'admin123';
 
     public const REGULAR_USER_USERNAME = 'test_user';
+
     public const REGULAR_USER_EMAIL = 'user@test.com';
+
     public const REGULAR_USER_PASSWORD = 'user123';
 
     public const EDITOR_USER_USERNAME = 'test_editor';
+
     public const EDITOR_USER_EMAIL = 'editor@test.com';
+
     public const EDITOR_USER_PASSWORD = 'editor123';
 
     public function __construct(

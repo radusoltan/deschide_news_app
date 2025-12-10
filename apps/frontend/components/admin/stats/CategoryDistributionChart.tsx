@@ -39,6 +39,23 @@ const COLORS = [
   '#6366f1', // indigo
 ];
 
+// Custom tooltip component (moved outside to prevent re-creation on each render)
+const CustomTooltip = ({ active, payload, total }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    const percentage = ((data.value / total) * 100).toFixed(1);
+    return (
+      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
+        <p className="font-semibold text-gray-900">{data.name}</p>
+        <p className="text-sm text-gray-600">
+          {data.value} articles ({percentage}%)
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function CategoryDistributionChart({
   data,
   title = 'Articles by Category'
@@ -62,23 +79,6 @@ export function CategoryDistributionChart({
 
   // Calculate total
   const total = data.reduce((sum, item) => sum + item.value, 0);
-
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0];
-      const percentage = ((data.value / total) * 100).toFixed(1);
-      return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-          <p className="font-semibold text-gray-900">{data.name}</p>
-          <p className="text-sm text-gray-600">
-            {data.value} articles ({percentage}%)
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   // Custom label
   const renderLabel = (entry: any) => {
@@ -109,7 +109,7 @@ export function CategoryDistributionChart({
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip total={total} />} />
             </PieChart>
           </ResponsiveContainer>
         </div>

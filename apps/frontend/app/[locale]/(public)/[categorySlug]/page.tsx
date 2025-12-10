@@ -142,8 +142,8 @@ export default async function CategoryPage({
             <div className="flex-shrink max-w-full w-full lg:w-2/3 overflow-hidden">
               {/* Category Title - H1 for SEO */}
               <div className="w-full py-3">
-                <h1 className="text-gray-800 text-2xl font-bold">
-                  <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
+                <h1 className="text-deschide-oxford-blue text-2xl font-bold font-heading uppercase">
+                  <span className="inline-block h-5 border-l-3 border-deschide-tomato mr-2"></span>
                   {category.title}
                 </h1>
               </div>

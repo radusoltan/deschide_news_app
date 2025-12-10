@@ -160,7 +160,7 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
         <div className="mb-6">
           <Link
             href={`/${locale}/archive`}
-            className="text-red-600 hover:text-red-700 font-medium"
+            className="text-deschide-tomato hover:text-deschide-tomato-dark font-medium"
           >
             {t.backToArchive}
           </Link>
@@ -193,7 +193,7 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
                     </span>
                     <Link
                       href={`/${locale}/archive/${yearNum}/${month + 1}`}
-                      className="text-red-600 hover:text-red-700 font-medium text-sm"
+                      className="text-deschide-tomato hover:text-deschide-tomato-dark font-medium text-sm"
                     >
                       {t.viewAll} →
                     </Link>

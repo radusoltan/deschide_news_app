@@ -56,11 +56,9 @@ final class TagProvider implements ProviderInterface
 
             $result = $query->getOneOrNullResult();
 
-            if ($result) {
-                $result->setTranslatableLocale($locale);
-                // Force refresh to load translations
-                $this->entityManager->refresh($result);
-            }
+            // NOTE: Translation loading is handled by HINT_TRANSLATABLE_LOCALE
+            // Do NOT use refresh() as it causes N+1 queries
+            // The hint ensures Gedmo loads translated values directly
 
             return $result;
         }
@@ -125,12 +123,9 @@ final class TagProvider implements ProviderInterface
 
         $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: false);
 
-        // Refresh each tag to load translations
-        $results = iterator_to_array($doctrinePaginator);
-        foreach ($results as $tag) {
-            $tag->setTranslatableLocale($locale);
-            $this->entityManager->refresh($tag);
-        }
+        // NOTE: Translation loading is handled by HINT_TRANSLATABLE_LOCALE
+        // Do NOT iterate and refresh() as it causes N+1 queries and exhausts the iterator
+        // The hint ensures Gedmo loads translated values directly
 
         return $doctrinePaginator;
     }

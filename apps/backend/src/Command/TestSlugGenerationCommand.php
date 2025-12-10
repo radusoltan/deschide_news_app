@@ -70,7 +70,7 @@ class TestSlugGenerationCommand extends Command
             array_map(fn ($r) => [$r['Title'], $r['Expected'], $r['Actual'], $r['Status']], $results)
         );
 
-        $allPassed = !in_array('❌', array_column($results, 'Status'), true);
+        $allPassed = !\in_array('❌', array_column($results, 'Status'), true);
 
         if ($allPassed) {
             $io->success('All slug generation tests passed! Romanian characters are properly transliterated.');

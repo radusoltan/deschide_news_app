@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
+use ReflectionClass;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -67,7 +68,7 @@ final class TestCacheHeadersSubscriber implements EventSubscriberInterface
             $response->headers->remove('Cache-Control');
 
             // Use reflection to bypass Symfony's Cache-Control normalization
-            $headersReflection = new \ReflectionClass($response->headers);
+            $headersReflection = new ReflectionClass($response->headers);
             $computedCacheControlProperty = $headersReflection->getProperty('computedCacheControl');
             $computedCacheControlProperty->setAccessible(true);
             $computedCacheControlProperty->setValue($response->headers, [
@@ -85,7 +86,7 @@ final class TestCacheHeadersSubscriber implements EventSubscriberInterface
             $response->headers->set('Vary', 'Accept-Language');
         }
 
-        if (in_array($route, ['api_tags_search', 'api_tags_related', 'api_tags_stats', 'api_tags_unused'], true)) {
+        if (\in_array($route, ['api_tags_search', 'api_tags_related', 'api_tags_stats', 'api_tags_unused'], true)) {
             // These endpoints also set custom cache headers
             // Restore the Vary header they set
             $vary = $response->headers->get('Vary');
@@ -96,12 +97,12 @@ final class TestCacheHeadersSubscriber implements EventSubscriberInterface
 
         // For Archive controller endpoints (/api/archive/years, /api/archive/stats, /api/archive/categories)
         // ArchiveController sets: 'Cache-Control: public, max-age=86400, s-maxage=604800'
-        if (in_array($route, ['api_archive_years', 'api_archive_stats', 'api_archive_categories'], true)) {
+        if (\in_array($route, ['api_archive_years', 'api_archive_stats', 'api_archive_categories'], true)) {
             // Clear existing Cache-Control settings
             $response->headers->remove('Cache-Control');
 
             // Use reflection to bypass Symfony's Cache-Control normalization
-            $headersReflection = new \ReflectionClass($response->headers);
+            $headersReflection = new ReflectionClass($response->headers);
             $computedCacheControlProperty = $headersReflection->getProperty('computedCacheControl');
             $computedCacheControlProperty->setAccessible(true);
             $computedCacheControlProperty->setValue($response->headers, [

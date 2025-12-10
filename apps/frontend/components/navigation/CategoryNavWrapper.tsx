@@ -18,20 +18,22 @@ export default async function CategoryNavWrapper({
   currentCategorySlug,
   className = '',
 }: CategoryNavWrapperProps) {
+  let categories: Awaited<ReturnType<typeof fetchFrontPageCategories>>['member'] = [];
+
   try {
     const result = await fetchFrontPageCategories(locale);
-    const categories = result.member;
-
-    return (
-      <CategoryNav
-        categories={categories}
-        locale={locale}
-        currentCategorySlug={currentCategorySlug}
-        className={className}
-      />
-    );
+    categories = result.member;
   } catch (error) {
     console.error('Error fetching categories:', error);
     return null;
   }
+
+  return (
+    <CategoryNav
+      categories={categories}
+      locale={locale}
+      currentCategorySlug={currentCategorySlug}
+      className={className}
+    />
+  );
 }

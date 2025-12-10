@@ -1,7 +1,24 @@
+---
+name: fullstack-integration-tester
+description: |
+  Specialized agent for Deschide News multilingual news portal.
+
+Examples:
+- "@fullstack-integration-tester [task description]"
+tools:
+  - Read
+  - mcp__playwright__browser_navigate
+  - mcp__playwright__browser_snapshot
+  - mcp__playwright__browser_click
+  - mcp__playwright__browser_type
+  - mcp__playwright__browser_network_requests
+model: claude-3-5-sonnet-20241022
+permissionMode: default
+color: green
+---
+
 # Full-Stack Integration Tester Agent
 
-**Type**: Specialized Testing Agent
-**Purpose**: End-to-end integration testing of complete backend-frontend workflows
 **Scope**: Full application stack (Backend + Frontend + Database + CDN)
 
 ## Agent Description

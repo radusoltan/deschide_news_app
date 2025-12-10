@@ -74,11 +74,10 @@ export default function CategoryNav({
                 <Link
                   key={category.id}
                   href={`/${locale}/${category.slug}`}
-                  className={`block px-4 py-3 hover:bg-gray-100 transition-colors ${
-                    isActive
-                      ? 'bg-red-50 text-red-600 font-semibold border-l-4 border-red-600'
-                      : 'text-gray-700'
-                  }`}
+                  className={`block px-4 py-3 hover:bg-gray-100 transition-colors ${isActive
+                    ? 'bg-red-50 text-red-600 font-semibold border-l-4 border-red-600'
+                    : 'text-gray-700'
+                    }`}
                   onClick={() => setIsOpen(false)}
                 >
                   {category.title}
@@ -98,11 +97,10 @@ export default function CategoryNav({
               <li key={category.id}>
                 <Link
                   href={`/${locale}/${category.slug}`}
-                  className={`inline-block px-4 py-2 rounded-lg font-medium transition-colors ${
-                    isActive
-                      ? 'bg-red-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-red-600'
-                  }`}
+                  className={`inline-block px-4 py-2 rounded-lg font-medium transition-colors ${isActive
+                    ? 'bg-red-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-red-600'
+                    }`}
                 >
                   {category.title}
                 </Link>

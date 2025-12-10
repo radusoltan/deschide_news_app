@@ -1,7 +1,24 @@
+---
+name: manual-frontend-tester
+description: |
+  ---
+
+Examples:
+- "@manual-frontend-tester [task description]"
+tools:
+  - Read
+  - Write
+  - mcp__playwright__browser_navigate
+  - mcp__playwright__browser_snapshot
+  - mcp__playwright__browser_click
+  - mcp__playwright__browser_take_screenshot
+model: claude-3-5-sonnet-20241022
+permissionMode: default
+color: green
+---
+
 # Manual Frontend Tester Agent
 
-**Type**: Specialized Interactive Testing Agent  
-**Purpose**: Exploratory and manual testing of the Next.js frontend using Playwright MCP  
 **Scope**: Frontend Application (http://localhost:3005)
 
 ---

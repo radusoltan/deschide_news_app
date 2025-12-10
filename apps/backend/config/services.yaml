@@ -58,6 +58,7 @@ services:
             $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
 
     # Image Elasticsearch Service
     App\Service\ImageElasticService:
@@ -65,6 +66,7 @@ services:
             $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
 
     # Redis Client for Performance Service and Sessions
     Predis\Client:
@@ -181,6 +183,12 @@ services:
     App\EventSubscriber\TestCacheHeadersSubscriber:
         arguments:
             $environment: '%kernel.environment%'
+
+    # Health Check Service
+    App\Service\HealthCheckService:
+        arguments:
+            $elasticsearchUrl: '%env(ELASTICSEARCH_HOST)%'
+            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
 
 # Test environment specific configuration
 when@test:

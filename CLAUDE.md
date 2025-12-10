@@ -35,6 +35,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │       ├── docs/             # Frontend documentation
 │       ├── package.json      # Node dependencies
 │       └── README.md         # Frontend README
+├── context/                  # Design system documentation
+│   ├── design_principles_and_features.md  # Full design guide
+│   ├── DESIGN_QUICK_REFERENCE.md          # Quick reference
+│   └── reseach_result.md                  # Research data
 ├── docs/                     # Centralized documentation
 │   ├── GIT_MONOREPO_MIGRATION_PLAN.md  # Monorepo migration
 │   └── ...
@@ -467,6 +471,113 @@ NEXT_PUBLIC_AVAILABLE_LOCALES=ro,en,ru
 - **Real-time Updates**:
   - Backend publishes to Mercure (`deschide_news/breaking`)
   - Frontend subscribes via SSE
+
+## Caching Strategy (L1/L2/L3)
+
+The application uses a multi-layer caching architecture for optimal performance:
+
+### Cache Hierarchy
+
+| Layer | Technology | Scope | TTL | Purpose |
+|-------|------------|-------|-----|---------|
+| **L1** | APCu/OPcache | Per-server | 30s-5min | PHP metadata, hot data |
+| **L2** | Redis (DB 1) | Shared | 5min-1h | API responses, sessions |
+| **L3** | Next.js ISR | Edge/CDN | 60s or ODR | Static HTML pages |
+
+### Data Flow
+
+```
+User Request
+    │
+    ▼
+┌─────────────────────────────────────┐
+│ L3: Next.js ISR / CDN               │
+│ - Homepage: revalidate: 60          │
+│ - Articles: On-Demand Revalidation  │
+└─────────────────────────────────────┘
+    │ MISS
+    ▼
+┌─────────────────────────────────────┐
+│ L2: Redis (Tag-based invalidation)  │
+│ - Prefix: deschide_news:*           │
+│ - Tags: article_123, category_5     │
+└─────────────────────────────────────┘
+    │ MISS
+    ▼
+┌─────────────────────────────────────┐
+│ L1: APCu (Local memory)             │
+│ - Doctrine metadata                 │
+│ - Config cache                      │
+└─────────────────────────────────────┘
+    │ MISS
+    ▼
+┌─────────────────────────────────────┐
+│ PostgreSQL (Source of truth)        │
+└─────────────────────────────────────┘
+```
+
+### On-Demand Revalidation (ODR)
+
+When content changes in Symfony, the frontend cache is invalidated immediately:
+
+```
+Article Update (Symfony Admin)
+    │
+    ▼
+┌─────────────────────────────────────┐
+│ Doctrine PostUpdate Event           │
+└─────────────────────────────────────┘
+    │
+    ├──▶ Redis: invalidateTags(['article_123'])
+    │
+    └──▶ Symfony Messenger (async)
+              │
+              ▼
+         POST /api/revalidate (Next.js)
+              │
+              ▼
+         revalidatePath('/ro/article/slug')
+```
+
+**Frontend Webhook Endpoint:**
+```typescript
+// apps/frontend/app/api/revalidate/route.ts
+export async function POST(request: NextRequest) {
+  const secret = request.headers.get('x-revalidate-secret');
+  if (secret !== process.env.REVALIDATE_SECRET) {
+    return NextResponse.json({ error: 'Invalid' }, { status: 401 });
+  }
+  const { path, locale } = await request.json();
+  revalidatePath(`/${locale}/article/${path}`, 'page');
+  revalidatePath(`/${locale}`, 'page'); // Always refresh homepage
+  return NextResponse.json({ revalidated: true });
+}
+```
+
+**Environment Variables:**
+```bash
+# Backend (.env)
+FRONTEND_REVALIDATE_URL=http://localhost:3005/api/revalidate
+FRONTEND_REVALIDATE_SECRET=your-secure-secret
+
+# Frontend (.env.local)
+REVALIDATE_SECRET=your-secure-secret
+```
+
+### Cache TTL Strategy
+
+| Content Type | L1 | L2 | L3 (ISR) | Invalidation |
+|--------------|----|----|----------|--------------|
+| Homepage | 30s | 60s | revalidate: 60 | Time-based |
+| Article | 5min | 1h | ODR | On update |
+| Category list | 5min | 30min | revalidate: 60 | Time-based |
+| Breaking news | - | 30s | ODR immediate | Sync webhook |
+
+### Agent Reference
+
+For detailed cache management, see:
+- `.claude/agents/cache-sync-specialist.md` - ODR implementation
+- `.claude/agents/database-engineer.md` - L1/L2 optimization
 
 ## CDN and Image Serving
 
@@ -940,6 +1051,90 @@ pnpm test:e2e:ui          # UI mode (visual debugging)
   - API Entrypoint: `http://127.0.0.1:8081/api`
   - See "API Resources & Endpoints" section above for details
 
+## Design System Documentation
+
+**IMPORTANT**: All frontend public-facing development MUST follow the design system documented in the `context/` folder.
+
+### Design Documents
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| **Full Design Guide** | `context/design_principles_and_features.md` | Comprehensive 1600+ line design specification |
+| **Quick Reference** | `context/DESIGN_QUICK_REFERENCE.md` | Fast lookup for common design decisions |
+
+### Key Design Decisions
+
+| Aspect | Decision | Rationale |
+|--------|----------|-----------|
+| **AMP** | NO | Deprecated - Core Web Vitals is the standard |
+| **FB Instant Articles** | NO | Discontinued since 2023 |
+| **Telegram Instant View** | YES | Major traffic source in Moldova |
+| **Layout System** | Bento Grid | Modern trend, high information density |
+| **Typography** | Serif body + Sans UI | Readability + Clarity |
+
+### Design System Essentials
+
+**Typography Scale:**
+- Hero Title: 48px (desktop) / 32px (mobile) - Sans 800
+- Article H1: 40px / 28px - Sans 700
+- Card Title: 24px / 20px - Sans 600
+- Body Text: 19px / 17px - Serif 400
+- Meta: 14px / 13px - Sans 500
+
+**Category Colors:**
+```
+politica:  #1d4ed8 (Blue)
+economie:  #047857 (Green)
+societate: #7c3aed (Purple)
+sport:     #dc2626 (Red)
+cultura:   #b45309 (Amber)
+external:  #0891b2 (Cyan)
+```
+
+**Responsive Breakpoints:**
+```
+Mobile:     < 640px    → 1 column
+Tablet S:   640-767px  → 2 columns
+Tablet:     768-1023px → 3 columns
+Desktop S:  1024-1279px → Bento 12-col
+Desktop:    >= 1280px   → Bento full
+```
+
+**Performance Targets (Core Web Vitals):**
+- LCP (Largest Contentful Paint): < 2.5s
+- INP (Interaction to Next Paint): < 200ms
+- CLS (Cumulative Layout Shift): < 0.1
+- Lighthouse Mobile Score: >= 90
+
+### Frontend Design Skill
+
+**IMPORTANT**: When working on **public frontend components** (homepage, article pages, category pages, archive pages, etc.), agents MUST use the `frontend-design` skill:
+
+```
+Use Skill: frontend-design:frontend-design
+```
+
+This skill provides:
+- Production-grade frontend interfaces with high design quality
+- Creative, polished code that avoids generic AI aesthetics
+- Adherence to the Bento Grid layout system
+- Proper typography and color implementation
+- Core Web Vitals optimization
+- Telegram Instant View compatibility
+
+**When to use frontend-design skill:**
+- Building new public-facing pages
+- Creating reusable UI components (cards, navigation, hero sections)
+- Implementing responsive layouts
+- Styling article content display
+- Adding visual polish and micro-interactions
+
+**When NOT to use:**
+- Admin panel development (internal tools)
+- Backend API work
+- Configuration files
+- Test files
+
 ## Current Development Status
 
 ✅ **Completed:**
@@ -958,16 +1153,29 @@ pnpm test:e2e:ui          # UI mode (visual debugging)
 - Migrations run successfully
 - API Platform state providers/processors implemented
 - Elasticsearch integration configured
-- Import system from Newscoop CMS implemented
+- Import system from Newscoop CMS implemented (13 commands available)
 - Image upload and thumbnail generation system
 - Article locking mechanism
 - JWT authentication configured
 - **Testing infrastructure (PHPUnit + Jest + Playwright)**
 - **All tests passing (539 tests, 100% success rate)**
+- **Multi-tier caching (APCu L1, Redis L2, Next.js ISR L3)**
+- **Rate limiting for API endpoints (general, login, write, image operations)**
+- **CSP headers configured for CDN integration**
+
+✅ **Import Status (from Newscoop CMS):**
+- **Authors:** 282/282 (100% complete)
+- **Categories:** 17/18 (94% complete, 28 available with translations)
+- **Images:** 1,788/155,332 (1.2% - WebP conversion, import paused)
+- **Articles:** 1,000/173,670 (0.6% - Romanian only)
+- **Translations:** 0/290,000 (0% - EN/RU not imported yet)
+- **Article-Image Links:** 0 (not imported yet)
+- **Infrastructure:** All 13 import commands functional and tested
 
 ⬜ **Current Focus:**
 - Frontend development and API integration
 - Admin panel features
+- Full-scale import execution (remaining 172K articles + images + translations)
 - Code quality tools (PHPStan, PHP-CS-Fixer)
 - Nginx virtual hosts configuration (optional)
 - CI/CD pipeline setup

@@ -70,9 +70,9 @@ final class ArticleProvider implements ProviderInterface
                 false
             );
 
-            // Enable result cache for single article GET (1 hour)
-            $cacheKey = \sprintf('article_%d_%s', $uriVariables['id'], $locale);
-            $query->enableResultCache(3600, $cacheKey);
+            // NOTE: Result cache is handled by CachedArticleProvider decorator
+            // Do NOT enable result cache here to avoid double caching
+            // (CachedArticleProvider uses Redis with tag-based invalidation)
 
             $result = $query->getOneOrNullResult();
 
@@ -182,18 +182,9 @@ final class ArticleProvider implements ProviderInterface
             false
         );
 
-        // Enable result cache for collection (30 minutes)
-        // Cache key includes page, itemsPerPage, filters, and locale
-        $cacheKey = \sprintf(
-            'articles_list_%s_p%d_ipp%d_%s_%s_%s',
-            $locale,
-            $page ?? 1,
-            $itemsPerPage ?? 20,
-            md5($request?->query->get('category', '')),
-            $request?->query->get('status', 'all'),
-            $request?->query->get('isFeatured', 'all')
-        );
-        $query->enableResultCache(1800, $cacheKey);  // 30 minutes
+        // NOTE: Result cache is handled by CachedArticleProvider decorator
+        // Do NOT enable result cache here to avoid double caching
+        // (CachedArticleProvider uses Redis with tag-based invalidation)
 
         // Use Doctrine Paginator to get correct total count
         // fetchJoinCollection=true because we're joining collections (authors, tags)

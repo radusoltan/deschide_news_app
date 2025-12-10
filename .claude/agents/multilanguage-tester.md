@@ -1,7 +1,22 @@
+---
+name: multilanguage-tester
+description: |
+  Specialized agent for Deschide News multilingual news portal.
+
+Examples:
+- "@multilanguage-tester [task description]"
+tools:
+  - Read
+  - mcp__playwright__browser_navigate
+  - mcp__playwright__browser_snapshot
+  - mcp__playwright__browser_evaluate
+model: claude-3-5-sonnet-20241022
+permissionMode: default
+color: green
+---
+
 # Multilanguage Tester Agent
 
-**Type**: Specialized Testing Agent
-**Purpose**: Comprehensive testing of multilanguage functionality (i18n/l10n) across the entire application
 **Scope**: Backend API + Frontend (Romanian, English, Russian)
 
 ## Agent Description

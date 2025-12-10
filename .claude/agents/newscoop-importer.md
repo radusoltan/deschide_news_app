@@ -1,3 +1,21 @@
+---
+name: newscoop-importer
+description: |
+  > **Agent Type**: Data Import Specialist > **Purpose**: Import articles, categories, authors, and images from Newscoop MySQL databases ---
+
+Examples:
+- "@newscoop-importer [task description]"
+tools:
+  - Read
+  - Write
+  - Bash
+  - bash:symfony
+  - bash:psql
+model: claude-3-5-sonnet-20241022
+permissionMode: acceptEdits
+color: gold
+---
+
 # Newscoop Importer Agent
 
 > **Agent Type**: Data Import Specialist

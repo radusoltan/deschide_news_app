@@ -10,6 +10,7 @@ use App\Enum\ArticleStatus;
 use App\Repository\ArticleRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -96,9 +97,9 @@ class ArticleArchiveService
      * @param int $yearsOld Number of years threshold (e.g., 4 for articles older than 4 years)
      * @param int $batchSize Number of articles to process per batch (default: 100)
      *
-     * @return int Total number of articles archived
+     * @throws Exception
      *
-     * @throws \Exception
+     * @return int Total number of articles archived
      */
     public function archiveOldArticles(int $yearsOld, int $batchSize = 100): int
     {
@@ -138,7 +139,7 @@ class ArticleArchiveService
                 // Archive each article in the batch
                 foreach ($articles as $article) {
                     $article->archive(ArchiveReason::OLD_CONTENT);
-                    $totalArchived++;
+                    ++$totalArchived;
                 }
 
                 // Flush and commit the batch
@@ -146,18 +147,19 @@ class ArticleArchiveService
                 $this->entityManager->commit();
 
                 $this->logger->debug('Batch archived', [
-                    'batch_count' => count($articles),
+                    'batch_count' => \count($articles),
                     'total_archived' => $totalArchived,
                 ]);
 
                 // Clear entity manager to free memory
                 $this->entityManager->clear();
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->entityManager->rollback();
                 $this->logger->error('Error during batch archiving', [
                     'error' => $e->getMessage(),
                     'total_archived_before_error' => $totalArchived,
                 ]);
+
                 throw $e;
             }
         }
@@ -195,13 +197,13 @@ class ArticleArchiveService
         $total = (int) $totalQb->getQuery()->getSingleScalarResult();
 
         // Articles by publication year using native SQL
-        $byYearSql = "
+        $byYearSql = '
             SELECT EXTRACT(YEAR FROM published_at) as year, COUNT(id) as count
             FROM articles
             WHERE status = :archived AND published_at IS NOT NULL
             GROUP BY year
             ORDER BY year DESC
-        ";
+        ';
         $byYearResult = $conn->executeQuery($byYearSql, ['archived' => ArticleStatus::ARCHIVED->value])->fetchAllAssociative();
 
         $byYear = [];
@@ -240,8 +242,8 @@ class ArticleArchiveService
 
         $this->logger->debug('Archive statistics generated', [
             'total' => $total,
-            'years_count' => count($byYear),
-            'categories_count' => count($byCategory),
+            'years_count' => \count($byYear),
+            'categories_count' => \count($byCategory),
         ]);
 
         return [
@@ -266,13 +268,13 @@ class ArticleArchiveService
         $conn = $this->entityManager->getConnection();
 
         // Use native SQL for EXTRACT(YEAR FROM ...) which is not available in DQL
-        $sql = "
+        $sql = '
             SELECT EXTRACT(YEAR FROM published_at) as year, COUNT(id) as count
             FROM articles
             WHERE status = :archived AND published_at IS NOT NULL
             GROUP BY year
             ORDER BY year DESC
-        ";
+        ';
 
         $result = $conn->executeQuery($sql, ['archived' => ArticleStatus::ARCHIVED->value])->fetchAllAssociative();
 
@@ -285,7 +287,7 @@ class ArticleArchiveService
         }
 
         $this->logger->debug('Available years retrieved', [
-            'years_count' => count($years),
+            'years_count' => \count($years),
             'locale' => $locale,
         ]);
 
@@ -332,7 +334,7 @@ class ArticleArchiveService
         }
 
         $this->logger->debug('Categories with archived articles retrieved', [
-            'categories_count' => count($categories),
+            'categories_count' => \count($categories),
             'locale' => $locale,
         ]);
 
@@ -371,8 +373,6 @@ class ArticleArchiveService
      * - Breakdown by archive reason
      * - Archived this month/year
      * - Oldest and most recent archived articles
-     *
-     * @return array
      */
     public function getArchiveStatistics(): array
     {

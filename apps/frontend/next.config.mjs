@@ -13,9 +13,8 @@ const nextConfig = {
 
   // Image optimization - allow images from backend and CDN
   images: {
-    // Disable optimization for development to avoid private IP blocking
-    // In production, use public CDN or configure proper remote patterns
-    unoptimized: process.env.NODE_ENV === 'development',
+    // Enable optimization in all environments for better performance testing
+    unoptimized: false,
 
     // Supported formats (WebP and AVIF for modern browsers)
     formats: ['image/webp', 'image/avif'],
@@ -103,6 +102,36 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'date-fns', '@heroicons/react'],
   },
 
+  // Rewrites for static files that may be requested with locale prefix
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // Handle manifest file requests with locale prefix
+        {
+          source: '/:locale(ro|en|ru)/site.webmanifest',
+          destination: '/site.webmanifest',
+        },
+        // Handle favicon requests with locale prefix
+        {
+          source: '/:locale(ro|en|ru)/favicon.ico',
+          destination: '/favicon.ico',
+        },
+        {
+          source: '/:locale(ro|en|ru)/favicon-16x16.png',
+          destination: '/favicon-16x16.png',
+        },
+        {
+          source: '/:locale(ro|en|ru)/favicon-32x32.png',
+          destination: '/favicon-32x32.png',
+        },
+        {
+          source: '/:locale(ro|en|ru)/apple-touch-icon.png',
+          destination: '/apple-touch-icon.png',
+        },
+      ],
+    };
+  },
+
   // Security headers
   async headers() {
     return [
@@ -117,7 +146,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: http://127.0.0.1:8082 http://127.0.0.1:8081",
               "font-src 'self' data:",
-              "connect-src 'self' http://127.0.0.1:8081 ws://localhost:3000",
+              "connect-src 'self' http://127.0.0.1:8081 http://127.0.0.1:8082 ws://localhost:3000",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

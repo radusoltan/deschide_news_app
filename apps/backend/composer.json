@@ -88,6 +88,16 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "test": "XDEBUG_MODE=off vendor/bin/phpunit",
+        "test:coverage": "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html=var/coverage/html",
+        "lint": "vendor/bin/phpstan analyse",
+        "lint:fix": "vendor/bin/php-cs-fixer fix",
+        "lint:check": "vendor/bin/php-cs-fixer fix --dry-run --diff",
+        "ci": [
+            "@test",
+            "@lint",
+            "@lint:check"
         ]
     },
     "conflict": {

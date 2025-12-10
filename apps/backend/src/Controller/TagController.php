@@ -109,7 +109,7 @@ class TagController extends AbstractController
                 '@context' => '/api/contexts/Error',
                 '@type' => 'hydra:Error',
                 'hydra:title' => 'Tag not found',
-                'hydra:description' => sprintf('Tag with ID %d does not exist.', $id),
+                'hydra:description' => \sprintf('Tag with ID %d does not exist.', $id),
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -150,7 +150,7 @@ class TagController extends AbstractController
                 '@context' => '/api/contexts/Error',
                 '@type' => 'hydra:Error',
                 'hydra:title' => 'Tag not found',
-                'hydra:description' => sprintf('Tag with ID %d does not exist.', $id),
+                'hydra:description' => \sprintf('Tag with ID %d does not exist.', $id),
             ], Response::HTTP_NOT_FOUND);
         }
 
@@ -227,7 +227,7 @@ class TagController extends AbstractController
     private function serializeTag(Tag $tag): array
     {
         return [
-            '@id' => sprintf('/api/tags/%d', $tag->getId()),
+            '@id' => \sprintf('/api/tags/%d', $tag->getId()),
             '@type' => 'Tag',
             'id' => $tag->getId(),
             'name' => $tag->getName(),

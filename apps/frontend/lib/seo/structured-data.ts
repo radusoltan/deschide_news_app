@@ -93,7 +93,8 @@ export interface NewsArticleSchema {
 export function generateNewsArticleSchema(
   article: Article,
   locale: Locale,
-  imageUrl?: string
+  imageUrl?: string,
+  additionalImages?: string[]
 ): NewsArticleSchema {
   const categorySlug = getCategorySlug(article.category);
   const localePrefix = locale === 'ro' ? '' : `${locale}/`;
@@ -125,12 +126,22 @@ export function generateNewsArticleSchema(
     ? article.archivedAt
     : (article.updatedAt || article.publishedAt || article.createdAt);
 
+  // Build image array with multiple aspect ratios for rich results
+  // Google recommends including images in 16:9, 4:3, and 1:1 aspect ratios
+  const images: string[] = [];
+  if (imageUrl) {
+    images.push(imageUrl);
+  }
+  if (additionalImages && additionalImages.length > 0) {
+    images.push(...additionalImages);
+  }
+
   const schema: NewsArticleSchema = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: article.title,
     description: article.lead || undefined,
-    image: imageUrl ? [imageUrl] : undefined,
+    image: images.length > 0 ? images : undefined,
     datePublished: article.publishedAt || article.createdAt,
     dateModified,
     author: authorSchemas.length === 1 ? authorSchemas[0] : authorSchemas,
@@ -250,14 +261,20 @@ export function generateWebPageSchema(
 /**
  * Generate all structured data for an article
  * Returns array of JSON-LD schemas
+ *
+ * @param article - The article object
+ * @param locale - The current locale
+ * @param imageUrl - Primary featured image URL (16:9 aspect ratio recommended)
+ * @param additionalImages - Array of additional image URLs (4:3, 1:1 aspect ratios)
  */
 export function generateArticleStructuredData(
   article: Article,
   locale: Locale,
-  imageUrl?: string
+  imageUrl?: string,
+  additionalImages?: string[]
 ): Array<NewsArticleSchema | BreadcrumbSchema | WebPageSchema> {
   return [
-    generateNewsArticleSchema(article, locale, imageUrl),
+    generateNewsArticleSchema(article, locale, imageUrl, additionalImages),
     generateBreadcrumbSchema(article, locale),
     generateWebPageSchema(article, locale),
   ];

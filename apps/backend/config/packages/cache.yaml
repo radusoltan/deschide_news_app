@@ -12,34 +12,37 @@ framework:
 
         # Namespaced pools for cache and statistics
         pools:
-            # Cache pool for application data with tag support (256MB allocation)
+            # Main cache pool for API responses (articles, categories, etc.)
+            # TTL optimized: 5 minutes for fresh content with tag invalidation
             deschide.cache:
                 adapter: cache.adapter.redis_tag_aware
                 provider: 'redis://localhost:6379/1'
-                default_lifetime: 3600
+                default_lifetime: 300  # 5 minutes (was 3600)
 
-            # Stats pool for real-time statistics (256MB allocation)
+            # Stats pool for real-time statistics
             deschide.stats:
                 adapter: cache.adapter.redis_tag_aware
                 provider: 'redis://localhost:6379/1'
-                default_lifetime: 86400
+                default_lifetime: 60  # 1 minute for real-time stats (was 86400)
 
             # APCu pool for metadata and small frequently accessed data
             cache.metadata:
                 adapter: cache.adapter.apcu
                 default_lifetime: 86400
 
-            # Doctrine cache pools with tag support for granular invalidation
+            # Doctrine result cache - shorter TTL, invalidated on entity changes
             doctrine.result_cache_pool:
                 adapter: cache.adapter.redis_tag_aware
                 provider: 'redis://localhost:6379/1'
-                default_lifetime: 3600
+                default_lifetime: 600  # 10 minutes (was 3600)
 
+            # Doctrine query cache - DQL parsing, can be long-lived
             doctrine.query_cache_pool:
                 adapter: cache.adapter.redis_tag_aware
                 provider: 'redis://localhost:6379/1'
-                default_lifetime: 3600
+                default_lifetime: 86400  # 24 hours (was 3600)
 
+            # Doctrine metadata cache - entity mapping, very long-lived
             doctrine.system_cache_pool:
                 adapter: cache.adapter.apcu
                 default_lifetime: 86400

@@ -1,3 +1,20 @@
+---
+name: data-import-orchestrator
+description: |
+  > **Agent Type**: Orchestration & Planning > **Purpose**: Orchestrate and coordinate data import from legacy systems (Newscoop MySQL) and CSV files into Deschide News App ---
+
+Examples:
+- "@data-import-orchestrator [task description]"
+tools:
+  - Read
+  - Write
+  - Task
+  - Memory
+model: claude-3-5-sonnet-20241022
+permissionMode: default
+color: gold
+---
+
 # Data Import Orchestrator Agent
 
 > **Agent Type**: Orchestration & Planning

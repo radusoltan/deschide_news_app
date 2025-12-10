@@ -17,6 +17,7 @@ final class RateLimiterSubscriber implements EventSubscriberInterface
         private readonly RateLimiterFactory $apiGeneralLimiter,
         private readonly RateLimiterFactory $apiLoginLimiter,
         private readonly RateLimiterFactory $apiWriteLimiter,
+        private readonly RateLimiterFactory $apiImageOperationsLimiter,
         private readonly string $environment,
     ) {
     }
@@ -30,8 +31,8 @@ final class RateLimiterSubscriber implements EventSubscriberInterface
 
     public function onKernelRequest(RequestEvent $event): void
     {
-        // Skip rate limiting in test environment
-        if ($this->environment === 'test') {
+        // Skip rate limiting in test and dev environments
+        if ($this->environment === 'test' || $this->environment === 'dev') {
             return;
         }
 
@@ -41,6 +42,12 @@ final class RateLimiterSubscriber implements EventSubscriberInterface
 
         $request = $event->getRequest();
         $path = $request->getPathInfo();
+
+        // Skip rate limiting for localhost (CLI commands, internal services)
+        $clientIp = $request->getClientIp();
+        if ($clientIp === '127.0.0.1' || $clientIp === '::1') {
+            return;
+        }
 
         // Skip rate limiting for non-API routes
         if (!str_starts_with($path, '/api')) {
@@ -74,6 +81,7 @@ final class RateLimiterSubscriber implements EventSubscriberInterface
             ], Response::HTTP_TOO_MANY_REQUESTS, $headers);
 
             $event->setResponse($response);
+
             return;
         }
 
@@ -87,8 +95,13 @@ final class RateLimiterSubscriber implements EventSubscriberInterface
             return $this->apiLoginLimiter->create($clientIp . '_login');
         }
 
+        // Image operations (crop, thumbnails) - higher limits for batch operations
+        if (str_contains($path, '/images') && (str_contains($path, '/crop') || str_contains($path, '/thumbnails'))) {
+            return $this->apiImageOperationsLimiter->create($clientIp . '_image_ops');
+        }
+
         // Write operations
-        if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+        if (\in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
             return $this->apiWriteLimiter->create($clientIp . '_write');
         }
 

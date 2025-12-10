@@ -10,6 +10,11 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 final class SecurityHeadersSubscriber implements EventSubscriberInterface
 {
+    public function __construct(
+        private readonly string $environment = 'dev'
+    ) {
+    }
+
     public static function getSubscribedEvents(): array
     {
         return [
@@ -44,5 +49,11 @@ final class SecurityHeadersSubscriber implements EventSubscriberInterface
         $response->headers->set('X-XSS-Protection', '1; mode=block');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+
+        // HSTS header - only in production to enforce HTTPS
+        if ('prod' === $this->environment) {
+            // max-age=31536000 (1 year), includeSubDomains for full coverage
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+        }
     }
 }

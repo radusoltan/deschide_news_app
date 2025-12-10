@@ -1,3 +1,22 @@
+---
+name: import-mapper
+description: |
+  > **Agent Type**: Data Mapping & Deduplication > **Purpose**: Manage ID mappings between source systems and Symfony, handle deduplication ---
+
+Examples:
+- "@import-mapper [task description]"
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - bash:symfony
+  - bash:psql
+model: claude-3-5-sonnet-20241022
+permissionMode: acceptEdits
+color: gold
+---
+
 # Import Mapper Agent
 
 > **Agent Type**: Data Mapping & Deduplication
@@ -65,7 +84,6 @@ This agent manages the relationship between external system IDs and Symfony enti
 
 ### 1. newscoop_id_mapping (Legacy Newscoop)
 
-**Purpose**: Map Newscoop entities to Symfony entities
 
 ```sql
 CREATE TABLE newscoop_id_mapping (
@@ -93,7 +111,6 @@ CREATE INDEX idx_mapping_type_newsapp ON newscoop_id_mapping(entity_type, news_a
 
 ### 2. external_article_mappings (Generic External Sources)
 
-**Purpose**: Map any external article source to Symfony articles
 
 ```sql
 -- Already exists as Doctrine entity

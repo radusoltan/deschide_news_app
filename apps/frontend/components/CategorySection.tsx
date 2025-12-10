@@ -3,6 +3,7 @@
  * Displays a section with category title and 6 articles in 3-column grid
  */
 
+import Image from 'next/image';
 import { Category } from '@/lib/types/article';
 import { fetchArticlesByCategory } from '@/lib/api/articles';
 import ArticleCard from './ArticleCard';
@@ -38,12 +39,12 @@ export default async function CategorySection({
           {/* Left - Articles (2/3 width) */}
           <div className="flex-shrink max-w-full w-full lg:w-2/3 overflow-hidden">
             <div className="w-full py-3">
-              <h2 className="text-gray-800 text-2xl font-bold">
-                <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
+              <h2 className="text-deschide-oxford-blue text-2xl font-heading uppercase">
+                <span className="inline-block h-5 border-l-3 border-deschide-tomato mr-2"></span>
                 {category.title}
               </h2>
             </div>
-            <div className="flex flex-row flex-wrap -mx-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-6">
               {articles.map((article) => (
                 <ArticleCard
                   key={article.id}
@@ -64,12 +65,15 @@ export default async function CategorySection({
                     Advertisement
                   </a>
                   <a href="#">
-                    <img
+                    <Image
                       className="mx-auto"
                       src="/tailnews/dummy/img12.jpg"
                       alt="advertisement area"
                       width={300}
                       height={250}
+                      loading="lazy"
+                      placeholder="blur"
+                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
                     />
                   </a>
                 </div>

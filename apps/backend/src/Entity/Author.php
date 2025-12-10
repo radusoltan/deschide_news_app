@@ -27,6 +27,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AuthorRepository::class)]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE', region: 'default')]  // L2 cache: authors change occasionally
 #[ORM\Table(name: 'authors')]
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity('email')]

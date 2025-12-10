@@ -1,7 +1,8 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
+import type { Editor as TinyMCEEditor } from 'tinymce';
 
 interface TinyEditorProps {
   initialValue?: string;
@@ -16,19 +17,15 @@ export default function TinyEditor({
   height = 500,
   imageList = []
 }: TinyEditorProps) {
-  const editorRef = useRef<any>(null);
-  const initialValueRef = useRef(initialValue);
+  const editorRef = useRef<TinyMCEEditor | null>(null);
   const imageListRef = useRef(imageList);
+  // Store initial value in state to avoid ref access during render
+  const [editorInitialValue] = useState(initialValue);
 
   // Update imageListRef when imageList changes
   useEffect(() => {
     imageListRef.current = imageList;
   }, [imageList]);
-
-  // Only update initial value on mount, not on every re-render
-  useEffect(() => {
-    initialValueRef.current = initialValue;
-  }, []);
 
   return (
     <Editor
@@ -88,7 +85,7 @@ export default function TinyEditor({
         skin: 'oxide',
         content_css: 'default',
       }}
-      initialValue={initialValueRef.current}
+      initialValue={editorInitialValue}
       onEditorChange={(content, editor) => {
         if (onChange) {
           onChange(editor.getContent());

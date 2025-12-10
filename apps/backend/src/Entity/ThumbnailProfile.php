@@ -27,6 +27,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ThumbnailProfileRepository::class)]
+#[ORM\Cache(usage: 'READ_ONLY', region: 'long_lived')]  // L2 cache: profiles rarely change
 #[ORM\Table(name: 'thumbnail_profiles')]
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity('name')]

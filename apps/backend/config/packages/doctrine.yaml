@@ -5,15 +5,23 @@ doctrine:
             default:
                 url: '%env(resolve:DATABASE_URL)%'
                 driver: 'pdo_pgsql'
-                server_version: '17'
+                server_version: '18'
                 profiling_collect_backtrace: '%kernel.debug%'
                 use_savepoints: true
+                options:
+                    # Connection timeout: 5 seconds (prevents hanging on connection issues)
+                    connect_timeout: 5
+                    # Statement timeout: 30 seconds (prevents runaway queries)
+                    options: '-c statement_timeout=30000'
 
             newscoop:
                 url: '%env(resolve:NEWSCOOP_DATABASE_URL)%'
                 driver: 'pdo_mysql'
                 server_version: '10.11'
                 charset: utf8mb4
+                options:
+                    # MySQL connection timeout
+                    !php/const PDO::ATTR_TIMEOUT: 5
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
@@ -32,6 +40,32 @@ doctrine:
         result_cache_driver:
             type: pool
             pool: doctrine.result_cache_pool
+        # Second Level Cache (L2) for entity caching
+        second_level_cache:
+            enabled: true
+            log_enabled: '%kernel.debug%'
+            region_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+            regions:
+                # Default region for most entities
+                default:
+                    lifetime: 3600
+                    cache_driver:
+                        type: pool
+                        pool: doctrine.result_cache_pool
+                # Short-lived region for frequently changing data
+                short_lived:
+                    lifetime: 300
+                    cache_driver:
+                        type: pool
+                        pool: doctrine.result_cache_pool
+                # Long-lived region for rarely changing data (categories, profiles)
+                long_lived:
+                    lifetime: 86400
+                    cache_driver:
+                        type: pool
+                        pool: doctrine.result_cache_pool
         mappings:
             App:
                 type: attribute

@@ -8,6 +8,9 @@ api_platform:
         multipart: ['multipart/form-data']
     defaults:
         stateless: true
+        pagination_enabled: true
+        pagination_client_enabled: true
+        pagination_client_items_per_page: true
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin', 'Accept-Language']
             # HTTP Cache - public endpoints can be cached

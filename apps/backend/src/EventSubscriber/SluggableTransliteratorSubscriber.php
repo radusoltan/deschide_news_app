@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Configures the Gedmo Sluggable listener to use Romanian-aware transliteration
+ * Configures the Gedmo Sluggable listener to use Romanian-aware transliteration.
  *
  * This subscriber sets up the sluggable listener to properly handle Romanian characters
  * (Ș/ș, Ț/ț, Ă/ă, Â/â, Î/î) when generating slugs from entity fields.
@@ -25,7 +25,7 @@ class SluggableTransliteratorSubscriber implements EventSubscriberInterface
 
     /**
      * Configure the sluggable listener with Romanian transliterator
-     * This runs on the first kernel request to ensure the listener is properly configured
+     * This runs on the first kernel request to ensure the listener is properly configured.
      */
     public function onKernelRequest(RequestEvent $event): void
     {

@@ -271,25 +271,14 @@ export async function getArticleCount(): Promise<number> {
 /**
  * Archived article data for sitemap
  */
-export interface ArchivedArticle {
-  id: number;
-  slug: string;
-  updatedAt: string;
+export interface ArchivedArticle extends SitemapArticle {
   archivedAt?: string;
-  category: {
-    slug: string;
-  };
-  translations: {
-    ro: ArticleTranslation;
-    en: ArticleTranslation;
-    ru: ArticleTranslation;
-  };
 }
 
 /**
  * Fetch all archived articles for sitemap with pagination handling
  */
-export async function fetchAllArchivedArticlesForSitemap(): Promise<ArchivedArticle[]> {
+export async function fetchArchivedArticlesForSitemap(): Promise<ArchivedArticle[]> {
   const allArticles: ArchivedArticle[] = [];
   let currentPage = 1;
   let hasNextPage = true;
