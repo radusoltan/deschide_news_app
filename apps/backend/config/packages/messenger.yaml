@@ -28,6 +28,9 @@ framework:
             'App\Message\RecalculateTagCountsMessage': async
             'App\Message\CheckOrphanedTagsMessage': async
 
+            # Short link analytics (async for fast redirects)
+            'App\Message\ShortLinkClickMessage': async
+
 # when@test:
 #    framework:
 #        messenger:

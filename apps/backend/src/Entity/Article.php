@@ -249,6 +249,11 @@ class Article implements Translatable
     #[Groups(['article:read'])]
     private ?string $locale = null;
 
+    // Short link webcode (auto-generated when article is published)
+    #[ORM\Column(type: Types::STRING, length: 10, nullable: true, unique: true)]
+    #[Groups(['article:read'])]
+    private ?string $webcode = null;
+
     public function __construct()
     {
         $this->authors = new ArrayCollection();
@@ -402,6 +407,18 @@ class Article implements Translatable
     public function getLocale(): ?string
     {
         return $this->locale;
+    }
+
+    public function getWebcode(): ?string
+    {
+        return $this->webcode;
+    }
+
+    public function setWebcode(?string $webcode): self
+    {
+        $this->webcode = $webcode;
+
+        return $this;
     }
 
     public function getCategory(): ?Category

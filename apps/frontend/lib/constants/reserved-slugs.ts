@@ -35,6 +35,7 @@
  */
 
 export const RESERVED_SLUGS = [
+  's',        // Short link redirects (/s/{code})
   'all',
   'search',
   'trending',

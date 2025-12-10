@@ -58,8 +58,9 @@ class SlugLookupServiceTest extends TestCase
         $reservedSlugs = $this->service->getReservedSlugs();
 
         $this->assertIsArray($reservedSlugs);
-        $this->assertCount(17, $reservedSlugs);
+        $this->assertCount(18, $reservedSlugs);  // 17 + 's' for short links
         $this->assertContains('admin', $reservedSlugs);
+        $this->assertContains('s', $reservedSlugs);
         $this->assertContains('api', $reservedSlugs);
         $this->assertContains('search', $reservedSlugs);
     }
