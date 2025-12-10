@@ -1,0 +1,70 @@
+{
+  "timestamp": "2025-12-10T13:15:00Z",
+  "project": "Deschide News App",
+  "symfony_version": "7.3.7",
+  "php_version": "8.4.14",
+  "phpunit_version": "12.4.4",
+  "test_suites": {
+    "unit": {
+      "tests": 330,
+      "assertions": 1028,
+      "passed": 330,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time_seconds": 0.325,
+      "memory_mb": 16.0,
+      "status": "PASS"
+    },
+    "service": {
+      "tests": 32,
+      "assertions": 72,
+      "passed": 31,
+      "failed": 1,
+      "errors": 0,
+      "skipped": 0,
+      "status": "PARTIAL",
+      "notes": "1 test failure related to reserved slugs count change (17->18)"
+    },
+    "validator": {
+      "tests": 34,
+      "assertions": 74,
+      "passed": 33,
+      "failed": 1,
+      "errors": 0,
+      "skipped": 0,
+      "status": "PARTIAL",
+      "notes": "1 test failure related to reserved slugs count change (17->18)"
+    },
+    "full_suite": {
+      "tests": 495,
+      "assertions": 1324,
+      "passed": 433,
+      "failed": 25,
+      "errors": 35,
+      "skipped": 2,
+      "status": "PARTIAL",
+      "notes": [
+        "35 errors: Database missing 'webcode' column (new feature not yet migrated)",
+        "25 failures: Reserved slugs count changes, API endpoint issues",
+        "2 skipped: Conditional test requirements"
+      ]
+    }
+  },
+  "known_issues": [
+    {
+      "issue": "Missing 'webcode' column in article table",
+      "impact": "35 errors in smoke/functional tests",
+      "resolution": "Run pending migration Version20251210082400",
+      "priority": "high"
+    },
+    {
+      "issue": "Reserved slugs count mismatch (17 vs 18)",
+      "impact": "2 test failures",
+      "resolution": "Update test expectations",
+      "priority": "low"
+    }
+  ],
+  "baseline_note": "This baseline was captured before Symfony 8 upgrade. Some test failures are due to pending features, not deprecations.",
+  "deprecations_found": 0
+}
