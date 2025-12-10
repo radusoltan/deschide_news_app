@@ -7,7 +7,7 @@ doctrine:
                 driver: 'pdo_pgsql'
                 server_version: '18'
                 profiling_collect_backtrace: '%kernel.debug%'
-                use_savepoints: true
+                # Note: use_savepoints removed in DBAL 4.x (savepoints now always enabled)
                 options:
                     # Connection timeout: 5 seconds (prevents hanging on connection issues)
                     connect_timeout: 5
@@ -22,71 +22,74 @@ doctrine:
                 options:
                     # MySQL connection timeout
                     !php/const PDO::ATTR_TIMEOUT: 5
+
     orm:
-        auto_generate_proxy_classes: true
-        enable_lazy_ghost_objects: true
-        report_fields_where_declared: true
-        validate_xml_mapping: true
-        naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
-        identity_generation_preferences:
-            Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
-        auto_mapping: true
-        metadata_cache_driver:
-            type: pool
-            pool: doctrine.system_cache_pool
-        query_cache_driver:
-            type: pool
-            pool: doctrine.query_cache_pool
-        result_cache_driver:
-            type: pool
-            pool: doctrine.result_cache_pool
-        # Second Level Cache (L2) for entity caching
-        second_level_cache:
-            enabled: true
-            log_enabled: '%kernel.debug%'
-            region_cache_driver:
-                type: pool
-                pool: doctrine.result_cache_pool
-            regions:
-                # Default region for most entities
-                default:
-                    lifetime: 3600
-                    cache_driver:
-                        type: pool
-                        pool: doctrine.result_cache_pool
-                # Short-lived region for frequently changing data
-                short_lived:
-                    lifetime: 300
-                    cache_driver:
-                        type: pool
-                        pool: doctrine.result_cache_pool
-                # Long-lived region for rarely changing data (categories, profiles)
-                long_lived:
-                    lifetime: 86400
-                    cache_driver:
-                        type: pool
-                        pool: doctrine.result_cache_pool
-        mappings:
-            App:
-                type: attribute
-                is_bundle: false
-                dir: '%kernel.project_dir%/src/Entity'
-                prefix: 'App\Entity'
-                alias: App
-            gedmo_translatable:
-                type: attribute
-                prefix: Gedmo\Translatable\Entity
-                dir: '%kernel.project_dir%/vendor/gedmo/doctrine-extensions/src/Translatable/Entity'
-                alias: GedmoTranslatable
-                is_bundle: false
-            gedmo_translator:
-                type: attribute
-                prefix: Gedmo\Translator\Entity
-                dir: '%kernel.project_dir%/vendor/gedmo/doctrine-extensions/src/Translator/Entity'
-                alias: GedmoTranslator
-                is_bundle: false
+        # Doctrine Bundle 3.x configuration structure
         controller_resolver:
             auto_mapping: false
+        default_entity_manager: default
+        entity_managers:
+            default:
+                connection: default
+                auto_mapping: true
+                naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+                identity_generation_preferences:
+                    Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
+                validate_xml_mapping: true
+                metadata_cache_driver:
+                    type: pool
+                    pool: doctrine.system_cache_pool
+                query_cache_driver:
+                    type: pool
+                    pool: doctrine.query_cache_pool
+                result_cache_driver:
+                    type: pool
+                    pool: doctrine.result_cache_pool
+                # Second Level Cache (L2) for entity caching
+                second_level_cache:
+                    enabled: true
+                    log_enabled: '%kernel.debug%'
+                    region_cache_driver:
+                        type: pool
+                        pool: doctrine.result_cache_pool
+                    regions:
+                        # Default region for most entities
+                        default:
+                            lifetime: 3600
+                            cache_driver:
+                                type: pool
+                                pool: doctrine.result_cache_pool
+                        # Short-lived region for frequently changing data
+                        short_lived:
+                            lifetime: 300
+                            cache_driver:
+                                type: pool
+                                pool: doctrine.result_cache_pool
+                        # Long-lived region for rarely changing data (categories, profiles)
+                        long_lived:
+                            lifetime: 86400
+                            cache_driver:
+                                type: pool
+                                pool: doctrine.result_cache_pool
+                mappings:
+                    App:
+                        type: attribute
+                        is_bundle: false
+                        dir: '%kernel.project_dir%/src/Entity'
+                        prefix: 'App\Entity'
+                        alias: App
+                    gedmo_translatable:
+                        type: attribute
+                        prefix: Gedmo\Translatable\Entity
+                        dir: '%kernel.project_dir%/vendor/gedmo/doctrine-extensions/src/Translatable/Entity'
+                        alias: GedmoTranslatable
+                        is_bundle: false
+                    gedmo_translator:
+                        type: attribute
+                        prefix: Gedmo\Translator\Entity
+                        dir: '%kernel.project_dir%/vendor/gedmo/doctrine-extensions/src/Translator/Entity'
+                        alias: GedmoTranslator
+                        is_bundle: false
 
 when@test:
     doctrine:
@@ -97,14 +100,14 @@ when@test:
 when@prod:
     doctrine:
         orm:
-            auto_generate_proxy_classes: false
-            proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
-            query_cache_driver:
-                type: pool
-                pool: doctrine.system_cache_pool
-            result_cache_driver:
-                type: pool
-                pool: doctrine.result_cache_pool
+            entity_managers:
+                default:
+                    query_cache_driver:
+                        type: pool
+                        pool: doctrine.system_cache_pool
+                    result_cache_driver:
+                        type: pool
+                        pool: doctrine.result_cache_pool
 
     framework:
         cache:

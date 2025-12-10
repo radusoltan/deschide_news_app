@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Dto\LiveText;
 
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 /**
  * DTO for LiveText analytics response.

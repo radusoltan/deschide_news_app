@@ -20,7 +20,7 @@ api_platform:
     http_cache:
         invalidation:
             enabled: true
-            varnish_urls: ['http://127.0.0.1:6081']  # Varnish cache server
+            urls: ['http://127.0.0.1:6081']  # Varnish cache server (renamed from varnish_urls for API Platform 3.x)
 
     # Optimize error handling (don't cache errors)
     exception_to_status:

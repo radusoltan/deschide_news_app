@@ -9,15 +9,15 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 
 final class RateLimiterSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly RateLimiterFactory $apiGeneralLimiter,
-        private readonly RateLimiterFactory $apiLoginLimiter,
-        private readonly RateLimiterFactory $apiWriteLimiter,
-        private readonly RateLimiterFactory $apiImageOperationsLimiter,
+        private readonly RateLimiterFactoryInterface $apiGeneralLimiter,
+        private readonly RateLimiterFactoryInterface $apiLoginLimiter,
+        private readonly RateLimiterFactoryInterface $apiWriteLimiter,
+        private readonly RateLimiterFactoryInterface $apiImageOperationsLimiter,
         private readonly string $environment,
     ) {
     }
