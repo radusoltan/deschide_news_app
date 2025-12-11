@@ -59,6 +59,11 @@ export default async function HomePage({ params }: PageProps) {
     <>
       {/* SEO H1 - visually hidden but present for search engines */}
       <h1 className="sr-only">{h1Titles[locale] || h1Titles.ro}</h1>
+      {/* Breaking, Alert Flash */}
+
+      <div className="xl:container mx-auto h-18 bg-red-300 my-6 rounded ">BREAKING</div>
+      <div className="xl:container mx-auto h-18 bg-yellow-300 my-6 rounded ">ALERT</div>
+      <div className="xl:container mx-auto h-18 bg-red-300 my-6 rounded ">FLASH</div>
 
       {/* Hero / Important Articles Section */}
       <ImportantList locale={locale} />

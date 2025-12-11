@@ -5,9 +5,11 @@
 
 import Link from 'next/link';
 import { fetchArticlesByCategory } from '@/lib/api/articles';
+import { buildArticleUrl } from '@/lib/utils/url-builder';
+import type { Locale } from '@/lib/types';
 
 interface MostPopularProps {
-  locale: string;
+  locale: Locale;
   categoryId: number;
   limit?: number;
 }
@@ -33,19 +35,18 @@ export default async function MostPopular({
   return (
     <div className="w-full bg-white">
       <div className="mb-6">
-        <div className="p-4 bg-gray-100">
-          <h2 className="text-lg font-bold">Most Popular</h2>
+        <div className="p-4 bg-brand-oxford-900">
+          <h2 className="text-lg font-heading text-white">Most Popular</h2>
         </div>
         <ul className="post-number">
           {articles.map((article) => {
-            const categorySlug = article.category?.slug || 'uncategorized';
-            const articleUrl = `/${locale}/${categorySlug}/${article.slug}`;
+            const articleUrl = buildArticleUrl(article, locale);
 
             return (
-              <li key={article.id} className="border-b border-gray-100 hover:bg-gray-50">
+              <li key={article.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                 <Link
                   href={articleUrl}
-                  className="text-lg font-bold px-6 py-3 flex flex-row items-center"
+                  className="text-lg font-heading text-brand-oxford-900 hover:text-brand-tomato-500 px-6 py-3 flex flex-row items-center transition-colors"
                 >
                   {article.title}
                 </Link>

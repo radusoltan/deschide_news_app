@@ -5,10 +5,12 @@
 
 import Link from 'next/link';
 import { Tag } from '@/lib/types/tag';
+import { buildLocalizedUrl } from '@/lib/utils/url-builder';
+import type { Locale } from '@/lib/types';
 
 export interface TagBadgeProps {
   tag: Tag;
-  locale: string;
+  locale: Locale;
   variant?: 'default' | 'outline' | 'solid';
   size?: 'sm' | 'md' | 'lg';
   showHash?: boolean;
@@ -40,14 +42,14 @@ export default function TagBadge({
   };
 
   const variantClasses = {
-    default: 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200',
-    outline: 'border border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-300 dark:hover:bg-blue-900',
-    solid: 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600',
+    default: 'bg-brand-oxford-100 text-brand-oxford-900 hover:bg-brand-oxford-200 dark:bg-brand-oxford-900 dark:text-white',
+    outline: 'border border-brand-oxford-300 text-brand-oxford-900 hover:bg-brand-oxford-50 dark:border-brand-oxford-700 dark:text-white dark:hover:bg-brand-oxford-800',
+    solid: 'bg-brand-tomato text-white hover:bg-brand-tomato-600 dark:bg-brand-tomato-600 dark:hover:bg-brand-tomato-500',
   };
 
   return (
     <Link
-      href={`/${locale}/tags/${tag.slug}`}
+      href={buildLocalizedUrl(`/tags/${tag.slug}`, locale)}
       className={`
         inline-flex items-center rounded-full font-medium
         transition-colors duration-200

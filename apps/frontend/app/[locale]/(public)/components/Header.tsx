@@ -1,27 +1,49 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useIntl } from 'react-intl'
 import LanguageSwitcher from '@/app/components/LanguageSwitcher'
 import { Logo } from '@/components/brand/Logo'
+import { buildLocalizedUrl, buildCategoryUrl } from '@/lib/utils/url-builder'
+import type { Locale } from '@/lib/types'
+import type { Category } from '@/lib/types/article'
 
 interface HeaderProps {
   locale: string;
+  categories?: Category[];
 }
 
-export default function Header({ locale }: HeaderProps) {
+export default function Header({ locale, categories = [] }: HeaderProps) {
   const intl = useIntl()
   const router = useRouter()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isStiriDropdownOpen, setIsStiriDropdownOpen] = useState(false)
+  const [isMobileStiriOpen, setIsMobileStiriOpen] = useState(false)
+  const stiriDropdownRef = useRef<HTMLLIElement>(null)
+
+  // Separate categories into menu items and dropdown items based on inMenu flag
+  const menuCategories = categories.filter((cat) => cat.inMenu === true)
+  const dropdownCategories = categories.filter((cat) => cat.inMenu !== true)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (stiriDropdownRef.current && !stiriDropdownRef.current.contains(event.target as Node)) {
+        setIsStiriDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
-      router.push(`/${locale}/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      router.push(`${buildLocalizedUrl('/search', locale as Locale)}?q=${encodeURIComponent(searchQuery.trim())}`)
       setIsSearchOpen(false)
       setSearchQuery('')
     }
@@ -36,52 +58,70 @@ export default function Header({ locale }: HeaderProps) {
             <div className="flex justify-between">
               {/* Logo */}
               <div className="mx-w-10 flex items-center">
-                <Logo variant="white" size="md" href={`/${locale}`} />
+                <Logo variant="white" size="md" href={buildLocalizedUrl('/', locale as Locale)} />
               </div>
 
               <div className="flex flex-row">
                 {/* Desktop Navigation */}
                 <ul className="navbar hidden lg:flex lg:flex-row text-white text-sm items-center font-heading uppercase">
-                  <li className="active relative border-l border-white/10 hover:bg-brand-oxford-800">
-                    <Link className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors" href={`/${locale}`}>
-                      {intl.formatMessage({ id: 'common.home' })}
-                    </Link>
-                  </li>
+                  {/* Stiri dropdown for other categories (inMenu=false) */}
+                  {dropdownCategories.length > 0 && (
+                      <li
+                          ref={stiriDropdownRef}
+                          className="relative border-l border-white/10 hover:bg-brand-oxford-800"
+                      >
+                        <button
+                            onClick={() => setIsStiriDropdownOpen(!isStiriDropdownOpen)}
+                            className="flex items-center uppercase gap-1 py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors"
+                            aria-expanded={isStiriDropdownOpen}
+                            aria-haspopup="true"
+                        >
+                          {intl.formatMessage({ id: 'nav.stiri', defaultMessage: 'Știri' })}
+                          <svg
+                              className={`w-4 h-4 transition-transform ${isStiriDropdownOpen ? 'rotate-180' : ''}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
 
-                  {/* Politic */}
-                  <li className="relative border-l border-white/10 hover:bg-brand-oxford-800">
-                    <Link className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors" href={`/${locale}/politic`}>
-                      {intl.formatMessage({ id: 'nav.politic', defaultMessage: 'Politic' })}
-                    </Link>
-                  </li>
-                  {/* Externe */}
-                  <li className="relative border-l border-white/10 hover:bg-brand-oxford-800">
-                    <Link className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors" href={`/${locale}/externe`}>
-                      {intl.formatMessage({ id: 'nav.externe', defaultMessage: 'Externe' })}
-                    </Link>
-                  </li>
-                  {/* Social */}
-                  <li className="relative border-l border-white/10 hover:bg-brand-oxford-800">
-                    <Link className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors" href={`/${locale}/social`}>
-                      {intl.formatMessage({ id: 'nav.social', defaultMessage: 'Social' })}
-                    </Link>
-                  </li>
-                  {/* Editorial */}
-                  <li className="relative border-l border-white/10 hover:bg-brand-oxford-800">
-                    <Link className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors" href={`/${locale}/editorial`}>
-                      {intl.formatMessage({ id: 'nav.editorial', defaultMessage: 'Editorial' })}
-                    </Link>
-                  </li>
+                        {isStiriDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-0 w-48 bg-white border border-gray-200 rounded-b-lg shadow-lg z-50 overflow-hidden">
+                              {dropdownCategories.map((category) => (
+                                  <Link
+                                      key={category.id}
+                                      href={buildCategoryUrl(category, locale as Locale)}
+                                      className="block uppercase px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-brand-tomato-500 transition-colors normal-case"
+                                      onClick={() => setIsStiriDropdownOpen(false)}
+                                  >
+                                    {category.title}
+                                  </Link>
+                              ))}
+                            </div>
+                        )}
+                      </li>
+                  )}
+
+                  {/* Dynamic menu categories (inMenu=true) */}
+                  {menuCategories.map((category) => (
+                    <li key={category.id} className="relative border-l border-white/10 hover:bg-brand-oxford-800">
+                      <Link
+                        className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors"
+                        href={buildCategoryUrl(category, locale as Locale)}
+                      >
+                        {category.title}
+                      </Link>
+                    </li>
+                  ))}
+
+
+
                   {/* All Articles */}
                   <li className="relative border-l border-white/10 hover:bg-brand-oxford-800">
-                    <Link className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors" href={`/${locale}/all`}>
+                    <Link className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors" href={buildLocalizedUrl('/all', locale as Locale)}>
                       {intl.formatMessage({ id: 'nav.all', defaultMessage: 'Toate' })}
-                    </Link>
-                  </li>
-                  {/* Archive */}
-                  <li className="relative border-l border-white/10 hover:bg-brand-oxford-800">
-                    <Link className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors" href={`/${locale}/archive`}>
-                      {intl.formatMessage({ id: 'nav.archive', defaultMessage: 'Arhivă' })}
                     </Link>
                   </li>
                 </ul>
@@ -179,34 +219,74 @@ export default function Header({ locale }: HeaderProps) {
                   <Logo variant="blue" size="sm" className="dark:!text-white" />
                 </div>
                 <ul className="w-full float-none flex flex-col font-body">
+                  {/* Home */}
                   <li className="relative">
-                    <Link href={`/${locale}`} className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors">
+                    <Link
+                      href={buildLocalizedUrl('/', locale as Locale)}
+                      className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
                       {intl.formatMessage({ id: 'common.home' })}
                     </Link>
                   </li>
+
+                  {/* Dynamic menu categories (inMenu=true) */}
+                  {menuCategories.map((category) => (
+                    <li key={category.id} className="relative">
+                      <Link
+                        href={buildCategoryUrl(category, locale as Locale)}
+                        className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {category.title}
+                      </Link>
+                    </li>
+                  ))}
+
+                  {/* Stiri section for dropdown categories */}
+                  {dropdownCategories.length > 0 && (
+                    <li className="relative">
+                      <button
+                        onClick={() => setIsMobileStiriOpen(!isMobileStiriOpen)}
+                        className="w-full flex items-center justify-between py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors"
+                      >
+                        <span>{intl.formatMessage({ id: 'nav.stiri', defaultMessage: 'Știri' })}</span>
+                        <svg
+                          className={`w-4 h-4 transition-transform ${isMobileStiriOpen ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {isMobileStiriOpen && (
+                        <ul className="bg-gray-50 dark:bg-brand-oxford-800">
+                          {dropdownCategories.map((category) => (
+                            <li key={category.id}>
+                              <Link
+                                href={buildCategoryUrl(category, locale as Locale)}
+                                className="block py-2 px-8 border-b border-gray-100 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-brand-oxford-700 dark:text-white transition-colors text-sm"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                              >
+                                {category.title}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  )}
+
+                  {/* All Articles */}
                   <li className="relative">
-                    <Link href={`/${locale}/politic`} className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors">
-                      {intl.formatMessage({ id: 'nav.politic', defaultMessage: 'Politic' })}
-                    </Link>
-                  </li>
-                  <li className="relative">
-                    <Link href={`/${locale}/externe`} className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors">
-                      {intl.formatMessage({ id: 'nav.externe', defaultMessage: 'Externe' })}
-                    </Link>
-                  </li>
-                  <li className="relative">
-                    <Link href={`/${locale}/social`} className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors">
-                      {intl.formatMessage({ id: 'nav.social', defaultMessage: 'Social' })}
-                    </Link>
-                  </li>
-                  <li className="relative">
-                    <Link href={`/${locale}/editorial`} className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors">
-                      {intl.formatMessage({ id: 'nav.editorial', defaultMessage: 'Editorial' })}
-                    </Link>
-                  </li>
-                  <li className="relative">
-                    <Link href={`/${locale}/archive`} className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors">
-                      {intl.formatMessage({ id: 'nav.archive', defaultMessage: 'Arhivă' })}
+                    <Link
+                      href={buildLocalizedUrl('/all', locale as Locale)}
+                      className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {intl.formatMessage({ id: 'nav.all', defaultMessage: 'Toate' })}
                     </Link>
                   </li>
                 </ul>

@@ -6,9 +6,11 @@
 
 import Link from 'next/link';
 import { getTrendingArticles } from '@/lib/api/statistics';
+import { buildArticleUrl } from '@/lib/utils/url-builder';
+import type { Locale } from '@/lib/types';
 
 interface Props {
-  locale?: string;
+  locale?: Locale;
   limit?: number;
 }
 
@@ -30,7 +32,7 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
     <section className="my-12">
       <div className="flex items-center gap-3 mb-6">
         <svg
-          className="w-8 h-8 text-deschide-tomato"
+          className="w-8 h-8 text-brand-tomato-500"
           fill="currentColor"
           viewBox="0 0 20 20"
           xmlns="http://www.w3.org/2000/svg"
@@ -41,7 +43,7 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
             clipRule="evenodd"
           />
         </svg>
-        <h2 className="text-3xl font-heading uppercase text-deschide-oxford-blue">
+        <h2 className="text-3xl font-heading text-brand-oxford-900">
           Trending Now
         </h2>
       </div>
@@ -50,13 +52,13 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
         {articles.map((article, index) => (
           <Link
             key={article.id}
-            href={`/${article.category?.slug}/${article.slug}`}
+            href={buildArticleUrl(article, locale)}
             className="group"
           >
-            <article className="relative border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-deschide-tomato bg-white">
+            <article className="relative border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-brand-tomato-500 bg-white hover-lift">
               {/* Trending badge for #1 */}
               {index === 0 && (
-                <span className="absolute -top-3 -right-3 bg-deschide-tomato text-white text-xs font-heading uppercase px-3 py-1 rounded-full shadow-lg">
+                <span className="absolute -top-3 -right-3 bg-brand-tomato text-white text-xs font-heading px-3 py-1 rounded-full shadow-lg">
                   #1 Trending
                 </span>
               )}
@@ -64,7 +66,7 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
               {/* Rank indicator for top 3 */}
               {index < 3 && (
                 <div className="absolute top-4 left-4">
-                  <span className={`text-5xl font-bold ${
+                  <span className={`text-5xl font-heading ${
                     index === 0 ? 'text-yellow-400' :
                     index === 1 ? 'text-gray-400' :
                     'text-orange-400'
@@ -77,13 +79,13 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
               <div className="relative z-10">
                 {/* Category */}
                 {article.category && (
-                  <p className="text-sm text-deschide-oxford-blue font-heading uppercase tracking-wide mb-3">
+                  <p className="text-sm text-brand-oxford-900 font-heading tracking-wide mb-3">
                     {article.category.name}
                   </p>
                 )}
 
                 {/* Title */}
-                <h3 className="font-semibold text-lg mb-3 group-hover:text-deschide-tomato transition-colors leading-tight min-h-[3.5rem]">
+                <h3 className="font-heading text-lg mb-3 group-hover:text-brand-tomato-500 transition-colors leading-tight min-h-[3.5rem]">
                   {article.title || 'Untitled'}
                 </h3>
 
@@ -116,7 +118,7 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
 
                   {/* Trending icon */}
                   <svg
-                    className="w-5 h-5 text-deschide-tomato"
+                    className="w-5 h-5 text-brand-tomato-500"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >

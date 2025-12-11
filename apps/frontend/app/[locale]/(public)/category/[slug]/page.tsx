@@ -4,6 +4,8 @@ import { fetchCategories } from '@/lib/api/categories';
 import CategoryHeroArticle from '@/components/CategoryHeroArticle';
 import ArticleCard from '@/components/ArticleCard';
 import MostPopular from '@/components/MostPopular';
+import { buildLocalizedUrl } from '@/lib/utils/url-builder';
+import type { Locale } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 120; // Revalidate every 2 minutes
@@ -107,7 +109,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                     <div className="flex gap-2">
                       {currentPage > 1 && (
                         <a
-                          href={`/${locale}/category/${slug}?page=${currentPage - 1}`}
+                          href={`${buildLocalizedUrl(`/category/${slug}`, locale as Locale)}?page=${currentPage - 1}`}
                           className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
                         >
                           Previous
@@ -115,7 +117,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                       )}
                       {currentPage < totalPages && (
                         <a
-                          href={`/${locale}/category/${slug}?page=${currentPage + 1}`}
+                          href={`${buildLocalizedUrl(`/category/${slug}`, locale as Locale)}?page=${currentPage + 1}`}
                           className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
                         >
                           Next

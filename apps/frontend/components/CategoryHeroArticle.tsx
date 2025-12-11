@@ -7,10 +7,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Article, Category } from '@/lib/types/article';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
+import { buildArticleUrl } from '@/lib/utils/url-builder';
+import type { Locale } from '@/lib/types';
 
 interface CategoryHeroArticleProps {
   article: Article;
-  locale: string;
+  locale: Locale;
 }
 
 /**
@@ -48,9 +50,8 @@ export default function CategoryHeroArticle({ article, locale }: CategoryHeroArt
   // Get excerpt: use lead if available, otherwise extract from content
   const excerpt = article.lead || (article.content ? getExcerpt(article.content) : '');
 
-  // Build article URL with correct category slug
-  const categorySlug = typeof article.category === 'object' ? article.category.slug : 'uncategorized';
-  const articleUrl = `/${locale}/${categorySlug}/${article.slug}`;
+  // Build article URL using url-builder utility
+  const articleUrl = buildArticleUrl(article, locale);
 
   return (
     <div className="flex-shrink max-w-full w-full px-3 pb-5">
@@ -76,28 +77,27 @@ export default function CategoryHeroArticle({ article, locale }: CategoryHeroArt
         </Link>
 
         {/* Gradient overlay with content */}
-        <div className="absolute px-5 pt-8 pb-5 bottom-0 w-full bg-gradient-cover">
-          {/* Title */}
+        <div className="absolute px-5 pt-8 pb-5 bottom-0 w-full card-overlay-gradient">
+          {/* Category Badge */}
+          <div className="mb-3">
+            <span className="inline-block px-3 py-1.5 rounded bg-brand-tomato text-white text-xs font-medium uppercase tracking-wide shadow-lg">
+              {getCategoryTitle(article.category)}
+            </span>
+          </div>
+
+          {/* Title with text shadow for readability on images */}
           <Link href={articleUrl}>
-            <h2 className="text-3xl font-bold capitalize text-white mb-3">
+            <h2 className="text-3xl font-heading text-white text-on-photo-strong mb-3">
               {article.title}
             </h2>
           </Link>
 
           {/* Excerpt */}
           {excerpt && (
-            <p className="text-gray-100 hidden sm:inline-block">
+            <p className="text-white text-on-photo hidden sm:inline-block font-body leading-relaxed">
               {excerpt}
             </p>
           )}
-
-          {/* Category tag */}
-          <div className="pt-2">
-            <div className="text-gray-100">
-              <div className="inline-block h-3 border-l-2 border-deschide-tomato mr-2"></div>
-              {getCategoryTitle(article.category)}
-            </div>
-          </div>
         </div>
       </div>
     </div>

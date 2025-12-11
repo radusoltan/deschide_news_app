@@ -165,11 +165,17 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
       if (result.message) {
         // Handle redirect based on save action
         if (saveAction === 'saveAndClose') {
+          // Reset state before redirect in case navigation fails
+          setIsSubmitting(false);
+          setSaveAction(null);
           router.push(`/${locale}/admin/articles`);
           router.refresh();
         } else if (saveAction === 'save') {
           // If creating a new article, redirect to edit page with the new ID
           if (!article?.id && result.articleId) {
+            // Reset state before redirect in case navigation fails
+            setIsSubmitting(false);
+            setSaveAction(null);
             router.push(`/${locale}/admin/articles/${result.articleId}/edit`);
             router.refresh();
           } else {
@@ -184,11 +190,15 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
         }
       } else {
         // If no message returned, something went wrong but no errors were reported
+        setFormErrors({ _form: ['An unexpected error occurred. Please try again.'] });
         setIsSubmitting(false);
         setSaveAction(null);
       }
     } catch (err) {
       console.error('Form submission error:', err);
+      setFormErrors({
+        _form: [err instanceof Error ? err.message : 'Failed to save article. Please try again.']
+      });
       setIsSubmitting(false);
       setSaveAction(null);
     }

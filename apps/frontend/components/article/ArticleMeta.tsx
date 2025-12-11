@@ -9,6 +9,7 @@ import React from 'react';
 import Link from 'next/link';
 import type { Article } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
+import { buildAuthorUrl, buildCategoryUrl } from '@/lib/utils/url-builder';
 
 interface ArticleMetaProps {
   article: Article;
@@ -183,7 +184,7 @@ export default function ArticleMeta({ article, locale, className = '' }: Article
               {authors.map((author: any, index: number) => (
                 <span key={`author-${author.id || index}`}>
                   <Link
-                    href={`/${locale}/author/${author.slug}`}
+                    href={buildAuthorUrl(author.slug, locale)}
                     className="font-semibold hover:text-red-600"
                   >
                     {author.fullName}
@@ -222,7 +223,7 @@ export default function ArticleMeta({ article, locale, className = '' }: Article
           {/* Category */}
           <span className="block sm:inline-block">
             <Link
-              href={`/${locale}/${categoryData.slug}`}
+              href={buildCategoryUrl(categoryData.slug, locale)}
               className="text-red-600 hover:text-red-700"
             >
               <span className="inline-block h-3 border-l-2 border-red-600 mr-2"></span>

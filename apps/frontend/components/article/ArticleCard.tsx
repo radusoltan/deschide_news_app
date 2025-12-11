@@ -92,7 +92,7 @@ export default function ArticleCard({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors">
+            <h3 className="text-sm font-heading text-brand-oxford-900 line-clamp-2 group-hover:text-brand-tomato-500 transition-colors">
               {article.title}
             </h3>
             {showDate && article.publishedAt && (
@@ -113,7 +113,7 @@ export default function ArticleCard({
     return (
       <article className={`group ${className}`}>
         <Link href={articleUrl} className="block hover:opacity-90 transition-opacity">
-          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors mb-1">
+          <h3 className="text-sm font-heading text-brand-oxford-900 line-clamp-2 group-hover:text-brand-tomato-500 transition-colors mb-1">
             {article.title}
           </h3>
           {showDate && article.publishedAt && (
@@ -161,13 +161,13 @@ export default function ArticleCard({
         <div className="p-4">
           {/* Category */}
           {showCategory && article.category && (
-            <span className="inline-block text-xs font-semibold text-red-600 uppercase mb-2">
+            <span className="inline-block px-3 py-1 rounded bg-brand-tomato text-white text-xs font-medium uppercase tracking-wide mb-2">
               {article.category.title}
             </span>
           )}
 
           {/* Title */}
-          <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-red-600 transition-colors mb-2">
+          <h3 className="text-lg font-heading text-brand-oxford-900 line-clamp-2 group-hover:text-brand-tomato-500 transition-colors mb-2">
             {article.title}
           </h3>
 

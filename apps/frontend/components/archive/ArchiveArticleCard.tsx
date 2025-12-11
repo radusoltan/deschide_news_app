@@ -14,6 +14,7 @@ import {
   buildImageUrl,
 } from '@/lib/api/important-articles';
 import type { Locale } from '@/lib/types';
+import { buildArticleUrl } from '@/lib/utils/url-builder';
 
 interface ArchiveArticleCardProps {
   article: any;
@@ -54,7 +55,7 @@ export default function ArchiveArticleCard({
   className = '',
 }: ArchiveArticleCardProps) {
   const t = translations[locale as keyof typeof translations] || translations.ro;
-  const articleUrl = `/${locale}/${article.category?.slug || 'uncategorized'}/${article.slug}`;
+  const articleUrl = buildArticleUrl(article, locale);
 
   // Get featured image
   const featuredImage = getFeaturedImage(article.articleImages || []);

@@ -5,7 +5,7 @@
 
 'use server';
 
-import { redirect } from 'next/navigation';
+// redirect removed - client handles redirect to preserve locale
 import { z } from 'zod';
 import { loginUser, refreshToken, getUserFromToken, isTokenExpired, isRefreshTokenExpired, type AuthTokens } from '@/lib/api-client';
 import {
@@ -100,11 +100,14 @@ export async function login(
 
 /**
  * Logout user
- * Deletes session cookie and redirects to login
+ * Deletes session cookie
+ * Note: Client handles redirect to preserve locale
  */
 export async function logout() {
   await deleteSession();
-  redirect('/login');
+  // Don't call redirect() here - it throws an exception in server actions
+  // which prevents client-side code from executing after await logout()
+  // Let the client handle the redirect with the correct locale
 }
 
 // ============================================================================

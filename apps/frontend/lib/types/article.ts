@@ -16,6 +16,8 @@ export interface Category {
   description?: string;
   status?: string;
   onFrontPage?: boolean;
+  inMenu?: boolean;
+  inFooterMenu?: boolean;
   articleCount?: number;
 }
 

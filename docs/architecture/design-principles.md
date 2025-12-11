@@ -158,6 +158,8 @@ This approach facilitates the implementation of a scalable and flexible Design S
 
 Despite the *utility-first* nature of Tailwind , it is essential to maintain a well-defined React component structure, following, for example, the Container-Presentational pattern, to maximize UI modularity and reusability of graphical elements (e.g., news cards, ad blocks) .
 
+For detailed UI/UX guidelines, Typography standards, and Color palettes, please refer to the **[UI Design Best Practices](../design/best_practices.md)** document.
+
 ## **Conclusions and Architectural Recommendations**
 
 The architecture of a multilingual Next.js 16 news portal, based on the App Router and the modern stack (TypeScript, Tailwind 4), must be centered on three main pillars: Server-First performance, efficient content freshness management, and global SEO optimization.

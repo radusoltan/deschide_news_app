@@ -28,7 +28,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: ImageRepository::class)]
-#[ORM\Cache(usage: 'READ_ONLY', region: 'default')]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE', region: 'default')]
 #[ORM\Table(name: 'images')]
 #[ORM\HasLifecycleCallbacks]
 #[Vich\Uploadable]
