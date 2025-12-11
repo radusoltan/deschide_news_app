@@ -54,13 +54,13 @@ export default function CategoryHeroArticle({ article, locale }: CategoryHeroArt
   const articleUrl = buildArticleUrl(article, locale);
 
   return (
-    <div className="flex-shrink max-w-full w-full px-3 pb-5">
-      <div className="relative hover-img max-h-98 overflow-hidden">
-        {/* Thumbnail */}
-        <Link href={articleUrl}>
+    <div className="flex-shrink max-w-full w-full px-3 pb-6">
+      <div className="group relative overflow-hidden rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-500">
+        {/* Thumbnail with Premium Hover Effect */}
+        <Link href={articleUrl} className="block relative aspect-[21/9] overflow-hidden">
           {imageToUse ? (
             <Image
-              className="max-w-full w-full mx-auto h-auto"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               src={buildImageUrl(imageToUse.path)}
               alt={featuredImage?.alt || article.title}
               width={imageToUse.width || 1920}
@@ -70,34 +70,50 @@ export default function CategoryHeroArticle({ article, locale }: CategoryHeroArt
               blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmM2Y0ZjYiLz48L3N2Zz4="
             />
           ) : (
-            <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400">No image</span>
+            <div className="w-full h-full bg-gradient-to-br from-brand-oxford-100 to-brand-oxford-50 flex items-center justify-center">
+              <div className="text-center">
+                <svg className="w-16 h-16 mx-auto text-brand-oxford-900/20 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="text-brand-oxford-900/40 font-medium text-sm">No image</span>
+              </div>
             </div>
           )}
         </Link>
 
-        {/* Gradient overlay with content */}
-        <div className="absolute px-5 pt-8 pb-5 bottom-0 w-full card-overlay-gradient">
-          {/* Category Badge */}
-          <div className="mb-3">
-            <span className="inline-block px-3 py-1.5 rounded bg-brand-tomato text-white text-xs font-medium uppercase tracking-wide shadow-lg">
+        {/* Premium Gradient Overlay - Oxford Blue to Transparent */}
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-oxford-900/95 via-brand-oxford-900/60 to-transparent pointer-events-none"></div>
+
+        {/* Content - Positioned over image with text shadows */}
+        <div className="absolute bottom-0 left-0 right-0 px-8 py-6 z-10">
+          {/* Category Badge - Tomato Background, White Text */}
+          <div className="mb-4 animate-fade-in">
+            <span className="inline-flex items-center px-4 py-2 rounded-md bg-brand-tomato text-white text-xs font-bold uppercase tracking-widest shadow-2xl hover:bg-brand-tomato-600 transition-colors duration-300">
               {getCategoryTitle(article.category)}
             </span>
           </div>
 
-          {/* Title with text shadow for readability on images */}
-          <Link href={articleUrl}>
-            <h2 className="text-3xl font-heading text-white text-on-photo-strong mb-3">
+          {/* Title - League Spartan Bold, UPPERCASE, with Drop Shadow */}
+          <Link href={articleUrl} className="block mb-3 group/title">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-heading text-white text-on-photo-strong leading-tight transition-all duration-300 group-hover/title:text-brand-mindaro-400">
               {article.title}
             </h2>
           </Link>
 
-          {/* Excerpt */}
+          {/* Excerpt - Poppins with Drop Shadow */}
           {excerpt && (
-            <p className="text-white text-on-photo hidden sm:inline-block font-body leading-relaxed">
+            <p className="text-white text-on-photo hidden sm:block font-body text-base md:text-lg leading-relaxed max-w-4xl">
               {excerpt}
             </p>
           )}
+
+          {/* Subtle Bottom Accent Line with Mindaro */}
+          <div className="mt-4 w-24 h-1 bg-gradient-to-r from-brand-mindaro-400 to-transparent opacity-80"></div>
+        </div>
+
+        {/* Subtle Mindaro Glow on Hover */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+          <div className="absolute inset-0 bg-brand-mindaro-400/5"></div>
         </div>
       </div>
     </div>

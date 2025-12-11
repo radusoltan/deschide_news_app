@@ -34,13 +34,13 @@ export default async function CategorySection({
 
   return (
     <div className="bg-white">
-      <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
+      <div className="xl:container mx-auto p-3 sm:p-4 xl:p-2">
         <div className="flex flex-row flex-wrap">
           {/* Left - Articles (2/3 width) */}
           <div className="flex-shrink max-w-full w-full lg:w-2/3 overflow-hidden">
             <div className="w-full py-3">
-              <h2 className="text-deschide-oxford-blue text-2xl font-heading uppercase">
-                <span className="inline-block h-5 border-l-3 border-deschide-tomato mr-2"></span>
+              <h2 className="text-brand-oxford-900 text-2xl font-heading uppercase">
+                <span className="inline-block h-5 border-l-3 border-brand-tomato-500 mr-2"></span>
                 {category.title}
               </h2>
             </div>
@@ -58,8 +58,8 @@ export default async function CategorySection({
 
           {/* Right - Advertisement (1/3 width) */}
           <div className="flex-shrink max-w-full w-full lg:w-1/3 lg:pl-8 lg:pt-14 lg:pb-8 order-first lg:order-last">
-            <div className="w-full bg-gray-50 h-full">
-              <div className="text-sm py-6 sticky top-0">
+            <div className="w-full h-full">
+              <div className="text-sm py-6 sticky top-10">
                 <div className="w-full text-center">
                   <a className="uppercase" href="#">
                     Advertisement

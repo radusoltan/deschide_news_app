@@ -99,7 +99,7 @@ export default function ArticleCard({
       <div className="flex flex-col flex-grow">
         {/* Title - full visibility, no truncation */}
         <h3 className="text-lg font-bold leading-snug mb-2 tracking-tight">
-          <Link href={articleUrl} className="hover:text-deschide-tomato transition-colors duration-200 block">
+          <Link href={articleUrl} className="hover:text-brand-tomato-500 transition-colors duration-200 block">
             {article.title}
           </Link>
         </h3>
@@ -114,9 +114,9 @@ export default function ArticleCard({
           <div className="flex items-center justify-between">
             <Link
               href={categoryUrl}
-              className="inline-flex items-center text-xs font-medium text-gray-500 hover:text-deschide-tomato transition-colors uppercase tracking-wide"
+              className="inline-flex items-center text-xs font-medium text-gray-500 hover:text-brand-tomato-500 transition-colors uppercase tracking-wide"
             >
-              <span className="w-0.5 h-3 bg-deschide-tomato mr-2"></span>
+              <span className="w-0.5 h-3 bg-brand-tomato-500 mr-2"></span>
               {getCategoryTitle(article.category)}
             </Link>
             {article.viewCount && (

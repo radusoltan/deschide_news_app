@@ -4,6 +4,7 @@ import { fetchLatestArticles } from "@/lib/api/articles";
 import { getFeaturedImage, buildImageUrl, getThumbnailByProfile } from "@/lib/api/important-articles";
 import { Article } from "@/lib/types/article";
 import { buildArticleUrl } from "@/lib/utils/url-builder";
+import { ViewCountBadge } from "@/components/public/ViewCountBadge";
 import type { Locale } from "@/lib/types";
 
 interface LatestNewsProps {
@@ -52,11 +53,11 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
   };
 
   return (
-    <div className="bg-gray-50 py-6">
+    <div className="bg-white py-6">
       <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
         <div className="flex flex-row flex-wrap">
           {/* Sidebar - 1/3 width - Most Popular */}
-          <div className="flex-shrink max-w-full w-full lg:w-1/3 lg:pr-8 lg:pt-14 lg:pb-8 order-first">
+          <div className="flex-shrink max-w-full w-full lg:w-1/3 lg:pr-8 lg:pb-8 order-first">
             <div className="w-full bg-white">
               <div className="mb-6">
                 <div className="p-4 bg-gray-100">
@@ -82,8 +83,8 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
           <div className="flex-shrink max-w-full w-full lg:w-2/3 overflow-hidden">
             {/* Section Title */}
             <div className="w-full py-3">
-              <h2 className="text-deschide-oxford-blue text-2xl font-heading uppercase">
-                <span className="inline-block h-5 border-l-3 border-deschide-tomato mr-2"></span>
+              <h2 className="text-brand-oxford-900 text-2xl font-heading uppercase">
+                <span className="inline-block h-5 border-l-3 border-brand-tomato-500 mr-2"></span>
                 Latest news
               </h2>
             </div>
@@ -134,7 +135,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                   {featuredArticle.category && (
                     <div className="pt-2">
                       <div className="text-gray-100">
-                        <div className="inline-block h-3 border-l-2 border-deschide-tomato mr-2"></div>
+                        <div className="inline-block h-3 border-l-2 border-brand-tomato-500 mr-2"></div>
                         {getCategoryTitle(featuredArticle.category)}
                       </div>
                     </div>
@@ -191,7 +192,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                       <h3 className="text-lg font-bold leading-snug mb-2 tracking-tight">
                         <Link
                           href={buildArticleUrl(article, locale as Locale)}
-                          className="hover:text-deschide-tomato transition-colors duration-200 block"
+                          className="hover:text-brand-tomato-500 transition-colors duration-200 block"
                         >
                           {article.title}
                         </Link>
@@ -202,17 +203,22 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                         {article.lead || '\u00A0'}
                       </p>
 
-                      {/* Category badge - always at bottom */}
+                      {/* Footer with category and view count - always at bottom */}
                       <div className="mt-auto pt-2">
-                        {article.category && getCategorySlug(article.category) && (
-                          <Link
-                            className="inline-flex items-center text-xs font-medium text-gray-500 hover:text-deschide-tomato transition-colors uppercase tracking-wide"
-                            href={`/${locale}/category/${getCategorySlug(article.category)}`}
-                          >
-                            <span className="w-0.5 h-3 bg-deschide-tomato mr-2"></span>
-                            {getCategoryTitle(article.category)}
-                          </Link>
-                        )}
+                        <div className="flex items-center justify-between">
+                          {article.category && getCategorySlug(article.category) && (
+                            <Link
+                              className="inline-flex items-center text-xs font-medium text-gray-500 hover:text-brand-tomato-500 transition-colors uppercase tracking-wide"
+                              href={`/${locale}/category/${getCategorySlug(article.category)}`}
+                            >
+                              <span className="w-0.5 h-3 bg-brand-tomato-500 mr-2"></span>
+                              {getCategoryTitle(article.category)}
+                            </Link>
+                          )}
+                          {article.viewCount && (
+                            <ViewCountBadge views={article.viewCount} />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </article>
