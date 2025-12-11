@@ -12,7 +12,7 @@ use Gedmo\Translatable\TranslatableListener;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 
 /**
@@ -54,13 +54,18 @@ class SlugController extends AbstractController
 
         // Search in translations table for the given locale
         // Join with ext_translations to find the article by slug in the specific locale
+        // OPTIMIZATION: Eager load all related entities to avoid N+1 queries
         $query = $this->articleRepository->createQueryBuilder('a')
             ->leftJoin('a.category', 'c')
             ->addSelect('c')
+            ->leftJoin('a.authors', 'au')
+            ->addSelect('au')
             ->leftJoin('a.articleImages', 'ai')
             ->addSelect('ai')
             ->leftJoin('ai.image', 'img')
             ->addSelect('img')
+            ->leftJoin('a.tags', 't')
+            ->addSelect('t')
             ->where('a.status = :status')
             ->setParameter('status', 'published');
 

@@ -23,6 +23,7 @@ class ArticleRepository extends ServiceEntityRepository
      *
      * @param array<int> $tagIds Array of tag IDs
      * @param string $locale Locale for translatable fields
+     *
      * @return Article[]
      */
     public function findByTags(array $tagIds, string $locale = 'ro'): array
@@ -32,17 +33,17 @@ class ArticleRepository extends ServiceEntityRepository
         foreach ($tagIds as $index => $tagId) {
             $alias = 't' . $index;
             $qb->join('a.tags', $alias)
-               ->andWhere($alias . '.id = :tagId' . $index)
-               ->setParameter('tagId' . $index, $tagId);
+                ->andWhere($alias . '.id = :tagId' . $index)
+                ->setParameter('tagId' . $index, $tagId);
         }
 
         $qb->leftJoin('a.category', 'c')
-           ->addSelect('c')
-           ->leftJoin('a.authors', 'au')
-           ->addSelect('au')
-           ->leftJoin('a.tags', 'tags')
-           ->addSelect('tags')
-           ->orderBy('a.publishedAt', 'DESC');
+            ->addSelect('c')
+            ->leftJoin('a.authors', 'au')
+            ->addSelect('au')
+            ->leftJoin('a.tags', 'tags')
+            ->addSelect('tags')
+            ->orderBy('a.publishedAt', 'DESC');
 
         $query = $qb->getQuery();
         $query->setHint(
@@ -58,6 +59,7 @@ class ArticleRepository extends ServiceEntityRepository
      *
      * @param array<int> $tagIds Array of tag IDs
      * @param string $locale Locale for translatable fields
+     *
      * @return Article[]
      */
     public function findByAnyTag(array $tagIds, string $locale = 'ro'): array
@@ -92,11 +94,12 @@ class ArticleRepository extends ServiceEntityRepository
      * @param Article $article The reference article
      * @param int $limit Maximum number of results
      * @param string $locale Locale for translatable fields
+     *
      * @return Article[]
      */
     public function findSimilarByTags(Article $article, int $limit = 5, string $locale = 'ro'): array
     {
-        $tagIds = $article->getTags()->map(fn($tag) => $tag->getId())->toArray();
+        $tagIds = $article->getTags()->map(fn ($tag) => $tag->getId())->toArray();
 
         if (empty($tagIds)) {
             return [];
@@ -132,7 +135,6 @@ class ArticleRepository extends ServiceEntityRepository
      * Count articles by tag.
      *
      * @param int $tagId The tag ID
-     * @return int
      */
     public function countByTag(int $tagId): int
     {

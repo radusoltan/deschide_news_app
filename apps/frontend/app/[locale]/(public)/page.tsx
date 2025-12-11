@@ -1,15 +1,34 @@
 import type { Metadata } from 'next'
-import NewsSlider from './components/NewsSlider';
+import dynamic from 'next/dynamic';
 import ImportantList from "./components/home/important";
 import LatestNews from "./components/home/latest-news";
 import CategorySection from '@/components/CategorySection';
-import { TrendingArticles } from '@/components/public/TrendingArticles';
 import { fetchFrontPageCategories } from '@/lib/api/categories';
+import { generateHomepageMetadata } from '@/lib/seo/meta-tags';
 
-export const metadata: Metadata = {
-  title: 'Acasă',
-  description: 'Portal de știri în limba română',
+// Lazy load non-critical components for better initial load performance
+const NewsSlider = dynamic(() => import('./components/NewsSlider'), {
+  loading: () => <div className="h-96 bg-gray-100 animate-pulse" />,
+});
+
+const TrendingArticles = dynamic(() => import('@/components/public/TrendingArticles').then(mod => ({ default: mod.TrendingArticles })), {
+  loading: () => <div className="h-64 bg-gray-50 animate-pulse my-12" />,
+});
+
+type Locale = 'ro' | 'en' | 'ru';
+
+// Generate dynamic metadata based on locale
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const validLocale = (['ro', 'en', 'ru'].includes(locale) ? locale : 'ro') as Locale;
+  return generateHomepageMetadata(validLocale);
 }
+
+// Homepage uses dynamic metadata based on locale - see generateMetadata below
+// Static metadata removed to allow dynamic generation
+
+// Enable ISR (Incremental Static Regeneration) with 60-second revalidation
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ locale: string }>
@@ -29,8 +48,23 @@ export default async function HomePage({ params }: PageProps) {
     frontPageCategories = [];
   }
 
+  // H1 titles per locale for SEO
+  const h1Titles: Record<string, string> = {
+    ro: 'Deschide News - Știri de Ultimă Oră din Moldova și din Lume',
+    en: 'Deschide News - Breaking News from Moldova and Worldwide',
+    ru: 'Deschide News - Последние Новости из Молдовы и Мира',
+  };
+
   return (
-    <main id="content">
+    <>
+      {/* SEO H1 - visually hidden but present for search engines */}
+      <h1 className="sr-only">{h1Titles[locale] || h1Titles.ro}</h1>
+      {/* Breaking, Alert Flash */}
+
+      <div className="xl:container mx-auto h-18 bg-red-300 my-6 rounded ">BREAKING</div>
+      <div className="xl:container mx-auto h-18 bg-yellow-300 my-6 rounded ">ALERT</div>
+      <div className="xl:container mx-auto h-18 bg-red-300 my-6 rounded ">FLASH</div>
+
       {/* Hero / Important Articles Section */}
       <ImportantList locale={locale} />
 
@@ -55,6 +89,6 @@ export default async function HomePage({ params }: PageProps) {
           )}
         </div>
       ))}
-    </main>
+    </>
   )
 }

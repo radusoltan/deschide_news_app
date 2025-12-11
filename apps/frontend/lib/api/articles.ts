@@ -29,7 +29,7 @@ export async function fetchArticlesByCategory(
   }
 
   const url = new URL(`${API_BASE_URL}/api/articles`);
-  url.searchParams.set('category[id]', categoryId.toString());
+  url.searchParams.set('categoryId', categoryId.toString());
   url.searchParams.set('status', 'published');
   url.searchParams.set('itemsPerPage', itemsPerPage.toString());
   // Note: order is handled by default in backend (publishedAt DESC)

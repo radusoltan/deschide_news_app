@@ -2,9 +2,7 @@ gesdinet_jwt_refresh_token:
     refresh_token_class: App\Entity\RefreshToken
     ttl: 2592000  # 30 days
     ttl_update: true
-
-    # Firewall configuration
-    firewall: api
+    # Note: firewall option removed in dev-master (Symfony 8 compatible version)
 
     # Token parameter names
     token_parameter_name: refresh_token

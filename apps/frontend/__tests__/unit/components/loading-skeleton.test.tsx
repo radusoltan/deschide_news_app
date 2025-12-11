@@ -3,7 +3,7 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import ArticleLoading from '@/app/[locale]/(public)/[slug]/[articleSlug]/loading';
+import ArticleLoading from '@/app/[locale]/(public)/[categorySlug]/[articleSlug]/loading';
 
 describe('ArticleLoading Component', () => {
   describe('Rendering', () => {

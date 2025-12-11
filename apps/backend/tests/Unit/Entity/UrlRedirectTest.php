@@ -164,13 +164,13 @@ class UrlRedirectTest extends TestCase
     {
         $redirect = new UrlRedirect();
 
-        // Initially null (will be set on persist)
-        $this->assertNull($redirect->getCreatedAt());
+        // Constructor automatically sets createdAt
+        $this->assertInstanceOf(DateTimeImmutable::class, $redirect->getCreatedAt());
 
+        // Verify createdAt is set to current time (within 1 second tolerance)
         $now = new DateTimeImmutable();
-        $redirect->setCreatedAt($now);
-
-        $this->assertEquals($now, $redirect->getCreatedAt());
+        $diff = $now->getTimestamp() - $redirect->getCreatedAt()->getTimestamp();
+        $this->assertLessThanOrEqual(1, abs($diff));
     }
 
     public function testLastAccessedAtTimestamp(): void
@@ -199,7 +199,6 @@ class UrlRedirectTest extends TestCase
             ->setType('article')
             ->setEntityId(42)
             ->setHitCount(10)
-            ->setCreatedAt($now)
             ->setLastAccessedAt($now);
 
         $this->assertSame($redirect, $result);
@@ -210,7 +209,7 @@ class UrlRedirectTest extends TestCase
         $this->assertEquals('article', $redirect->getType());
         $this->assertEquals(42, $redirect->getEntityId());
         $this->assertEquals(10, $redirect->getHitCount());
-        $this->assertEquals($now, $redirect->getCreatedAt());
+        $this->assertInstanceOf(DateTimeImmutable::class, $redirect->getCreatedAt());
         $this->assertEquals($now, $redirect->getLastAccessedAt());
     }
 

@@ -23,10 +23,11 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Translatable\Translatable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ThumbnailProfileRepository::class)]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE', region: 'long_lived')]  // L2 cache: profiles rarely change
 #[ORM\Table(name: 'thumbnail_profiles')]
 #[ORM\HasLifecycleCallbacks]
 #[UniqueEntity('name')]

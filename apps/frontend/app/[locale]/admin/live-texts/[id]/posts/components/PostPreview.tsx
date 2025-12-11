@@ -1,5 +1,7 @@
 'use client';
 
+import { createSafeHtml } from '@/lib/sanitize';
+
 interface PostPreviewProps {
   content: string;
   isKeyPoint: boolean;
@@ -114,7 +116,7 @@ export function PostPreview({ content, isKeyPoint, locale }: PostPreviewProps) {
             {/* Post Content */}
             <div
               className="prose dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: content }}
+              dangerouslySetInnerHTML={createSafeHtml(content)}
             />
           </div>
         )}

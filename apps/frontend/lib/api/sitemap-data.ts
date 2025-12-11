@@ -267,3 +267,92 @@ export async function getArticleCount(): Promise<number> {
     return 0;
   }
 }
+
+/**
+ * Archived article data for sitemap
+ */
+export interface ArchivedArticle extends SitemapArticle {
+  archivedAt?: string;
+}
+
+/**
+ * Fetch all archived articles for sitemap with pagination handling
+ */
+export async function fetchArchivedArticlesForSitemap(): Promise<ArchivedArticle[]> {
+  const allArticles: ArchivedArticle[] = [];
+  let currentPage = 1;
+  let hasNextPage = true;
+
+  try {
+    while (hasNextPage) {
+      const response = await fetch(
+        `${API_URL}/api/archived_articles?page=${currentPage}&itemsPerPage=100`,
+        {
+          headers: {
+            'Accept': 'application/ld+json',
+            'Accept-Language': 'ro', // Start with default locale
+          },
+          cache: 'no-store',
+        }
+      );
+
+      if (!response.ok) {
+        console.error(`Failed to fetch archived articles page ${currentPage}:`, response.status);
+        break;
+      }
+
+      const data = await response.json();
+      const articles = data['hydra:member'] || [];
+
+      // Map to our interface
+      const mappedArticles = articles.map((article: any) => ({
+        id: article.id,
+        slug: article.slug,
+        updatedAt: article.updatedAt,
+        archivedAt: article.archivedAt || article.updatedAt,
+        category: {
+          slug: article.category?.slug || '',
+        },
+        translations: {
+          ro: {
+            locale: 'ro' as Locale,
+            slug: article.slug,
+            categorySlug: article.category?.slug || '',
+            title: article.title,
+          },
+          en: {
+            locale: 'en' as Locale,
+            slug: article.slug, // TODO: Fetch actual translation
+            categorySlug: article.category?.slug || '',
+            title: article.title,
+          },
+          ru: {
+            locale: 'ru' as Locale,
+            slug: article.slug, // TODO: Fetch actual translation
+            categorySlug: article.category?.slug || '',
+            title: article.title,
+          },
+        },
+      }));
+
+      allArticles.push(...mappedArticles);
+
+      // Check if there's a next page
+      const view = data['hydra:view'];
+      hasNextPage = !!view?.['hydra:next'];
+      currentPage++;
+
+      // Safety limit to prevent infinite loops (adjust based on expected volume)
+      if (currentPage > 1000) {
+        console.warn('Reached maximum page limit (1000) when fetching archived articles');
+        break;
+      }
+    }
+
+    console.log(`Fetched ${allArticles.length} archived articles across ${currentPage - 1} pages`);
+    return allArticles;
+  } catch (error) {
+    console.error('Error fetching archived articles for sitemap:', error);
+    return allArticles; // Return what we've collected so far
+  }
+}

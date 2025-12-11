@@ -41,12 +41,19 @@ final class CategoryProcessor implements ProcessorInterface
         // Handle DELETE operation
         if ($operation instanceof DeleteOperationInterface) {
             if ($data instanceof Category) {
+                // Get managed entity from database (the provided entity may be detached)
+                $managedEntity = $this->entityManager->getRepository(Category::class)->find($data->getId());
+
+                if (!$managedEntity) {
+                    throw new RuntimeException('Category not found');
+                }
+
                 // Check if category has articles
-                if ($data->getArticles()->count() > 0) {
+                if ($managedEntity->getArticles()->count() > 0) {
                     throw new LogicException('Cannot delete category with existing articles');
                 }
 
-                $this->entityManager->remove($data);
+                $this->entityManager->remove($managedEntity);
                 $this->entityManager->flush();
             }
 

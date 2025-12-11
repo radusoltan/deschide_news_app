@@ -19,14 +19,15 @@ class ImageElasticService
     public function __construct(
         string $elasticsearchHost,
         string $elasticsearchUser = '',
-        string $elasticsearchPassword = ''
+        string $elasticsearchPassword = '',
+        bool $elasticsearchVerifySsl = true
     ) {
         $this->enabled = '' !== $elasticsearchHost && '0' !== $elasticsearchHost;
 
         if ($this->enabled) {
             $builder = ClientBuilder::create()
                 ->setHosts([$elasticsearchHost])
-                ->setSSLVerification(false);
+                ->setSSLVerification($elasticsearchVerifySsl);
 
             // Add authentication if credentials provided
             if ($elasticsearchUser && $elasticsearchPassword) {

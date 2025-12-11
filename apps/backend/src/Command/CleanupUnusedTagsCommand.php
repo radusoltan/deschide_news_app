@@ -47,26 +47,27 @@ class CleanupUnusedTagsCommand extends Command
                 InputOption::VALUE_NONE,
                 'Execute asynchronously via message queue'
             )
-            ->setHelp(<<<'HELP'
-The <info>%command.name%</info> command cleans up unused tags.
+            ->setHelp(
+                <<<'HELP'
+                    The <info>%command.name%</info> command cleans up unused tags.
 
-<info>php %command.full_name%</info>
+                    <info>php %command.full_name%</info>
 
-By default, removes tags that haven't been used in 30 days:
-<info>php %command.full_name%</info>
+                    By default, removes tags that haven't been used in 30 days:
+                    <info>php %command.full_name%</info>
 
-Specify custom number of days:
-<info>php %command.full_name% --days=60</info>
+                    Specify custom number of days:
+                    <info>php %command.full_name% --days=60</info>
 
-Preview what would be deleted (dry run):
-<info>php %command.full_name% --dry-run</info>
+                    Preview what would be deleted (dry run):
+                    <info>php %command.full_name% --dry-run</info>
 
-Execute asynchronously via message queue:
-<info>php %command.full_name% --async</info>
+                    Execute asynchronously via message queue:
+                    <info>php %command.full_name% --async</info>
 
-Combine options:
-<info>php %command.full_name% --days=90 --dry-run</info>
-HELP
+                    Combine options:
+                    <info>php %command.full_name% --days=90 --dry-run</info>
+                    HELP
             );
     }
 
@@ -83,7 +84,7 @@ HELP
             $io->note('Running in DRY RUN mode - no tags will be deleted');
         }
 
-        $io->info(sprintf(
+        $io->info(\sprintf(
             'Cleaning up tags unused for %d days or more...',
             $days
         ));

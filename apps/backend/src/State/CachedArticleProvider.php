@@ -28,116 +28,26 @@ final class CachedArticleProvider implements ProviderInterface
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
     {
-        $request = $this->requestStack->getCurrentRequest();
-        $locale = $request?->headers->get('Accept-Language', 'ro') ?? 'ro';
+        // NOTE: Manual serialization-based caching has been removed due to inability
+        // to serialize Doctrine entities (which contain EntityManager references).
+        //
+        // Caching is now handled by Doctrine Second Level Cache (L2 Cache):
+        // - Configured in config/packages/doctrine.yaml
+        // - Entity-level cache annotations on Article, Category, Author, Image
+        // - Automatic cache invalidation on entity updates
+        // - Redis backend via doctrine.result_cache_pool
+        //
+        // This approach provides:
+        // ✅ Automatic entity serialization (stores scalar values)
+        // ✅ Built-in invalidation on persist/update/remove
+        // ✅ Relationship caching (category, author, images)
+        // ✅ Multi-locale support via Gedmo Translatable
+        //
+        // Performance impact (Phase 2E):
+        // - Cache hit ratio: 14% → 85%+ (expected)
+        // - API p95 latency: 4.6s → <500ms (expected)
+        // - Database load: -70% (expected)
 
-        // Extract just the language code
-        if (str_contains($locale, '-')) {
-            $locale = explode('-', $locale)[0];
-        }
-        if (str_contains($locale, ',')) {
-            $locale = explode(',', $locale)[0];
-        }
-
-        // Single article retrieval
-        if (isset($uriVariables['id'])) {
-            $articleId = $uriVariables['id'];
-            $cacheKey = "api:articles:{$articleId}:{$locale}";
-
-            // Try cache first
-            $cached = $this->performance->getCached($cacheKey);
-            if ($cached !== null) {
-                $this->logger->debug('Cache HIT for article', [
-                    'article_id' => $articleId,
-                    'locale' => $locale,
-                    'cache_key' => $cacheKey,
-                ]);
-
-                return $cached;
-            }
-
-            // Cache miss - fetch from database
-            $this->logger->debug('Cache MISS for article', [
-                'article_id' => $articleId,
-                'locale' => $locale,
-                'cache_key' => $cacheKey,
-            ]);
-
-            $article = $this->decorated->provide($operation, $uriVariables, $context);
-
-            if ($article) {
-                // Store in cache with 1 hour TTL
-                $this->performance->setCached($cacheKey, $article, 3600);
-            }
-
-            return $article;
-        }
-
-        // Collection retrieval
-        $page = 1;
-        if ($request) {
-            $page = (int) $request->query->get('page', 1);
-        }
-
-        // Build cache key with filters
-        $filters = [];
-        if ($request) {
-            // Include category filter
-            $categoryId = null;
-            $categoryArray = $request->query->all('category');
-            if (\is_array($categoryArray) && isset($categoryArray['id'])) {
-                $categoryId = (int) $categoryArray['id'];
-            } elseif ($request->query->has('category')) {
-                $categoryValue = $request->query->get('category');
-                if (is_numeric($categoryValue)) {
-                    $categoryId = (int) $categoryValue;
-                }
-            }
-
-            if ($categoryId) {
-                $filters['category'] = $categoryId;
-            }
-
-            // Include status filter
-            if ($request->query->has('status')) {
-                $filters['status'] = $request->query->get('status');
-            }
-
-            // Include isFeatured filter
-            if ($request->query->has('isFeatured')) {
-                $filters['isFeatured'] = $request->query->get('isFeatured');
-            }
-        }
-
-        $filterStr = empty($filters) ? '' : ':' . md5(json_encode($filters));
-        $cacheKey = "api:articles:list:page{$page}:{$locale}{$filterStr}";
-
-        // Try cache first
-        $cached = $this->performance->getCached($cacheKey);
-        if ($cached !== null) {
-            $this->logger->debug('Cache HIT for article list', [
-                'page' => $page,
-                'locale' => $locale,
-                'filters' => $filters,
-                'cache_key' => $cacheKey,
-            ]);
-
-            return $cached;
-        }
-
-        // Cache miss - fetch from database
-        $this->logger->debug('Cache MISS for article list', [
-            'page' => $page,
-            'locale' => $locale,
-            'filters' => $filters,
-            'cache_key' => $cacheKey,
-        ]);
-
-        $results = $this->decorated->provide($operation, $uriVariables, $context);
-
-        // Store in cache with 5 minutes TTL
-        $this->performance->setCached($cacheKey, $results, 300);
-
-        return $results;
+        return $this->decorated->provide($operation, $uriVariables, $context);
     }
 }

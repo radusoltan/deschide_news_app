@@ -83,10 +83,10 @@ class ImportCompleteCategoriesCommand extends Command
         $meta = $data['meta'] ?? [];
 
         $io->writeln(\sprintf('✅ JSON loaded successfully'));
-        $io->writeln(\sprintf('   Total categories: <info>%d</info>', $meta['total_categories'] ?? count($categories)));
+        $io->writeln(\sprintf('   Total categories: <info>%d</info>', $meta['total_categories'] ?? \count($categories)));
         $io->writeln(\sprintf('   Active: <info>%d</info>, Archived: <info>%d</info>', $meta['active_categories'] ?? 0, $meta['archived_categories'] ?? 0));
 
-        if (count($categories) === 0) {
+        if (\count($categories) === 0) {
             $io->warning('No categories found in JSON file');
 
             return Command::SUCCESS;
@@ -96,14 +96,14 @@ class ImportCompleteCategoriesCommand extends Command
         $io->section('🇷🇴 Step 2: Import Categories (Romanian - Default Locale)');
 
         $stats = [
-            'total' => count($categories),
+            'total' => \count($categories),
             'created' => 0,
             'updated' => 0,
             'skipped' => 0,
             'errors' => 0,
         ];
 
-        $io->progressStart(count($categories));
+        $io->progressStart(\count($categories));
 
         foreach ($categories as $categoryData) {
             $slug = $categoryData['slug'];
@@ -192,7 +192,7 @@ class ImportCompleteCategoriesCommand extends Command
                 $localeFlag = $locale === 'en' ? '🇬🇧' : '🇷🇺';
                 $io->writeln(\sprintf('%s Processing %s translations...', $localeFlag, strtoupper($locale)));
 
-                $io->progressStart(count($categories));
+                $io->progressStart(\count($categories));
 
                 foreach ($categories as $categoryData) {
                     $slug = $categoryData['slug'];

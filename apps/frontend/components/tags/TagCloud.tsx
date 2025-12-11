@@ -5,10 +5,12 @@
 
 import Link from 'next/link';
 import { Tag } from '@/lib/types/tag';
+import { buildLocalizedUrl } from '@/lib/utils/url-builder';
+import type { Locale } from '@/lib/types';
 
 export interface TagCloudProps {
   tags: Tag[];
-  locale: string;
+  locale: Locale;
   className?: string;
   minSize?: string;
   maxSize?: string;
@@ -80,7 +82,7 @@ export default function TagCloud({
       {tags.map((tag) => (
         <Link
           key={tag.id}
-          href={`/${locale}/tags/${tag.slug}`}
+          href={buildLocalizedUrl(`/tags/${tag.slug}`, locale)}
           className={`
             ${getFontSize(tag.usageCount)}
             ${getOpacity(tag.usageCount)}

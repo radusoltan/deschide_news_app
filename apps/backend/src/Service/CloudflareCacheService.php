@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Service for invalidating Cloudflare CDN cache
+ * Service for invalidating Cloudflare CDN cache.
  *
  * Usage:
  *   $this->cloudflareCache->purgeUrl('https://api.deschide.md/api/articles/123');
@@ -18,8 +19,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class CloudflareCacheService
 {
     private bool $enabled;
+
     private string $apiToken;
+
     private string $zoneId;
+
     private string $apiBaseUrl = 'https://api.cloudflare.com/client/v4';
 
     public function __construct(
@@ -35,15 +39,17 @@ final class CloudflareCacheService
     }
 
     /**
-     * Purge specific URLs from Cloudflare cache
+     * Purge specific URLs from Cloudflare cache.
      *
      * @param array<string> $urls Full URLs to purge (e.g., ['https://api.deschide.md/api/articles/123'])
+     *
      * @return bool True if purge was successful
      */
     public function purgeUrls(array $urls): bool
     {
         if (!$this->enabled) {
             $this->logger->debug('Cloudflare cache purge skipped (disabled)', ['urls' => $urls]);
+
             return false;
         }
 
@@ -68,8 +74,9 @@ final class CloudflareCacheService
             if ($data['success'] ?? false) {
                 $this->logger->info('Cloudflare cache purged', [
                     'urls' => $urls,
-                    'count' => count($urls),
+                    'count' => \count($urls),
                 ]);
+
                 return true;
             }
 
@@ -77,20 +84,23 @@ final class CloudflareCacheService
                 'urls' => $urls,
                 'errors' => $data['errors'] ?? [],
             ]);
+
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Cloudflare cache purge error', [
                 'urls' => $urls,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
-     * Purge a single URL from Cloudflare cache
+     * Purge a single URL from Cloudflare cache.
      *
      * @param string $url Full URL to purge (e.g., 'https://api.deschide.md/api/articles/123')
+     *
      * @return bool True if purge was successful
      */
     public function purgeUrl(string $url): bool
@@ -99,15 +109,17 @@ final class CloudflareCacheService
     }
 
     /**
-     * Purge cache by URL prefix (requires Enterprise plan)
+     * Purge cache by URL prefix (requires Enterprise plan).
      *
      * @param string $prefix URL prefix to purge (e.g., 'https://api.deschide.md/api/articles')
+     *
      * @return bool True if purge was successful
      */
     public function purgeByPrefix(string $prefix): bool
     {
         if (!$this->enabled) {
             $this->logger->debug('Cloudflare cache purge by prefix skipped (disabled)', ['prefix' => $prefix]);
+
             return false;
         }
 
@@ -127,31 +139,36 @@ final class CloudflareCacheService
 
             if ($data['success'] ?? false) {
                 $this->logger->info('Cloudflare cache purged by prefix', ['prefix' => $prefix]);
+
                 return true;
             }
 
             // If prefix purge fails (non-Enterprise), fall back to purging all
             $this->logger->warning('Cloudflare prefix purge requires Enterprise plan, falling back to purge all');
+
             return $this->purgeAll();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Cloudflare cache purge by prefix error', [
                 'prefix' => $prefix,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
-     * Purge by tags (requires Enterprise plan)
+     * Purge by tags (requires Enterprise plan).
      *
      * @param array<string> $tags Cache tags to purge
+     *
      * @return bool True if purge was successful
      */
     public function purgeByTags(array $tags): bool
     {
         if (!$this->enabled) {
             $this->logger->debug('Cloudflare cache purge by tags skipped (disabled)', ['tags' => $tags]);
+
             return false;
         }
 
@@ -175,6 +192,7 @@ final class CloudflareCacheService
 
             if ($data['success'] ?? false) {
                 $this->logger->info('Cloudflare cache purged by tags', ['tags' => $tags]);
+
                 return true;
             }
 
@@ -182,18 +200,20 @@ final class CloudflareCacheService
                 'tags' => $tags,
                 'errors' => $data['errors'] ?? [],
             ]);
+
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Cloudflare cache purge by tags error', [
                 'tags' => $tags,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
-     * Purge all cached content (use sparingly!)
+     * Purge all cached content (use sparingly!).
      *
      * WARNING: This purges EVERYTHING from Cloudflare cache.
      * Only use when absolutely necessary (full deployment, critical bug fix)
@@ -204,6 +224,7 @@ final class CloudflareCacheService
     {
         if (!$this->enabled) {
             $this->logger->debug('Cloudflare cache purge all skipped (disabled)');
+
             return false;
         }
 
@@ -223,23 +244,26 @@ final class CloudflareCacheService
 
             if ($data['success'] ?? false) {
                 $this->logger->warning('Cloudflare cache: Purged EVERYTHING (all zones, all files)');
+
                 return true;
             }
 
             $this->logger->error('Cloudflare cache purge all failed', [
                 'errors' => $data['errors'] ?? [],
             ]);
+
             return false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Cloudflare cache purge all error', [
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
 
     /**
-     * Purge article-related URLs
+     * Purge article-related URLs.
      *
      * @param int $articleId Article ID
      * @param string $domain Base domain (e.g., 'https://api.deschide.md')
@@ -263,7 +287,7 @@ final class CloudflareCacheService
     }
 
     /**
-     * Purge category-related URLs
+     * Purge category-related URLs.
      *
      * @param int $categoryId Category ID
      * @param string $domain Base domain
@@ -285,7 +309,7 @@ final class CloudflareCacheService
     }
 
     /**
-     * Get cache analytics (optional, requires API calls)
+     * Get cache analytics (optional, requires API calls).
      *
      * @return array<string, mixed> Cache statistics
      */
@@ -315,16 +339,17 @@ final class CloudflareCacheService
             }
 
             return [];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Cloudflare analytics fetch error', [
                 'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }
 
     /**
-     * Check if Cloudflare is enabled
+     * Check if Cloudflare is enabled.
      */
     public function isEnabled(): bool
     {
@@ -332,7 +357,7 @@ final class CloudflareCacheService
     }
 
     /**
-     * Enable Cloudflare cache operations
+     * Enable Cloudflare cache operations.
      */
     public function enable(): void
     {
@@ -341,7 +366,7 @@ final class CloudflareCacheService
     }
 
     /**
-     * Disable Cloudflare cache operations
+     * Disable Cloudflare cache operations.
      */
     public function disable(): void
     {

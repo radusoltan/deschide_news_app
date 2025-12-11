@@ -1,0 +1,130 @@
+name: Frontend CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'bugfix/**'
+      - 'release/**'
+      - 'hotfix/**'
+    paths:
+      - 'apps/frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'apps/frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+jobs:
+  frontend-tests:
+    name: Frontend Tests & Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: apps/frontend/pnpm-lock.yaml
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('apps/frontend/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        working-directory: apps/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint (Linting)
+        working-directory: apps/frontend
+        run: pnpm lint
+        continue-on-error: false
+
+      - name: Run Jest Tests (Unit & Integration)
+        working-directory: apps/frontend
+        run: pnpm test:ci
+        env:
+          NODE_ENV: test
+          NEXT_PUBLIC_API_URL: http://localhost:8081
+          NEXT_PUBLIC_CDN_URL: http://localhost:8082
+
+      - name: Upload Jest coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-jest-coverage
+          path: apps/frontend/coverage/
+          retention-days: 7
+
+      - name: Generate coverage summary
+        working-directory: apps/frontend
+        run: |
+          echo "## Frontend Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage/coverage-summary.json ]; then
+            cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All frontend Jest tests completed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Build Next.js Application
+        working-directory: apps/frontend
+        run: pnpm build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_API_URL: http://localhost:8081
+          NEXT_PUBLIC_CDN_URL: http://localhost:8082
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: |
+            apps/frontend/.next/
+            apps/frontend/out/
+          retention-days: 7
+
+      - name: Build summary
+        run: |
+          echo "## Frontend Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Next.js build completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d apps/frontend/.next ]; then
+            echo "Build output size:" >> $GITHUB_STEP_SUMMARY
+            du -sh apps/frontend/.next >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Archive test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-results
+          path: |
+            apps/frontend/coverage/
+            apps/frontend/test-results/
+          retention-days: 7

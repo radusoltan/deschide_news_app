@@ -1,0 +1,11 @@
+{
+  "name": "Deschide News",
+  "short_name": "Deschide",
+  "description": "Multilingual news portal - Romanian, English, Russian",
+  "icons": [],
+  "theme_color": "#112240",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/"
+}

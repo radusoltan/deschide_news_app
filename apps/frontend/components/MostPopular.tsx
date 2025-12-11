@@ -1,13 +1,15 @@
 /**
  * Most Popular Articles Sidebar Component
- * Displays a numbered list of articles from the same category
+ * Displays a simple numbered list of popular articles - matches homepage design
  */
 
 import Link from 'next/link';
 import { fetchArticlesByCategory } from '@/lib/api/articles';
+import { buildArticleUrl } from '@/lib/utils/url-builder';
+import type { Locale } from '@/lib/types';
 
 interface MostPopularProps {
-  locale: string;
+  locale: Locale;
   categoryId: number;
   limit?: number;
 }
@@ -15,7 +17,7 @@ interface MostPopularProps {
 export default async function MostPopular({
   locale,
   categoryId,
-  limit = 5
+  limit = 10
 }: MostPopularProps) {
   let articles: any[] = [];
 
@@ -32,28 +34,31 @@ export default async function MostPopular({
 
   return (
     <div className="w-full bg-white">
-      <div className="mb-6">
-        <div className="p-4 bg-gray-100">
-          <h2 className="text-lg font-bold">Most Popular</h2>
-        </div>
-        <ul className="post-number">
-          {articles.map((article) => {
-            const categorySlug = article.category?.slug || 'uncategorized';
-            const articleUrl = `/${locale}/${categorySlug}/${article.slug}`;
-
-            return (
-              <li key={article.id} className="border-b border-gray-100 hover:bg-gray-50">
-                <Link
-                  href={articleUrl}
-                  className="text-lg font-bold px-6 py-3 flex flex-row items-center"
-                >
-                  {article.title}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      {/* Simple Header - matches homepage pattern */}
+      <div className="p-4 bg-gray-100">
+        <h2 className="text-lg font-bold text-brand-oxford-900">Most Popular</h2>
       </div>
+
+      {/* Simple Articles List */}
+      <ul className="post-number">
+        {articles.map((article) => {
+          const articleUrl = buildArticleUrl(article, locale);
+
+          return (
+            <li
+              key={article.id}
+              className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+            >
+              <Link
+                href={articleUrl}
+                className="text-base font-bold px-6 py-3 flex flex-row items-center text-brand-oxford-900 hover:text-brand-tomato-500 transition-colors"
+              >
+                {article.title}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

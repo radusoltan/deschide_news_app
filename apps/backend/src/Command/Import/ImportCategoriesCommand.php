@@ -156,16 +156,14 @@ class ImportCategoriesCommand extends Command
                     } else {
                         // Get response body for debugging
                         $responseBody = '';
+
                         try {
                             $responseBody = $response->getContent(false);
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             $responseBody = $e->getMessage();
                         }
-                        throw new RuntimeException(\sprintf(
-                            'Unexpected status code: %d. Response: %s',
-                            $response->getStatusCode(),
-                            $responseBody
-                        ));
+
+                        throw new RuntimeException(\sprintf('Unexpected status code: %d. Response: %s', $response->getStatusCode(), $responseBody));
                     }
                 }
             } catch (Exception $e) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { Eye } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getLiveTextViewerCount } from '@/lib/api/livetext-analytics';
 
 interface ViewerCounterProps {
@@ -45,7 +45,7 @@ export function ViewerCounter({
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
   // Fetch viewer count
-  const fetchViewerCount = async () => {
+  const fetchViewerCount = useCallback(async () => {
     try {
       const { currentViewers } = await getLiveTextViewerCount(liveTextId);
 
@@ -64,18 +64,21 @@ export function ViewerCounter({
       setError('Failed to load viewer count');
       setIsLoading(false);
     }
-  };
+  }, [liveTextId, viewerCount]);
 
   // Initial fetch
   useEffect(() => {
-    fetchViewerCount();
-  }, [liveTextId]);
+    const initFetch = async () => {
+      await fetchViewerCount();
+    };
+    initFetch();
+  }, [fetchViewerCount]);
 
   // Setup interval for updates
   useEffect(() => {
     const interval = setInterval(fetchViewerCount, updateInterval);
     return () => clearInterval(interval);
-  }, [liveTextId, updateInterval, viewerCount]);
+  }, [fetchViewerCount, updateInterval]);
 
   if (error) {
     return null; // Silently fail

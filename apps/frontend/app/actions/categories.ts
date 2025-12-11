@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createCategory, updateCategory } from '@/lib/dal';
+import { createCategory, updateCategory, deleteCategory } from '@/lib/dal';
 
 // ============================================================================
 // Types
@@ -15,6 +15,12 @@ export interface CategoryFormState {
     status?: string[];
     _form?: string[];
   };
+}
+
+export interface DeleteCategoryState {
+  success?: boolean;
+  message?: string;
+  error?: string;
 }
 
 // ============================================================================
@@ -122,6 +128,31 @@ export async function updateCategoryAction(
       errors: {
         _form: [error instanceof Error ? error.message : 'Failed to update category'],
       },
+    };
+  }
+}
+
+/**
+ * Delete category
+ */
+export async function deleteCategoryAction(
+  id: number,
+  locale: string
+): Promise<DeleteCategoryState> {
+  try {
+    await deleteCategory(id, locale);
+
+    revalidatePath(`/[locale]/admin/categories`, 'page');
+
+    return {
+      success: true,
+      message: 'Category deleted successfully'
+    };
+  } catch (error) {
+    console.error('Failed to delete category:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to delete category',
     };
   }
 }

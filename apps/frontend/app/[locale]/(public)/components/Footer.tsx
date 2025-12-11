@@ -1,30 +1,34 @@
+'use client'
+
 import Link from 'next/link';
+import { useIntl } from 'react-intl';
+import { Logo } from '@/components/brand/Logo';
 
 interface FooterProps {
   locale: string;
 }
 
 export default function Footer({ locale }: FooterProps) {
+  const intl = useIntl();
+
   return (
-    <footer className="bg-black text-gray-400">
+    <footer className="bg-brand-oxford-900 text-white/80">
       {/* Footer content */}
       <div id="footer-content" className="relative pt-8 xl:pt-16 pb-6 xl:pb-12">
         <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2 overflow-hidden">
           <div className="flex flex-wrap flex-row lg:justify-between -mx-3">
             {/* Left side - Brand and Social */}
             <div className="flex-shrink max-w-full w-full lg:w-2/5 px-3 lg:pr-16">
-              <div className="flex items-center mb-2">
-                <span className="text-3xl leading-normal mb-2 font-bold text-gray-100 mt-2">
-                  Deschide News
-                </span>
+              <div className="flex items-center mb-4">
+                <Logo variant="white" size="lg" />
               </div>
-              <p>Your trusted source for multilingual news and analysis.</p>
+              <p className="text-white/80">{intl.formatMessage({ id: 'footer.tagline' })}</p>
               <ul className="space-x-3 mt-6 mb-6 Lg:mb-0">
                 {/* Facebook */}
                 <li className="inline-block">
                   <a
                     target="_blank"
-                    className="hover:text-gray-100"
+                    className="hover:text-white transition-colors group"
                     rel="noopener noreferrer"
                     href="https://facebook.com"
                     title="Facebook"
@@ -34,6 +38,7 @@ export default function Footer({ locale }: FooterProps) {
                       width="2rem"
                       height="2rem"
                       viewBox="0 0 512 512"
+                      className="group-hover:scale-110 transition-transform"
                     >
                       <path
                         fill="currentColor"
@@ -46,7 +51,7 @@ export default function Footer({ locale }: FooterProps) {
                 <li className="inline-block">
                   <a
                     target="_blank"
-                    className="hover:text-gray-100"
+                    className="hover:text-white transition-colors group"
                     rel="noopener noreferrer"
                     href="https://twitter.com"
                     title="Twitter"
@@ -56,6 +61,7 @@ export default function Footer({ locale }: FooterProps) {
                       width="2rem"
                       height="2rem"
                       viewBox="0 0 512 512"
+                      className="group-hover:scale-110 transition-transform"
                     >
                       <path
                         fill="currentColor"
@@ -68,7 +74,7 @@ export default function Footer({ locale }: FooterProps) {
                 <li className="inline-block">
                   <a
                     target="_blank"
-                    className="hover:text-gray-100"
+                    className="hover:text-white transition-colors group"
                     rel="noopener noreferrer"
                     href="https://youtube.com"
                     title="Youtube"
@@ -78,6 +84,7 @@ export default function Footer({ locale }: FooterProps) {
                       width="2rem"
                       height="2rem"
                       viewBox="0 0 512 512"
+                      className="group-hover:scale-110 transition-transform"
                     >
                       <path
                         fill="currentColor"
@@ -90,7 +97,7 @@ export default function Footer({ locale }: FooterProps) {
                 <li className="inline-block">
                   <a
                     target="_blank"
-                    className="hover:text-gray-100"
+                    className="hover:text-white transition-colors group"
                     rel="noopener noreferrer"
                     href="https://instagram.com"
                     title="Instagram"
@@ -100,6 +107,7 @@ export default function Footer({ locale }: FooterProps) {
                       width="2rem"
                       height="2rem"
                       viewBox="0 0 512 512"
+                      className="group-hover:scale-110 transition-transform"
                     >
                       <path
                         fill="currentColor"
@@ -124,87 +132,95 @@ export default function Footer({ locale }: FooterProps) {
               <div className="flex flex-wrap flex-row">
                 {/* Categories Column */}
                 <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
-                  <h4 className="text-base leading-normal mb-3 uppercase text-gray-100">
-                    Categories
+                  <h4 className="text-sm leading-normal mb-3 uppercase text-brand-mindaro-400 font-heading">
+                    {intl.formatMessage({ id: 'footer.categories' })}
                   </h4>
-                  <ul>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/category/politics`}>Politics</Link>
+                  <ul className="font-body">
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/politic`}>{intl.formatMessage({ id: 'categories.politics' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/category/business`}>Business</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/externe`}>{intl.formatMessage({ id: 'nav.externe' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/category/technology`}>Technology</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/social`}>{intl.formatMessage({ id: 'categories.society' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/category/sports`}>Sports</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/editorial`}>{intl.formatMessage({ id: 'nav.editorial' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/category/entertainment`}>Entertainment</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/all`}>{intl.formatMessage({ id: 'nav.all' })}</Link>
                     </li>
                   </ul>
                 </div>
 
                 {/* Quick Links Column */}
                 <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
-                  <h4 className="text-base leading-normal mb-3 uppercase text-gray-100">
-                    Quick Links
+                  <h4 className="text-sm leading-normal mb-3 uppercase text-brand-mindaro-400 font-heading">
+                    {intl.formatMessage({ id: 'footer.quickLinks' })}
                   </h4>
-                  <ul>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}`}>Home</Link>
+                  <ul className="font-body">
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}`}>{intl.formatMessage({ id: 'common.home' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/latest`}>Latest News</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/all`}>{intl.formatMessage({ id: 'footer.latestNews' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/trending`}>Trending</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/trending`}>{intl.formatMessage({ id: 'footer.trending' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/contact`}>Contact</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/archive`} className="flex items-center gap-1.5">
+                        <svg className="w-4 h-4 text-brand-mindaro-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                        </svg>
+                        {intl.formatMessage({ id: 'footer.archive' })}
+                      </Link>
+                    </li>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/contact`}>{intl.formatMessage({ id: 'common.contact' })}</Link>
                     </li>
                   </ul>
                 </div>
 
                 {/* About Us Column */}
                 <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
-                  <h4 className="text-base leading-normal mb-3 uppercase text-gray-100">
-                    About Us
+                  <h4 className="text-sm leading-normal mb-3 uppercase text-brand-mindaro-400 font-heading">
+                    {intl.formatMessage({ id: 'footer.aboutUs' })}
                   </h4>
-                  <ul>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/about`}>Our Story</Link>
+                  <ul className="font-body">
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/about`}>{intl.formatMessage({ id: 'footer.ourStory' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/team`}>Our Team</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/team`}>{intl.formatMessage({ id: 'footer.ourTeam' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/careers`}>Careers</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/careers`}>{intl.formatMessage({ id: 'footer.careers' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/advertise`}>Advertise</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/advertise`}>{intl.formatMessage({ id: 'footer.advertise' })}</Link>
                     </li>
                   </ul>
                 </div>
 
                 {/* Legal Column */}
                 <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
-                  <h4 className="text-base leading-normal mb-3 uppercase text-gray-100">
-                    Legal
+                  <h4 className="text-sm leading-normal mb-3 uppercase text-brand-mindaro-400 font-heading">
+                    {intl.formatMessage({ id: 'footer.legal' })}
                   </h4>
-                  <ul>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/privacy`}>Privacy Policy</Link>
+                  <ul className="font-body">
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/privacy`}>{intl.formatMessage({ id: 'footer.privacyPolicy' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/terms`}>Terms of Use</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/terms`}>{intl.formatMessage({ id: 'footer.termsOfUse' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/license`}>License</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/license`}>{intl.formatMessage({ id: 'footer.license' })}</Link>
                     </li>
-                    <li className="py-1 hover:text-white">
-                      <Link href={`/${locale}/gdpr`}>GDPR</Link>
+                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
+                      <Link href={`/${locale}/gdpr`}>{intl.formatMessage({ id: 'footer.gdpr' })}</Link>
                     </li>
                   </ul>
                 </div>
@@ -216,11 +232,11 @@ export default function Footer({ locale }: FooterProps) {
 
       {/* Footer copyright */}
       <div className="footer-dark">
-        <div className="container py-4 border-t border-gray-200 border-opacity-10">
+        <div className="container py-4 border-t border-white/10">
           <div className="row">
             <div className="col-12 col-md text-center">
-              <p className="d-block my-3">
-                Copyright © {new Date().getFullYear()} Deschide News | All rights reserved.
+              <p className="d-block my-3 text-white/60 font-body">
+                Copyright © {new Date().getFullYear()} Deschide News | {intl.formatMessage({ id: 'footer.copyright' })}
               </p>
             </div>
           </div>

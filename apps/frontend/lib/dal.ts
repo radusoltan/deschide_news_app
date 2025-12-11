@@ -7,7 +7,8 @@
 
 import 'server-only';
 import { cookies } from 'next/headers';
-import { decrypt, type SessionPayload } from '@/lib/auth/session';
+import { decrypt, getSession, type SessionPayload } from '@/lib/auth/session';
+import { isTokenExpired, refreshToken as refreshTokenApi, isRefreshTokenExpired } from '@/lib/api-client';
 import { cache } from 'react';
 
 // ============================================================================
@@ -51,13 +52,57 @@ interface ApiRequestOptions extends RequestInit {
   locale?: string;
 }
 
+/**
+ * Get a fresh access token, refreshing if necessary
+ * Note: In Next.js 15+, cookies can only be modified in Server Actions/Route Handlers
+ * So we refresh the token but return the new token directly without updating cookies
+ * The session will be updated on next login
+ * @returns Fresh access token or null if refresh failed
+ */
+async function getFreshAccessToken(): Promise<string | null> {
+  const session = await getSession();
+  if (!session) return null;
+
+  const { accessToken, refreshToken, refreshTokenExpiresAt } = session.tokens;
+
+  // If access token is still valid, return it
+  if (!isTokenExpired(accessToken)) {
+    return accessToken;
+  }
+
+  // Access token expired - check if refresh token is still valid
+  if (isRefreshTokenExpired(refreshTokenExpiresAt)) {
+    console.log('[DAL] Refresh token expired, session invalid');
+    // Cannot delete session here (not in Server Action)
+    // Return null to trigger re-authentication
+    return null;
+  }
+
+  // Try to refresh the token
+  try {
+    console.log('[DAL] Access token expired, refreshing...');
+    const newTokens = await refreshTokenApi(refreshToken);
+    console.log('[DAL] Token refreshed successfully');
+
+    // Return the new token directly
+    // Note: Session cookie is not updated here (Next.js limitation)
+    // but the new token is valid for this request
+    return newTokens.token;
+  } catch (error) {
+    console.error('[DAL] Token refresh failed:', error);
+    // Cannot delete session here (not in Server Action)
+    return null;
+  }
+}
+
 async function authenticatedFetch(
   endpoint: string,
   options: ApiRequestOptions = {}
 ): Promise<Response> {
-  const session = await verifySession();
+  // Get fresh token (refreshes automatically if expired)
+  const accessToken = await getFreshAccessToken();
 
-  if (!session.isAuth || !session.tokens) {
+  if (!accessToken) {
     throw new Error('Not authenticated');
   }
 
@@ -65,7 +110,7 @@ async function authenticatedFetch(
 
   const requestHeaders: Record<string, string> = {
     ...(headers as Record<string, string>),
-    'Authorization': `Bearer ${session.tokens.accessToken}`,
+    'Authorization': `Bearer ${accessToken}`,
     'Content-Type': 'application/ld+json',
     'Accept': 'application/ld+json',
   };
@@ -74,10 +119,28 @@ async function authenticatedFetch(
     requestHeaders['Accept-Language'] = locale;
   }
 
-  return fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...fetchOptions,
     headers: requestHeaders,
   });
+
+  // Handle 401 responses - token might have expired during request
+  if (response.status === 401) {
+    console.log('[DAL] Got 401, attempting token refresh...');
+
+    // Try to refresh and retry once
+    const newToken = await getFreshAccessToken();
+    if (newToken && newToken !== accessToken) {
+      // Retry with new token
+      requestHeaders['Authorization'] = `Bearer ${newToken}`;
+      return fetch(`${API_BASE_URL}${endpoint}`, {
+        ...fetchOptions,
+        headers: requestHeaders,
+      });
+    }
+  }
+
+  return response;
 }
 
 // ============================================================================
@@ -235,6 +298,21 @@ export async function updateArticle(
   return response.json();
 }
 
+/**
+ * Delete article (server-side only)
+ */
+export async function deleteArticle(id: number, locale: string = 'ro'): Promise<void> {
+  const response = await authenticatedFetch(`/api/articles/${id}`, {
+    method: 'DELETE',
+    locale,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to delete article: ${response.status}`);
+  }
+}
+
 // ============================================================================
 // Categories Data Access
 // ============================================================================
@@ -376,6 +454,30 @@ export async function updateCategory(
   }
 
   return response.json();
+}
+
+/**
+ * Delete category (server-side only)
+ */
+export async function deleteCategory(id: number, locale: string = 'ro'): Promise<void> {
+  const response = await authenticatedFetch(`/api/categories/${id}`, {
+    method: 'DELETE',
+    locale,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Error response:', errorText);
+
+    let error;
+    try {
+      error = JSON.parse(errorText);
+    } catch {
+      error = { message: errorText };
+    }
+
+    throw new Error(error.message || error['hydra:description'] || `Failed to delete category: ${response.status}`);
+  }
 }
 
 // ============================================================================

@@ -78,25 +78,8 @@ final class ImageProcessor implements ProcessorInterface
             // Check if this is an update (PUT) by looking at URI variables
             $isUpdate = isset($uriVariables['id']);
 
-            if (!$isUpdate) {
-                // CREATE: Set default locale and persist
-                $data->setTranslatableLocale($locale);
-
-                // Vich will automatically handle file upload and set:
-                // - filename (via fileNameProperty)
-                // - originalFilename (via originalName)
-                // - size (via size)
-                // - mimeType (via mimeType)
-                // - width and height (via dimensions)
-
-                $this->entityManager->persist($data);
-                $this->entityManager->flush();
-
-                return $data;
-            }
-
             if ($isUpdate) {
-                // Load existing entity for updates
+                // UPDATE: Load existing entity for updates
                 $existingEntity = $this->entityManager->getRepository(Image::class)->find($uriVariables['id']);
 
                 if (!$existingEntity) {
@@ -105,46 +88,46 @@ final class ImageProcessor implements ProcessorInterface
 
                 // Update translatable and metadata fields from deserialized data
                 // File information fields (filename, path, etc.) are not updatable after creation
-                if ($data->getAlt() !== null) {
-                    $existingEntity->setAlt($data->getAlt());
-                }
-                if ($data->getCaption() !== null) {
-                    $existingEntity->setCaption($data->getCaption());
-                }
-                if ($data->getDescription() !== null) {
-                    $existingEntity->setDescription($data->getDescription());
-                }
-                // imageAuthor is not translatable, so update directly
+                // Update all provided fields (API Platform deserialization handles null vs missing)
+                $existingEntity->setAlt($data->getAlt());
+                $existingEntity->setCaption($data->getCaption());
+                $existingEntity->setDescription($data->getDescription());
                 $existingEntity->setImageAuthor($data->getImageAuthor());
 
-                // Use existing entity instead of deserialized one
-                $data = $existingEntity;
-            }
-
-            $isNew = !$data->getId();
-
-            if ($isNew) {
-                // CREATE: New entity - always save in default locale
-                $data->setTranslatableLocale('ro');
-                $this->entityManager->persist($data);
-                $this->entityManager->flush();
-
-                // If created with non-default locale, also add translation
-                if ($locale !== 'ro') {
-                    $this->addTranslation($data, $locale);
-                }
-            } else {
-                // UPDATE: Existing entity
+                // Handle translations based on locale
                 if ($locale === 'ro') {
                     // Update default locale fields directly
-                    $data->setTranslatableLocale($locale);
+                    $existingEntity->setTranslatableLocale('ro');
                     $this->entityManager->flush();
                 } else {
                     // Add/Update translation for non-default locale
-                    $this->addTranslation($data, $locale);
+                    $this->addTranslation($existingEntity, $locale);
                 }
 
-                // Reload entity with correct locale
+                // Reload entity with correct locale to return updated data
+                $existingEntity->setTranslatableLocale($locale);
+                $this->entityManager->refresh($existingEntity);
+
+                return $existingEntity;
+            }
+
+            // CREATE: New entity - always save in default locale first
+            $data->setTranslatableLocale('ro');
+
+            // Vich will automatically handle file upload and set:
+            // - filename (via fileNameProperty)
+            // - originalFilename (via originalName)
+            // - size (via size)
+            // - mimeType (via mimeType)
+            // - width and height (via dimensions)
+
+            $this->entityManager->persist($data);
+            $this->entityManager->flush();
+
+            // If created with non-default locale, also add translation
+            if ($locale !== 'ro') {
+                $this->addTranslation($data, $locale);
+                // Reload with requested locale
                 $data->setTranslatableLocale($locale);
                 $this->entityManager->refresh($data);
             }

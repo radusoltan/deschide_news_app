@@ -22,12 +22,13 @@ use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Translatable\Translatable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\HttpFoundation\File\File;
-use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Serializer\Annotation\MaxDepth;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\MaxDepth;
 use Symfony\Component\Validator\Constraints as Assert;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: ImageRepository::class)]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE', region: 'default')]
 #[ORM\Table(name: 'images')]
 #[ORM\HasLifecycleCallbacks]
 #[Vich\Uploadable]
@@ -45,7 +46,9 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
         new GetCollection(
             uriTemplate: '/images',
             normalizationContext: ['groups' => ['image:read', 'image:list']],
-            paginationItemsPerPage: 50
+            paginationItemsPerPage: 30,
+            paginationClientEnabled: true,
+            paginationClientItemsPerPage: true
         ),
         new Post(
             uriTemplate: '/images',
@@ -271,6 +274,7 @@ class Image implements Translatable
 
     /**
      * Lifecycle callback to set path after file upload.
+     * Path is relative to uploads directory: images/originals/{filename}.
      */
     #[ORM\PostLoad]
     #[ORM\PostPersist]
@@ -278,7 +282,7 @@ class Image implements Translatable
     public function updatePath(): void
     {
         if ($this->filename && !$this->path) {
-            $this->path = 'images/' . $this->filename;
+            $this->path = 'images/originals/' . $this->filename;
         }
     }
 

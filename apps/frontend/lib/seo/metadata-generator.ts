@@ -77,9 +77,15 @@ export function generateKeywords(article: Article): string[] {
     });
   }
 
-  // Add tags if available
+  // Add tags if available (extract tag names from Tag objects or use string directly)
   if ('tags' in article && article.tags && Array.isArray(article.tags)) {
-    keywords.push(...article.tags);
+    article.tags.forEach((tag: any) => {
+      if (typeof tag === 'string') {
+        keywords.push(tag);
+      } else if (tag && typeof tag === 'object' && tag.name) {
+        keywords.push(tag.name);
+      }
+    });
   }
 
   return keywords;
@@ -256,13 +262,21 @@ export function generateArticleMetadata(
       languages: alternateUrls,
     },
 
-    // Robots
+    /**
+     * Robots configuration for article SEO:
+     * - Published articles: fully indexed (index: true, follow: true)
+     * - Archived articles: not indexed but links followed (index: false, follow: true)
+     *   This preserves link equity while removing outdated content from search results
+     * - Draft/other: completely hidden (index: false, follow: false)
+     */
     robots: {
       index: article.status === 'published',
-      follow: true,
+      follow: article.status === 'published' || article.status === 'archived',
+      noarchive: article.status === 'archived',
       googleBot: {
         index: article.status === 'published',
-        follow: true,
+        follow: article.status === 'published' || article.status === 'archived',
+        noarchive: article.status === 'archived',
         'max-video-preview': -1,
         'max-image-preview': 'large',
         'max-snippet': -1,

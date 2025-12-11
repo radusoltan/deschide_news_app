@@ -63,8 +63,8 @@ export default function NewsSlider({ title, backgroundImage, locale }: NewsSlide
           <div className="flex flex-row flex-wrap">
             <div className="flex-shrink max-w-full w-full py-12 overflow-hidden">
               <div className="w-full py-3">
-                <h2 className="text-white text-2xl font-bold text-shadow-black">
-                  <span className="inline-block h-5 border-l-3 border-red-600 mr-2"></span>
+                <h2 className="text-white text-2xl font-heading uppercase">
+                  <span className="inline-block h-5 border-l-3 border-deschide-tomato mr-2"></span>
                   {title}
                 </h2>
               </div>
@@ -91,7 +91,7 @@ export default function NewsSlider({ title, backgroundImage, locale }: NewsSlide
                 }}
                 className="news-slider"
               >
-                {slides.map((slide) => (
+                {slides.map((slide, index) => (
                   <SwiperSlide key={slide.id}>
                     <div className="w-full pb-3 px-2">
                       <div className="hover-img bg-white">
@@ -102,14 +102,17 @@ export default function NewsSlider({ title, backgroundImage, locale }: NewsSlide
                             alt={slide.title}
                             width={400}
                             height={300}
+                            loading="lazy"
+                            placeholder="blur"
+                            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMWYyOTM3Ii8+PC9zdmc+"
                           />
                         </Link>
                         <div className="py-3 px-6">
                           <h3 className="text-lg font-bold leading-tight mb-2">
                             <Link href={`/${locale}/article/${slide.id}`}>{slide.title}</Link>
                           </h3>
-                          <Link className="text-gray-500" href={`/${locale}/category/american`}>
-                            <span className="inline-block h-3 border-l-2 border-red-600 mr-2"></span>
+                          <Link className="text-gray-500 hover:text-deschide-tomato transition-colors" href={`/${locale}/category/american`}>
+                            <span className="inline-block h-3 border-l-2 border-deschide-tomato mr-2"></span>
                             {slide.category}
                           </Link>
                         </div>

@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createArticle, updateArticle } from '@/lib/dal';
+import { createArticle, updateArticle, deleteArticle } from '@/lib/dal';
 
 // ============================================================================
 // Types
@@ -16,6 +16,14 @@ export interface ArticleFormState {
     content?: string[];
     excerpt?: string[];
     status?: string[];
+    _form?: string[];
+  };
+}
+
+export interface DeleteArticleState {
+  message?: string;
+  success?: boolean;
+  errors?: {
     _form?: string[];
   };
 }
@@ -218,6 +226,35 @@ export async function updateArticleAction(
     return {
       errors: {
         _form: [error instanceof Error ? error.message : 'Failed to update article'],
+      },
+    };
+  }
+}
+
+/**
+ * Delete article
+ * Server Action for deleting articles
+ */
+export async function deleteArticleAction(
+  id: number,
+  locale: string
+): Promise<DeleteArticleState> {
+  try {
+    await deleteArticle(id, locale);
+
+    // Revalidate articles list page
+    revalidatePath(`/[locale]/admin/articles`, 'page');
+
+    return {
+      message: 'Article deleted successfully',
+      success: true
+    };
+  } catch (error) {
+    console.error('Failed to delete article:', error);
+    return {
+      success: false,
+      errors: {
+        _form: [error instanceof Error ? error.message : 'Failed to delete article'],
       },
     };
   }

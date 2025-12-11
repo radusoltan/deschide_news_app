@@ -27,10 +27,11 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Translatable\Translatable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE', region: 'long_lived')]  // L2 cache: categories rarely change
 #[UniqueEntity('slug', message: 'This slug is already in use. Please choose a different slug.')]
 #[ORM\Table(name: 'categories')]
 #[ORM\HasLifecycleCallbacks]
@@ -67,7 +68,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     'title' => 'partial',
     'slug' => 'exact',
 ])]
-#[ApiFilter(BooleanFilter::class, properties: ['onFrontPage'])]
+#[ApiFilter(BooleanFilter::class, properties: ['onFrontPage', 'inMenu', 'inFooterMenu'])]
 class Category implements Translatable
 {
     #[ORM\Id]
@@ -102,6 +103,14 @@ class Category implements Translatable
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     #[Groups(['category:read', 'category:write'])]
     private bool $onFrontPage = false;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    #[Groups(['category:read', 'category:write'])]
+    private bool $inMenu = false;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    #[Groups(['category:read', 'category:write'])]
+    private bool $inFooterMenu = false;
 
     // Timestamps
     #[Gedmo\Timestampable(on: 'create')]
@@ -205,6 +214,30 @@ class Category implements Translatable
     public function setOnFrontPage(bool $onFrontPage): self
     {
         $this->onFrontPage = $onFrontPage;
+
+        return $this;
+    }
+
+    public function isInMenu(): bool
+    {
+        return $this->inMenu;
+    }
+
+    public function setInMenu(bool $inMenu): self
+    {
+        $this->inMenu = $inMenu;
+
+        return $this;
+    }
+
+    public function isInFooterMenu(): bool
+    {
+        return $this->inFooterMenu;
+    }
+
+    public function setInFooterMenu(bool $inFooterMenu): self
+    {
+        $this->inFooterMenu = $inFooterMenu;
 
         return $this;
     }

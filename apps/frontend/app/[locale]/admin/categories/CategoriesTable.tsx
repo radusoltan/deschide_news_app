@@ -1,6 +1,10 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import { Checkbox, Badge } from 'flowbite-react';
 import { type Category } from '@/lib/dal';
+import DeleteCategoryModal from './components/DeleteCategoryModal';
 
 interface CategoriesTableProps {
   categories: any[];
@@ -9,6 +13,9 @@ interface CategoriesTableProps {
 }
 
 export default function CategoriesTable({ categories, totalItems, locale }: CategoriesTableProps) {
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<{ id: number; title: string } | null>(null);
+
   if (!categories || categories.length === 0) {
     return (
       <div className="p-8 text-center text-gray-500 dark:text-gray-400">
@@ -37,6 +44,16 @@ export default function CategoriesTable({ categories, totalItems, locale }: Cate
       month: 'short',
       day: 'numeric',
     });
+  };
+
+  const handleDeleteClick = (category: { id: number; title: string }) => {
+    setSelectedCategory(category);
+    setDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setSelectedCategory(null);
   };
 
   return (
@@ -93,12 +110,21 @@ export default function CategoriesTable({ categories, totalItems, locale }: Cate
                 </td>
                 <td className="px-6 py-4">{formatDate(category.createdAt)}</td>
                 <td className="px-6 py-4 text-right">
-                  <Link
-                    href={`/${locale}/admin/categories/${category.id}/edit`}
-                    className="font-medium text-blue-600 hover:underline dark:text-blue-500"
-                  >
-                    Edit
-                  </Link>
+                  <div className="flex items-center justify-end gap-3">
+                    <Link
+                      href={`/${locale}/admin/categories/${category.id}/edit`}
+                      className="font-medium text-blue-600 hover:underline dark:text-blue-500"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteClick({ id: category.id, title: category.title })}
+                      className="font-medium text-red-600 hover:underline dark:text-red-500"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -110,6 +136,16 @@ export default function CategoriesTable({ categories, totalItems, locale }: Cate
       <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
         Showing {categories.length} of {totalItems} categories
       </div>
+
+      {/* Delete Modal */}
+      {selectedCategory && (
+        <DeleteCategoryModal
+          isOpen={deleteModalOpen}
+          onClose={handleCloseDeleteModal}
+          category={selectedCategory}
+          locale={locale}
+        />
+      )}
     </div>
   );
 }

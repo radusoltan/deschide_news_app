@@ -66,6 +66,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveAction, setSaveAction] = useState<'save' | 'saveAndClose' | null>(null);
+  const [formErrors, setFormErrors] = useState<NonNullable<ArticleFormState['errors']>>({});
 
   const [formData, setFormData] = useState({
     title: article?.title || '',
@@ -122,6 +123,14 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
     try {
       const formDataObj = new FormData(e.currentTarget);
 
+      // IMPORTANT: Explicitly set all controlled input values from React state
+      // This ensures the FormData contains the current React state values,
+      // not potentially stale DOM values from the form element
+      formDataObj.set('title', formData.title);
+      formDataObj.set('slug', formData.slug);
+      formDataObj.set('category', formData.category.toString());
+      formDataObj.set('status', formData.status);
+
       // Add editor content to FormData
       formDataObj.set('lead', formData.lead);
       formDataObj.set('content', formData.content);
@@ -142,20 +151,31 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
         result = await createArticleAction(locale, formDataObj);
       }
 
-      if (result.errors?._form) {
+      // Check for any validation errors
+      if (result.errors && Object.keys(result.errors).length > 0) {
+        setFormErrors(result.errors);
         setIsSubmitting(false);
         setSaveAction(null);
         return;
       }
 
+      // Clear errors on success
+      setFormErrors({});
+
       if (result.message) {
         // Handle redirect based on save action
         if (saveAction === 'saveAndClose') {
+          // Reset state before redirect in case navigation fails
+          setIsSubmitting(false);
+          setSaveAction(null);
           router.push(`/${locale}/admin/articles`);
           router.refresh();
         } else if (saveAction === 'save') {
           // If creating a new article, redirect to edit page with the new ID
           if (!article?.id && result.articleId) {
+            // Reset state before redirect in case navigation fails
+            setIsSubmitting(false);
+            setSaveAction(null);
             router.push(`/${locale}/admin/articles/${result.articleId}/edit`);
             router.refresh();
           } else {
@@ -170,11 +190,15 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
         }
       } else {
         // If no message returned, something went wrong but no errors were reported
+        setFormErrors({ _form: ['An unexpected error occurred. Please try again.'] });
         setIsSubmitting(false);
         setSaveAction(null);
       }
     } catch (err) {
       console.error('Form submission error:', err);
+      setFormErrors({
+        _form: [err instanceof Error ? err.message : 'Failed to save article. Please try again.']
+      });
       setIsSubmitting(false);
       setSaveAction(null);
     }
@@ -363,6 +387,28 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Validation Error Banner */}
+      {formErrors && Object.keys(formErrors).length > 0 && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-start">
+            <svg className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                Please fix the following errors:
+              </h3>
+              <ul className="mt-2 text-sm text-red-700 dark:text-red-300 list-disc list-inside space-y-1">
+                {formErrors.title?.map((err, i) => <li key={`title-${i}`}>{err}</li>)}
+                {formErrors.slug?.map((err, i) => <li key={`slug-${i}`}>{err}</li>)}
+                {formErrors.content?.map((err, i) => <li key={`content-${i}`}>{err}</li>)}
+                {formErrors._form?.map((err, i) => <li key={`form-${i}`}>{err}</li>)}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Basic Information */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -386,8 +432,13 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             placeholder="Enter article title"
             required
             disabled={isSubmitting}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+              formErrors.title ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+            }`}
           />
+          {formErrors.title && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.title[0]}</p>
+          )}
         </div>
 
         {/* Slug */}
@@ -407,8 +458,13 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             placeholder="article-slug"
             required
             disabled={isSubmitting}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm ${
+              formErrors.slug ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+            }`}
           />
+          {formErrors.slug && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.slug[0]}</p>
+          )}
         </div>
 
         {/* Lead / Chapeau */}
@@ -441,15 +497,20 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
           >
             Content <span className="text-red-500">*</span>
           </label>
-          <TinyEditor
-            initialValue={formData.content}
-            onChange={(html) => setFormData((prev) => ({ ...prev, content: html }))}
-            height={900}
-            imageList={attachedImages.map((img) => ({
-              title: img.image.originalFilename || `Image ${img.image.id}`,
-              value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${img.image.filename}`
-            }))}
-          />
+          <div className={formErrors.content ? 'ring-2 ring-red-500 rounded-lg' : ''}>
+            <TinyEditor
+              initialValue={formData.content}
+              onChange={(html) => setFormData((prev) => ({ ...prev, content: html }))}
+              height={900}
+              imageList={attachedImages.map((img) => ({
+                title: img.image.originalFilename || `Image ${img.image.id}`,
+                value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${img.image.filename}`
+              }))}
+            />
+          </div>
+          {formErrors.content && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{formErrors.content[0]}</p>
+          )}
         </div>
       </div>
 

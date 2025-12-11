@@ -30,11 +30,12 @@ use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
 use Gedmo\Translatable\Translatable;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Serializer\Annotation\MaxDepth;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\MaxDepth;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE', region: 'short_lived')]
 #[UniqueEntity('slug', message: 'This slug is already in use. Please choose a different slug.')]
 #[ORM\Table(name: 'articles')]
 #[ORM\HasLifecycleCallbacks]
@@ -117,9 +118,8 @@ use Symfony\Component\Validator\Constraints as Assert;
     provider: ArchivedArticleProvider::class
 )]
 #[ApiFilter(SearchFilter::class, properties: [
-    'category' => 'exact',
-    'category.id' => 'exact',
-    'status' => 'exact',
+    // NOTE: 'category' and 'category.id' filters are handled by ArticleProvider
+    // to avoid conflicts with nested array parameter parsing
     'title' => 'partial',
     'slug' => 'exact',
     'tags' => 'exact',
@@ -180,7 +180,7 @@ class Article implements Translatable
 
     #[ORM\OneToMany(targetEntity: ArticleImage::class, mappedBy: 'article', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['position' => 'ASC'])]
-    #[Groups(['article:detail'])] // OPTIMIZATION: Only load images in detail view, not in list
+    #[Groups(['article:read', 'article:detail', 'article:list'])]
     #[MaxDepth(2)]
     private Collection $articleImages;
 
@@ -248,6 +248,11 @@ class Article implements Translatable
     #[Gedmo\Locale]
     #[Groups(['article:read'])]
     private ?string $locale = null;
+
+    // Short link webcode (auto-generated when article is published)
+    #[ORM\Column(type: Types::STRING, length: 10, nullable: true, unique: true)]
+    #[Groups(['article:read'])]
+    private ?string $webcode = null;
 
     public function __construct()
     {
@@ -402,6 +407,18 @@ class Article implements Translatable
     public function getLocale(): ?string
     {
         return $this->locale;
+    }
+
+    public function getWebcode(): ?string
+    {
+        return $this->webcode;
+    }
+
+    public function setWebcode(?string $webcode): self
+    {
+        $this->webcode = $webcode;
+
+        return $this;
     }
 
     public function getCategory(): ?Category

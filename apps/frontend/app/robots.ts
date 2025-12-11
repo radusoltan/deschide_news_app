@@ -50,6 +50,7 @@ export default function robots(): MetadataRoute.Robots {
       `${baseUrl}/sitemap.xml`,
       `${baseUrl}/news-sitemap.xml`,
       `${baseUrl}/image-sitemap.xml`,
+      `${baseUrl}/sitemap-archive.xml`,
     ],
     host: baseUrl,
   };

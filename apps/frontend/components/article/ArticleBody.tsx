@@ -7,6 +7,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { createSafeHtml } from '@/lib/sanitize';
 
 interface ArticleBodyProps {
   content: string;
@@ -143,7 +144,7 @@ export default function ArticleBody({
           prose-td:border prose-td:border-gray-200 prose-td:p-3
           ${className}
         `}
-        dangerouslySetInnerHTML={{ __html: processedContent }}
+        dangerouslySetInnerHTML={createSafeHtml(processedContent)}
       />
     </div>
   );

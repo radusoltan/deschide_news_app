@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { PostEditorForm } from './PostEditorForm';
 import { PostsList } from './PostsList';
 import { PostPreview } from './PostPreview';
@@ -25,24 +25,8 @@ export function PostsEditorClient({ liveText: initialLiveText, locale }: PostsEd
     debug: process.env.NODE_ENV === 'development',
   });
 
-  // Handle Mercure events
-  useEffect(() => {
-    if (!latestEvent) return;
-
-    switch (latestEvent.type) {
-      case 'post.created':
-        handlePostCreated(latestEvent as PostCreatedEvent);
-        break;
-      case 'post.updated':
-        handlePostUpdated(latestEvent as PostUpdatedEvent);
-        break;
-      case 'post.deleted':
-        handlePostDeleted(latestEvent as PostDeletedEvent);
-        break;
-    }
-  }, [latestEvent]);
-
-  const handlePostCreated = (event: PostCreatedEvent) => {
+  // Define handlers before useEffect using useCallback
+  const handlePostCreated = useCallback((event: PostCreatedEvent) => {
     setPosts((prev) => {
       // Check if post already exists
       if (prev.some((p) => p.id === event.post.id)) {
@@ -51,9 +35,9 @@ export function PostsEditorClient({ liveText: initialLiveText, locale }: PostsEd
       // Add new post at the beginning
       return [event.post, ...prev];
     });
-  };
+  }, []);
 
-  const handlePostUpdated = (event: PostUpdatedEvent) => {
+  const handlePostUpdated = useCallback((event: PostUpdatedEvent) => {
     setPosts((prev) =>
       prev.map((post) =>
         post.id === event.post.id
@@ -61,11 +45,32 @@ export function PostsEditorClient({ liveText: initialLiveText, locale }: PostsEd
           : post
       )
     );
-  };
+  }, []);
 
-  const handlePostDeleted = (event: PostDeletedEvent) => {
+  const handlePostDeleted = useCallback((event: PostDeletedEvent) => {
     setPosts((prev) => prev.filter((post) => post.id !== event.postId));
-  };
+  }, []);
+
+  // Handle Mercure events
+  useEffect(() => {
+    if (!latestEvent) return;
+
+    // Handle event in a function to avoid direct setState in effect body
+    const processEvent = () => {
+      switch (latestEvent.type) {
+        case 'post.created':
+          handlePostCreated(latestEvent as PostCreatedEvent);
+          break;
+        case 'post.updated':
+          handlePostUpdated(latestEvent as PostUpdatedEvent);
+          break;
+        case 'post.deleted':
+          handlePostDeleted(latestEvent as PostDeletedEvent);
+          break;
+      }
+    };
+    processEvent();
+  }, [latestEvent, handlePostCreated, handlePostUpdated, handlePostDeleted]);
 
   const handlePostSuccess = () => {
     // Reset editing state

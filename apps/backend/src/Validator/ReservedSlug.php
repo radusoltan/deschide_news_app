@@ -24,9 +24,10 @@ class ReservedSlug extends Constraint
      * List of reserved slugs that cannot be used for categories.
      *
      * These slugs are reserved for system pages as defined in url-structure-APPROVED.md
-     * Total: 19 reserved slugs
+     * Total: 18 reserved slugs
      */
     public const RESERVED_SLUGS = [
+        's',        // Short link redirects (/s/{code})
         'all',
         'search',
         'trending',

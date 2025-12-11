@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import type { Article } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
+import { buildAuthorUrl, buildCategoryUrl } from '@/lib/utils/url-builder';
 
 interface ArticleHeaderProps {
   article: Article;
@@ -106,7 +107,7 @@ export default function ArticleHeader({
               {authors.map((author: any, index: number) => (
                 <span key={`author-${author.id || index}`}>
                   <Link
-                    href={`/${locale}/author/${author.slug}`}
+                    href={buildAuthorUrl(author.slug, locale)}
                     className="font-semibold hover:text-red-600"
                   >
                     {author.fullName}
@@ -163,7 +164,7 @@ export default function ArticleHeader({
         {/* Category */}
         {article.category && (
           <Link
-            href={`/${locale}/${getCategorySlug(article.category)}`}
+            href={buildCategoryUrl(article.category, locale)}
             className="text-red-600 hover:text-red-700 font-semibold"
           >
             <span className="inline-block h-3 border-l-2 border-red-600 mr-2"></span>

@@ -1,9 +1,10 @@
 /**
  * Category Navigation Wrapper (Server Component)
- * Fetches categories and renders CategoryNav client component
+ * Fetches all active categories and renders CategoryNav client component
+ * Categories are separated in CategoryNav based on inMenu flag
  */
 
-import { fetchFrontPageCategories } from '@/lib/api/categories';
+import { fetchCategories } from '@/lib/api/categories';
 import type { Locale } from '@/lib/types';
 import CategoryNav from './CategoryNav';
 
@@ -18,20 +19,22 @@ export default async function CategoryNavWrapper({
   currentCategorySlug,
   className = '',
 }: CategoryNavWrapperProps) {
-  try {
-    const result = await fetchFrontPageCategories(locale);
-    const categories = result.member;
+  let categories: Awaited<ReturnType<typeof fetchCategories>>['member'] = [];
 
-    return (
-      <CategoryNav
-        categories={categories}
-        locale={locale}
-        currentCategorySlug={currentCategorySlug}
-        className={className}
-      />
-    );
+  try {
+    const result = await fetchCategories(locale);
+    categories = result.member;
   } catch (error) {
     console.error('Error fetching categories:', error);
     return null;
   }
+
+  return (
+    <CategoryNav
+      categories={categories}
+      locale={locale}
+      currentCategorySlug={currentCategorySlug}
+      className={className}
+    />
+  );
 }

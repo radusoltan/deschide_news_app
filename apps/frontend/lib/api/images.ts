@@ -4,7 +4,8 @@
  */
 
 import 'server-only';
-import { getAccessToken } from '@/lib/dal';
+import { getSession } from '@/lib/auth/session';
+import { isTokenExpired, refreshToken as refreshTokenApi, isRefreshTokenExpired } from '@/lib/api-client';
 import type {
   Image,
   ImageListResponse,
@@ -18,6 +19,39 @@ import type {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
 
 /**
+ * Get a fresh access token, refreshing if necessary
+ * Same logic as in dal.ts to ensure token refresh works
+ */
+async function getFreshAccessToken(): Promise<string | null> {
+  const session = await getSession();
+  if (!session) return null;
+
+  const { accessToken, refreshToken, refreshTokenExpiresAt } = session.tokens;
+
+  // If access token is still valid, return it
+  if (!isTokenExpired(accessToken)) {
+    return accessToken;
+  }
+
+  // Access token expired - check if refresh token is still valid
+  if (isRefreshTokenExpired(refreshTokenExpiresAt)) {
+    console.log('[Images API] Refresh token expired, session invalid');
+    return null;
+  }
+
+  // Try to refresh the token
+  try {
+    console.log('[Images API] Access token expired, refreshing...');
+    const newTokens = await refreshTokenApi(refreshToken);
+    console.log('[Images API] Token refreshed successfully');
+    return newTokens.token;
+  } catch (error) {
+    console.error('[Images API] Token refresh failed:', error);
+    return null;
+  }
+}
+
+/**
  * Fetch paginated list of images
  */
 export async function getImages(params?: {
@@ -25,7 +59,7 @@ export async function getImages(params?: {
   itemsPerPage?: number;
   search?: string;
 }): Promise<ImageListResponse> {
-  const token = await getAccessToken();
+  const token = await getFreshAccessToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -56,7 +90,7 @@ export async function getImages(params?: {
  * Fetch a single image by ID
  */
 export async function getImage(id: number): Promise<Image> {
-  const token = await getAccessToken();
+  const token = await getFreshAccessToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -81,7 +115,7 @@ export async function getImage(id: number): Promise<Image> {
  * Note: This should be called from an API route, not directly from components
  */
 export async function uploadImage(formData: FormData): Promise<Image> {
-  const token = await getAccessToken();
+  const token = await getFreshAccessToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -111,7 +145,7 @@ export async function updateImage(id: number, data: {
   caption?: string;
   description?: string;
 }): Promise<Image> {
-  const token = await getAccessToken();
+  const token = await getFreshAccessToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -137,7 +171,7 @@ export async function updateImage(id: number, data: {
  * Delete an image
  */
 export async function deleteImage(id: number): Promise<void> {
-  const token = await getAccessToken();
+  const token = await getFreshAccessToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -171,7 +205,7 @@ export async function deleteImage(id: number): Promise<void> {
  * Fetch image with thumbnails (expanded)
  */
 export async function getImageWithThumbnails(id: number): Promise<ImageWithThumbnails> {
-  const token = await getAccessToken();
+  const token = await getFreshAccessToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -195,7 +229,7 @@ export async function getImageWithThumbnails(id: number): Promise<ImageWithThumb
  * Fetch all thumbnail profiles
  */
 export async function getThumbnailProfiles(): Promise<ThumbnailProfile[]> {
-  const token = await getAccessToken();
+  const token = await getFreshAccessToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -240,7 +274,7 @@ export async function applyCustomCrop(
   format: 'jpg' | 'webp',
   cropData: CropCoordinates
 ): Promise<Thumbnail> {
-  const token = await getAccessToken();
+  const token = await getFreshAccessToken();
   if (!token) {
     throw new Error('Authentication required');
   }
@@ -259,8 +293,20 @@ export async function applyCustomCrop(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(error.message || 'Failed to apply crop');
+    const errorText = await response.text();
+    console.error('[Images API] Crop failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      body: errorText
+    });
+    let errorMessage = 'Failed to apply crop';
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorJson['hydra:description'] || errorJson.detail || errorMessage;
+    } catch {
+      errorMessage = errorText || response.statusText || errorMessage;
+    }
+    throw new Error(errorMessage);
   }
 
   return response.json();
@@ -274,7 +320,7 @@ export async function resetCrop(
   profile: string,
   format: 'jpg' | 'webp'
 ): Promise<Thumbnail> {
-  const token = await getAccessToken();
+  const token = await getFreshAccessToken();
   if (!token) {
     throw new Error('Authentication required');
   }

@@ -23,14 +23,15 @@ class ElasticService
     public function __construct(
         string $elasticsearchHost,
         string $elasticsearchUser = '',
-        string $elasticsearchPassword = ''
+        string $elasticsearchPassword = '',
+        bool $elasticsearchVerifySsl = true
     ) {
         $this->enabled = '' !== $elasticsearchHost && '0' !== $elasticsearchHost;
 
         if ($this->enabled) {
             $builder = ClientBuilder::create()
                 ->setHosts([$elasticsearchHost])
-                ->setSSLVerification(false);
+                ->setSSLVerification($elasticsearchVerifySsl);
 
             // Add authentication if credentials provided
             if ($elasticsearchUser && $elasticsearchPassword) {
@@ -264,7 +265,7 @@ class ElasticService
 
         // Add filter for tags
         if (!empty($filters['tag_ids'])) {
-            $tagIds = is_array($filters['tag_ids']) ? $filters['tag_ids'] : [$filters['tag_ids']];
+            $tagIds = \is_array($filters['tag_ids']) ? $filters['tag_ids'] : [$filters['tag_ids']];
 
             $must[] = [
                 'nested' => [

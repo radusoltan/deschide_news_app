@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
+use DateTime;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Set HTTP cache headers for public API endpoints
+ * Set HTTP cache headers for public API endpoints.
  *
  * This subscriber sets appropriate cache headers for GET requests
  * to enable HTTP caching in Varnish and CDN layers.
@@ -18,6 +19,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
 final class CacheHeadersSubscriber implements EventSubscriberInterface
 {
     private const CACHE_MAX_AGE = 3600;        // 1 hour browser cache
+
     private const CACHE_SHARED_MAX_AGE = 7200; // 2 hours CDN/proxy cache
 
     public static function getSubscribedEvents(): array
@@ -37,7 +39,7 @@ final class CacheHeadersSubscriber implements EventSubscriberInterface
         $response = $event->getResponse();
 
         // Only set cache headers for successful GET/HEAD requests
-        if (!in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
+        if (!\in_array($request->getMethod(), ['GET', 'HEAD'], true)) {
             return;
         }
 
@@ -54,6 +56,7 @@ final class CacheHeadersSubscriber implements EventSubscriberInterface
         // Skip authenticated requests (keep them private)
         if ($request->headers->has('Authorization')) {
             $response->headers->set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+
             return;
         }
 
@@ -77,7 +80,7 @@ final class CacheHeadersSubscriber implements EventSubscriberInterface
 
         // Set Last-Modified if not present
         if (!$response->headers->has('Last-Modified')) {
-            $response->setLastModified(new \DateTime());
+            $response->setLastModified(new DateTime());
         }
     }
 }

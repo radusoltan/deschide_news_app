@@ -86,7 +86,9 @@ class TagRepository extends ServiceEntityRepository
             $tag->setName($name);
             $tag->setTranslatableLocale($locale);
 
-            $this->getEntityManager()->persist($tag);
+            $em = $this->getEntityManager();
+            $em->persist($tag);
+            $em->flush();
         }
 
         return $tag;

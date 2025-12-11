@@ -27,7 +27,7 @@ class TagMaintenanceScheduleProvider implements ScheduleProviderInterface
 {
     public function getSchedule(): Schedule
     {
-        return (new Schedule())
+        return new Schedule()
             // Cleanup unused tags daily at 3:00 AM
             ->add(
                 RecurringMessage::cron(

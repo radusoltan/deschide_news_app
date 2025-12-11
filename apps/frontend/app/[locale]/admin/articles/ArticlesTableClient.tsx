@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { HiPencil, HiSearch, HiX, HiLockClosed } from 'react-icons/hi';
 import Link from 'next/link';
 import { Badge } from 'flowbite-react';
+import { DeleteArticleButton } from './components/DeleteArticleButton';
 
 interface Article {
   id: number;
@@ -313,13 +314,20 @@ export function ArticlesTableClient({ articles, locale, categories }: ArticlesTa
                     <td className="px-6 py-4">{formatDate(article.publishedAt)}</td>
                     <td className="px-6 py-4">{article.viewCount || 0}</td>
                     <td className="px-6 py-4">
-                      <Link
-                        href={`/${locale}/admin/articles/${article.id}/edit`}
-                        className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-                      >
-                        <HiPencil className="w-4 h-4 mr-1" />
-                        Edit
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <Link
+                          href={`/${locale}/admin/articles/${article.id}/edit`}
+                          className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+                        >
+                          <HiPencil className="w-4 h-4 mr-1" />
+                          Edit
+                        </Link>
+                        <DeleteArticleButton
+                          articleId={article.id}
+                          articleTitle={article.title}
+                          locale={locale}
+                        />
+                      </div>
                     </td>
                   </tr>
                   );

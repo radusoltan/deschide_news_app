@@ -43,13 +43,7 @@ final class TagProcessor implements ProcessorInterface
             if ($data instanceof Tag) {
                 // Check if tag is being used by any articles
                 if ($data->getUsageCount() > 0) {
-                    throw new LogicException(
-                        sprintf(
-                            'Cannot delete tag "%s" because it is currently used by %d article(s). Remove the tag from all articles first.',
-                            $data->getName(),
-                            $data->getUsageCount()
-                        )
-                    );
+                    throw new LogicException(\sprintf('Cannot delete tag "%s" because it is currently used by %d article(s). Remove the tag from all articles first.', $data->getName(), $data->getUsageCount()));
                 }
 
                 $this->entityManager->remove($data);

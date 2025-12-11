@@ -65,7 +65,7 @@ class ArchiveOldArticlesCommand extends Command
         $thresholdDate = new DateTimeImmutable("-{$yearsThreshold} years");
 
         $io->title('Archive Old Articles');
-        $io->info(sprintf(
+        $io->info(\sprintf(
             'Archiving articles published before: %s (%d years ago)',
             $thresholdDate->format('Y-m-d'),
             $yearsThreshold
@@ -87,17 +87,19 @@ class ArchiveOldArticlesCommand extends Command
         $query = $qb->getQuery();
         $articles = $query->getResult();
 
-        $totalFound = count($articles);
+        $totalFound = \count($articles);
 
         if ($totalFound === 0) {
             $io->success('No articles found to archive.');
+
             return Command::SUCCESS;
         }
 
-        $io->info(sprintf('Found %d articles to archive', $totalFound));
+        $io->info(\sprintf('Found %d articles to archive', $totalFound));
 
         if (!$dryRun && !$io->confirm('Do you want to proceed with archiving?', false)) {
             $io->warning('Archiving cancelled by user.');
+
             return Command::SUCCESS;
         }
 
@@ -108,7 +110,7 @@ class ArchiveOldArticlesCommand extends Command
 
         foreach ($articles as $article) {
             if ($dryRun) {
-                $io->text(sprintf(
+                $io->text(\sprintf(
                     '[DRY-RUN] Would archive: ID=%d, Title=%s, Published=%s',
                     $article->getId(),
                     $article->getTitle(),
@@ -117,10 +119,10 @@ class ArchiveOldArticlesCommand extends Command
             } else {
                 // Archive the article
                 $article->archive(ArchiveReason::OLD_CONTENT);
-                $archived++;
+                ++$archived;
 
                 // Flush in batches to avoid memory issues
-                $processed++;
+                ++$processed;
                 if ($processed % $batchSize === 0) {
                     $this->entityManager->flush();
                     $this->entityManager->clear(); // Clear the entity manager to free memory
@@ -152,13 +154,13 @@ class ArchiveOldArticlesCommand extends Command
         $io->progressFinish();
 
         if ($dryRun) {
-            $io->success(sprintf(
+            $io->success(\sprintf(
                 '[DRY-RUN] Would have archived %d articles published before %s',
                 $totalFound,
                 $thresholdDate->format('Y-m-d')
             ));
         } else {
-            $io->success(sprintf(
+            $io->success(\sprintf(
                 'Successfully archived %d articles published before %s',
                 $archived,
                 $thresholdDate->format('Y-m-d')

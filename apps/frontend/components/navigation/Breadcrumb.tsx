@@ -6,6 +6,7 @@
 
 import Link from 'next/link';
 import type { Locale } from '@/lib/types';
+import { buildLocalizedUrl, buildCategoryUrl } from '@/lib/utils/url-builder';
 
 interface BreadcrumbItem {
   label: string;
@@ -76,14 +77,14 @@ export function buildArticleBreadcrumbs(
   const items: BreadcrumbItem[] = [
     {
       label: locale === 'ro' ? 'Acasă' : locale === 'en' ? 'Home' : 'Главная',
-      href: `/${locale}`,
+      href: buildLocalizedUrl('/', locale),
     },
   ];
 
   if (article.category) {
     items.push({
       label: article.category.title,
-      href: `/${locale}/${article.category.slug}`,
+      href: buildCategoryUrl(article.category, locale),
     });
   }
 

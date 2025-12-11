@@ -8,9 +8,14 @@ use ApiPlatform\Metadata\DeleteOperationInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Article;
+use App\Entity\Author;
+use App\Entity\Category;
+use App\Entity\Tag;
 use App\Message\CheckOrphanedTagsMessage;
+use App\Service\PerformanceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
+use Psr\Cache\CacheItemPoolInterface;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -23,7 +28,9 @@ final class ArticleProcessor implements ProcessorInterface
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly RequestStack $requestStack,
-        private readonly MessageBusInterface $messageBus
+        private readonly MessageBusInterface $messageBus,
+        private readonly PerformanceService $performanceService,
+        private readonly CacheItemPoolInterface $doctrineResultCachePool
     ) {
     }
 
@@ -43,6 +50,8 @@ final class ArticleProcessor implements ProcessorInterface
         // Handle DELETE operation
         if ($operation instanceof DeleteOperationInterface) {
             if ($data instanceof Article) {
+                $articleId = $data->getId();
+
                 // Collect tag IDs before deletion
                 $tagIds = [];
                 foreach ($data->getTags() as $tag) {
@@ -52,6 +61,11 @@ final class ArticleProcessor implements ProcessorInterface
 
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
+
+                // Invalidate article cache after DELETE
+                if ($articleId) {
+                    $this->invalidateArticleCache($articleId);
+                }
 
                 // Dispatch async message to check for orphaned tags
                 if (!empty($tagIds)) {
@@ -69,18 +83,35 @@ final class ArticleProcessor implements ProcessorInterface
 
             if ($isUpdate) {
                 // Load existing entity for updates
-                $existingEntity = $this->entityManager->getRepository(Article::class)->find($uriVariables['id']);
+                $repository = $this->entityManager->getRepository(Article::class);
+                $existingEntity = $repository->find($uriVariables['id']);
 
                 if (!$existingEntity) {
                     throw new RuntimeException('Article not found');
                 }
 
-                // Update fields from deserialized data
-                $existingEntity->setTitle($data->getTitle());
-                if ($data->getLead()) {
+                // CRITICAL: For Gedmo Translatable to work correctly:
+                // 1. Set the locale on the entity BEFORE making changes
+                // 2. DO NOT refresh before updating - it clears change tracking
+                // 3. For default locale (ro), update entity fields directly
+                // 4. For non-default locales (en, ru), explicitly persist translations
+
+                // Set translatable locale on the entity
+                $existingEntity->setTranslatableLocale($locale);
+
+                // Update translatable fields
+                // These changes will be tracked by Doctrine UnitOfWork
+                if ($data->getTitle()) {
+                    $existingEntity->setTitle($data->getTitle());
+                }
+                if ($data->getLead() !== null) {
                     $existingEntity->setLead($data->getLead());
                 }
-                $existingEntity->setContent($data->getContent());
+                if ($data->getContent() !== null) {
+                    $existingEntity->setContent($data->getContent());
+                }
+
+                // Update non-translatable fields
                 $existingEntity->setStatus($data->getStatus());
                 $existingEntity->setBadge($data->getBadge());
                 $existingEntity->setIsFeatured($data->isFeatured());
@@ -90,22 +121,37 @@ final class ArticleProcessor implements ProcessorInterface
                     $existingEntity->setPublishAt($data->getPublishAt());
                 }
 
-                // Update category if provided
+                // Update category if provided (get managed entity)
                 if ($data->getCategory()) {
-                    $existingEntity->setCategory($data->getCategory());
+                    $managedCategory = $this->getManagedCategory($data->getCategory());
+                    $existingEntity->setCategory($managedCategory);
                 }
 
-                // Sync authors collection
+                // Sync authors collection (using managed entities)
+                // Get IDs of incoming authors
+                $incomingAuthorIds = [];
+                foreach ($data->getAuthors() as $author) {
+                    if ($author->getId()) {
+                        $incomingAuthorIds[] = $author->getId();
+                    }
+                }
                 // Remove authors that are not in the new list
                 foreach ($existingEntity->getAuthors() as $author) {
-                    if (!$data->getAuthors()->contains($author)) {
+                    if (!\in_array($author->getId(), $incomingAuthorIds, true)) {
                         $existingEntity->removeAuthor($author);
                     }
                 }
-                // Add new authors
+                // Add new authors (get managed entities)
+                $existingAuthorIds = [];
+                foreach ($existingEntity->getAuthors() as $author) {
+                    $existingAuthorIds[] = $author->getId();
+                }
                 foreach ($data->getAuthors() as $author) {
-                    if (!$existingEntity->getAuthors()->contains($author)) {
-                        $existingEntity->addAuthor($author);
+                    if (!\in_array($author->getId(), $existingAuthorIds, true)) {
+                        $managedAuthor = $this->getManagedAuthor($author);
+                        if ($managedAuthor) {
+                            $existingEntity->addAuthor($managedAuthor);
+                        }
                     }
                 }
 
@@ -123,19 +169,33 @@ final class ArticleProcessor implements ProcessorInterface
                     }
                 }
 
-                // Sync tags collection
+                // Sync tags collection (using managed entities)
+                // Get IDs of incoming tags
+                $incomingTagIds = [];
+                foreach ($data->getTags() as $tag) {
+                    if ($tag->getId()) {
+                        $incomingTagIds[] = $tag->getId();
+                    }
+                }
                 // Remove tags that are not in the new list and decrement their usage count
                 foreach ($existingEntity->getTags() as $tag) {
-                    if (!$data->getTags()->contains($tag)) {
+                    if (!\in_array($tag->getId(), $incomingTagIds, true)) {
                         $existingEntity->removeTag($tag);
                         $tag->setUsageCount(max(0, $tag->getUsageCount() - 1));
                     }
                 }
-                // Add new tags and increment their usage count
+                // Add new tags (get managed entities) and increment their usage count
+                $existingTagIds = [];
+                foreach ($existingEntity->getTags() as $tag) {
+                    $existingTagIds[] = $tag->getId();
+                }
                 foreach ($data->getTags() as $tag) {
-                    if (!$existingEntity->getTags()->contains($tag)) {
-                        $existingEntity->addTag($tag);
-                        $tag->setUsageCount($tag->getUsageCount() + 1);
+                    if (!\in_array($tag->getId(), $existingTagIds, true)) {
+                        $managedTag = $this->getManagedTag($tag);
+                        if ($managedTag) {
+                            $existingEntity->addTag($managedTag);
+                            $managedTag->setUsageCount($managedTag->getUsageCount() + 1);
+                        }
                     }
                 }
 
@@ -148,6 +208,44 @@ final class ArticleProcessor implements ProcessorInterface
             if ($isNew) {
                 // CREATE: New entity - always save in default locale
                 $data->setTranslatableLocale('ro');
+
+                // CRITICAL: Get managed entities for relations before persist
+                // The deserialized entity has detached relations that will cause "new entity found" errors
+                if ($data->getCategory()) {
+                    $managedCategory = $this->getManagedCategory($data->getCategory());
+                    $data->setCategory($managedCategory);
+                }
+
+                // Handle authors collection
+                $managedAuthors = [];
+                foreach ($data->getAuthors() as $author) {
+                    $managedAuthors[] = $this->getManagedAuthor($author);
+                }
+                // Clear and re-add with managed entities
+                foreach ($data->getAuthors()->toArray() as $author) {
+                    $data->removeAuthor($author);
+                }
+                foreach ($managedAuthors as $managedAuthor) {
+                    if ($managedAuthor) {
+                        $data->addAuthor($managedAuthor);
+                    }
+                }
+
+                // Handle tags collection
+                $managedTags = [];
+                foreach ($data->getTags() as $tag) {
+                    $managedTags[] = $this->getManagedTag($tag);
+                }
+                // Clear and re-add with managed entities
+                foreach ($data->getTags()->toArray() as $tag) {
+                    $data->removeTag($tag);
+                }
+                foreach ($managedTags as $managedTag) {
+                    if ($managedTag) {
+                        $data->addTag($managedTag);
+                    }
+                }
+
                 $this->entityManager->persist($data);
                 $this->entityManager->flush();
 
@@ -163,24 +261,99 @@ final class ArticleProcessor implements ProcessorInterface
                 }
             } else {
                 // UPDATE: Existing entity
+                // For default locale (ro), changes are tracked automatically
+                // For non-default locales, we need to explicitly save translations
                 if ($locale === 'ro') {
-                    // Update default locale fields directly
-                    $data->setTranslatableLocale($locale);
+                    // Default locale - flush changes directly
                     $this->entityManager->flush();
                 } else {
-                    // Add/Update translation for non-default locale
-                    $this->addTranslation($data, $locale);
+                    // Non-default locale - save as translation
+                    // First flush any non-translatable field changes
+                    $this->entityManager->flush();
+
+                    // Then persist translatable fields as translations
+                    /** @var TranslationRepository $translationRepo */
+                    $translationRepo = $this->entityManager->getRepository('Gedmo\Translatable\Entity\Translation');
+
+                    if ($data->getTitle()) {
+                        $translationRepo->translate($data, 'title', $locale, $data->getTitle());
+                    }
+
+                    if ($data->getLead()) {
+                        $translationRepo->translate($data, 'lead', $locale, $data->getLead());
+                    }
+
+                    if ($data->getContent()) {
+                        $translationRepo->translate($data, 'content', $locale, $data->getContent());
+                    }
+
+                    // Flush translations
+                    $this->entityManager->flush();
                 }
 
-                // Reload entity with correct locale
-                $data->setTranslatableLocale($locale);
-                $this->entityManager->refresh($data);
+                // NOTE: Do NOT call refresh() here!
+                // Gedmo Translatable stores translations separately, and refresh() would
+                // reload the entity from DB with the old values before Translatable had
+                // a chance to update the main entity fields.
+
+                // Invalidate article cache after UPDATE
+                if ($data->getId()) {
+                    $this->invalidateArticleCache($data->getId());
+                }
             }
 
             return $data;
         }
 
         return null;
+    }
+
+    /**
+     * Invalidate article cache for all locales (individual + list caches)
+     * Clears both PerformanceService cache AND Doctrine Result Cache.
+     */
+    private function invalidateArticleCache(int $articleId): void
+    {
+        // 1. Clear PerformanceService Redis cache (used by CachedArticleProvider)
+        $this->performanceService->invalidateArticle($articleId);
+
+        // 2. Clear Doctrine Result Cache (used by ArticleProvider.enableResultCache())
+        // Clear individual article cache for all locales
+        $locales = ['ro', 'en', 'ru'];
+        foreach ($locales as $locale) {
+            $cacheKey = \sprintf('article_%d_%s', $articleId, $locale);
+            $this->doctrineResultCachePool->deleteItem($cacheKey);
+        }
+
+        // 3. Clear all article list caches (they contain the article)
+        // Unfortunately Doctrine cache pool doesn't support pattern deletion,
+        // so we clear specific known patterns
+        $this->clearArticleListCaches();
+    }
+
+    /**
+     * Clear article list caches for all locales and common filter combinations.
+     */
+    private function clearArticleListCaches(): void
+    {
+        $locales = ['ro', 'en', 'ru'];
+        $itemsPerPage = [10, 20, 30, 50, 100];
+
+        foreach ($locales as $locale) {
+            for ($page = 1; $page <= 10; ++$page) {
+                foreach ($itemsPerPage as $ipp) {
+                    // Clear common filter combinations
+                    $patterns = [
+                        \sprintf('articles_list_%s_p%d_ipp%d_%s_all_all', $locale, $page, $ipp, md5('')),
+                        \sprintf('articles_list_%s_p%d_ipp%d_%s_new_all', $locale, $page, $ipp, md5('')),
+                        \sprintf('articles_list_%s_p%d_ipp%d_%s_published_all', $locale, $page, $ipp, md5('')),
+                    ];
+                    foreach ($patterns as $cacheKey) {
+                        $this->doctrineResultCachePool->deleteItem($cacheKey);
+                    }
+                }
+            }
+        }
     }
 
     private function addTranslation(Article $article, string $locale): void
@@ -201,5 +374,41 @@ final class ArticleProcessor implements ProcessorInterface
         }
 
         $this->entityManager->flush();
+    }
+
+    /**
+     * Get managed Category entity from database.
+     */
+    private function getManagedCategory(Category $category): ?Category
+    {
+        if (!$category->getId()) {
+            return null;
+        }
+
+        return $this->entityManager->getRepository(Category::class)->find($category->getId());
+    }
+
+    /**
+     * Get managed Author entity from database.
+     */
+    private function getManagedAuthor(Author $author): ?Author
+    {
+        if (!$author->getId()) {
+            return null;
+        }
+
+        return $this->entityManager->getRepository(Author::class)->find($author->getId());
+    }
+
+    /**
+     * Get managed Tag entity from database.
+     */
+    private function getManagedTag(Tag $tag): ?Tag
+    {
+        if (!$tag->getId()) {
+            return null;
+        }
+
+        return $this->entityManager->getRepository(Tag::class)->find($tag->getId());
     }
 }

@@ -6,14 +6,6 @@ namespace App\Enum;
 
 enum ArchiveReason: string
 {
-    case OLD_CONTENT = 'old_content';           // Content older than 4 years
-    case OUTDATED_INFO = 'outdated_info';       // Information no longer relevant
-    case LEGAL_REQUEST = 'legal_request';       // Legal or GDPR request
-    case DUPLICATE = 'duplicate';               // Duplicate content
-    case LOW_QUALITY = 'low_quality';           // Low quality content
-    case POLICY_VIOLATION = 'policy_violation'; // Violated editorial policy
-    case MANUAL = 'manual';                     // Manual decision by editor
-
     public function label(): string
     {
         return match ($this) {
@@ -39,4 +31,11 @@ enum ArchiveReason: string
             self::MANUAL => 'Arhivat manual de către editor',
         };
     }
+    case OLD_CONTENT = 'old_content';           // Content older than 4 years
+    case OUTDATED_INFO = 'outdated_info';       // Information no longer relevant
+    case LEGAL_REQUEST = 'legal_request';       // Legal or GDPR request
+    case DUPLICATE = 'duplicate';               // Duplicate content
+    case LOW_QUALITY = 'low_quality';           // Low quality content
+    case POLICY_VIOLATION = 'policy_violation'; // Violated editorial policy
+    case MANUAL = 'manual';                     // Manual decision by editor
 }

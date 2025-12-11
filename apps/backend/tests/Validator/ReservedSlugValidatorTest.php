@@ -158,11 +158,11 @@ class ReservedSlugValidatorTest extends ConstraintValidatorTestCase
     }
 
     /**
-     * Test that the reserved slugs list contains exactly 19 items.
+     * Test that the reserved slugs list contains exactly 18 items.
      */
-    public function testReservedSlugsListHas19Items(): void
+    public function testReservedSlugsListHas18Items(): void
     {
-        $this->assertCount(17, ReservedSlug::RESERVED_SLUGS, 'Reserved slugs list should contain exactly 19 items');
+        $this->assertCount(18, ReservedSlug::RESERVED_SLUGS, 'Reserved slugs list should contain exactly 18 items (including s for short links)');
     }
 
     /**

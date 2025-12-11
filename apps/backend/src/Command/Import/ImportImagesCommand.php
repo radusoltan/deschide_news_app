@@ -8,6 +8,7 @@ use App\Service\Import\ImportTokenService;
 use App\Service\Import\MigrationLoggerService;
 use App\Service\Import\NewscoopConnectionService;
 use Exception;
+use Imagick;
 use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -19,15 +20,17 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[AsCommand(
     name: 'app:import:images',
-    description: 'Import images from Newscoop via API with multipart/form-data upload'
+    description: 'Import images from Newscoop via API with multipart/form-data upload and WebP conversion'
 )]
 class ImportImagesCommand extends Command
 {
     private const API_BASE_URL = 'http://127.0.0.1:8081';
 
-    private const NEWSCOOP_IMAGES_PATH = '/home/radu/ext-hdd/backups/alpha/newscoop/images';
+    private const NEWSCOOP_IMAGES_PATH = '/mnt/d/ext-hdd/backups/alpha/newscoop/images';
 
     private const UPLOAD_TEMP_PATH = '/tmp/newscoop_import';
+
+    private const WEBP_QUALITY = 85; // Good balance between quality and size
 
     public function __construct(
         private readonly NewscoopConnectionService $newscoopConnection,
@@ -43,7 +46,38 @@ class ImportImagesCommand extends Command
         $this
             ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Limit number of images', null)
             ->addOption('offset', null, InputOption::VALUE_OPTIONAL, 'Offset for pagination', 0)
+            ->addOption('min-article', null, InputOption::VALUE_OPTIONAL, 'Minimum article number to filter images', null)
+            ->addOption('max-article', null, InputOption::VALUE_OPTIONAL, 'Maximum article number to filter images', null)
+            ->addOption('no-webp', null, InputOption::VALUE_NONE, 'Skip WebP conversion (import original format)')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Dry run mode (no API calls)');
+    }
+
+    /**
+     * Convert image to WebP format using Imagick
+     */
+    private function convertToWebP(string $sourcePath, string $destPath): bool
+    {
+        try {
+            $imagick = new Imagick($sourcePath);
+
+            // Strip metadata to reduce size
+            $imagick->stripImage();
+
+            // Set WebP compression quality
+            $imagick->setImageCompressionQuality(self::WEBP_QUALITY);
+
+            // Convert to WebP
+            $imagick->setImageFormat('webp');
+
+            // Write to destination
+            $imagick->writeImage($destPath);
+            $imagick->destroy();
+
+            return true;
+        } catch (Exception $e) {
+            // If conversion fails, return false to use original
+            return false;
+        }
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -52,6 +86,9 @@ class ImportImagesCommand extends Command
 
         $limit = $input->getOption('limit') ? (int) $input->getOption('limit') : null;
         $offset = (int) $input->getOption('offset');
+        $minArticle = $input->getOption('min-article') ? (int) $input->getOption('min-article') : null;
+        $maxArticle = $input->getOption('max-article') ? (int) $input->getOption('max-article') : null;
+        $noWebp = $input->getOption('no-webp');
         $dryRun = $input->getOption('dry-run');
 
         $io->title('FAZA 3: Import Imagini Newscoop → Deschide');
@@ -60,6 +97,9 @@ class ImportImagesCommand extends Command
         $io->definitionList(
             ['Limit' => $limit ?? 'ALL'],
             ['Offset' => $offset],
+            ['Min Article Number' => $minArticle ?? 'N/A'],
+            ['Max Article Number' => $maxArticle ?? 'N/A'],
+            ['WebP Conversion' => $noWebp ? 'DISABLED' : 'ENABLED (quality: ' . self::WEBP_QUALITY . ')'],
             ['Mode' => $dryRun ? 'DRY RUN (no API calls)' : 'LIVE'],
             ['Newscoop Images Path' => self::NEWSCOOP_IMAGES_PATH],
             ['Temp Upload Path' => self::UPLOAD_TEMP_PATH],
@@ -90,7 +130,7 @@ class ImportImagesCommand extends Command
         $io->section('Step 2: Fetch Images from Newscoop');
 
         try {
-            $images = $this->newscoopConnection->fetchImages($limit, $offset);
+            $images = $this->newscoopConnection->fetchImages($limit, $offset, $minArticle, $maxArticle);
             $io->writeln(\sprintf('Found %d images in Newscoop (offset: %d)', \count($images), $offset));
 
             if (\count($images) === 0) {
@@ -157,13 +197,41 @@ class ImportImagesCommand extends Command
                     $io->writeln(\sprintf('  [DRY] Would import: %s (%d bytes)', $filename, $fileSize), OutputInterface::VERBOSITY_VERBOSE);
                     ++$stats['success'];
                 } else {
-                    // Copy to temp location
-                    $tempPath = self::UPLOAD_TEMP_PATH . '/' . $filename;
-                    copy($sourcePath, $tempPath);
+                    // Determine file to upload (WebP converted or original)
+                    $uploadPath = null;
+                    $uploadFilename = $filename;
+                    $originalSize = $fileSize;
+                    $convertedToWebp = false;
+
+                    if (!$noWebp) {
+                        // Try to convert to WebP
+                        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+                        // Only convert supported formats (skip already WebP and GIFs with animation)
+                        if (\in_array($extension, ['jpg', 'jpeg', 'png', 'bmp', 'tiff'], true)) {
+                            $webpFilename = pathinfo($filename, PATHINFO_FILENAME) . '.webp';
+                            $webpPath = self::UPLOAD_TEMP_PATH . '/' . $webpFilename;
+
+                            if ($this->convertToWebP($sourcePath, $webpPath)) {
+                                $uploadPath = $webpPath;
+                                $uploadFilename = $webpFilename;
+                                $convertedToWebp = true;
+                                $newSize = filesize($webpPath);
+                                $savedPercent = round((1 - $newSize / $originalSize) * 100, 1);
+                                $io->writeln(\sprintf('  [WEBP] %s → %s (saved %.1f%%)', $filename, $webpFilename, $savedPercent), OutputInterface::VERBOSITY_VERBOSE);
+                            }
+                        }
+                    }
+
+                    // If not converted, copy original to temp
+                    if ($uploadPath === null) {
+                        $uploadPath = self::UPLOAD_TEMP_PATH . '/' . $filename;
+                        copy($sourcePath, $uploadPath);
+                    }
 
                     // Prepare multipart form data
                     $formData = [
-                        'file' => fopen($tempPath, 'r'),
+                        'file' => fopen($uploadPath, 'r'),
                         'alt' => $imageData['Description'] ?? '',
                         'imageAuthor' => $imageData['Photographer'] ?? '',
                     ];
@@ -175,6 +243,9 @@ class ImportImagesCommand extends Command
                         ],
                         'body' => $formData,
                     ]);
+
+                    // Add delay to avoid rate limiting (429 Too Many Requests)
+                    usleep(500000); // 500ms delay between requests
 
                     if ($response->getStatusCode() === 201) {
                         $responseData = $response->toArray();
@@ -193,17 +264,19 @@ class ImportImagesCommand extends Command
                             ]
                         );
 
-                        // Delete source file from Newscoop after successful upload
-                        unlink($sourcePath);
+                        // IMPORTANT: DO NOT delete source file - preserve originals on external HDD
+                        // unlink($sourcePath); // DISABLED - keep originals safe!
 
-                        $io->writeln(\sprintf('  [OK] Image %d → %d: %s (deleted from source)', $newscoopId, $deschideId, $filename), OutputInterface::VERBOSITY_VERBOSE);
+                        $io->writeln(\sprintf('  [OK] Image %d → %d: %s (source preserved)', $newscoopId, $deschideId, $filename), OutputInterface::VERBOSITY_VERBOSE);
                         ++$stats['success'];
                     } else {
                         throw new RuntimeException('Unexpected status code: ' . $response->getStatusCode());
                     }
 
                     // Cleanup temp file
-                    unlink($tempPath);
+                    if (file_exists($uploadPath)) {
+                        unlink($uploadPath);
+                    }
                 }
             } catch (Exception $e) {
                 $errorMessage = \sprintf('Image %d (%s): %s', $newscoopId, $filename, $e->getMessage());

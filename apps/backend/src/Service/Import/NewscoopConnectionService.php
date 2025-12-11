@@ -181,7 +181,7 @@ class NewscoopConnectionService
      *
      * @return array<int, array<string, mixed>>
      */
-    public function fetchImages(?int $limit = null, int $offset = 0): array
+    public function fetchImages(?int $limit = null, int $offset = 0, ?int $minArticleNumber = null, ?int $maxArticleNumber = null): array
     {
         $sql = 'SELECT DISTINCT
             i.Id,
@@ -198,12 +198,7 @@ class NewscoopConnectionService
         INNER JOIN ArticleImages ai ON i.Id = ai.IdImage
         INNER JOIN Articles a ON ai.NrArticle = a.Number
         WHERE a.Type = :type
-          AND a.Published = :published
-        ORDER BY i.Id';
-
-        if ($limit) {
-            $sql .= ' LIMIT :limit OFFSET :offset';
-        }
+          AND a.Published = :published';
 
         $params = [
             'type' => 'stiri',
@@ -212,7 +207,19 @@ class NewscoopConnectionService
 
         $types = [];
 
+        // Add article number range filter if provided
+        if ($minArticleNumber !== null && $maxArticleNumber !== null) {
+            $sql .= ' AND a.Number BETWEEN :minArticleNumber AND :maxArticleNumber';
+            $params['minArticleNumber'] = $minArticleNumber;
+            $params['maxArticleNumber'] = $maxArticleNumber;
+            $types['minArticleNumber'] = PDO::PARAM_INT;
+            $types['maxArticleNumber'] = PDO::PARAM_INT;
+        }
+
+        $sql .= ' ORDER BY i.Id';
+
         if ($limit) {
+            $sql .= ' LIMIT :limit OFFSET :offset';
             $params['limit'] = $limit;
             $params['offset'] = $offset;
             $types['limit'] = PDO::PARAM_INT;

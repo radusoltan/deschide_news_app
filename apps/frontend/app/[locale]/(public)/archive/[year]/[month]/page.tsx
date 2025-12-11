@@ -165,13 +165,13 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="mb-6 flex items-center gap-2 text-sm">
-          <Link href={`/${locale}/archive`} className="text-red-600 hover:text-red-700">
+          <Link href={`/${locale}/archive`} className="text-deschide-tomato hover:text-deschide-tomato-dark">
             {t.title}
           </Link>
           <span className="text-gray-400">/</span>
           <Link
             href={`/${locale}/archive/${yearNum}`}
-            className="text-red-600 hover:text-red-700 font-medium"
+            className="text-deschide-tomato hover:text-deschide-tomato-dark font-medium"
           >
             {t.backToYear}
           </Link>
@@ -231,7 +231,7 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
                       key={day}
                       className={`aspect-square flex flex-col items-center justify-center rounded-lg text-sm ${
                         hasArticles
-                          ? 'bg-red-600 text-white cursor-pointer hover:bg-red-700'
+                          ? 'bg-deschide-tomato text-white cursor-pointer hover:bg-deschide-tomato-dark'
                           : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
                       }`}
                     >

@@ -96,8 +96,10 @@ export function useMercureSubscription(
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
+  // Ref to store connect function for self-referential calls
+  const connectRef = useRef<() => void>(() => {});
 
-  const log = useCallback((...args: any[]) => {
+  const log = useCallback((...args: unknown[]) => {
     if (debug) {
       console.log('[useMercureSubscription]', ...args);
     }
@@ -188,7 +190,8 @@ export function useMercureSubscription(
           setReconnectAttempts(nextAttempt);
           reconnectTimeoutRef.current = setTimeout(() => {
             if (isMountedRef.current) {
-              connect();
+              // Use ref to call connect to avoid circular dependency
+              connectRef.current();
             }
           }, reconnectDelay);
         } else if (reconnectAttempts >= maxReconnectAttempts) {
@@ -203,6 +206,11 @@ export function useMercureSubscription(
     }
   }, [liveTextId, autoReconnect, maxReconnectAttempts, reconnectDelay, reconnectAttempts, cleanup, log]);
 
+  // Update ref whenever connect changes - must be in useEffect to avoid "cannot update ref during render"
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
+
   const reconnect = useCallback(() => {
     log('Manual reconnection triggered');
     setReconnectAttempts(0);
@@ -213,11 +221,15 @@ export function useMercureSubscription(
   useEffect(() => {
     isMountedRef.current = true;
 
-    if (liveTextId) {
-      connect();
-    } else {
-      setStatus('disconnected');
-    }
+    // Wrap in function to avoid direct setState in effect body
+    const initConnection = () => {
+      if (liveTextId) {
+        connect();
+      } else {
+        setStatus('disconnected');
+      }
+    };
+    initConnection();
 
     return () => {
       isMountedRef.current = false;

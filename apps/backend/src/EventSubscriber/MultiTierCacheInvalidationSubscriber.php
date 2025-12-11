@@ -13,7 +13,7 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Automatically invalidate multi-tier cache (Cloudflare + Varnish) when content changes
+ * Automatically invalidate multi-tier cache (Cloudflare + Varnish) when content changes.
  *
  * Cache invalidation strategy:
  * 1. Cloudflare Edge (global CDN)
@@ -52,7 +52,7 @@ final class MultiTierCacheInvalidationSubscriber implements EventSubscriberInter
 
         // Only invalidate on write operations
         $method = $request->getMethod();
-        if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+        if (!\in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
             return;
         }
 
@@ -64,8 +64,11 @@ final class MultiTierCacheInvalidationSubscriber implements EventSubscriberInter
             return;
         }
 
-        // Get resource ID if available
+        // Get resource ID if available (cast to int for numeric IDs)
         $resourceId = $attributes->get('id');
+        if ($resourceId !== null && is_numeric($resourceId)) {
+            $resourceId = (int) $resourceId;
+        }
 
         // Invalidate cache based on resource type
         $this->invalidateResourceCache($resourceClass, $resourceId, $method);
@@ -163,7 +166,7 @@ final class MultiTierCacheInvalidationSubscriber implements EventSubscriberInter
 
     /**
      * Purge article collection pages (first 10 pages, common filters)
-     * This is a workaround for non-Enterprise Cloudflare plans that don't support prefix purging
+     * This is a workaround for non-Enterprise Cloudflare plans that don't support prefix purging.
      */
     private function purgeArticleCollections(): void
     {
@@ -178,7 +181,7 @@ final class MultiTierCacheInvalidationSubscriber implements EventSubscriberInter
         // Purge first 3 pages for common pagination sizes
         foreach ($locales as $locale) {
             foreach ($itemsPerPage as $ipp) {
-                for ($page = 1; $page <= 3; $page++) {
+                for ($page = 1; $page <= 3; ++$page) {
                     $urls[] = "{$this->apiDomain}/api/articles?page={$page}&itemsPerPage={$ipp}&locale={$locale}";
                 }
             }
@@ -200,7 +203,7 @@ final class MultiTierCacheInvalidationSubscriber implements EventSubscriberInter
     }
 
     /**
-     * Purge category collection pages
+     * Purge category collection pages.
      */
     private function purgeCategoryCollections(): void
     {

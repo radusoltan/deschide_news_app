@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Automatically invalidate Varnish cache when content changes
+ * Automatically invalidate Varnish cache when content changes.
  *
  * This subscriber listens to API Platform POST/PUT/PATCH/DELETE operations
  * and invalidates the relevant Varnish cache entries.
@@ -47,7 +47,7 @@ final class VarnishCacheInvalidationSubscriber implements EventSubscriberInterfa
 
         // Only invalidate on write operations
         $method = $request->getMethod();
-        if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+        if (!\in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
             return;
         }
 
@@ -59,8 +59,11 @@ final class VarnishCacheInvalidationSubscriber implements EventSubscriberInterfa
             return;
         }
 
-        // Get resource ID if available
+        // Get resource ID if available (cast to int for numeric IDs)
         $resourceId = $attributes->get('id');
+        if ($resourceId !== null && is_numeric($resourceId)) {
+            $resourceId = (int) $resourceId;
+        }
 
         // Invalidate cache based on resource type
         $this->invalidateResourceCache($resourceClass, $resourceId, $method);

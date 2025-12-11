@@ -8,6 +8,9 @@ api_platform:
         multipart: ['multipart/form-data']
     defaults:
         stateless: true
+        pagination_enabled: true
+        pagination_client_enabled: true
+        pagination_client_items_per_page: true
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin', 'Accept-Language']
             # HTTP Cache - public endpoints can be cached
@@ -15,3 +18,13 @@ api_platform:
             shared_max_age: 7200             # 2 hours CDN/proxy cache
             public: true                     # Allow caching by proxies/CDN
             # For private/authenticated data, these will be overridden per-resource
+
+# Test environment: Disable default cache headers to allow controller-specific headers
+when@test:
+    api_platform:
+        defaults:
+            cache_headers:
+                vary: []                     # Empty array - don't add default Vary headers
+                max_age: null                # Disable default cache
+                shared_max_age: null
+                public: null

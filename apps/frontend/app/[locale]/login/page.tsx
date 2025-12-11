@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { isAuthenticated } from '@/app/actions/auth';
 import LoginForm from './LoginForm';
 
@@ -23,7 +24,7 @@ export default async function LoginPage({
     <section className="bg-gray-50 dark:bg-gray-900">
       <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
         {/* Logo */}
-        <a
+        <Link
           href="/"
           className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white"
         >
@@ -35,7 +36,7 @@ export default async function LoginPage({
             <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
           </svg>
           Deschide News
-        </a>
+        </Link>
 
         {/* Login Card */}
         <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">

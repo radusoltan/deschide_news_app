@@ -5,7 +5,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Article, Category, Tag } from '@/lib/types/article';
+import { Article, Category } from '@/lib/types/article';
+import type { Tag } from '@/lib/types/tag';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
 import { buildArticleUrl, buildCategoryUrl, getCategorySlug as getSlug } from '@/lib/utils/url-builder';
 import { ViewCountBadge } from '@/components/public/ViewCountBadge';
@@ -73,50 +74,59 @@ export default function ArticleCard({
   const categoryUrl = buildCategoryUrl(article.category, locale as Locale);
 
   return (
-    <div className="flex-shrink max-w-full w-full sm:w-1/3 px-3 pb-3 pt-3 sm:pt-0 border-b-2 sm:border-b-0 border-dotted border-gray-100">
-      <div className="flex flex-row sm:block hover-img">
-        <Link href={articleUrl}>
-          {imageToUse ? (
-            <Image
-              className="max-w-full w-full mx-auto h-auto"
-              src={buildImageUrl(imageToUse.path)}
-              alt={featuredImage?.alt || article.title}
-              width={imageToUse.width || 640}
-              height={imageToUse.height || 427}
-              loading="lazy"
-              placeholder="blur"
-              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQwIiBoZWlnaHQ9IjQyNyIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PC9zdmc+"
-            />
-          ) : (
-            <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400 text-sm">No image</span>
-            </div>
-          )}
-        </Link>
-        <div className="py-0 sm:py-3 pl-3 sm:pl-0">
-          <h3 className="text-lg font-bold leading-tight mb-2">
-            <Link href={articleUrl}>{article.title}</Link>
-          </h3>
-          {excerpt && (
-            <p className="hidden md:block text-gray-600 leading-tight mb-1">
-              {excerpt}
-            </p>
-          )}
-          <div className="flex items-center justify-between mt-2">
+    <article className="group flex flex-col h-full">
+      {/* Image container with 16:9 aspect ratio */}
+      <Link href={articleUrl} className="block relative aspect-video overflow-hidden bg-gray-100 mb-3 rounded-sm">
+        {imageToUse ? (
+          <Image
+            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
+            src={buildImageUrl(imageToUse.path)}
+            alt={featuredImage?.alt || article.title}
+            fill
+            sizes="(max-width: 640px) 100vw, 33vw"
+            loading="lazy"
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwMCIgaGVpZ2h0PSI5MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YzZjRmNiIvPjwvc3ZnPg=="
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-400 text-sm">No image</span>
+          </div>
+        )}
+      </Link>
+
+      {/* Content wrapper - flex-grow to fill remaining space */}
+      <div className="flex flex-col flex-grow">
+        {/* Title - full visibility, no truncation */}
+        <h3 className="text-lg font-bold leading-snug mb-2 tracking-tight">
+          <Link href={articleUrl} className="hover:text-brand-tomato-500 transition-colors duration-200 block">
+            {article.title}
+          </Link>
+        </h3>
+
+        {/* Excerpt - subtle, 2 lines max */}
+        <p className="hidden md:block text-gray-500 text-sm leading-relaxed mb-3 line-clamp-2 flex-grow">
+          {excerpt || '\u00A0'}
+        </p>
+
+        {/* Footer with category and view count - always at bottom */}
+        <div className="mt-auto pt-2">
+          <div className="flex items-center justify-between">
             <Link
               href={categoryUrl}
-              className="text-gray-500"
+              className="inline-flex items-center text-xs font-medium text-gray-500 hover:text-brand-tomato-500 transition-colors uppercase tracking-wide"
             >
-              <span className="inline-block h-3 border-l-2 border-red-600 mr-2"></span>
+              <span className="w-0.5 h-3 bg-brand-tomato-500 mr-2"></span>
               {getCategoryTitle(article.category)}
             </Link>
             {article.viewCount && (
               <ViewCountBadge views={article.viewCount} />
             )}
           </div>
+
           {/* Tags */}
           {article.tags && article.tags.length > 0 && (
-            <div className="mt-3">
+            <div className="mt-2">
               <TagList
                 tags={article.tags.filter((tag): tag is Tag => typeof tag !== 'string')}
                 locale={locale}
@@ -129,6 +139,6 @@ export default function ArticleCard({
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }

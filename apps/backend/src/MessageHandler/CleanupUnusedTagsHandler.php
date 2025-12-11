@@ -6,6 +6,7 @@ namespace App\MessageHandler;
 
 use App\Message\CleanupUnusedTagsMessage;
 use App\Service\TagService;
+use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -47,7 +48,7 @@ final class CleanupUnusedTagsHandler
                     'daysOld' => $daysOld,
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Failed to cleanup unused tags', [
                 'error' => $e->getMessage(),
                 'daysOld' => $daysOld,

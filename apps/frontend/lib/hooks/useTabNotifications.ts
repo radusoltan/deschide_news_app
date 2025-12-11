@@ -83,6 +83,73 @@ export function useTabNotifications(options: UseTabNotificationsOptions): UseTab
   const originalFaviconRef = useRef<string | null>(null);
   const faviconLinkRef = useRef<HTMLLinkElement | null>(null);
 
+  /**
+   * Draw badge on favicon
+   */
+  const drawFaviconBadge = (count: number, bgColor: string, textColor: string) => {
+    if (!originalFaviconRef.current || !faviconLinkRef.current) return;
+
+    const canvas = document.createElement('canvas');
+    const size = 32;
+    canvas.width = size;
+    canvas.height = size;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Load original favicon
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      // Draw original icon
+      ctx.drawImage(img, 0, 0, size, size);
+
+      // Draw badge
+      const badgeSize = size * 0.6;
+      const badgeX = size - badgeSize;
+      const badgeY = size - badgeSize;
+
+      // Badge background
+      ctx.fillStyle = bgColor;
+      ctx.beginPath();
+      ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // Badge text
+      ctx.fillStyle = textColor;
+      ctx.font = `bold ${badgeSize * 0.6}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const badgeText = count > 99 ? '99+' : count.toString();
+      ctx.fillText(badgeText, badgeX + badgeSize / 2, badgeY + badgeSize / 2);
+
+      // Update favicon
+      if (faviconLinkRef.current) {
+        faviconLinkRef.current.href = canvas.toDataURL('image/png');
+      }
+    };
+
+    img.onerror = () => {
+      // Fallback: draw simple badge without icon
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, size, size);
+
+      ctx.fillStyle = textColor;
+      ctx.font = `bold ${size * 0.5}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const badgeText = count > 99 ? '99+' : count.toString();
+      ctx.fillText(badgeText, size / 2, size / 2);
+
+      if (faviconLinkRef.current) {
+        faviconLinkRef.current.href = canvas.toDataURL('image/png');
+      }
+    };
+
+    img.src = originalFaviconRef.current;
+  };
+
   // Store original favicon on mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -152,73 +219,6 @@ export function useTabNotifications(options: UseTabNotificationsOptions): UseTab
    */
   const clearUnread = () => {
     setUnreadCountState(0);
-  };
-
-  /**
-   * Draw badge on favicon
-   */
-  const drawFaviconBadge = (count: number, bgColor: string, textColor: string) => {
-    if (!originalFaviconRef.current || !faviconLinkRef.current) return;
-
-    const canvas = document.createElement('canvas');
-    const size = 32;
-    canvas.width = size;
-    canvas.height = size;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Load original favicon
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-
-    img.onload = () => {
-      // Draw original icon
-      ctx.drawImage(img, 0, 0, size, size);
-
-      // Draw badge
-      const badgeSize = size * 0.6;
-      const badgeX = size - badgeSize;
-      const badgeY = size - badgeSize;
-
-      // Badge background
-      ctx.fillStyle = bgColor;
-      ctx.beginPath();
-      ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, 2 * Math.PI);
-      ctx.fill();
-
-      // Badge text
-      ctx.fillStyle = textColor;
-      ctx.font = `bold ${badgeSize * 0.6}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const badgeText = count > 99 ? '99+' : count.toString();
-      ctx.fillText(badgeText, badgeX + badgeSize / 2, badgeY + badgeSize / 2);
-
-      // Update favicon
-      if (faviconLinkRef.current) {
-        faviconLinkRef.current.href = canvas.toDataURL('image/png');
-      }
-    };
-
-    img.onerror = () => {
-      // Fallback: draw simple badge without icon
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, size, size);
-
-      ctx.fillStyle = textColor;
-      ctx.font = `bold ${size * 0.5}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const badgeText = count > 99 ? '99+' : count.toString();
-      ctx.fillText(badgeText, size / 2, size / 2);
-
-      if (faviconLinkRef.current) {
-        faviconLinkRef.current.href = canvas.toDataURL('image/png');
-      }
-    };
-
-    img.src = originalFaviconRef.current;
   };
 
   return {

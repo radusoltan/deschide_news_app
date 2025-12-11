@@ -61,6 +61,13 @@ export function generatePersonSchema(author: any, locale: Locale): PersonSchema 
 /**
  * NewsArticle Schema
  * Main article structured data
+ *
+ * Archive-specific metadata strategy:
+ * - For archived articles, we add the 'expires' property to indicate when the content
+ *   was archived, signaling to search engines that the content may be outdated
+ * - We update 'dateModified' to reflect the archive date, as archival is a significant
+ *   modification to the article's status
+ * - This helps search engines understand the freshness and relevance of the content
  */
 export interface NewsArticleSchema {
   '@context': 'https://schema.org';
@@ -80,16 +87,21 @@ export interface NewsArticleSchema {
   keywords?: string;
   wordCount?: number;
   inLanguage: string;
+  expires?: string; // Date when content was archived (for archived articles)
 }
 
 export function generateNewsArticleSchema(
   article: Article,
   locale: Locale,
-  imageUrl?: string
+  imageUrl?: string,
+  additionalImages?: string[]
 ): NewsArticleSchema {
   const categorySlug = getCategorySlug(article.category);
   const localePrefix = locale === 'ro' ? '' : `${locale}/`;
   const articleUrl = `${SITE_URL}/${localePrefix}${categorySlug}/${article.slug}`;
+
+  // Check if article is archived
+  const isArchived = article.status === 'archived' || !!article.archivedAt;
 
   // Generate author schemas
   const authors = article.authors || [];
@@ -108,14 +120,30 @@ export function generateNewsArticleSchema(
     ...getAuthorNames(article),
   ].filter(Boolean).join(', ');
 
+  // Determine dateModified based on archive status
+  // For archived articles, use archivedAt as the last modification date
+  const dateModified = isArchived && article.archivedAt
+    ? article.archivedAt
+    : (article.updatedAt || article.publishedAt || article.createdAt);
+
+  // Build image array with multiple aspect ratios for rich results
+  // Google recommends including images in 16:9, 4:3, and 1:1 aspect ratios
+  const images: string[] = [];
+  if (imageUrl) {
+    images.push(imageUrl);
+  }
+  if (additionalImages && additionalImages.length > 0) {
+    images.push(...additionalImages);
+  }
+
   const schema: NewsArticleSchema = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: article.title,
     description: article.lead || undefined,
-    image: imageUrl ? [imageUrl] : undefined,
+    image: images.length > 0 ? images : undefined,
     datePublished: article.publishedAt || article.createdAt,
-    dateModified: article.updatedAt || article.publishedAt || article.createdAt,
+    dateModified,
     author: authorSchemas.length === 1 ? authorSchemas[0] : authorSchemas,
     publisher: generateOrganizationSchema(),
     mainEntityOfPage: {
@@ -127,6 +155,11 @@ export function generateNewsArticleSchema(
     wordCount,
     inLanguage: locale === 'ro' ? 'ro-RO' : locale === 'en' ? 'en-US' : 'ru-RU',
   };
+
+  // Add archive-specific metadata for archived articles
+  if (isArchived && article.archivedAt) {
+    schema.expires = article.archivedAt;
+  }
 
   return schema;
 }
@@ -205,6 +238,12 @@ export function generateWebPageSchema(
   const localePrefix = locale === 'ro' ? '' : `${locale}/`;
   const articleUrl = `${SITE_URL}/${localePrefix}${categorySlug}/${article.slug}`;
 
+  // Check if article is archived and use archivedAt as dateModified
+  const isArchived = article.status === 'archived' || !!article.archivedAt;
+  const dateModified = isArchived && article.archivedAt
+    ? article.archivedAt
+    : (article.updatedAt || article.publishedAt || article.createdAt);
+
   return {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -215,21 +254,27 @@ export function generateWebPageSchema(
     publisher: generateOrganizationSchema(),
     inLanguage: locale === 'ro' ? 'ro-RO' : locale === 'en' ? 'en-US' : 'ru-RU',
     datePublished: article.publishedAt || article.createdAt,
-    dateModified: article.updatedAt || article.publishedAt || article.createdAt,
+    dateModified,
   };
 }
 
 /**
  * Generate all structured data for an article
  * Returns array of JSON-LD schemas
+ *
+ * @param article - The article object
+ * @param locale - The current locale
+ * @param imageUrl - Primary featured image URL (16:9 aspect ratio recommended)
+ * @param additionalImages - Array of additional image URLs (4:3, 1:1 aspect ratios)
  */
 export function generateArticleStructuredData(
   article: Article,
   locale: Locale,
-  imageUrl?: string
+  imageUrl?: string,
+  additionalImages?: string[]
 ): Array<NewsArticleSchema | BreadcrumbSchema | WebPageSchema> {
   return [
-    generateNewsArticleSchema(article, locale, imageUrl),
+    generateNewsArticleSchema(article, locale, imageUrl, additionalImages),
     generateBreadcrumbSchema(article, locale),
     generateWebPageSchema(article, locale),
   ];
