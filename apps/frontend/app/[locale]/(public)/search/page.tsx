@@ -79,7 +79,7 @@ function SearchContent({ params }: SearchPageProps) {
 
       // Use Elasticsearch search endpoint
       const response = await fetch(
-        `${apiUrl}/api/articles/search?${queryParams.toString()}`,
+        `${apiUrl}/search?${queryParams.toString()}`,
         {
           headers: {
             'Accept': 'application/json',
