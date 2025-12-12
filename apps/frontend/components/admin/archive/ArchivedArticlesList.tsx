@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { buildArticleUrl } from '@/lib/utils/url-builder';
+import { buildLocalizedUrl } from '@/lib/utils/url-builder';
 import type { Locale } from '@/lib/types';
 
 interface Category {
@@ -418,7 +418,7 @@ export default function ArchivedArticlesList({
                           {unarchivingId === article.id ? t.loading : t.unarchive}
                         </button>
                         <Link
-                          href={buildArticleUrl(article, locale as Locale)}
+                          href={buildLocalizedUrl(`${article.category.slug}/${article.slug}`, locale as Locale)}
                           target="_blank"
                           className="px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 border border-blue-600 dark:border-blue-400 rounded transition-colors"
                         >

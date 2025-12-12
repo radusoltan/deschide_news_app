@@ -15,7 +15,7 @@ import type { Locale } from '@/lib/types';
 
 interface ArticleCardProps {
   article: Article;
-  locale: string;
+  locale: Locale;
   thumbnailProfile?: string; // Default: 'article_card'
 }
 

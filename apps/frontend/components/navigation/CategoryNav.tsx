@@ -29,7 +29,7 @@ export default function CategoryNav({
 }: CategoryNavProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isStiriDropdownOpen, setIsStiriDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLLIElement>(null);
 
   // Separate categories into menu items and dropdown items
   const menuItems = categories.filter((cat) => cat.inMenu === true);

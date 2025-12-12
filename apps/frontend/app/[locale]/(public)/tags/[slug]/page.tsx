@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation';
 import { fetchArticlesByTag, fetchTags, fetchRelatedTags } from '@/lib/api';
 import ArticleCard from '@/components/ArticleCard';
 import { TagList } from '@/components/tags';
+import type { Locale } from '@/lib/types';
 
 interface TagPageProps {
   params: {
@@ -70,7 +71,8 @@ export default async function TagPage({
   params,
   searchParams,
 }: TagPageProps) {
-  const { locale, slug } = params;
+  const { locale: localeParam, slug } = params;
+  const locale = localeParam as Locale;
   const page = parseInt(searchParams?.page || '1', 10);
 
   // Fetch tag information

@@ -7,10 +7,11 @@ import Image from 'next/image';
 import { Category } from '@/lib/types/article';
 import { fetchArticlesByCategory } from '@/lib/api/articles';
 import ArticleCard from './ArticleCard';
+import type { Locale } from '@/lib/types';
 
 interface CategorySectionProps {
   category: Category;
-  locale: string;
+  locale: Locale;
 }
 
 export default async function CategorySection({

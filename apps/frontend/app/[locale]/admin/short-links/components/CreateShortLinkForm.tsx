@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Label, TextInput, Spinner, Alert } from 'flowbite-react';
-import { createShortLink, type CreateShortLinkData } from '@/lib/api/short-links';
-import { getAccessToken } from '@/lib/auth/session';
+import { type CreateShortLinkData } from '@/lib/api/short-links';
+import { createShortLinkAction } from '@/app/actions/short-links';
 
 interface CreateShortLinkFormProps {
   locale: string;
@@ -35,47 +35,24 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
     setCreatedLink(null);
 
     try {
-      const token = await getAccessToken();
-      if (!token) {
-        throw new Error('Nu sunteți autentificat');
+      const result = await createShortLinkAction(formData, locale);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Eroare la crearea linkului scurt');
       }
 
-      // Validate URL
-      if (!formData.originalUrl) {
-        throw new Error('URL-ul este obligatoriu');
+      if (result.shortLink) {
+        // Success - show the created link
+        const fullUrl = `${window.location.origin}${result.shortLink.shortUrl}`;
+        setCreatedLink(fullUrl);
+
+        // Reset form
+        setFormData({
+          originalUrl: '',
+          code: '',
+          title: '',
+        });
       }
-
-      try {
-        new URL(formData.originalUrl);
-      } catch {
-        throw new Error('URL-ul nu este valid');
-      }
-
-      // Prepare data (remove empty optional fields)
-      const dataToSend: CreateShortLinkData = {
-        originalUrl: formData.originalUrl,
-      };
-
-      if (formData.code?.trim()) {
-        dataToSend.code = formData.code.trim();
-      }
-
-      if (formData.title?.trim()) {
-        dataToSend.title = formData.title.trim();
-      }
-
-      const result = await createShortLink(dataToSend, token);
-
-      // Success - show the created link
-      const fullUrl = `${window.location.origin}${result.shortUrl}`;
-      setCreatedLink(fullUrl);
-
-      // Reset form
-      setFormData({
-        originalUrl: '',
-        code: '',
-        title: '',
-      });
     } catch (err) {
       console.error('Failed to create short link:', err);
       setError(
@@ -117,7 +94,7 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 space-y-4">
           <div>
-            <Label htmlFor="created-url" value="Link scurt generat:" />
+            <Label htmlFor="created-url">Link scurt generat:</Label>
             <div className="flex gap-2 mt-2">
               <TextInput
                 id="created-url"
@@ -190,7 +167,7 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 space-y-4">
         {/* Original URL */}
         <div>
-          <Label htmlFor="originalUrl" value="URL Original *" />
+          <Label htmlFor="originalUrl">URL Original *</Label>
           <TextInput
             id="originalUrl"
             type="url"
@@ -207,7 +184,7 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
 
         {/* Custom Code */}
         <div>
-          <Label htmlFor="code" value="Cod personalizat (opțional)" />
+          <Label htmlFor="code">Cod personalizat (opțional)</Label>
           <TextInput
             id="code"
             type="text"
@@ -225,7 +202,7 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
 
         {/* Title */}
         <div>
-          <Label htmlFor="title" value="Titlu (opțional)" />
+          <Label htmlFor="title">Titlu (opțional)</Label>
           <TextInput
             id="title"
             type="text"

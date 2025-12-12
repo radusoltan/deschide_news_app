@@ -60,7 +60,7 @@ export default function ArticleNotFound() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/"
-                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-deschide-tomato hover:bg-deschide-tomato-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deschide-tomato transition-colors"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-brand-tomato-500 hover:bg-brand-tomato-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-tomato-500 transition-colors"
                 >
                   <svg
                     className="w-5 h-5 mr-2"
@@ -80,7 +80,7 @@ export default function ArticleNotFound() {
 
                 <button
                   onClick={() => window.history.back()}
-                  className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deschide-tomato transition-colors"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-tomato-500 transition-colors"
                 >
                   <svg
                     className="w-5 h-5 mr-2"
@@ -108,7 +108,7 @@ export default function ArticleNotFound() {
                   <input
                     type="text"
                     placeholder="Search articles..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-deschide-tomato focus:border-transparent"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const value = (e.target as HTMLInputElement).value;
@@ -125,7 +125,7 @@ export default function ArticleNotFound() {
                         window.location.href = `/search?q=${encodeURIComponent(input.value)}`;
                       }
                     }}
-                    className="px-6 py-2 bg-deschide-tomato text-white rounded-r-md hover:bg-deschide-tomato-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-deschide-tomato transition-colors"
+                    className="px-6 py-2 bg-brand-tomato-500 text-white rounded-r-md hover:bg-brand-tomato-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-tomato-500 transition-colors"
                   >
                     <svg
                       className="w-5 h-5"

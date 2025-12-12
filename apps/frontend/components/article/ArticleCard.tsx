@@ -129,65 +129,76 @@ export default function ArticleCard({
     );
   }
 
-  // Default variant
+  // Default variant - Premium Editorial Card Design
   return (
-    <article className={`group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow ${className}`}>
+    <article className={`group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 border border-brand-oxford-900/10 hover:border-brand-tomato/30 hover:-translate-y-1 ${className}`}>
       <Link href={articleUrl} className="block">
-        {/* Thumbnail */}
+        {/* Premium Thumbnail with Gradient Overlay */}
         {imageUrl && (
-          <div className="relative w-full h-48 overflow-hidden bg-gray-200">
+          <div className="relative w-full aspect-[16/10] overflow-hidden bg-gradient-to-br from-brand-oxford-100 to-brand-oxford-50">
             <Image
               src={imageUrl}
               alt={featuredImage?.alt || article.title}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              className="object-cover group-hover:scale-110 transition-transform duration-700"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
+
+            {/* Subtle Gradient Overlay on Image */}
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-oxford-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             {/* Archive Badge */}
             {isArchived && (
-              <div className="absolute top-2 right-2 z-10">
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/90 backdrop-blur-sm text-amber-50 text-xs font-bold uppercase tracking-wider shadow-lg">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="absolute top-3 right-3 z-10">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-900/95 backdrop-blur-sm text-amber-50 text-xs font-bold uppercase tracking-wider shadow-lg">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                   </svg>
                   {archiveBadgeText}
                 </span>
               </div>
             )}
+
+            {/* Category Badge - Positioned over image */}
+            {showCategory && article.category && (
+              <div className="absolute top-3 left-3 z-10">
+                <span className="inline-block px-3 py-1.5 rounded-md bg-brand-tomato text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:bg-brand-tomato-600 transition-colors duration-300">
+                  {article.category.title}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Content */}
-        <div className="p-4">
-          {/* Category */}
-          {showCategory && article.category && (
-            <span className="inline-block px-3 py-1 rounded bg-brand-tomato text-white text-xs font-medium uppercase tracking-wide mb-2">
-              {article.category.title}
-            </span>
-          )}
-
-          {/* Title */}
-          <h3 className="text-lg font-heading text-brand-oxford-900 line-clamp-2 group-hover:text-brand-tomato-500 transition-colors mb-2">
+        {/* Content Area */}
+        <div className="p-5">
+          {/* Title - Brandbook Typography */}
+          <h3 className="text-lg font-semibold text-brand-oxford-900 line-clamp-2 group-hover:text-brand-tomato-500 transition-colors duration-300 mb-3 leading-tight">
             {article.title}
           </h3>
 
-          {/* Lead */}
+          {/* Lead Text */}
           {showLead && article.lead && (
-            <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+            <p className="text-sm font-body text-brand-oxford-900/70 line-clamp-2 mb-3 leading-relaxed">
               {article.lead}
             </p>
           )}
 
-          {/* Date */}
+          {/* Date and Time - Premium Styling */}
           {showDate && article.publishedAt && (
-            <time
-              className="text-xs text-gray-500"
-              dateTime={article.publishedAt}
-            >
-              {formatDate(article.publishedAt, locale)}
-            </time>
+            <div className="flex items-center gap-2 text-xs text-brand-oxford-900/50 font-medium">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <time dateTime={article.publishedAt}>
+                {formatDate(article.publishedAt, locale)}
+              </time>
+            </div>
           )}
         </div>
+
+        {/* Subtle Mindaro Accent Bar on Hover */}
+        <div className="h-1 bg-gradient-to-r from-brand-mindaro-400 via-brand-tomato to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       </Link>
     </article>
   );

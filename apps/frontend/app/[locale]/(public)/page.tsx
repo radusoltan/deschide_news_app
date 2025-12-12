@@ -4,7 +4,10 @@ import ImportantList from "./components/home/important";
 import LatestNews from "./components/home/latest-news";
 import CategorySection from '@/components/CategorySection';
 import { fetchFrontPageCategories } from '@/lib/api/categories';
+import { fetchAllSpecialArticles } from '@/lib/api/special-articles';
 import { generateHomepageMetadata } from '@/lib/seo/meta-tags';
+import { SpecialArticlesSection, SpecialArticle } from '@/components/special';
+import { LiveTextHomepage } from '@/components/live';
 
 // Lazy load non-critical components for better initial load performance
 const NewsSlider = dynamic(() => import('./components/NewsSlider'), {
@@ -35,7 +38,8 @@ interface PageProps {
 }
 
 export default async function HomePage({ params }: PageProps) {
-  const { locale } = await params
+  const { locale: localeParam } = await params
+  const locale = localeParam as Locale
 
   // Fetch categories that should appear on front page
   let frontPageCategories: any[] = [];
@@ -46,6 +50,29 @@ export default async function HomePage({ params }: PageProps) {
   } catch (error) {
     console.error('Failed to fetch front page categories:', error);
     frontPageCategories = [];
+  }
+
+  // Fetch special articles (breaking, alert, flash)
+  let specialArticles: SpecialArticle[] = [];
+  try {
+    const articles = await fetchAllSpecialArticles(locale, 3);
+    // Transform to SpecialArticle format
+    specialArticles = articles
+      .filter(article => article.badge)
+      .map(article => ({
+        id: article.id,
+        title: article.title,
+        slug: article.slug,
+        lead: article.lead,
+        badge: article.badge as 'breaking' | 'alert' | 'flash',
+        category: article.category as any,
+        authors: article.authors as any,
+        articleImages: article.articleImages as any,
+        publishedAt: article.publishedAt,
+      }));
+  } catch (error) {
+    console.error('Failed to fetch special articles:', error);
+    specialArticles = [];
   }
 
   // H1 titles per locale for SEO
@@ -59,14 +86,21 @@ export default async function HomePage({ params }: PageProps) {
     <>
       {/* SEO H1 - visually hidden but present for search engines */}
       <h1 className="sr-only">{h1Titles[locale] || h1Titles.ro}</h1>
-      {/* Breaking, Alert Flash */}
 
-      <div className="xl:container mx-auto h-18 bg-red-300 my-6 rounded ">BREAKING</div>
-      <div className="xl:container mx-auto h-18 bg-yellow-300 my-6 rounded ">ALERT</div>
-      <div className="xl:container mx-auto h-18 bg-red-300 my-6 rounded ">FLASH</div>
+      {/* Breaking, Alert, Flash - Special Articles Section */}
+      {specialArticles.length > 0 && (
+        <SpecialArticlesSection
+          articles={specialArticles}
+          locale={locale}
+          className="my-6"
+        />
+      )}
 
       {/* Hero / Important Articles Section */}
       <ImportantList locale={locale} />
+
+      {/* Live Broadcasts Section - Shows only when there are live LiveTexts */}
+      <LiveTextHomepage locale={locale} />
 
       {/* Latest News Section */}
       <LatestNews locale={locale} />

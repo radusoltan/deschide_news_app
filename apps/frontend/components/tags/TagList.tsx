@@ -5,10 +5,11 @@
 
 import { Tag } from '@/lib/types/tag';
 import TagBadge, { TagBadgeProps } from './TagBadge';
+import type { Locale } from '@/lib/types';
 
 export interface TagListProps {
   tags: Tag[];
-  locale: string;
+  locale: Locale;
   variant?: TagBadgeProps['variant'];
   size?: TagBadgeProps['size'];
   showHash?: boolean;

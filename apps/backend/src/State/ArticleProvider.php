@@ -145,6 +145,16 @@ final class ArticleProvider implements ProviderInterface
                     ->setParameter('isFeatured', $isFeatured);
             }
 
+            // Filter by badge (breaking, alert, flash)
+            if ($badge = $request->query->get('badge')) {
+                // Validate badge value against enum values
+                $validBadges = ['breaking', 'alert', 'flash'];
+                if (\in_array($badge, $validBadges, true)) {
+                    $queryBuilder->andWhere('a.badge = :badge')
+                        ->setParameter('badge', $badge);
+                }
+            }
+
             // Order by
             $orderBy = $request->query->all('order');
             if (!empty($orderBy) && \is_array($orderBy)) {

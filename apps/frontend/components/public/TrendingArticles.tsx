@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import { getTrendingArticles } from '@/lib/api/statistics';
-import { buildArticleUrl } from '@/lib/utils/url-builder';
+import { buildLocalizedUrl } from '@/lib/utils/url-builder';
 import type { Locale } from '@/lib/types';
 
 interface Props {
@@ -52,7 +52,7 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
         {articles.map((article, index) => (
           <Link
             key={article.id}
-            href={buildArticleUrl(article, locale)}
+            href={buildLocalizedUrl(`${article.category?.slug || 'uncategorized'}/${article.slug}`, locale)}
             className="group"
           >
             <article className="relative border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-brand-tomato-500 bg-white hover-lift">

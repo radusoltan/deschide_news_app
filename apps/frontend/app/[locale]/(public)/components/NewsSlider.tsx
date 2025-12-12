@@ -64,7 +64,7 @@ export default function NewsSlider({ title, backgroundImage, locale }: NewsSlide
             <div className="flex-shrink max-w-full w-full py-12 overflow-hidden">
               <div className="w-full py-3">
                 <h2 className="text-white text-2xl font-heading uppercase">
-                  <span className="inline-block h-5 border-l-3 border-deschide-tomato mr-2"></span>
+                  <span className="inline-block h-5 border-l-3 border-brand-tomato-500 mr-2"></span>
                   {title}
                 </h2>
               </div>
@@ -111,8 +111,8 @@ export default function NewsSlider({ title, backgroundImage, locale }: NewsSlide
                           <h3 className="text-lg font-bold leading-tight mb-2">
                             <Link href={`/${locale}/article/${slide.id}`}>{slide.title}</Link>
                           </h3>
-                          <Link className="text-gray-500 hover:text-deschide-tomato transition-colors" href={`/${locale}/category/american`}>
-                            <span className="inline-block h-3 border-l-2 border-deschide-tomato mr-2"></span>
+                          <Link className="text-gray-500 hover:text-brand-tomato-500 transition-colors" href={`/${locale}/category/american`}>
+                            <span className="inline-block h-3 border-l-2 border-brand-tomato-500 mr-2"></span>
                             {slide.category}
                           </Link>
                         </div>

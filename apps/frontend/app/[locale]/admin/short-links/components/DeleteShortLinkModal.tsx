@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Modal, Button, Spinner } from 'flowbite-react';
-import { deleteShortLink } from '@/lib/api/short-links';
-import { getAccessToken } from '@/lib/auth/session';
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Spinner } from 'flowbite-react';
+import { deleteShortLinkAction } from '@/app/actions/short-links';
 
 interface DeleteShortLinkModalProps {
   isOpen: boolean;
@@ -31,12 +30,11 @@ export default function DeleteShortLinkModal({
     setError(null);
 
     try {
-      const token = await getAccessToken();
-      if (!token) {
-        throw new Error('Nu sunteți autentificat');
-      }
+      const result = await deleteShortLinkAction(shortLink.id, locale);
 
-      await deleteShortLink(shortLink.id, token);
+      if (!result.success) {
+        throw new Error(result.error || 'Eroare la ștergerea linkului scurt');
+      }
 
       // Success - close modal and refresh
       onClose();
@@ -55,8 +53,8 @@ export default function DeleteShortLinkModal({
 
   return (
     <Modal show={isOpen} onClose={onClose} size="md">
-      <Modal.Header>Confirmare ștergere</Modal.Header>
-      <Modal.Body>
+      <ModalHeader>Confirmare ștergere</ModalHeader>
+      <ModalBody>
         <div className="space-y-4">
           <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
             Sigur doriți să ștergeți linkul scurt <strong>{shortLink.code}</strong>?
@@ -73,8 +71,8 @@ export default function DeleteShortLinkModal({
             </div>
           )}
         </div>
-      </Modal.Body>
-      <Modal.Footer>
+      </ModalBody>
+      <ModalFooter>
         <Button color="failure" onClick={handleDelete} disabled={isDeleting}>
           {isDeleting ? (
             <>
@@ -88,7 +86,7 @@ export default function DeleteShortLinkModal({
         <Button color="gray" onClick={onClose} disabled={isDeleting}>
           Anulează
         </Button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 }

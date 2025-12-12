@@ -21,7 +21,8 @@ interface CategoryPageProps {
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
-  const { locale, slug } = await params;
+  const { locale: localeParam, slug } = await params;
+  const locale = localeParam as Locale;
   const { page: pageParam } = await searchParams;
 
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
@@ -136,7 +137,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                     <div className="flex gap-3">
                       {currentPage > 1 && (
                         <a
-                          href={`${buildLocalizedUrl(`/category/${slug}`, locale as Locale)}?page=${currentPage - 1}`}
+                          href={`${buildLocalizedUrl(`/category/${slug}`, locale)}?page=${currentPage - 1}`}
                           className="group inline-flex items-center gap-2 px-6 py-3 bg-brand-oxford-900 text-white font-medium rounded-lg hover:bg-brand-oxford-800 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
                         >
                           <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -147,7 +148,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                       )}
                       {currentPage < totalPages && (
                         <a
-                          href={`${buildLocalizedUrl(`/category/${slug}`, locale as Locale)}?page=${currentPage + 1}`}
+                          href={`${buildLocalizedUrl(`/category/${slug}`, locale)}?page=${currentPage + 1}`}
                           className="group inline-flex items-center gap-2 px-6 py-3 bg-brand-oxford-900 text-white font-medium rounded-lg hover:bg-brand-oxford-800 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
                         >
                           Next
