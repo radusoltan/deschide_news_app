@@ -48,7 +48,7 @@ const translations: Record<string, { live: string; watching: string; follow: str
 
 // Sport type icons
 const SportIcon: React.FC<{ type: string; className?: string }> = ({ type, className }) => {
-  const icons: Record<string, JSX.Element> = {
+  const icons: Record<string, React.ReactElement> = {
     football: (
       <svg className={className} viewBox="0 0 24 24" fill="currentColor">
         <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.5" />

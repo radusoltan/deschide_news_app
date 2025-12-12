@@ -40,6 +40,12 @@ final class ArticleProvider implements ProviderInterface
 
         // Handle single item retrieval
         if (isset($uriVariables['id'])) {
+            // Validate that ID is a valid integer within PostgreSQL int4 range
+            $id = $uriVariables['id'];
+            if (!is_numeric($id) || $id < 1 || $id > 2147483647) {
+                return null; // API Platform will return 404
+            }
+
             $queryBuilder = $repository->createQueryBuilder('a')
                 ->leftJoin('a.category', 'c')
                 ->addSelect('c')

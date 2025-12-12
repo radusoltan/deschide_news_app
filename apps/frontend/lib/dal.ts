@@ -8,7 +8,8 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { decrypt, getSession, type SessionPayload } from '@/lib/auth/session';
-import { isTokenExpired, refreshToken as refreshTokenApi, isRefreshTokenExpired } from '@/lib/api-client';
+import { isTokenExpired, isRefreshTokenExpired } from '@/lib/api-client';
+import { refreshSessionToken } from '@/lib/auth/actions';
 import { cache } from 'react';
 
 // ============================================================================
@@ -54,9 +55,7 @@ interface ApiRequestOptions extends RequestInit {
 
 /**
  * Get a fresh access token, refreshing if necessary
- * Note: In Next.js 15+, cookies can only be modified in Server Actions/Route Handlers
- * So we refresh the token but return the new token directly without updating cookies
- * The session will be updated on next login
+ * Uses Server Action to properly update the session cookie after token refresh
  * @returns Fresh access token or null if refresh failed
  */
 async function getFreshAccessToken(): Promise<string | null> {
@@ -73,24 +72,24 @@ async function getFreshAccessToken(): Promise<string | null> {
   // Access token expired - check if refresh token is still valid
   if (isRefreshTokenExpired(refreshTokenExpiresAt)) {
     console.log('[DAL] Refresh token expired, session invalid');
-    // Cannot delete session here (not in Server Action)
-    // Return null to trigger re-authentication
     return null;
   }
 
-  // Try to refresh the token
+  // Try to refresh the token using Server Action
+  // This properly updates the session cookie with new tokens
   try {
-    console.log('[DAL] Access token expired, refreshing...');
-    const newTokens = await refreshTokenApi(refreshToken);
-    console.log('[DAL] Token refreshed successfully');
+    console.log('[DAL] Access token expired, refreshing via Server Action...');
+    const result = await refreshSessionToken();
 
-    // Return the new token directly
-    // Note: Session cookie is not updated here (Next.js limitation)
-    // but the new token is valid for this request
-    return newTokens.token;
+    if (result.success) {
+      console.log('[DAL] Token refreshed and session cookie updated');
+      return result.accessToken;
+    } else {
+      console.error('[DAL] Token refresh failed:', result.error);
+      return null;
+    }
   } catch (error) {
     console.error('[DAL] Token refresh failed:', error);
-    // Cannot delete session here (not in Server Action)
     return null;
   }
 }
