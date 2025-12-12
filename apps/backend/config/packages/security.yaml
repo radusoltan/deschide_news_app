@@ -79,11 +79,11 @@ security:
         - { path: ^/api/archived_articles, roles: PUBLIC_ACCESS, methods: [GET] }
 
         # Public READ access for frontend (GET only)
-        - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles|tags|live_texts|live_text_posts|live_text_collaborators|live_text_templates|live_text_reactions), roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles|tags|live_texts|live_text_posts|live_text_collaborators|live_text_templates|live_text_reactions|video_shows|youtube_videos), roles: PUBLIC_ACCESS, methods: [GET] }
 
         # Admin/Editor access for write operations (POST, PUT, PATCH, DELETE) - templates allow POST for reactions
         - { path: ^/api/live_text_reactions, roles: PUBLIC_ACCESS, methods: [POST] }
-        - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles|tags|live_texts|live_text_posts|live_text_collaborators|live_text_templates), roles: [ROLE_ADMIN, ROLE_EDITOR], methods: [POST, PUT, PATCH, DELETE] }
+        - { path: ^/api/(articles|categories|authors|images|thumbnails|important_articles|thumbnail_profiles|tags|live_texts|live_text_posts|live_text_collaborators|live_text_templates|video_shows|youtube_videos), roles: [ROLE_ADMIN, ROLE_EDITOR], methods: [POST, PUT, PATCH, DELETE] }
 
         # All other API routes require authentication
         - { path: ^/api, roles: ROLE_USER }

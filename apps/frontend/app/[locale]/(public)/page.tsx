@@ -5,13 +5,15 @@ import LatestNews from "./components/home/latest-news";
 import CategorySection from '@/components/CategorySection';
 import { fetchFrontPageCategories } from '@/lib/api/categories';
 import { fetchAllSpecialArticles } from '@/lib/api/special-articles';
+import { fetchHomepageVideos, fetchVideoShows } from '@/lib/api/video-shows';
 import { generateHomepageMetadata } from '@/lib/seo/meta-tags';
 import { SpecialArticlesSection, SpecialArticle } from '@/components/special';
 import { LiveTextHomepage } from '@/components/live';
+import { YouTubeVideo, VideoShow } from '@/lib/types/video';
 
 // Lazy load non-critical components for better initial load performance
-const NewsSlider = dynamic(() => import('./components/NewsSlider'), {
-  loading: () => <div className="h-96 bg-gray-100 animate-pulse" />,
+const VideoShowsSlider = dynamic(() => import('@/components/video/VideoShowsSlider').then(mod => ({ default: mod.VideoShowsSlider })), {
+  loading: () => <div className="h-96 bg-slate-900 animate-pulse" />,
 });
 
 const TrendingArticles = dynamic(() => import('@/components/public/TrendingArticles').then(mod => ({ default: mod.TrendingArticles })), {
@@ -75,6 +77,22 @@ export default async function HomePage({ params }: PageProps) {
     specialArticles = [];
   }
 
+  // Fetch YouTube videos for homepage slider
+  let homepageVideos: YouTubeVideo[] = [];
+  let videoShows: VideoShow[] = [];
+  try {
+    const [videosResponse, showsResponse] = await Promise.all([
+      fetchHomepageVideos(12, locale),
+      fetchVideoShows(locale),
+    ]);
+    homepageVideos = videosResponse.member || [];
+    videoShows = showsResponse.member || [];
+  } catch (error) {
+    console.error('Failed to fetch homepage videos:', error);
+    homepageVideos = [];
+    videoShows = [];
+  }
+
   // H1 titles per locale for SEO
   const h1Titles: Record<string, string> = {
     ro: 'Deschide News - Știri de Ultimă Oră din Moldova și din Lume',
@@ -108,19 +126,19 @@ export default async function HomePage({ params }: PageProps) {
       {/* Trending Articles Section */}
       <TrendingArticles locale={locale} limit={5} />
 
+      {/* Video Emissions Slider - Shows only when videos are available */}
+      {homepageVideos.length > 0 && (
+        <VideoShowsSlider
+          videos={homepageVideos}
+          videoShows={videoShows}
+          locale={locale}
+        />
+      )}
+
       {/* Dynamic Category Sections - Only categories with onFrontPage=true */}
-      {frontPageCategories.map((category, index) => (
+      {frontPageCategories.map((category) => (
         <div key={category.id}>
           <CategorySection category={category} locale={locale} />
-
-          {/* Insert Slider News Section after first category */}
-          {index === 0 && (
-            <NewsSlider
-              title="American"
-              backgroundImage="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&h=1080&fit=crop"
-              locale={locale}
-            />
-          )}
         </div>
       ))}
     </>
