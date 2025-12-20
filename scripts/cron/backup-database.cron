@@ -1,0 +1,20 @@
+# ============================================================================
+# Cron Job Configuration for PostgreSQL Database Backups
+# ============================================================================
+# Description: Automated daily backup of the deschide database
+# Installation: sudo cp /var/www/deschide_news_app/scripts/cron/backup-database.cron /etc/cron.d/deschide-db-backup
+# ============================================================================
+
+# Run daily backup at 2:00 AM
+0 2 * * * radu /var/www/deschide_news_app/scripts/backup-database.sh >> /var/www/deschide_news_app/backups/backup.log 2>&1
+
+# Alternative schedules (uncomment to use):
+
+# Run every 6 hours (for high-traffic sites)
+# 0 */6 * * * radu /var/www/deschide_news_app/scripts/backup-database.sh >> /var/www/deschide_news_app/backups/backup.log 2>&1
+
+# Run every hour (for critical data)
+# 0 * * * * radu /var/www/deschide_news_app/scripts/backup-database.sh >> /var/www/deschide_news_app/backups/backup.log 2>&1
+
+# Run twice daily (2 AM and 2 PM)
+# 0 2,14 * * * radu /var/www/deschide_news_app/scripts/backup-database.sh >> /var/www/deschide_news_app/backups/backup.log 2>&1
