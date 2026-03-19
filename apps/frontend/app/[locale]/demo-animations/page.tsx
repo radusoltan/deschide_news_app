@@ -9,7 +9,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   LoadingSpinner,
   LoadingOverlay,
@@ -32,6 +32,14 @@ export default function AnimationsDemoPage() {
     setLoading(true);
     setTimeout(() => setLoading(false), 3000);
   };
+
+  // Auto-close overlay after 3 seconds
+  useEffect(() => {
+    if (showOverlay) {
+      const timer = setTimeout(() => setShowOverlay(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showOverlay]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -377,7 +385,7 @@ export default function AnimationsDemoPage() {
       )}
 
       {/* Auto-close overlay after 3 seconds */}
-      {showOverlay && setTimeout(() => setShowOverlay(false), 3000)}
+      {showOverlay && void setTimeout(() => setShowOverlay(false), 3000)}
     </div>
   );
 }

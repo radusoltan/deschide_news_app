@@ -13,8 +13,10 @@ const nextConfig = {
 
   // Image optimization - allow images from backend and CDN
   images: {
-    // Enable optimization in all environments for better performance testing
-    unoptimized: false,
+    // DEVELOPMENT: Disable optimization to allow local CDN (127.0.0.1)
+    // Next.js 16 blocks private IPs in image optimization for security
+    // In production, set this to false and use a public CDN hostname
+    unoptimized: process.env.NODE_ENV === 'development',
 
     // Supported formats (WebP and AVIF for modern browsers)
     formats: ['image/webp', 'image/avif'],

@@ -215,10 +215,6 @@
 
   .text-on-photo-strong {
     color: white;
-    text-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.9),
-      0 4px 12px rgba(0, 0, 0, 0.7),
-      0 8px 24px rgba(17, 34, 64, 0.6);
   }
 
   /* Brand Border Utilities */
@@ -461,6 +457,24 @@
     }
   }
 
+  /* Live Broadcast Scan Line Animation */
+  @keyframes live-scan {
+    0% {
+      top: 0;
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      top: 100%;
+      opacity: 0;
+    }
+  }
+
   /* Animation Utility Classes */
   .animate-fade-in-up {
     animation: fade-in-up 0.5s ease-out forwards;
@@ -492,6 +506,10 @@
 
   .animate-shimmer {
     animation: shimmer 2s infinite linear;
+  }
+
+  .animate-live-scan {
+    animation: live-scan 3s linear infinite;
   }
 
   /* Stagger Delays for Sequential Animations */

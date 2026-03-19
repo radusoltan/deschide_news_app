@@ -103,7 +103,7 @@ export default async function AllArticlesPage({
                 href={`/${locale}/all`}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   !category
-                    ? 'bg-deschide-tomato text-white'
+                    ? 'bg-brand-tomato-500 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                 }`}
               >
@@ -117,7 +117,7 @@ export default async function AllArticlesPage({
                   href={`/${locale}/all?category=${cat.id}`}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     category === cat.id.toString()
-                      ? 'bg-deschide-tomato text-white'
+                      ? 'bg-brand-tomato-500 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                   }`}
                 >
@@ -172,7 +172,7 @@ export default async function AllArticlesPage({
                         href={`/${locale}/all?page=${pageNum}${category ? `&category=${category}` : ''}`}
                         className={`px-4 py-2 rounded ${
                           currentPage === pageNum
-                            ? 'bg-deschide-tomato text-white'
+                            ? 'bg-brand-tomato-500 text-white'
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                         }`}
                       >

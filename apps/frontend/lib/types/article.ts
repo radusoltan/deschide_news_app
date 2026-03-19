@@ -7,6 +7,9 @@ import { Tag } from './tag';
 
 export type ArticleStatus = 'draft' | 'published' | 'archived';
 
+// Article badge types for special articles (breaking news, alerts, flash news)
+export type ArticleBadge = 'breaking' | 'alert' | 'flash';
+
 export interface Category {
   '@id': string;
   '@type': string;
@@ -35,6 +38,7 @@ export interface Article {
   relatedArticles?: (Article | string)[]; // Full Article objects or IRIs
   tags?: (Tag | string)[]; // Full Tag objects or IRIs
   status: ArticleStatus;
+  badge?: ArticleBadge | null; // Special article badge (breaking, alert, flash)
   viewCount: number;
   createdAt: string;
   updatedAt: string;

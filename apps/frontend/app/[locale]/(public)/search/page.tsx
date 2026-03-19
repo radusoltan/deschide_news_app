@@ -79,7 +79,7 @@ function SearchContent({ params }: SearchPageProps) {
 
       // Use Elasticsearch search endpoint
       const response = await fetch(
-        `${apiUrl}/api/articles/search?${queryParams.toString()}`,
+        `${apiUrl}/search?${queryParams.toString()}`,
         {
           headers: {
             'Accept': 'application/json',
@@ -170,13 +170,13 @@ function SearchContent({ params }: SearchPageProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.placeholder}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-deschide-tomato focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               autoFocus
             />
             <button
               type="submit"
               disabled={loading || !searchQuery.trim()}
-              className="px-6 py-3 bg-deschide-tomato text-white rounded-lg hover:bg-deschide-tomato-dark disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+              className="px-6 py-3 bg-brand-tomato-500 text-white rounded-lg hover:bg-brand-tomato-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {loading ? t.loading : t.searchButton}
             </button>
@@ -234,7 +234,7 @@ function SearchContent({ params }: SearchPageProps) {
                         </div>
                       )}
                       <div className="p-4">
-                        <div className="text-xs text-deschide-tomato font-semibold mb-2">
+                        <div className="text-xs text-brand-tomato-500 font-semibold mb-2">
                           {article.category.title}
                         </div>
                         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
@@ -285,7 +285,7 @@ function SearchContent({ params }: SearchPageProps) {
                           onClick={() => performSearch(query, pageNum)}
                           className={`px-4 py-2 rounded ${
                             currentPage === pageNum
-                              ? 'bg-deschide-tomato text-white'
+                              ? 'bg-brand-tomato-500 text-white'
                               : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300'
                           }`}
                         >

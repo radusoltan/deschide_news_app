@@ -21,15 +21,15 @@ export default function ArticleLayout({
       <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
         <div className="flex flex-row flex-wrap">
           {/* Main Content - 2/3 width on desktop */}
-          <div className="flex-shrink max-w-full w-full lg:w-2/3 overflow-hidden">
+          <article className="flex-shrink max-w-full w-full lg:w-2/3 overflow-hidden">
             {children}
-          </div>
+          </article>
 
           {/* Sidebar - 1/3 width on desktop */}
           {sidebar && (
-            <div className="flex-shrink max-w-full w-full lg:w-1/3 lg:pl-8 lg:pt-14 lg:pb-8 order-first lg:order-last">
+            <aside className="flex-shrink max-w-full w-full lg:w-1/3 lg:pl-8 lg:pt-14 lg:pb-8 order-first lg:order-last">
               {sidebar}
-            </div>
+            </aside>
           )}
         </div>
       </div>

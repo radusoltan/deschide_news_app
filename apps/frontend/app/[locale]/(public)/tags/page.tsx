@@ -6,6 +6,7 @@
 import { Metadata } from 'next';
 import { fetchPopularTags } from '@/lib/api/tags';
 import { TagCloud } from '@/components/tags';
+import type { Locale } from '@/lib/types';
 
 export async function generateMetadata({
   params,
@@ -44,7 +45,8 @@ export default async function TagsPage({
 }: {
   params: { locale: string };
 }) {
-  const { locale } = params;
+  const localeParam = params.locale;
+  const locale = localeParam as Locale;
 
   // Fetch popular tags
   let tags: any[] = [];
@@ -88,7 +90,7 @@ export default async function TagsPage({
       {/* Tag Cloud */}
       {tags.length > 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-          <TagCloud tags={tags} locale={locale} />
+          <TagCloud tags={tags} locale={locale as 'ro' | 'en' | 'ru'} />
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center text-gray-500 dark:text-gray-400">

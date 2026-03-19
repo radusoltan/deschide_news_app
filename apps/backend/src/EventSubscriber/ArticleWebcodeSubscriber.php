@@ -9,6 +9,7 @@ use App\Entity\ShortLink;
 use App\Enum\ArticleStatus;
 use App\Service\ShortCodeGenerator;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Event\PrePersistEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
@@ -66,7 +67,7 @@ class ArticleWebcodeSubscriber
         }
     }
 
-    private function generateWebcodeAndShortLink(Article $article, $entityManager): void
+    private function generateWebcodeAndShortLink(Article $article, EntityManagerInterface $entityManager): void
     {
         try {
             // Generate unique webcode

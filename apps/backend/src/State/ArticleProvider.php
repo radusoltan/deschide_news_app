@@ -40,6 +40,12 @@ final class ArticleProvider implements ProviderInterface
 
         // Handle single item retrieval
         if (isset($uriVariables['id'])) {
+            // Validate that ID is a valid integer within PostgreSQL int4 range
+            $id = $uriVariables['id'];
+            if (!is_numeric($id) || $id < 1 || $id > 2147483647) {
+                return null; // API Platform will return 404
+            }
+
             $queryBuilder = $repository->createQueryBuilder('a')
                 ->leftJoin('a.category', 'c')
                 ->addSelect('c')
@@ -143,6 +149,16 @@ final class ArticleProvider implements ProviderInterface
                 $isFeatured = filter_var($request->query->get('isFeatured'), FILTER_VALIDATE_BOOLEAN);
                 $queryBuilder->andWhere('a.isFeatured = :isFeatured')
                     ->setParameter('isFeatured', $isFeatured);
+            }
+
+            // Filter by badge (breaking, alert, flash)
+            if ($badge = $request->query->get('badge')) {
+                // Validate badge value against enum values
+                $validBadges = ['breaking', 'alert', 'flash'];
+                if (\in_array($badge, $validBadges, true)) {
+                    $queryBuilder->andWhere('a.badge = :badge')
+                        ->setParameter('badge', $badge);
+                }
             }
 
             // Order by

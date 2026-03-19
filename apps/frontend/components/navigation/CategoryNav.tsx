@@ -29,11 +29,7 @@ export default function CategoryNav({
 }: CategoryNavProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isStiriDropdownOpen, setIsStiriDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Separate categories into menu items and dropdown items
-  const menuItems = categories.filter((cat) => cat.inMenu === true);
-  const dropdownItems = categories.filter((cat) => cat.inMenu !== true);
+  const dropdownRef = useRef<HTMLLIElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -49,6 +45,10 @@ export default function CategoryNav({
   if (!categories || categories.length === 0) {
     return null;
   }
+
+  // Separate categories into menu items and dropdown items
+  const menuItems = categories.filter((cat) => cat.inMenu === true);
+  const dropdownItems = categories.filter((cat) => cat.inMenu !== true);
 
   const toggleMobileDropdown = () => {
     setIsMobileOpen(!isMobileOpen);

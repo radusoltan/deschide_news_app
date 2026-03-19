@@ -190,6 +190,11 @@ services:
             $elasticsearchUrl: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
 
+    # YouTube Sync Service (Video Emissions)
+    App\Service\YouTubeSyncService:
+        arguments:
+            $youtubeApiKey: '%env(YOUTUBE_API_KEY)%'
+
 # Test environment specific configuration
 when@test:
     services:

@@ -109,6 +109,7 @@ function transformLiveTextResponse(data: LiveTextApiResponse): LiveText {
     author: data.author,
     category: data.category,
     template: (data as any).template || null,
+    sportMatch: data.sportMatch || null,
     collaborators: data.collaborators,
     posts: data.posts,
     createdAt: data.createdAt,

@@ -10,12 +10,14 @@ interface ShortLinksTableProps {
   shortLinks: ShortLink[];
   totalItems: number;
   locale: string;
+  accessToken?: string | null;
 }
 
 export default function ShortLinksTable({
   shortLinks,
   totalItems,
   locale,
+  accessToken = null,
 }: ShortLinksTableProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedLink, setSelectedLink] = useState<{
@@ -200,6 +202,7 @@ export default function ShortLinksTable({
           onClose={handleCloseDeleteModal}
           shortLink={selectedLink}
           locale={locale}
+          accessToken={accessToken}
         />
       )}
     </div>

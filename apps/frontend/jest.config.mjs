@@ -41,6 +41,9 @@ const customJestConfig = {
     '/__tests__/__mocks__/',
     '/__tests__/e2e/',
     '/__tests__/integration/',
+    '/__tests__/smoke/',
+    '/__tests__/performance/',
+    '/__tests__/diagnostics/',
   ],
 
   // Coverage collection

@@ -73,7 +73,7 @@ export default function ArticleBody({
           >
             <span className="flex items-center">
               <svg
-                className="w-5 h-5 mr-2 text-red-600"
+                className="w-5 h-5 mr-2 text-brand-tomato-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -111,7 +111,7 @@ export default function ArticleBody({
                 >
                   <button
                     onClick={() => scrollToHeading(heading.id)}
-                    className="text-sm text-gray-700 hover:text-red-600 hover:underline transition-colors text-left"
+                    className="text-sm text-gray-700 hover:text-brand-tomato-500 hover:underline transition-colors text-left"
                   >
                     {heading.text}
                   </button>
@@ -130,13 +130,13 @@ export default function ArticleBody({
           prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
           prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
           prose-p:text-gray-700 prose-p:mb-5 prose-p:leading-relaxed
-          prose-a:text-red-600 prose-a:no-underline hover:prose-a:underline
+          prose-a:text-brand-tomato-500 prose-a:no-underline hover:prose-a:underline
           prose-strong:text-gray-900 prose-strong:font-semibold
           prose-em:text-gray-700
           prose-ul:list-disc prose-ul:ml-6 prose-ul:mb-5
           prose-ol:list-decimal prose-ol:ml-6 prose-ol:mb-5
           prose-li:text-gray-700 prose-li:mb-2
-          prose-blockquote:border-l-4 prose-blockquote:border-red-600
+          prose-blockquote:border-l-4 prose-blockquote:border-brand-tomato-500
           prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600
           prose-img:rounded-lg prose-img:shadow-md prose-img:my-6
           prose-table:border-collapse prose-table:w-full prose-table:mb-6

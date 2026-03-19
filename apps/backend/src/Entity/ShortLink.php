@@ -100,7 +100,7 @@ class ShortLink
     #[Groups(['short_link:read'])]
     private int $clickCount = 0;
 
-    #[ORM\ManyToOne(targetEntity: Article::class)]
+    #[ORM\ManyToOne(targetEntity: Article::class, cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'article_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     #[Groups(['short_link:read', 'short_link:write'])]
     private ?Article $article = null;

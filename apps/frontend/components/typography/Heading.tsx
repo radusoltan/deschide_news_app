@@ -31,7 +31,7 @@ export const Heading: React.FC<HeadingProps> = ({
   align = 'left',
   responsive = true,
 }) => {
-  const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+  const Tag = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4';
 
   // Base styles - League Spartan MUST be uppercase
   const baseStyles = 'font-heading text-crisp'; // font-heading includes uppercase transform

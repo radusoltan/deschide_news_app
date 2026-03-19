@@ -6,6 +6,25 @@ import type { SportMercureEvent } from './sport';
 
 export type LiveTextStatus = 'draft' | 'live' | 'paused' | 'ended';
 
+/**
+ * Simplified SportMatch for API response (without nested liveText)
+ */
+export interface LiveTextSportMatch {
+  id: number;
+  sportType: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
+  homeScore: number;
+  awayScore: number;
+  status: string;
+  currentMinute?: number;
+  currentPeriod?: string;
+  venue?: string;
+  competition?: string;
+}
+
 export type TemplateType = 'breaking_news' | 'sport' | 'conference' | 'election';
 
 export interface TemplateConfig {
@@ -86,6 +105,7 @@ export interface LiveText {
   author: LiveTextAuthor;
   category: LiveTextCategory | null;
   template: LiveTextTemplate | null;
+  sportMatch?: LiveTextSportMatch | null;
   collaborators: LiveTextCollaborator[];
   posts: LiveTextPost[];
   createdAt: string;
@@ -102,6 +122,7 @@ export interface LiveTextListItem {
   endTime: string | null;
   author: LiveTextAuthor;
   category: LiveTextCategory | null;
+  sportMatch?: LiveTextSportMatch | null;
   collaborators: LiveTextCollaborator[];
   createdAt: string;
   updatedAt: string;
@@ -220,6 +241,7 @@ export interface LiveTextApiResponse {
   locale: string;
   author: any;
   category: any;
+  sportMatch?: any;
   collaborators: any[];
   posts: any[];
   createdAt: string;
