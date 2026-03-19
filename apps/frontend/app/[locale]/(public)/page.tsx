@@ -18,7 +18,7 @@ const TrendingArticles = dynamic(() => import('@/components/public/TrendingArtic
 });
 
 const BreakingNewsTicker = dynamic(() => import('@/components/public/BreakingNewsTicker').then(mod => ({ default: mod.BreakingNewsTicker })), {
-  ssr: false,
+  loading: () => null,
 });
 
 type Locale = 'ro' | 'en' | 'ru';

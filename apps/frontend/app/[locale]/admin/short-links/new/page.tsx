@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import CreateShortLinkForm from '../components/CreateShortLinkForm';
+import { getAccessToken } from '@/lib/auth/session';
 
 interface NewShortLinkPageProps {
   params: Promise<{
@@ -11,6 +12,7 @@ export default async function NewShortLinkPage({
   params,
 }: NewShortLinkPageProps) {
   const { locale } = await params;
+  const accessToken = await getAccessToken();
 
   return (
     <div className="p-4">
@@ -69,7 +71,7 @@ export default async function NewShortLinkPage({
       </div>
 
       {/* Form */}
-      <CreateShortLinkForm locale={locale} />
+      <CreateShortLinkForm locale={locale} accessToken={accessToken} />
     </div>
   );
 }

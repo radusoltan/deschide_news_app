@@ -5,10 +5,11 @@
 
 import { Tag } from '@/lib/types/tag';
 import TagBadge, { TagBadgeProps } from './TagBadge';
+import type { Locale } from '@/lib/types';
 
 export interface TagListProps {
   tags: Tag[];
-  locale: string;
+  locale: string | Locale;
   variant?: TagBadgeProps['variant'];
   size?: TagBadgeProps['size'];
   showHash?: boolean;
@@ -64,7 +65,7 @@ export default function TagList({
         <TagBadge
           key={tag.id}
           tag={tag}
-          locale={locale}
+          locale={locale as Locale}
           variant={variant}
           size={size}
           showHash={showHash}

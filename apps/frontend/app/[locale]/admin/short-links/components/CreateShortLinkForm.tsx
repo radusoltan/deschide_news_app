@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Label, TextInput, Spinner, Alert } from 'flowbite-react';
 import { createShortLink, type CreateShortLinkData } from '@/lib/api/short-links';
-import { getAccessToken } from '@/lib/auth/session';
 
 interface CreateShortLinkFormProps {
   locale: string;
+  accessToken: string | null;
 }
 
-export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps) {
+export default function CreateShortLinkForm({ locale, accessToken }: CreateShortLinkFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
     setCreatedLink(null);
 
     try {
-      const token = await getAccessToken();
+      const token = accessToken;
       if (!token) {
         throw new Error('Nu sunteți autentificat');
       }
@@ -117,7 +117,7 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 space-y-4">
           <div>
-            <Label htmlFor="created-url" value="Link scurt generat:" />
+            <Label htmlFor="created-url">Link scurt generat:</Label>
             <div className="flex gap-2 mt-2">
               <TextInput
                 id="created-url"
@@ -190,7 +190,7 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 space-y-4">
         {/* Original URL */}
         <div>
-          <Label htmlFor="originalUrl" value="URL Original *" />
+          <Label htmlFor="originalUrl">URL Original *</Label>
           <TextInput
             id="originalUrl"
             type="url"
@@ -207,7 +207,7 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
 
         {/* Custom Code */}
         <div>
-          <Label htmlFor="code" value="Cod personalizat (opțional)" />
+          <Label htmlFor="code">Cod personalizat (opțional)</Label>
           <TextInput
             id="code"
             type="text"
@@ -225,7 +225,7 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
 
         {/* Title */}
         <div>
-          <Label htmlFor="title" value="Titlu (opțional)" />
+          <Label htmlFor="title">Titlu (opțional)</Label>
           <TextInput
             id="title"
             type="text"

@@ -191,6 +191,7 @@ export default async function ShortLinksPage({
           shortLinks={shortLinksData}
           totalItems={totalItems}
           locale={locale}
+          accessToken={token}
         />
       </div>
 

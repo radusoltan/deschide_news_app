@@ -21,7 +21,8 @@ interface CategoryPageProps {
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
-  const { locale, slug } = await params;
+  const { locale: rawLocale, slug } = await params;
+  const locale = rawLocale as Locale;
   const { page: pageParam } = await searchParams;
 
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;

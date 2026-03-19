@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Modal, Button, Spinner } from 'flowbite-react';
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Spinner } from 'flowbite-react';
 import { deleteShortLink } from '@/lib/api/short-links';
-import { getAccessToken } from '@/lib/auth/session';
 
 interface DeleteShortLinkModalProps {
   isOpen: boolean;
@@ -14,6 +13,7 @@ interface DeleteShortLinkModalProps {
     code: string;
   };
   locale: string;
+  accessToken: string | null;
 }
 
 export default function DeleteShortLinkModal({
@@ -21,6 +21,7 @@ export default function DeleteShortLinkModal({
   onClose,
   shortLink,
   locale,
+  accessToken,
 }: DeleteShortLinkModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +32,7 @@ export default function DeleteShortLinkModal({
     setError(null);
 
     try {
-      const token = await getAccessToken();
+      const token = accessToken;
       if (!token) {
         throw new Error('Nu sunteți autentificat');
       }
@@ -55,8 +56,8 @@ export default function DeleteShortLinkModal({
 
   return (
     <Modal show={isOpen} onClose={onClose} size="md">
-      <Modal.Header>Confirmare ștergere</Modal.Header>
-      <Modal.Body>
+      <ModalHeader>Confirmare ștergere</ModalHeader>
+      <ModalBody>
         <div className="space-y-4">
           <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
             Sigur doriți să ștergeți linkul scurt <strong>{shortLink.code}</strong>?
@@ -73,8 +74,8 @@ export default function DeleteShortLinkModal({
             </div>
           )}
         </div>
-      </Modal.Body>
-      <Modal.Footer>
+      </ModalBody>
+      <ModalFooter>
         <Button color="failure" onClick={handleDelete} disabled={isDeleting}>
           {isDeleting ? (
             <>
@@ -88,7 +89,7 @@ export default function DeleteShortLinkModal({
         <Button color="gray" onClick={onClose} disabled={isDeleting}>
           Anulează
         </Button>
-      </Modal.Footer>
+      </ModalFooter>
     </Modal>
   );
 }
