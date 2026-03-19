@@ -324,11 +324,14 @@ class StatsController extends AbstractController
             $count = (int) $row['count'];
             $counts['total'] += $count;
 
-            if ($status === ArticleStatus::PUBLISHED->value) {
+            // Handle both enum instances (Doctrine mapped) and string values
+            $statusValue = $status instanceof ArticleStatus ? $status->value : (string) $status;
+
+            if ($statusValue === ArticleStatus::PUBLISHED->value) {
                 $counts['published'] = $count;
-            } elseif ($status === ArticleStatus::NEW->value) {
+            } elseif ($statusValue === ArticleStatus::NEW->value) {
                 $counts['new'] = $count;
-            } elseif ($status === ArticleStatus::SUBMITTED->value) {
+            } elseif ($statusValue === ArticleStatus::SUBMITTED->value) {
                 $counts['submitted'] = $count;
             }
         }

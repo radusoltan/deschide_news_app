@@ -20,7 +20,7 @@ export default function AdminLayout({
       <Navbar />
       <Sidebar />
 
-      <main className="p-4 md:ml-64 h-auto pt-20">
+      <main className="p-4 md:ml-64 h-auto pt-20 relative z-0">
         {children}
       </main>
     </div>

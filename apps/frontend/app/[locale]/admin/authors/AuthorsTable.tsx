@@ -19,7 +19,8 @@ export default function AuthorsTable({ authors, totalItems, locale }: AuthorsTab
   }
 
   const getStatusBadge = (status?: string, isActive?: boolean) => {
-    if (!isActive) {
+    // Check explicit isActive=false (not undefined/null which means field wasn't returned)
+    if (isActive === false) {
       return <Badge color="gray">Inactive</Badge>;
     }
     switch (status) {
@@ -30,6 +31,10 @@ export default function AuthorsTable({ authors, totalItems, locale }: AuthorsTab
       case 'inactive':
         return <Badge color="gray">Inactive</Badge>;
       default:
+        // If isActive is true (or not returned), default to Active
+        if (isActive === true) {
+          return <Badge color="success">Active</Badge>;
+        }
         return <Badge color="gray">{status || 'Unknown'}</Badge>;
     }
   };

@@ -120,8 +120,8 @@ export async function proxy(request: NextRequest) {
     // For protected routes, do a quick session existence check
     // Full session validation happens in the route handler
     if (isProtectedRoute && !hasSession) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('from', pathWithoutLocale);
+      const loginUrl = new URL(`/${locale}/login`, request.url);
+      loginUrl.searchParams.set('from', `/${locale}${pathWithoutLocale}`);
       return NextResponse.redirect(loginUrl);
     }
 
@@ -130,8 +130,8 @@ export async function proxy(request: NextRequest) {
     if (isProtectedRoute && hasSession) {
       const session = await decrypt(cookie);
       if (!session) {
-        const loginUrl = new URL('/login', request.url);
-        loginUrl.searchParams.set('from', pathWithoutLocale);
+        const loginUrl = new URL(`/${locale}/login`, request.url);
+        loginUrl.searchParams.set('from', `/${locale}${pathWithoutLocale}`);
         return NextResponse.redirect(loginUrl);
       }
     }
