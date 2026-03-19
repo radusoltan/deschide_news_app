@@ -37,9 +37,7 @@ export default function DeleteShortLinkModal({
         throw new Error('Nu sunteți autentificat');
       }
 
-      if (!result.success) {
-        throw new Error(result.error || 'Eroare la ștergerea linkului scurt');
-      }
+      await deleteShortLink(shortLink.id, token);
 
       // Success - close modal and refresh
       onClose();

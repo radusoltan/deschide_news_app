@@ -40,9 +40,11 @@ export default function CreateShortLinkForm({ locale, accessToken }: CreateShort
         throw new Error('Nu sunteți autentificat');
       }
 
-      if (result.shortLink) {
+      const result = await createShortLink(formData, token);
+
+      if (result) {
         // Success - show the created link
-        const fullUrl = `${window.location.origin}${result.shortLink.shortUrl}`;
+        const fullUrl = `${window.location.origin}/s/${result.code}`;
         setCreatedLink(fullUrl);
 
         // Reset form

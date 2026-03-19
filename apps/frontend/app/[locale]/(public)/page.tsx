@@ -7,6 +7,11 @@ import { fetchFrontPageCategories } from '@/lib/api/categories';
 import { fetchLatestArticles } from '@/lib/api/articles';
 import { generateHomepageMetadata } from '@/lib/seo/meta-tags';
 import type { Article } from '@/lib/types/article';
+import { fetchAllSpecialArticles } from '@/lib/api/special-articles';
+import type { SpecialArticle } from '@/components/special/SpecialArticleBanner';
+import { fetchHomepageVideos, fetchVideoShows } from '@/lib/api/video-shows';
+import type { YouTubeVideo, VideoShow } from '@/lib/types/video';
+import { LiveTextHomepage } from '@/components/live';
 
 // Lazy load non-critical components for better initial load performance
 const VideoShowsSlider = dynamic(() => import('@/components/video/VideoShowsSlider').then(mod => ({ default: mod.VideoShowsSlider })), {

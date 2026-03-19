@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import { getTrendingArticles } from '@/lib/api/statistics';
-import { buildLocalizedUrl } from '@/lib/utils/url-builder';
+import { buildLocalizedUrl, buildArticleUrl } from '@/lib/utils/url-builder';
 import type { Locale } from '@/lib/types';
 
 interface Props {

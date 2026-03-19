@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { buildLocalizedUrl } from '@/lib/utils/url-builder';
+import { buildLocalizedUrl, buildArticleUrl } from '@/lib/utils/url-builder';
 import type { Locale } from '@/lib/types';
 
 interface Category {

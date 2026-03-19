@@ -43,6 +43,7 @@ const customJestConfig = {
     '/__tests__/integration/',
     '/__tests__/smoke/',
     '/__tests__/performance/',
+    '/__tests__/diagnostics/',
   ],
 
   // Coverage collection

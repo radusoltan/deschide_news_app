@@ -71,7 +71,4 @@ export {
 export {
   refreshSessionToken,
   updateSessionTokens,
-  validateLoginCredentials,
-  clearSession,
-  checkSessionStatus,
 } from './actions';
