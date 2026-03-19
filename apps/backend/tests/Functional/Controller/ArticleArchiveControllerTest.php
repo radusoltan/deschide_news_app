@@ -614,12 +614,17 @@ class ArticleArchiveControllerTest extends WebTestCase
         $article->setSlug('test-article-' . uniqid());
         $article->setLead('Test lead');
         $article->setContent('Test content');
-        $article->setStatus(ArticleStatus::PUBLISHED);
+        // Use NEW to avoid triggering ArticleWebcodeSubscriber which creates ShortLinks
+        $article->setStatus(ArticleStatus::NEW);
         $article->setPublishedAt(new DateTimeImmutable());
         $article->setCategory($category);
         $article->addAuthor($author);
 
         $this->entityManager->persist($article);
+        $this->entityManager->flush();
+
+        // Now set to PUBLISHED directly (without triggering prePersist subscriber)
+        $article->setStatus(ArticleStatus::PUBLISHED);
         $this->entityManager->flush();
 
         return $article;
