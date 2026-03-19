@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Label, TextInput, Spinner, Alert } from 'flowbite-react';
-import { type CreateShortLinkData } from '@/lib/api/short-links';
-import { createShortLinkAction } from '@/app/actions/short-links';
+import { createShortLink, type CreateShortLinkData } from '@/lib/api/short-links';
 
 interface CreateShortLinkFormProps {
   locale: string;
+  accessToken: string | null;
 }
 
-export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps) {
+export default function CreateShortLinkForm({ locale, accessToken }: CreateShortLinkFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,10 +35,9 @@ export default function CreateShortLinkForm({ locale }: CreateShortLinkFormProps
     setCreatedLink(null);
 
     try {
-      const result = await createShortLinkAction(formData, locale);
-
-      if (!result.success) {
-        throw new Error(result.error || 'Eroare la crearea linkului scurt');
+      const token = accessToken;
+      if (!token) {
+        throw new Error('Nu sunteți autentificat');
       }
 
       if (result.shortLink) {

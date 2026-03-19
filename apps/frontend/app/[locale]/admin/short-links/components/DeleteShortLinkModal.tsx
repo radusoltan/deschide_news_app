@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button, Spinner } from 'flowbite-react';
-import { deleteShortLinkAction } from '@/app/actions/short-links';
+import { deleteShortLink } from '@/lib/api/short-links';
 
 interface DeleteShortLinkModalProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ interface DeleteShortLinkModalProps {
     code: string;
   };
   locale: string;
+  accessToken: string | null;
 }
 
 export default function DeleteShortLinkModal({
@@ -20,6 +21,7 @@ export default function DeleteShortLinkModal({
   onClose,
   shortLink,
   locale,
+  accessToken,
 }: DeleteShortLinkModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +32,10 @@ export default function DeleteShortLinkModal({
     setError(null);
 
     try {
-      const result = await deleteShortLinkAction(shortLink.id, locale);
+      const token = accessToken;
+      if (!token) {
+        throw new Error('Nu sunteți autentificat');
+      }
 
       if (!result.success) {
         throw new Error(result.error || 'Eroare la ștergerea linkului scurt');

@@ -90,7 +90,7 @@ export default async function TagsPage({
       {/* Tag Cloud */}
       {tags.length > 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-          <TagCloud tags={tags} locale={locale} />
+          <TagCloud tags={tags} locale={locale as 'ro' | 'en' | 'ru'} />
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center text-gray-500 dark:text-gray-400">

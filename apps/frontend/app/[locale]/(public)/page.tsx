@@ -4,12 +4,9 @@ import ImportantList from "./components/home/important";
 import LatestNews from "./components/home/latest-news";
 import CategorySection from '@/components/CategorySection';
 import { fetchFrontPageCategories } from '@/lib/api/categories';
-import { fetchAllSpecialArticles } from '@/lib/api/special-articles';
-import { fetchHomepageVideos, fetchVideoShows } from '@/lib/api/video-shows';
+import { fetchLatestArticles } from '@/lib/api/articles';
 import { generateHomepageMetadata } from '@/lib/seo/meta-tags';
-import { SpecialArticlesSection, SpecialArticle } from '@/components/special';
-import { LiveTextHomepage } from '@/components/live';
-import { YouTubeVideo, VideoShow } from '@/lib/types/video';
+import type { Article } from '@/lib/types/article';
 
 // Lazy load non-critical components for better initial load performance
 const VideoShowsSlider = dynamic(() => import('@/components/video/VideoShowsSlider').then(mod => ({ default: mod.VideoShowsSlider })), {
@@ -20,6 +17,10 @@ const TrendingArticles = dynamic(() => import('@/components/public/TrendingArtic
   loading: () => <div className="h-64 bg-gray-50 animate-pulse my-12" />,
 });
 
+const BreakingNewsTicker = dynamic(() => import('@/components/public/BreakingNewsTicker').then(mod => ({ default: mod.BreakingNewsTicker })), {
+  loading: () => null,
+});
+
 type Locale = 'ro' | 'en' | 'ru';
 
 // Generate dynamic metadata based on locale
@@ -28,9 +29,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const validLocale = (['ro', 'en', 'ru'].includes(locale) ? locale : 'ro') as Locale;
   return generateHomepageMetadata(validLocale);
 }
-
-// Homepage uses dynamic metadata based on locale - see generateMetadata below
-// Static metadata removed to allow dynamic generation
 
 // Enable ISR (Incremental Static Regeneration) with 60-second revalidation
 export const revalidate = 60;
@@ -43,15 +41,20 @@ export default async function HomePage({ params }: PageProps) {
   const { locale: localeParam } = await params
   const locale = localeParam as Locale
 
-  // Fetch categories that should appear on front page
+  // Fetch categories and breaking news in parallel
   let frontPageCategories: any[] = [];
-  try {
-    const response = await fetchFrontPageCategories(locale);
-    // Filter only categories with onFrontPage=true (in case API doesn't filter)
-    frontPageCategories = (response.member || []).filter(cat => cat.onFrontPage === true);
-  } catch (error) {
-    console.error('Failed to fetch front page categories:', error);
-    frontPageCategories = [];
+  let breakingArticles: Article[] = [];
+
+  const [categoriesResult, breakingResult] = await Promise.allSettled([
+    fetchFrontPageCategories(locale),
+    fetchLatestArticles(locale, 3), // Use latest for breaking news ticker
+  ]);
+
+  if (categoriesResult.status === 'fulfilled') {
+    frontPageCategories = (categoriesResult.value.member || []).filter(cat => cat.onFrontPage === true);
+  }
+  if (breakingResult.status === 'fulfilled') {
+    breakingArticles = breakingResult.value.member || [];
   }
 
   // Fetch special articles (breaking, alert, flash)
@@ -105,14 +108,8 @@ export default async function HomePage({ params }: PageProps) {
       {/* SEO H1 - visually hidden but present for search engines */}
       <h1 className="sr-only">{h1Titles[locale] || h1Titles.ro}</h1>
 
-      {/* Breaking, Alert, Flash - Special Articles Section */}
-      {specialArticles.length > 0 && (
-        <SpecialArticlesSection
-          articles={specialArticles}
-          locale={locale}
-          className="my-6"
-        />
-      )}
+      {/* Breaking News Ticker */}
+      <BreakingNewsTicker locale={locale} articles={breakingArticles} />
 
       {/* Hero / Important Articles Section */}
       <ImportantList locale={locale} />
@@ -124,7 +121,7 @@ export default async function HomePage({ params }: PageProps) {
       <LatestNews locale={locale} />
 
       {/* Trending Articles Section */}
-      <TrendingArticles locale={locale} limit={5} />
+      <TrendingArticles locale={locale as Locale} limit={5} />
 
       {/* Video Emissions Slider - Shows only when videos are available */}
       {homepageVideos.length > 0 && (

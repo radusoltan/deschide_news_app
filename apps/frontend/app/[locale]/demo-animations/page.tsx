@@ -383,6 +383,9 @@ export default function AnimationsDemoPage() {
           text="Loading demonstration..."
         />
       )}
+
+      {/* Auto-close overlay after 3 seconds */}
+      {showOverlay && void setTimeout(() => setShowOverlay(false), 3000)}
     </div>
   );
 }
