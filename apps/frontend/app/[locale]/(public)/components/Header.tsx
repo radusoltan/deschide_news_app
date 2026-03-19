@@ -23,6 +23,7 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isStiriDropdownOpen, setIsStiriDropdownOpen] = useState(false)
   const [isMobileStiriOpen, setIsMobileStiriOpen] = useState(false)
+  const [isCompact, setIsCompact] = useState(false)
   const stiriDropdownRef = useRef<HTMLLIElement>(null)
 
   // Separate categories into menu items and dropdown items based on inMenu flag
@@ -40,6 +41,22 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Compact header on scroll
+  useEffect(() => {
+    let ticking = false
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setIsCompact(window.scrollY > 60)
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
@@ -53,12 +70,16 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
     <>
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50">
-        <nav className="bg-brand-oxford-900">
+        <nav className={`bg-brand-oxford-900 transition-shadow duration-300 ${isCompact ? 'shadow-lg' : ''}`}>
           <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
             <div className="flex justify-between">
               {/* Logo */}
-              <div className="mx-w-10 flex items-center">
-                <Logo variant="white" size="md" href={buildLocalizedUrl('/', locale as Locale)} />
+              <div className="flex items-center">
+                <Logo
+                  variant="white"
+                  size={isCompact ? 'sm' : 'md'}
+                  href={buildLocalizedUrl('/', locale as Locale)}
+                />
               </div>
 
               <div className="flex flex-row">
@@ -72,7 +93,7 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
                       >
                         <button
                             onClick={() => setIsStiriDropdownOpen(!isStiriDropdownOpen)}
-                            className="flex items-center uppercase gap-1 py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors"
+                            className={`flex items-center uppercase gap-1 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-all ${isCompact ? 'py-2 px-4' : 'py-3 px-6'}`}
                             aria-expanded={isStiriDropdownOpen}
                             aria-haspopup="true"
                         >
@@ -108,7 +129,7 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
                   {menuCategories.map((category) => (
                     <li key={category.id} className="relative border-l border-white/10 hover:bg-brand-oxford-800">
                       <Link
-                        className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors"
+                        className={`block border-b-2 border-transparent hover:text-brand-mindaro-400 transition-all ${isCompact ? 'py-2 px-4' : 'py-3 px-6'}`}
                         href={buildCategoryUrl(category, locale as Locale)}
                       >
                         {category.title}
@@ -116,11 +137,12 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
                     </li>
                   ))}
 
-
-
                   {/* All Articles */}
                   <li className="relative border-l border-white/10 hover:bg-brand-oxford-800">
-                    <Link className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors" href={buildLocalizedUrl('/all', locale as Locale)}>
+                    <Link
+                      className={`block border-b-2 border-transparent hover:text-brand-mindaro-400 transition-all ${isCompact ? 'py-2 px-4' : 'py-3 px-6'}`}
+                      href={buildLocalizedUrl('/all', locale as Locale)}
+                    >
                       {intl.formatMessage({ id: 'nav.all', defaultMessage: 'Toate' })}
                     </Link>
                   </li>
@@ -136,15 +158,16 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
                   {/* Search Button */}
                   <div className="search-dropdown relative border-r lg:border-l border-white/10 hover:bg-brand-oxford-800">
                     <button
-                      className="block py-3 px-6 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-colors"
+                      className={`block border-b-2 border-transparent hover:text-brand-mindaro-400 transition-all ${isCompact ? 'py-2 px-4' : 'py-3 px-6'}`}
                       onClick={() => setIsSearchOpen(!isSearchOpen)}
+                      aria-label={intl.formatMessage({ id: 'common.search' })}
                     >
                       {!isSearchOpen ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-search" viewBox="0 0 16 16">
-                          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"></path>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
                         </svg>
                       ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-x-lg" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                           <path fillRule="evenodd" d="M13.854 2.146a.5.5 0 0 1 0 .708l-11 11a.5.5 0 0 1-.708-.708l11-11a.5.5 0 0 1 .708 0Z"/>
                           <path fillRule="evenodd" d="M2.146 2.146a.5.5 0 0 0 0 .708l11 11a.5.5 0 0 0 .708-.708l-11-11a.5.5 0 0 0-.708 0Z"/>
                         </svg>
@@ -164,8 +187,8 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
                           />
                           <div className="flex -mr-px">
                             <button className="flex items-center py-2 px-5 -ml-1 leading-5 text-white bg-brand-oxford-900 hover:bg-brand-tomato-500 transition-colors focus:outline-none focus:ring-0" type="submit">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-search" viewBox="0 0 16 16">
-                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"></path>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
                               </svg>
                             </button>
                           </div>
@@ -178,12 +201,12 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
                   <div className="relative hover:bg-brand-oxford-800 block lg:hidden">
                     <button
                       type="button"
-                      className="menu-mobile block py-3 px-6 border-b-2 border-transparent font-heading uppercase text-sm hover:text-brand-mindaro-400 transition-colors"
+                      className={`menu-mobile block border-b-2 border-transparent font-heading uppercase text-sm hover:text-brand-mindaro-400 transition-all ${isCompact ? 'py-2 px-4' : 'py-3 px-6'}`}
                       onClick={() => setIsMobileMenuOpen(true)}
                     >
                       <span className="sr-only">Mobile menu</span>
                       <svg className="inline-block h-6 w-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                       </svg>
                       {intl.formatMessage({ id: 'common.menu' })}
                     </button>
@@ -205,8 +228,8 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
           >
             <div className="cursor-pointer text-white absolute right-64 p-2 hover:text-brand-mindaro-400 transition-colors">
               <svg className="bi bi-x" width="2rem" height="2rem" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" d="M11.854 4.146a.5.5 0 010 .708l-7 7a.5.5 0 01-.708-.708l7-7a.5.5 0 01.708 0z" clipRule="evenodd"></path>
-                <path fillRule="evenodd" d="M4.146 4.146a.5.5 0 000 .708l7 7a.5.5 0 00.708-.708l-7-7a.5.5 0 00-.708 0z" clipRule="evenodd"></path>
+                <path fillRule="evenodd" d="M11.854 4.146a.5.5 0 010 .708l-7 7a.5.5 0 01-.708-.708l7-7a.5.5 0 01.708 0z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M4.146 4.146a.5.5 0 000 .708l7 7a.5.5 0 00.708-.708l-7-7a.5.5 0 00-.708 0z" clipRule="evenodd" />
               </svg>
             </div>
           </div>

@@ -4,7 +4,9 @@ import ImportantList from "./components/home/important";
 import LatestNews from "./components/home/latest-news";
 import CategorySection from '@/components/CategorySection';
 import { fetchFrontPageCategories } from '@/lib/api/categories';
+import { fetchLatestArticles } from '@/lib/api/articles';
 import { generateHomepageMetadata } from '@/lib/seo/meta-tags';
+import type { Article } from '@/lib/types/article';
 
 // Lazy load non-critical components for better initial load performance
 const NewsSlider = dynamic(() => import('./components/NewsSlider'), {
@@ -13,6 +15,10 @@ const NewsSlider = dynamic(() => import('./components/NewsSlider'), {
 
 const TrendingArticles = dynamic(() => import('@/components/public/TrendingArticles').then(mod => ({ default: mod.TrendingArticles })), {
   loading: () => <div className="h-64 bg-gray-50 animate-pulse my-12" />,
+});
+
+const BreakingNewsTicker = dynamic(() => import('@/components/public/BreakingNewsTicker').then(mod => ({ default: mod.BreakingNewsTicker })), {
+  ssr: false,
 });
 
 type Locale = 'ro' | 'en' | 'ru';
@@ -24,9 +30,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return generateHomepageMetadata(validLocale);
 }
 
-// Homepage uses dynamic metadata based on locale - see generateMetadata below
-// Static metadata removed to allow dynamic generation
-
 // Enable ISR (Incremental Static Regeneration) with 60-second revalidation
 export const revalidate = 60;
 
@@ -37,15 +40,20 @@ interface PageProps {
 export default async function HomePage({ params }: PageProps) {
   const { locale } = await params
 
-  // Fetch categories that should appear on front page
+  // Fetch categories and breaking news in parallel
   let frontPageCategories: any[] = [];
-  try {
-    const response = await fetchFrontPageCategories(locale);
-    // Filter only categories with onFrontPage=true (in case API doesn't filter)
-    frontPageCategories = (response.member || []).filter(cat => cat.onFrontPage === true);
-  } catch (error) {
-    console.error('Failed to fetch front page categories:', error);
-    frontPageCategories = [];
+  let breakingArticles: Article[] = [];
+
+  const [categoriesResult, breakingResult] = await Promise.allSettled([
+    fetchFrontPageCategories(locale),
+    fetchLatestArticles(locale, 3), // Use latest for breaking news ticker
+  ]);
+
+  if (categoriesResult.status === 'fulfilled') {
+    frontPageCategories = (categoriesResult.value.member || []).filter(cat => cat.onFrontPage === true);
+  }
+  if (breakingResult.status === 'fulfilled') {
+    breakingArticles = breakingResult.value.member || [];
   }
 
   // H1 titles per locale for SEO
@@ -59,11 +67,9 @@ export default async function HomePage({ params }: PageProps) {
     <>
       {/* SEO H1 - visually hidden but present for search engines */}
       <h1 className="sr-only">{h1Titles[locale] || h1Titles.ro}</h1>
-      {/* Breaking, Alert Flash */}
 
-      <div className="xl:container mx-auto h-18 bg-red-300 my-6 rounded ">BREAKING</div>
-      <div className="xl:container mx-auto h-18 bg-yellow-300 my-6 rounded ">ALERT</div>
-      <div className="xl:container mx-auto h-18 bg-red-300 my-6 rounded ">FLASH</div>
+      {/* Breaking News Ticker */}
+      <BreakingNewsTicker locale={locale} articles={breakingArticles} />
 
       {/* Hero / Important Articles Section */}
       <ImportantList locale={locale} />
@@ -72,7 +78,7 @@ export default async function HomePage({ params }: PageProps) {
       <LatestNews locale={locale} />
 
       {/* Trending Articles Section */}
-      <TrendingArticles locale={locale} limit={5} />
+      <TrendingArticles locale={locale as Locale} limit={5} />
 
       {/* Dynamic Category Sections - Only categories with onFrontPage=true */}
       {frontPageCategories.map((category, index) => (
