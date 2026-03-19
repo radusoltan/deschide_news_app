@@ -1,0 +1,71 @@
+# Telegram Instant View Template for Deschide News
+# Template Version: 2.1
+# Domain: deschide.md
+#
+# HTML Structure Expected:
+# <article>
+#   <header>
+#     <h1>Title</h1>
+#     <address>Author</address>
+#     <time datetime="...">Date</time>
+#   </header>
+#   <figure>
+#     <img src="..." alt="..." />
+#     <figcaption>Caption</figcaption>
+#   </figure>
+#   <div class="article-body">Content</div>
+# </article>
+
+~version: "2.1"
+
+# Article page detection
+?path: /[a-z]{2}/[^/]+/[^/]+$
+
+# Title extraction
+title: //article//header//h1
+
+# Subtitle/lead from the paragraph after h1
+subtitle: //article//header//p
+
+# Author name
+author: //article//header//address//a
+
+# Author URL
+author_url: //article//header//address//a/@href
+
+# Published date
+published_date: //article//header//time/@datetime
+
+# Cover image - featured image
+cover: //article//figure[1]//img
+
+# Image caption
+image_caption: //article//figure//figcaption
+
+# Article body content
+body: //article//*[has-class("prose")]
+
+# Remove non-content elements
+@remove: //header[has-class("fixed")]
+@remove: //footer
+@remove: //aside
+@remove: //nav
+@remove: //*[has-class("sr-only")]
+@remove: //*[has-class("breadcrumb")]
+@remove: //*[has-class("related-articles")]
+@remove: //*[has-class("social-share")]
+@remove: //*[has-class("table-of-contents")]
+@remove: //*[has-class("lightbox")]
+
+# Handle embedded images in body
+@inline: //div[has-class("prose")]//figure
+@inline: //div[has-class("prose")]//img
+
+# Handle blockquotes
+@inline: //div[has-class("prose")]//blockquote
+
+# Related articles are already removed via aside
+# Sidebar content is already removed via aside
+
+# Site name for IV footer
+site_name: "Deschide News"
