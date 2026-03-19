@@ -11,6 +11,7 @@ export const mockCategory: Category = {
   title: 'Politics',
   slug: 'politics',
   description: 'Political news and analysis',
+  inMenu: true,
 };
 
 export const mockCategories: Category[] = [
@@ -22,6 +23,7 @@ export const mockCategories: Category[] = [
     title: 'Economy',
     slug: 'economy',
     description: 'Economic news and financial updates',
+    inMenu: true,
   },
   {
     '@id': '/api/categories/3',
@@ -30,6 +32,7 @@ export const mockCategories: Category[] = [
     title: 'Technology',
     slug: 'technology',
     description: 'Tech news and innovation',
+    inMenu: true,
   },
   {
     '@id': '/api/categories/4',
@@ -38,6 +41,7 @@ export const mockCategories: Category[] = [
     title: 'Society',
     slug: 'society',
     description: 'Social issues and community news',
+    inMenu: true,
   },
 ];
 

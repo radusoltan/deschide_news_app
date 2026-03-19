@@ -78,5 +78,7 @@ export function buildLocalizedUrl(
   // Remove leading slash if present
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;
 
-  return `/${localePrefix}${cleanPath}`;
+  const result = `/${localePrefix}${cleanPath}`;
+  // Remove trailing slash (except for root '/')
+  return result.length > 1 && result.endsWith('/') ? result.slice(0, -1) : result;
 }

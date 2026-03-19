@@ -185,10 +185,10 @@ describe('buildArticleBreadcrumbs Helper', () => {
       const breadcrumbs = buildArticleBreadcrumbs(mockArticle, 'ro');
 
       expect(breadcrumbs.length).toBe(3);
-      expect(breadcrumbs[0]).toEqual({ label: 'Acasă', href: '/ro' });
+      expect(breadcrumbs[0]).toEqual({ label: 'Acasă', href: '/' });
       expect(breadcrumbs[1]).toEqual({
         label: 'Politics',
-        href: '/ro/politics',
+        href: '/politics',
       });
       expect(breadcrumbs[2]).toEqual({ label: 'Test Article Title' });
     });
@@ -232,7 +232,7 @@ describe('buildArticleBreadcrumbs Helper', () => {
       const breadcrumbs = buildArticleBreadcrumbs(articleWithoutCategory, 'ro');
 
       expect(breadcrumbs.length).toBe(2);
-      expect(breadcrumbs[0]).toEqual({ label: 'Acasă', href: '/ro' });
+      expect(breadcrumbs[0]).toEqual({ label: 'Acasă', href: '/' });
       expect(breadcrumbs[1]).toEqual({ label: 'Test Article Title' });
     });
   });
@@ -247,7 +247,7 @@ describe('buildArticleBreadcrumbs Helper', () => {
       const breadcrumbs = buildArticleBreadcrumbs(articleWithNullCategory, 'ro');
 
       expect(breadcrumbs.length).toBe(2);
-      expect(breadcrumbs[0]).toEqual({ label: 'Acasă', href: '/ro' });
+      expect(breadcrumbs[0]).toEqual({ label: 'Acasă', href: '/' });
       expect(breadcrumbs[1]).toEqual({ label: 'Test Article Title' });
     });
   });

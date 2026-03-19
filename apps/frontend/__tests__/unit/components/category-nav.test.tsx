@@ -57,10 +57,10 @@ describe('CategoryNav Component', () => {
       );
 
       const links = container.querySelectorAll('.hidden.md\\:block a');
-      expect(links[0]).toHaveAttribute('href', '/ro/politics');
-      expect(links[1]).toHaveAttribute('href', '/ro/economy');
-      expect(links[2]).toHaveAttribute('href', '/ro/technology');
-      expect(links[3]).toHaveAttribute('href', '/ro/society');
+      expect(links[0]).toHaveAttribute('href', '/politics');
+      expect(links[1]).toHaveAttribute('href', '/economy');
+      expect(links[2]).toHaveAttribute('href', '/technology');
+      expect(links[3]).toHaveAttribute('href', '/society');
     });
 
     it('should build correct category URLs for English locale', () => {
@@ -81,7 +81,7 @@ describe('CategoryNav Component', () => {
         />
       );
 
-      const activeLink = container.querySelector('.hidden.md\\:block a.bg-red-600');
+      const activeLink = container.querySelector('.hidden.md\\:block a.bg-brand-tomato');
       expect(activeLink).toBeInTheDocument();
       expect(activeLink).toHaveTextContent('Politics');
     });
@@ -91,7 +91,7 @@ describe('CategoryNav Component', () => {
         <CategoryNav categories={mockCategories} locale="ro" />
       );
 
-      const activeLink = container.querySelector('.hidden.md\\:block a.bg-red-600');
+      const activeLink = container.querySelector('.hidden.md\\:block a.bg-brand-tomato');
       expect(activeLink).not.toBeInTheDocument();
     });
   });
@@ -106,12 +106,12 @@ describe('CategoryNav Component', () => {
       expect(button).toBeInTheDocument();
     });
 
-    it('should show "Categories" text when no category is active', () => {
+    it('should show "Categorii" text when no category is active', () => {
       render(
         <CategoryNav categories={mockCategories} locale="ro" />
       );
 
-      expect(screen.getByText('Categories')).toBeInTheDocument();
+      expect(screen.getByText('Categorii')).toBeInTheDocument();
     });
 
     it('should show active category title in toggle button', () => {
@@ -180,7 +180,7 @@ describe('CategoryNav Component', () => {
       const button = screen.getByRole('button', { name: /toggle category menu/i });
       fireEvent.click(button);
 
-      const activeLink = container.querySelector('.md\\:hidden .bg-red-50.text-red-600');
+      const activeLink = container.querySelector('.md\\:hidden .bg-brand-tomato-50.text-brand-tomato-500');
       expect(activeLink).toBeInTheDocument();
       expect(activeLink).toHaveTextContent('Economy');
     });
@@ -266,7 +266,8 @@ describe('CategoryNav Component', () => {
         );
 
         const firstLink = container.querySelector('.hidden.md\\:block a');
-        expect(firstLink).toHaveAttribute('href', `/${locale}/politics`);
+        const expectedHref = locale === 'ro' ? '/politics' : `/${locale}/politics`;
+        expect(firstLink).toHaveAttribute('href', expectedHref);
       });
     });
   });
