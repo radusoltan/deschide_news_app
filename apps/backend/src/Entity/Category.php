@@ -91,6 +91,15 @@ class Category implements Translatable
     #[Groups(['category:read', 'article:read'])]
     private ?string $slug = null;
 
+    // Parent-child hierarchy
+    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'children')]
+    #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['category:read', 'category:write'])]
+    private ?self $parent = null;
+
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent')]
+    private Collection $children;
+
     // Relationships
     #[ORM\OneToMany(targetEntity: Article::class, mappedBy: 'category')]
     private Collection $articles;
@@ -131,6 +140,7 @@ class Category implements Translatable
     public function __construct()
     {
         $this->articles = new ArrayCollection();
+        $this->children = new ArrayCollection();
     }
 
     // Getters and setters
@@ -240,6 +250,26 @@ class Category implements Translatable
         $this->inFooterMenu = $inFooterMenu;
 
         return $this;
+    }
+
+    public function getParent(): ?self
+    {
+        return $this->parent;
+    }
+
+    public function setParent(?self $parent): self
+    {
+        $this->parent = $parent;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, self>
+     */
+    public function getChildren(): Collection
+    {
+        return $this->children;
     }
 
     public function getCreatedAt(): ?DateTimeImmutable

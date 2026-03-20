@@ -72,6 +72,9 @@ export default function CategoriesTable({ categories, totalItems, locale }: Cate
                 Slug
               </th>
               <th scope="col" className="px-6 py-3">
+                Parent
+              </th>
+              <th scope="col" className="px-6 py-3">
                 Status
               </th>
               <th scope="col" className="px-6 py-3">
@@ -95,10 +98,20 @@ export default function CategoriesTable({ categories, totalItems, locale }: Cate
                   <Checkbox />
                 </td>
                 <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                  {category.parent && (
+                    <span className="text-gray-400 dark:text-gray-500 mr-1">&mdash;</span>
+                  )}
                   {category.title}
                 </td>
                 <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
                   {category.slug}
+                </td>
+                <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
+                  {category.parent
+                    ? (typeof category.parent === 'object' && category.parent !== null
+                        ? category.parent.title || '-'
+                        : category.parent)
+                    : <span className="text-gray-300 dark:text-gray-600">-</span>}
                 </td>
                 <td className="px-6 py-4">{getStatusBadge(category.status)}</td>
                 <td className="px-6 py-4">

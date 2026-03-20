@@ -78,6 +78,17 @@ final class CategoryProcessor implements ProcessorInterface
                 $existingEntity->setStatus($data->getStatus());
                 $existingEntity->setOnFrontPage($data->isOnFrontPage());
 
+                // Handle parent (get managed entity)
+                if ($data->getParent()) {
+                    $parentId = $data->getParent()->getId();
+                    if ($parentId && $parentId !== $existingEntity->getId()) {
+                        $managedParent = $this->entityManager->getRepository(Category::class)->find($parentId);
+                        $existingEntity->setParent($managedParent);
+                    }
+                } else {
+                    $existingEntity->setParent(null);
+                }
+
                 // Use existing entity instead of deserialized one
                 $data = $existingEntity;
             }
@@ -87,6 +98,16 @@ final class CategoryProcessor implements ProcessorInterface
             if ($isNew) {
                 // CREATE: New entity - always save in default locale
                 $data->setTranslatableLocale('ro');
+
+                // Handle parent (get managed entity)
+                if ($data->getParent()) {
+                    $parentId = $data->getParent()->getId();
+                    if ($parentId) {
+                        $managedParent = $this->entityManager->getRepository(Category::class)->find($parentId);
+                        $data->setParent($managedParent);
+                    }
+                }
+
                 $this->entityManager->persist($data);
                 $this->entityManager->flush();
 

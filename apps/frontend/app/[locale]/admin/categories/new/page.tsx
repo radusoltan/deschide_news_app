@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import CategoryForm from '../components/CategoryForm';
+import { getCategories } from '@/lib/dal';
 
 interface NewCategoryPageProps {
   params: Promise<{
@@ -9,6 +10,15 @@ interface NewCategoryPageProps {
 
 export default async function NewCategoryPage({ params }: NewCategoryPageProps) {
   const { locale } = await params;
+
+  // Fetch categories for parent dropdown
+  let categories: any[] = [];
+  try {
+    const data = await getCategories({ locale, itemsPerPage: 100 });
+    categories = (data.member || []).map((c: any) => ({ id: c.id, title: c.title }));
+  } catch (err) {
+    console.error('Failed to fetch categories for parent dropdown:', err);
+  }
 
   return (
     <div className="p-4">
@@ -35,7 +45,7 @@ export default async function NewCategoryPage({ params }: NewCategoryPageProps) 
 
       {/* Category Form */}
       <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-6">
-        <CategoryForm locale={locale} />
+        <CategoryForm locale={locale} categories={categories} />
       </div>
     </div>
   );

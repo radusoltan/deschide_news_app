@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import CategoryForm from '../../components/CategoryForm';
-import { getCategory } from '@/lib/dal';
+import TranslationTabs from './components/TranslationTabs';
+import { getCategory, getCategories } from '@/lib/dal';
 
 interface EditCategoryPageProps {
   params: Promise<{
@@ -27,6 +28,26 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
     notFound();
   }
 
+  // Fetch all categories for parent dropdown
+  let categories: any[] = [];
+  try {
+    const data = await getCategories({ locale, itemsPerPage: 100 });
+    categories = (data.member || []).map((c: any) => ({ id: c.id, title: c.title }));
+  } catch (err) {
+    console.error('Failed to fetch categories for parent dropdown:', err);
+  }
+
+  // Extract parent ID
+  let parentId: number | null = null;
+  if (category.parent) {
+    if (typeof category.parent === 'string') {
+      const match = category.parent.match(/\/(\d+)$/);
+      parentId = match ? parseInt(match[1], 10) : null;
+    } else if (typeof category.parent === 'object' && category.parent !== null && 'id' in category.parent) {
+      parentId = (category.parent as { id: number }).id;
+    }
+  }
+
   return (
     <div className="p-4">
       {/* Page Header */}
@@ -50,16 +71,25 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
         </p>
       </div>
 
+      {/* Translation Language Tabs */}
+      <TranslationTabs
+        entityId={categoryId}
+        activeLocale={locale}
+        basePath="categories"
+      />
+
       {/* Category Form */}
       <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-6">
         <CategoryForm
           locale={locale}
+          categories={categories}
           category={{
             id: category.id,
             title: category.title,
             slug: category.slug,
             status: category.status || 'active',
             onFrontPage: category.onFrontPage || false,
+            parentId,
           }}
         />
       </div>

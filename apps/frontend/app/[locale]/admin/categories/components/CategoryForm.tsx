@@ -6,18 +6,25 @@ import { Label, TextInput, Select, Button, Spinner, Checkbox } from 'flowbite-re
 import { createCategoryAction, updateCategoryAction } from '@/app/actions/categories';
 import { generateSlug } from '@/lib/utils/slug';
 
+interface ParentCategory {
+  id: number;
+  title: string;
+}
+
 interface CategoryFormProps {
   locale: string;
+  categories?: ParentCategory[];
   category?: {
     id?: number;
     title?: string;
     slug?: string;
     status?: string;
     onFrontPage?: boolean;
+    parentId?: number | null;
   };
 }
 
-export default function CategoryForm({ locale, category }: CategoryFormProps) {
+export default function CategoryForm({ locale, categories = [], category }: CategoryFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +33,11 @@ export default function CategoryForm({ locale, category }: CategoryFormProps) {
     slug: category?.slug || '',
     status: category?.status || 'active',
     onFrontPage: category?.onFrontPage || false,
+    parent: category?.parentId?.toString() || '',
   });
+
+  // Exclude current category from parent options (prevent self-reference)
+  const parentOptions = categories.filter(c => c.id !== category?.id);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,6 +45,8 @@ export default function CategoryForm({ locale, category }: CategoryFormProps) {
 
     try {
       const formDataObj = new FormData(e.currentTarget);
+      // Ensure parent field is included
+      formDataObj.set('parent', formData.parent);
 
       let result;
       if (category?.id) {
@@ -108,6 +121,28 @@ export default function CategoryForm({ locale, category }: CategoryFormProps) {
         />
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
           URL-friendly version of the title
+        </p>
+      </div>
+
+      {/* Parent Category */}
+      <div>
+        <Label htmlFor="parent">Parent Category</Label>
+        <Select
+          id="parent"
+          name="parent"
+          value={formData.parent}
+          onChange={(e) => setFormData({ ...formData, parent: e.target.value })}
+          disabled={loading}
+        >
+          <option value="">-- No parent (top-level) --</option>
+          {parentOptions.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.title}
+            </option>
+          ))}
+        </Select>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Select a parent to create a subcategory, or leave empty for a top-level category
         </p>
       </div>
 

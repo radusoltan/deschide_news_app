@@ -38,6 +38,7 @@ export async function createCategoryAction(
   const slug = formData.get('slug') as string;
   const status = formData.get('status') as string;
   const onFrontPage = formData.get('onFrontPage') === 'on';
+  const parentId = formData.get('parent') as string;
 
   // Validate required fields
   const errors: CategoryFormState['errors'] = {};
@@ -55,15 +56,20 @@ export async function createCategoryAction(
   }
 
   try {
-    await createCategory(
-      {
-        title: title.trim(),
-        slug: slug.trim(),
-        status: status || 'active',
-        onFrontPage,
-      },
-      locale
-    );
+    const categoryData: any = {
+      title: title.trim(),
+      slug: slug.trim(),
+      status: status || 'active',
+      onFrontPage,
+    };
+
+    if (parentId && parentId.trim() !== '') {
+      categoryData.parent = `/api/categories/${parentId}`;
+    } else {
+      categoryData.parent = null;
+    }
+
+    await createCategory(categoryData, locale);
 
     revalidatePath(`/[locale]/admin/categories`, 'page');
 
@@ -106,17 +112,23 @@ export async function updateCategoryAction(
     return { errors };
   }
 
+  const parentIdUpdate = formData.get('parent') as string;
+
   try {
-    await updateCategory(
-      id,
-      {
-        title: title.trim(),
-        slug: slug.trim(),
-        status: status || 'active',
-        onFrontPage,
-      },
-      locale
-    );
+    const updateData: any = {
+      title: title.trim(),
+      slug: slug.trim(),
+      status: status || 'active',
+      onFrontPage,
+    };
+
+    if (parentIdUpdate && parentIdUpdate.trim() !== '') {
+      updateData.parent = `/api/categories/${parentIdUpdate}`;
+    } else {
+      updateData.parent = null;
+    }
+
+    await updateCategory(id, updateData, locale);
 
     revalidatePath(`/[locale]/admin/categories`, 'page');
     revalidatePath(`/[locale]/admin/categories/[id]`, 'page');

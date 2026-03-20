@@ -324,6 +324,7 @@ export interface Category {
   slug: string;
   status?: string;
   onFrontPage?: boolean;
+  parent?: any;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -393,6 +394,7 @@ export async function createCategory(
     slug: string;
     status?: string;
     onFrontPage?: boolean;
+    parent?: string | null;
   },
   locale: string = 'ro'
 ): Promise<Category> {
@@ -429,6 +431,7 @@ export async function updateCategory(
     slug?: string;
     status?: string;
     onFrontPage?: boolean;
+    parent?: string | null;
   },
   locale: string = 'ro'
 ): Promise<Category> {
