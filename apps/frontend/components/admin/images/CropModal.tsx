@@ -135,12 +135,9 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
     }
   }, []);
 
-  // Get image URL from CDN using the path property which includes the correct subdirectory
-  const imageUrl = image.path
-    ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/${image.path}`
-    : (image.filename
-        ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${image.filename}`
-        : '');
+  // Proxy image through Next.js to avoid CORS issues with canvas-based cropper
+  const imagePath = image.path || (image.filename ? `images/${image.filename}` : '');
+  const imageUrl = imagePath ? `/api/images/proxy?path=${encodeURIComponent(imagePath)}` : '';
 
   return (
     <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
