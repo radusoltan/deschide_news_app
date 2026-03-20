@@ -108,10 +108,10 @@ async function authenticatedFetch(
   const { locale, headers, ...fetchOptions } = options;
 
   const requestHeaders: Record<string, string> = {
-    ...(headers as Record<string, string>),
     'Authorization': `Bearer ${accessToken}`,
     'Content-Type': 'application/ld+json',
     'Accept': 'application/ld+json',
+    ...(headers as Record<string, string>),
   };
 
   if (locale) {
@@ -614,5 +614,149 @@ export async function deleteAuthor(id: number, locale: string = 'ro'): Promise<v
 
   if (!response.ok) {
     throw new Error(`Failed to delete author: ${response.status}`);
+  }
+}
+
+// ============================================================================
+// Users Data Access
+// ============================================================================
+
+export interface User {
+  '@id': string;
+  '@type': string;
+  id: number;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  roles: string[];
+  active: boolean;
+}
+
+export interface UsersCollection {
+  '@context': string;
+  '@id': string;
+  '@type': string;
+  totalItems: number;
+  member: User[];
+}
+
+export async function getUsers(
+  params: { page?: number; itemsPerPage?: number } = {}
+): Promise<UsersCollection> {
+  const { page = 1, itemsPerPage = 20 } = params;
+
+  const queryParams = new URLSearchParams();
+  queryParams.set('page', page.toString());
+  queryParams.set('itemsPerPage', itemsPerPage.toString());
+
+  const response = await authenticatedFetch(
+    `/api/users?${queryParams.toString()}`,
+    { cache: 'no-store' }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to fetch users: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function getUser(id: number): Promise<User> {
+  const response = await authenticatedFetch(`/api/users/${id}`, {
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `Failed to fetch user: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function createUser(data: {
+  username: string;
+  email: string;
+  plainPassword: string;
+  roles: string[];
+  firstName?: string;
+  lastName?: string;
+  isActive?: boolean;
+}): Promise<User> {
+  const response = await authenticatedFetch('/api/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let error;
+    try {
+      error = JSON.parse(errorText);
+    } catch {
+      error = { message: errorText };
+    }
+    throw new Error(error.detail || error['hydra:description'] || error.message || `Failed to create user: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function updateUser(
+  id: number,
+  data: {
+    username?: string;
+    email?: string;
+    plainPassword?: string;
+    roles?: string[];
+    firstName?: string;
+    lastName?: string;
+    isActive?: boolean;
+  }
+): Promise<User> {
+  // Remove empty plainPassword so it doesn't trigger validation
+  const payload = { ...data };
+  if (!payload.plainPassword) {
+    delete payload.plainPassword;
+  }
+
+  const response = await authenticatedFetch(`/api/users/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/merge-patch+json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let error;
+    try {
+      error = JSON.parse(errorText);
+    } catch {
+      error = { message: errorText };
+    }
+    throw new Error(error.detail || error['hydra:description'] || error.message || `Failed to update user: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function deleteUser(id: number): Promise<void> {
+  const response = await authenticatedFetch(`/api/users/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let error;
+    try {
+      error = JSON.parse(errorText);
+    } catch {
+      error = { message: errorText };
+    }
+    throw new Error(error.detail || error['hydra:description'] || error.message || `Failed to delete user: ${response.status}`);
   }
 }

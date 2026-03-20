@@ -4,38 +4,100 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Repository\UserRepository;
+use App\State\UserProcessor;
 use Deprecated;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USERNAME', fields: ['username'])]
+#[UniqueEntity('username', message: 'This username is already taken.')]
+#[UniqueEntity('email', message: 'This email is already in use.')]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            uriTemplate: '/users',
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['user:read']],
+        ),
+        new Get(
+            uriTemplate: '/users/{id}',
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['user:read']],
+        ),
+        new Post(
+            uriTemplate: '/users',
+            security: "is_granted('ROLE_ADMIN')",
+            processor: UserProcessor::class,
+            normalizationContext: ['groups' => ['user:read']],
+            denormalizationContext: ['groups' => ['user:write']],
+            validationContext: ['groups' => ['Default', 'user:create']],
+        ),
+        new Patch(
+            uriTemplate: '/users/{id}',
+            security: "is_granted('ROLE_ADMIN')",
+            processor: UserProcessor::class,
+            normalizationContext: ['groups' => ['user:read']],
+            denormalizationContext: ['groups' => ['user:write']],
+        ),
+        new Delete(
+            uriTemplate: '/users/{id}',
+            security: "is_granted('ROLE_ADMIN')",
+            processor: UserProcessor::class,
+        ),
+    ],
+    order: ['id' => 'DESC'],
+    paginationItemsPerPage: 20,
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 180)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $username = null;
 
     #[ORM\Column(length: 180, unique: true)]
+    #[Assert\NotBlank]
+    #[Assert\Email]
+    #[Assert\Length(max: 180)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $email = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Assert\Length(max: 100)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Assert\Length(max: 100)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $lastName = null;
 
     /**
      * @var list<string> The user roles
      */
     #[ORM\Column]
+    #[Groups(['user:read', 'user:write'])]
     private array $roles = [];
 
     /**
@@ -43,6 +105,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private ?string $password = null;
+
+    /**
+     * Plain password - not persisted, used only for input.
+     */
+    #[Assert\NotBlank(groups: ['user:create'])]
+    #[Assert\Length(min: 8, minMessage: 'Password must be at least 8 characters.')]
+    #[Groups(['user:write'])]
+    private ?string $plainPassword = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => true])]
+    #[Groups(['user:read', 'user:write'])]
+    private bool $isActive = true;
 
     /**
      * Ensure the session doesn't contain actual password hashes by CRC32C-hashing them, as supported since Symfony 7.3.
@@ -89,6 +163,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      *
      * @see UserInterface
      */
+    #[Ignore]
     public function getUserIdentifier(): string
     {
         return (string) $this->username;
@@ -119,6 +194,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see PasswordAuthenticatedUserInterface
      */
+    #[Ignore]
     public function getPassword(): ?string
     {
         return $this->password;
@@ -127,6 +203,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }
@@ -155,9 +243,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read', 'user:write'])]
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+
+        return $this;
+    }
+
     #[Deprecated]
     public function eraseCredentials(): void
     {
-        // @deprecated, to be removed when upgrading to Symfony 8
+        $this->plainPassword = null;
     }
 }
