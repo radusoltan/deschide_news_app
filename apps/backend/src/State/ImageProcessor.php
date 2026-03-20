@@ -15,6 +15,7 @@ use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 /**
  * @implements ProcessorInterface<Image>
@@ -59,13 +60,31 @@ final class ImageProcessor implements ProcessorInterface
         // Handle DELETE operation
         if ($operation instanceof DeleteOperationInterface) {
             if ($data instanceof Image) {
-                // Check if image is attached to any articles
+                // Check if image is attached to any articles — return 409 Conflict
                 $articleImages = $data->getArticleImages();
                 if ($articleImages && \count($articleImages) > 0) {
-                    throw new RuntimeException(\sprintf('Cannot delete image: it is attached to %d article(s). Please detach it from all articles first.', \count($articleImages)));
+                    throw new ConflictHttpException(\sprintf('Cannot delete image: it is attached to %d article(s). Please detach it from all articles first.', \count($articleImages)));
                 }
 
-                // TODO: Delete physical file from storage
+                // Delete physical files from storage
+                $uploadsDir = $this->getUploadsDir();
+                if ($uploadsDir && $data->getPath()) {
+                    $filePath = $uploadsDir . '/' . $data->getPath();
+                    if (file_exists($filePath)) {
+                        @unlink($filePath);
+                    }
+                }
+
+                // Delete associated thumbnails from disk
+                foreach ($data->getThumbnails() as $thumbnail) {
+                    if ($uploadsDir && $thumbnail->getPath()) {
+                        $thumbPath = $uploadsDir . '/' . $thumbnail->getPath();
+                        if (file_exists($thumbPath)) {
+                            @unlink($thumbPath);
+                        }
+                    }
+                }
+
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
             }
@@ -123,6 +142,14 @@ final class ImageProcessor implements ProcessorInterface
 
             $this->entityManager->persist($data);
             $this->entityManager->flush();
+
+            // Auto-generate thumbnails for all active profiles
+            try {
+                $this->imageService->generateAllThumbnails($data);
+            } catch (\Throwable $e) {
+                // Log but don't fail the upload — thumbnails can be regenerated later
+                error_log('Thumbnail generation failed for image ' . $data->getId() . ': ' . $e->getMessage());
+            }
 
             // If created with non-default locale, also add translation
             if ($locale !== 'ro') {
@@ -285,5 +312,13 @@ final class ImageProcessor implements ProcessorInterface
 
         // Return array of thumbnails (will be serialized with 'thumbnail:read' group)
         return $thumbnails;
+    }
+
+    private function getUploadsDir(): ?string
+    {
+        $projectDir = \dirname(__DIR__, 2);
+        $uploadsDir = $projectDir . '/public/uploads';
+
+        return is_dir($uploadsDir) ? $uploadsDir : null;
     }
 }

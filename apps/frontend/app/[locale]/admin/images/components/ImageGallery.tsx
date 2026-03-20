@@ -295,9 +295,12 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
             if (image.contentUrl) {
               // contentUrl already contains the full path
               imageUrl = `${cdnUrl}${image.contentUrl}`;
+            } else if (image.path) {
+              // Use path field which contains correct relative path for both old and new images
+              imageUrl = `${cdnUrl}/uploads/${image.path}`;
             } else if (image.filename) {
-              // Build URL from filename - images are stored in /uploads/images/
-              imageUrl = `${cdnUrl}/uploads/images/originals/${image.filename}`;
+              // Fallback to filename
+              imageUrl = `${cdnUrl}/uploads/images/${image.filename}`;
             }
 
             return (

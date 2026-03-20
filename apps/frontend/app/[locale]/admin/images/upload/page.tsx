@@ -26,6 +26,7 @@ export default function UploadImagesPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadMode, setUploadMode] = useState<UploadMode>('file');
   const [imageUrl, setImageUrl] = useState('');
+  const [altText, setAltText] = useState('');
 
   const uploadFile = async (file: File) => {
     const fileKey = `${file.name}-${file.size}-${file.lastModified}`;
@@ -44,7 +45,7 @@ export default function UploadImagesPage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('alt', '');
+      formData.append('alt', altText || '');
       formData.append('caption', '');
       formData.append('description', '');
 
@@ -238,6 +239,28 @@ export default function UploadImagesPage() {
               <FiLink className="inline-block w-4 h-4 mr-2" />
               Upload from URL
             </button>
+          </div>
+
+          {/* Alt Text */}
+          <div>
+            <label
+              htmlFor="altText"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Alt Text (optional)
+            </label>
+            <input
+              type="text"
+              id="altText"
+              value={altText}
+              onChange={(e) => setAltText(e.target.value)}
+              placeholder="Describe the image for accessibility"
+              disabled={isProcessing}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              This text will be applied to all images uploaded in this batch
+            </p>
           </div>
 
           {/* Upload File Mode */}
