@@ -36,6 +36,10 @@ export default async function NewArticlePage({ params }: NewArticlePageProps) {
       {/* Page Header */}
       <div className="mb-4">
         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <Link href={`/${locale}/admin`} className="hover:text-blue-600">
+            Dashboard
+          </Link>
+          <span>/</span>
           <Link href={`/${locale}/admin/articles`} className="hover:text-blue-600">
             Articles
           </Link>
