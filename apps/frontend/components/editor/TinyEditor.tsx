@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 import type { Editor as TinyMCEEditor } from 'tinymce';
 
@@ -19,6 +19,7 @@ export default function TinyEditor({
 }: TinyEditorProps) {
   const editorRef = useRef<TinyMCEEditor | null>(null);
   const imageListRef = useRef(imageList);
+  const isReadyRef = useRef(false);
   // Store initial value in state to avoid ref access during render
   const [editorInitialValue] = useState(initialValue);
 
@@ -27,13 +28,30 @@ export default function TinyEditor({
     imageListRef.current = imageList;
   }, [imageList]);
 
+  const handleInit = useCallback((_evt: any, editor: TinyMCEEditor) => {
+    editorRef.current = editor;
+    isReadyRef.current = true;
+  }, []);
+
+  const handleEditorChange = useCallback((content: string, editor: TinyMCEEditor) => {
+    // Guard: only process changes after editor is fully initialized
+    if (!isReadyRef.current || !onChange) return;
+
+    try {
+      onChange(editor.getContent());
+    } catch (err) {
+      // Silently handle race condition errors during initialization
+      console.warn('TinyMCE editor change error (likely during init):', err);
+    }
+  }, [onChange]);
+
   return (
     <Editor
       licenseKey="gpl"
       // Use local TinyMCE (self-hosted)
       tinymceScriptSrc="/tinymce/tinymce.min.js"
       // Editor runs only in browser
-      onInit={(evt, editor) => (editorRef.current = editor)}
+      onInit={handleInit}
       init={{
         // Base URL for plugins/skin
         base_url: '/tinymce',
@@ -84,13 +102,16 @@ export default function TinyEditor({
         // Dark mode support
         skin: 'oxide',
         content_css: 'default',
+
+        // Initialization setup — prevents race conditions
+        setup: (editor: TinyMCEEditor) => {
+          editor.on('init', () => {
+            isReadyRef.current = true;
+          });
+        },
       }}
       initialValue={editorInitialValue}
-      onEditorChange={(content, editor) => {
-        if (onChange) {
-          onChange(editor.getContent());
-        }
-      }}
+      onEditorChange={handleEditorChange}
     />
   );
 }

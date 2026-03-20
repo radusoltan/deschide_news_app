@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import moment from 'moment';
 import ArticleEditWrapper from './components/ArticleEditWrapper';
+import TranslationTabs from './components/TranslationTabs';
 import { getArticle, getCategories } from '@/lib/dal';
 import { getAuthors } from '@/lib/api/authors';
 
@@ -113,6 +114,13 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
           Update article details
         </p>
       </div>
+
+      {/* Translation Language Tabs */}
+      <TranslationTabs
+        articleId={articleId}
+        activeLocale={locale}
+        availableLocales={[]}
+      />
 
       {/* Article Form with Lock Management */}
       <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-6">

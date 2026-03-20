@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { HiPencil, HiSearch, HiX, HiLockClosed } from 'react-icons/hi';
 import Link from 'next/link';
-import { Badge } from 'flowbite-react';
 import { DeleteArticleButton } from './components/DeleteArticleButton';
 
 interface Article {
@@ -65,6 +64,12 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [activeLocks, setActiveLocks] = useState<Map<number, ArticleLock>>(new Map());
 
+  // Server-side search state
+  const [searchResults, setSearchResults] = useState<Article[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchTotalItems, setSearchTotalItems] = useState(0);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Fetch active locks
   useEffect(() => {
     const fetchLocks = async () => {
@@ -84,39 +89,95 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
     };
 
     fetchLocks();
-    // Refresh locks every 30 seconds
     const interval = setInterval(fetchLocks, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Filter and search articles
-  const filteredArticles = useMemo(() => {
-    return articles.filter((article) => {
-      // Search filter
-      const matchesSearch =
-        searchQuery.trim() === '' ||
-        article.title?.toLowerCase().includes(searchQuery.toLowerCase());
+  // Server-side search with debounce
+  const searchArticles = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults(null);
+      setSearchTotalItems(0);
+      setIsSearching(false);
+      return;
+    }
 
-      // Status filter
+    setIsSearching(true);
+    try {
+      const params = new URLSearchParams({
+        title: query,
+        locale,
+        itemsPerPage: '50',
+      });
+      const response = await fetch(`/api/articles/search?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        const members = data['hydra:member'] || data.member || [];
+        setSearchResults(members);
+        setSearchTotalItems(data['hydra:totalItems'] || data.totalItems || members.length);
+      } else {
+        console.error('Search failed:', response.status);
+        setSearchResults(null);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults(null);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [locale]);
+
+  // Debounced search effect
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      setSearchTotalItems(0);
+      return;
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      searchArticles(searchQuery);
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchQuery, searchArticles]);
+
+  // Use search results when available, otherwise filter props articles locally
+  const displayArticles = useMemo(() => {
+    const sourceArticles = searchResults !== null ? searchResults : articles;
+
+    return sourceArticles.filter((article) => {
+      // Status filter (always client-side)
       const matchesStatus = statusFilter === 'all' || article.status === statusFilter;
 
-      // Category filter
+      // Category filter (always client-side)
       const articleCategoryId = typeof article.category === 'object' && article.category !== null
         ? article.category.id
         : null;
       const matchesCategory = categoryFilter === 'all' ||
         (categoryFilter === 'none' ? !articleCategoryId : articleCategoryId?.toString() === categoryFilter);
 
-      return matchesSearch && matchesStatus && matchesCategory;
+      return matchesStatus && matchesCategory;
     });
-  }, [articles, searchQuery, statusFilter, categoryFilter]);
+  }, [articles, searchResults, statusFilter, categoryFilter]);
 
   const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || categoryFilter !== 'all';
+  const isUsingServerSearch = searchResults !== null;
 
   const clearFilters = () => {
     setSearchQuery('');
     setStatusFilter('all');
     setCategoryFilter('all');
+    setSearchResults(null);
+    setSearchTotalItems(0);
   };
 
   const formatDate = (dateString?: string) => {
@@ -144,7 +205,14 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <HiSearch className="h-5 w-5 text-gray-400" />
+                {isSearching ? (
+                  <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                ) : (
+                  <HiSearch className="h-5 w-5 text-gray-400" />
+                )}
               </div>
               <input
                 type="text"
@@ -156,7 +224,11 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSearchResults(null);
+                    setSearchTotalItems(0);
+                  }}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
                   <HiX className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
@@ -211,7 +283,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
           </div>
         </div>
 
-        {/* Clear Filters */}
+        {/* Filter Info */}
         {hasActiveFilters && (
           <div className="mt-3 flex items-center">
             <button
@@ -221,7 +293,11 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
               Clear all filters
             </button>
             <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-              ({filteredArticles.length} of {articles.length} articles)
+              {isUsingServerSearch ? (
+                <>({displayArticles.length} results from server search)</>
+              ) : (
+                <>({displayArticles.length} of {articles.length} articles)</>
+              )}
             </span>
           </div>
         )}
@@ -257,7 +333,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
               </tr>
             </thead>
             <tbody>
-              {filteredArticles.length === 0 ? (
+              {displayArticles.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center">
                     <div className="text-gray-500 dark:text-gray-400">
@@ -271,7 +347,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                   </td>
                 </tr>
               ) : (
-                filteredArticles.map((article) => {
+                displayArticles.map((article) => {
                   const lock = activeLocks.get(article.id);
                   const isLocked = !!lock;
 
@@ -339,11 +415,22 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
         </div>
 
         {/* Results Summary */}
-        {filteredArticles.length > 0 && (
+        {displayArticles.length > 0 && (
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Showing <span className="font-medium text-gray-900 dark:text-white">{filteredArticles.length}</span> of{' '}
-              <span className="font-medium text-gray-900 dark:text-white">{totalItems ?? articles.length}</span> articles
+              {isUsingServerSearch ? (
+                <>
+                  Found <span className="font-medium text-gray-900 dark:text-white">{displayArticles.length}</span> articles
+                  {searchTotalItems > displayArticles.length && (
+                    <> (showing first {displayArticles.length} of {searchTotalItems})</>
+                  )}
+                </>
+              ) : (
+                <>
+                  Showing <span className="font-medium text-gray-900 dark:text-white">{displayArticles.length}</span> of{' '}
+                  <span className="font-medium text-gray-900 dark:text-white">{totalItems ?? articles.length}</span> articles
+                </>
+              )}
             </p>
           </div>
         )}

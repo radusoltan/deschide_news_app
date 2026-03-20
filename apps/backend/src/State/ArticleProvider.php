@@ -151,6 +151,12 @@ final class ArticleProvider implements ProviderInterface
                     ->setParameter('isFeatured', $isFeatured);
             }
 
+            // Search by title (partial match)
+            if ($title = $request->query->get('title')) {
+                $queryBuilder->andWhere('LOWER(a.title) LIKE LOWER(:titleSearch)')
+                    ->setParameter('titleSearch', '%' . $title . '%');
+            }
+
             // Filter by badge (breaking, alert, flash)
             if ($badge = $request->query->get('badge')) {
                 // Validate badge value against enum values
