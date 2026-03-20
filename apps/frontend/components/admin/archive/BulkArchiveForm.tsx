@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 
 interface BulkArchiveFormProps {
   token: string;
-  onComplete: () => void;
+  onComplete?: () => void;
   locale?: string;
 }
 
@@ -116,8 +116,8 @@ export default function BulkArchiveForm({ token, onComplete, locale = 'ro' }: Bu
       // Hide toast after 5 seconds
       setTimeout(() => setShowSuccessToast(false), 5000);
 
-      // Call completion callback
-      onComplete();
+      // Call completion callback if provided
+      onComplete?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : t.errorMessage);
     } finally {

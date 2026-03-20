@@ -1,4 +1,6 @@
 import { getArticles, getCategories } from '@/lib/dal';
+import { apiRequest } from '@/lib/api/client';
+import { getAccessToken } from '@/lib/auth/session';
 import { ArticlesTableClient } from './ArticlesTableClient';
 import { ArticlesPageClient } from './components/ArticlesPageClient';
 import { ArticlesPagination } from './components/ArticlesPagination';
@@ -44,10 +46,22 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
     categories = [];
   }
 
-  // Calculate stats (current page)
-  const currentPageArticles = articlesData.length;
-  const publishedArticles = articlesData.filter((a) => a.status === 'published').length;
-  const newArticles = articlesData.filter((a) => a.status === 'new').length;
+  // Fetch article counts from stats API for accurate totals
+  let articleCounts: any = null;
+  try {
+    const token = await getAccessToken();
+    if (token) {
+      articleCounts = await apiRequest<any>('/api/admin/stats/article-counts', {
+        token,
+        next: { revalidate: 60 },
+      });
+    }
+  } catch (err) {
+    console.error('Failed to fetch article counts:', err);
+  }
+
+  const publishedArticles = articleCounts?.published ?? articlesData.filter((a) => a.status === 'published').length;
+  const newArticles = articleCounts?.new ?? articlesData.filter((a) => a.status === 'new').length;
   const totalViews = articlesData.reduce((sum, a) => sum + (a.viewCount || 0), 0);
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -198,7 +212,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
       </div>
 
       {/* Articles Table */}
-      <ArticlesTableClient articles={articlesData} locale={locale} categories={categories} />
+      <ArticlesTableClient articles={articlesData} locale={locale} categories={categories} totalItems={totalItems} />
 
       {/* Pagination */}
       {totalPages > 1 && (

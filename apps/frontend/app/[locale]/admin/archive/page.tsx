@@ -110,7 +110,7 @@ async function ArchiveContent({
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
           {t.bulkArchive}
         </h2>
-        <BulkArchiveForm token={token} locale={locale} onComplete={() => {}} />
+        <BulkArchiveForm token={token} locale={locale} />
       </div>
 
       {/* Archived Articles List Section */}

@@ -1,14 +1,36 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 export default function Sidebar() {
   const params = useParams();
   const locale = params.locale as string;
+  const pathname = usePathname();
 
   const [usersOpen, setUsersOpen] = useState(false);
+
+  const isActive = (href: string) => {
+    if (href === `/${locale}/admin`) {
+      return pathname === `/${locale}/admin`;
+    }
+    return pathname.startsWith(href);
+  };
+
+  const linkClass = (href: string) =>
+    `flex items-center p-2 text-base rounded-lg group ${
+      isActive(href)
+        ? 'bg-blue-50 text-blue-700 font-semibold dark:bg-blue-900/30 dark:text-blue-300'
+        : 'text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+    }`;
+
+  const iconClass = (href: string) =>
+    `w-6 h-6 transition duration-75 ${
+      isActive(href)
+        ? 'text-blue-700 dark:text-blue-300'
+        : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white'
+    }`;
 
   return (
     <>
@@ -57,10 +79,10 @@ export default function Sidebar() {
                 <li>
                   <Link
                     href={`/${locale}/admin`}
-                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
+                    className={linkClass(`/${locale}/admin`)}
                   >
                     <svg
-                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className={iconClass(`/${locale}/admin`)}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
@@ -76,10 +98,10 @@ export default function Sidebar() {
                 <li>
                   <Link
                     href={`/${locale}/admin/articles`}
-                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
+                    className={linkClass(`/${locale}/admin/articles`)}
                   >
                     <svg
-                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className={iconClass(`/${locale}/admin/articles`)}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
@@ -99,10 +121,10 @@ export default function Sidebar() {
                 <li>
                   <Link
                     href={`/${locale}/admin/categories`}
-                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
+                    className={linkClass(`/${locale}/admin/categories`)}
                   >
                     <svg
-                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className={iconClass(`/${locale}/admin/categories`)}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
@@ -117,10 +139,10 @@ export default function Sidebar() {
                 <li>
                   <Link
                     href={`/${locale}/admin/images`}
-                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
+                    className={linkClass(`/${locale}/admin/images`)}
                   >
                     <svg
-                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className={iconClass(`/${locale}/admin/images`)}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
@@ -139,10 +161,10 @@ export default function Sidebar() {
                 <li>
                   <Link
                     href={`/${locale}/admin/authors`}
-                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
+                    className={linkClass(`/${locale}/admin/authors`)}
                   >
                     <svg
-                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className={iconClass(`/${locale}/admin/authors`)}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
@@ -157,10 +179,10 @@ export default function Sidebar() {
                 <li>
                   <Link
                     href={`/${locale}/admin/important-articles`}
-                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
+                    className={linkClass(`/${locale}/admin/important-articles`)}
                   >
                     <svg
-                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className={iconClass(`/${locale}/admin/important-articles`)}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
@@ -175,10 +197,10 @@ export default function Sidebar() {
                 <li>
                   <Link
                     href={`/${locale}/admin/archive`}
-                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
+                    className={linkClass(`/${locale}/admin/archive`)}
                   >
                     <svg
-                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className={iconClass(`/${locale}/admin/archive`)}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
@@ -253,10 +275,10 @@ export default function Sidebar() {
                 <li>
                   <Link
                     href={`/${locale}/admin/settings`}
-                    className="flex items-center p-2 text-base text-gray-900 rounded-lg hover:bg-gray-100 group dark:text-gray-200 dark:hover:bg-gray-700"
+                    className={linkClass(`/${locale}/admin/settings`)}
                   >
                     <svg
-                      className="w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className={iconClass(`/${locale}/admin/settings`)}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"

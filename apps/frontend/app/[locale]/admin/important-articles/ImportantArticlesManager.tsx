@@ -222,7 +222,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
   const availableArticles = allArticles.filter(
     article => !importantArticles.some(ia => ia.article.id === article.id)
   ).filter(article =>
-    article.title.toLowerCase().includes(searchQuery.toLowerCase())
+    (article.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {

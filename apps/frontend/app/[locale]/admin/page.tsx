@@ -63,8 +63,16 @@ async function DashboardContent({ locale }: { locale: string }) {
   const publishedArticles = articleCounts?.published ?? 0;
   const draftArticles = (articleCounts?.new ?? 0) + (articleCounts?.submitted ?? 0);
 
-  // Get total categories count from API (simpler endpoint without distribution)
-  const totalCategories = 18; // TODO: Create a simple /api/categories/count endpoint
+  // Get total categories count from API
+  let totalCategories = 0;
+  try {
+    const categoriesData = await apiRequest<any>('/api/categories?itemsPerPage=1', {
+      next: { revalidate: 60 },
+    });
+    totalCategories = categoriesData?.totalItems ?? 0;
+  } catch (error) {
+    console.error('Failed to fetch categories count:', error);
+  }
 
   // Calculate growth percentages (compared to average)
   const calculateGrowth = (current: number, previous: number) => {

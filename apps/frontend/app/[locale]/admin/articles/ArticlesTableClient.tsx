@@ -28,6 +28,7 @@ interface ArticlesTableClientProps {
   articles: Article[];
   locale: string;
   categories: Category[];
+  totalItems?: number;
 }
 
 const statusStyles = {
@@ -58,7 +59,7 @@ interface ArticleLock {
   expiresAt: string;
 }
 
-export function ArticlesTableClient({ articles, locale, categories }: ArticlesTableClientProps) {
+export function ArticlesTableClient({ articles, locale, categories, totalItems }: ArticlesTableClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -342,7 +343,7 @@ export function ArticlesTableClient({ articles, locale, categories }: ArticlesTa
           <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Showing <span className="font-medium text-gray-900 dark:text-white">{filteredArticles.length}</span> of{' '}
-              <span className="font-medium text-gray-900 dark:text-white">{articles.length}</span> articles
+              <span className="font-medium text-gray-900 dark:text-white">{totalItems ?? articles.length}</span> articles
             </p>
           </div>
         )}
