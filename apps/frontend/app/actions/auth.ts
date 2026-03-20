@@ -31,6 +31,7 @@ export type LoginFormState = {
     _form?: string[];
   };
   message?: string;
+  username?: string;
 };
 
 // ============================================================================
@@ -54,6 +55,7 @@ export async function login(
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
+      username: formData.get('username') as string,
     };
   }
 
@@ -90,6 +92,7 @@ export async function login(
       errors: {
         _form: [error.message || 'Failed to login. Please try again.'],
       },
+      username: formData.get('username') as string,
     };
   }
 }

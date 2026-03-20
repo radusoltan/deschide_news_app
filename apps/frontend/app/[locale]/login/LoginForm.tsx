@@ -44,12 +44,14 @@ export default function LoginForm() {
 
   return (
     <form className="space-y-4 md:space-y-6" action={formAction}>
-      {/* Form-level error */}
-      {state.errors?._form && (
-        <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
-          {state.errors._form.join(', ')}
-        </div>
-      )}
+      {/* Form-level error — fixed min-height to prevent CLS */}
+      <div className="min-h-[1rem]">
+        {state.errors?._form && (
+          <div className="p-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
+            {state.errors._form.join(', ')}
+          </div>
+        )}
+      </div>
 
       {/* Username field */}
       <div>
@@ -63,6 +65,7 @@ export default function LoginForm() {
           type="text"
           name="username"
           id="username"
+          defaultValue={state.username ?? ''}
           className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
           placeholder="admin"
           required

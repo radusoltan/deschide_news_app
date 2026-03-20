@@ -2,17 +2,18 @@
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import {Dropdown, Avatar, DropdownHeader, DropdownItem, DropdownDivider} from 'flowbite-react';
+import { useState, useEffect, useRef } from 'react';
 import { logout } from '@/app/actions/auth';
 
-export default function Navbar() {
+export default function Navbar({ username = 'Admin' }: { username?: string }) {
   const params = useParams();
   const router = useRouter();
   const locale = params.locale as string;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   // Initialize darkMode only on client-side to avoid hydration mismatch
   useEffect(() => {
@@ -38,6 +39,17 @@ export default function Navbar() {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode, mounted]);
+
+  // Close profile dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const toggleDarkMode = () => {
     if (darkMode) {
@@ -237,34 +249,57 @@ export default function Navbar() {
             </button>
 
             {/* Profile Dropdown */}
-            <div className="flex items-center ml-3">
-              <Dropdown
-                arrowIcon={false}
-                inline
-                label={
-                  <Avatar
-                    alt="User settings"
-                    img="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
-                    rounded
-                    className=""
-                  />
-                }
+            <div className="relative flex items-center ml-3" ref={profileRef}>
+              <button
+                type="button"
+                className="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+                onClick={() => setProfileOpen(!profileOpen)}
+                aria-expanded={profileOpen}
+                aria-haspopup="true"
               >
-                <DropdownHeader>
-                  <span className="block text-sm">Admin User</span>
-                  <span className="block truncate text-sm font-medium">admin@deschide.local</span>
-                </DropdownHeader>
-                <DropdownItem>
-                  <Link href={`/${locale}/admin/profile`}>Profile</Link>
-                </DropdownItem>
-                <DropdownItem>
-                  <Link href={`/${locale}/admin/settings`}>Settings</Link>
-                </DropdownItem>
-                <DropdownDivider />
-                <DropdownItem onClick={handleLogout}>
-                  Sign out
-                </DropdownItem>
-              </Dropdown>
+                <span className="sr-only">Open user menu</span>
+                <img
+                  className="w-8 h-8 rounded-full"
+                  src="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
+                  alt="User settings"
+                />
+              </button>
+              {profileOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600 z-50">
+                  <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                    <span className="block text-sm text-gray-900 dark:text-white">{username}</span>
+                    <span className="block text-sm font-medium text-gray-500 truncate dark:text-gray-400">admin@deschide.local</span>
+                  </div>
+                  <ul className="py-1">
+                    <li>
+                      <Link
+                        href={`/${locale}/admin/profile`}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white"
+                        onClick={() => setProfileOpen(false)}
+                      >
+                        Profile
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href={`/${locale}/admin/settings`}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white"
+                        onClick={() => setProfileOpen(false)}
+                      >
+                        Settings
+                      </Link>
+                    </li>
+                  </ul>
+                  <div className="border-t border-gray-200 dark:border-gray-600">
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

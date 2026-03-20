@@ -1,28 +1,38 @@
 import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { isAuthenticated } from '@/app/actions/auth';
 import LoginForm from './LoginForm';
 
-export const metadata = {
-  title: 'Sign In | Deschide News',
-  description: 'Sign in to your account',
-};
+const translations = {
+  ro: { title: 'Autentificare | Deschide News', description: 'Autentifică-te în contul tău', heading: 'Autentifică-te în cont' },
+  en: { title: 'Sign In | Deschide News', description: 'Sign in to your account', heading: 'Sign in to your account' },
+  ru: { title: 'Вход | Deschide News', description: 'Войдите в свой аккаунт', heading: 'Войдите в свой аккаунт' },
+} as const;
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = translations[locale as keyof typeof translations] || translations.ro;
+  return { title: t.title, description: t.description };
+}
 
 export default async function LoginPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
+  const t = translations[locale as keyof typeof translations] || translations.ro;
+
   // Redirect if already authenticated
   const authenticated = await isAuthenticated();
   if (authenticated) {
-    const { locale } = await params;
     redirect(`/${locale}/admin`);
   }
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900">
-      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
+    <section className="bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto min-h-screen lg:py-0">
         {/* Logo */}
         <Link
           href="/"
@@ -42,7 +52,7 @@ export default async function LoginPage({
         <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
           <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
             <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-              Sign in to your account
+              {t.heading}
             </h1>
 
             <LoginForm />

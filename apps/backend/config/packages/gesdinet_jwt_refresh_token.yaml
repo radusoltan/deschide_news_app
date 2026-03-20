@@ -2,6 +2,7 @@ gesdinet_jwt_refresh_token:
     refresh_token_class: App\Entity\RefreshToken
     ttl: 2592000  # 30 days
     ttl_update: true
+    single_use: true  # Invalidate old refresh token after use (prevents token replay)
     # Note: firewall option removed in dev-master (Symfony 8 compatible version)
 
     # Token parameter names
