@@ -86,10 +86,12 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
             Image Preview
           </h2>
           <div className="aspect-video relative bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden">
-            <img
+            <Image
               src={imageUrl}
               alt={image.alt || image.originalFilename || 'Image'}
-              className="w-full h-full object-contain"
+              fill
+              className="object-contain"
+              unoptimized
             />
           </div>
         </div>

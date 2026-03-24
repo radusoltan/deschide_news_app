@@ -43,17 +43,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch images when search changes (server-side search)
-  useEffect(() => {
-    if (debouncedSearchQuery) {
-      fetchImagesWithSearch();
-    } else {
-      // Reset to initial images when search is cleared
-      setImages(initialImages);
-    }
-  }, [debouncedSearchQuery]);
-
-  const fetchImagesWithSearch = async () => {
+  const fetchImagesWithSearch = useCallback(async () => {
     setIsSearching(true);
     try {
       const params = new URLSearchParams({
@@ -73,7 +63,17 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
     } finally {
       setIsSearching(false);
     }
-  };
+  }, [debouncedSearchQuery]);
+
+  // Fetch images when search changes (server-side search)
+  useEffect(() => {
+    if (debouncedSearchQuery) {
+      fetchImagesWithSearch();
+    } else {
+      // Reset to initial images when search is cleared
+      setImages(initialImages);
+    }
+  }, [debouncedSearchQuery, fetchImagesWithSearch, initialImages]);
 
   // Filter images based on type (client-side filter)
   const filteredImages = images.filter((item) => {
@@ -315,14 +315,17 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
                 >
                   <div className="aspect-[4/3] relative bg-gray-100 dark:bg-gray-800">
                     {imageUrl ? (
-                      <img
+                      <Image
                         src={imageUrl}
                         alt={image.alt || image.originalFilename || 'Image'}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        unoptimized
                         onError={(e) => {
                           // Hide broken image and show placeholder
-                          e.currentTarget.style.display = 'none';
-                          const parent = e.currentTarget.parentElement;
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
                           if (parent) {
                             parent.innerHTML = `
                               <div class="w-full h-full flex items-center justify-center">

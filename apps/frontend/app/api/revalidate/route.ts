@@ -138,8 +138,6 @@ export async function POST(request: NextRequest) {
 
   try {
     // Revalidate tags
-    // Next.js 16 requires second argument for cacheLife profile
-    // 'max' triggers stale-while-revalidate behavior
     for (const tag of tags) {
       try {
         revalidateTag(tag, 'max');

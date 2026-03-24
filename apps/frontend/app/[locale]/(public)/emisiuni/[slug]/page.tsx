@@ -347,170 +347,178 @@ export default async function ShowPage({ params, searchParams }: ShowPageProps) 
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
   const itemsPerPage = 12;
 
+  let show = null;
+  let videosResponse = null;
+  let fetchError: unknown = null;
+
   try {
     // Fetch show and videos in parallel
-    const [show, videosResponse] = await Promise.all([
+    [show, videosResponse] = await Promise.all([
       fetchVideoShowBySlug(slug, locale),
       fetchVideosByShow(slug, currentPage, itemsPerPage, locale),
     ]);
-
-    if (!show) {
-      notFound();
-    }
-
-    const videos = videosResponse.member;
-    const totalItems = videosResponse.totalItems;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-        {/* Hero Header */}
-        <section className="relative py-14 sm:py-20 border-b border-slate-800 overflow-hidden">
-          {/* Background Gradient with Show Color */}
-          <div
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: `
-                radial-gradient(circle at 30% 30%, ${show.color || '#dc2626'} 0%, transparent 50%),
-                radial-gradient(circle at 70% 70%, ${show.color || '#7f1d1d'} 0%, transparent 50%)
-              `,
-            }}
-          />
-
-          {/* Background Image if available */}
-          {show.thumbnailUrl && (
-            <div className="absolute inset-0 opacity-10">
-              <Image
-                src={show.thumbnailUrl}
-                alt=""
-                fill
-                className="object-cover blur-2xl"
-              />
-            </div>
-          )}
-
-          <div className="relative xl:container mx-auto px-4">
-            {/* Back Link */}
-            <Link
-              href={`/${locale}/emisiuni`}
-              className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-8 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              {t.backToAll}
-            </Link>
-
-            <div className="flex flex-col md:flex-row gap-8 items-start">
-              {/* Show Thumbnail */}
-              {show.thumbnailUrl && (
-                <div className="flex-shrink-0 w-40 h-40 md:w-48 md:h-48 relative rounded-2xl overflow-hidden border-2 border-slate-700/50 shadow-2xl">
-                  <Image
-                    src={show.thumbnailUrl}
-                    alt={show.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-
-              {/* Show Info */}
-              <div className="flex-1">
-                <div
-                  className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4"
-                  style={{
-                    backgroundColor: `${show.color || '#dc2626'}20`,
-                    color: show.color || '#dc2626',
-                    border: `1px solid ${show.color || '#dc2626'}40`,
-                  }}
-                >
-                  Video Show
-                </div>
-
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-white mb-4">
-                  {show.name}
-                </h1>
-
-                {show.description && (
-                  <p className="text-lg text-slate-300 max-w-2xl mb-6">
-                    {show.description}
-                  </p>
-                )}
-
-                <div className="flex flex-wrap items-center gap-4">
-                  <span className="text-slate-400">
-                    <strong className="text-white">{show.videosCount}</strong> {t.episodes}
-                  </span>
-
-                  {show.youtubeChannelId && (
-                    <a
-                      href={`https://www.youtube.com/channel/${show.youtubeChannelId}?sub_confirmation=1`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={cn(
-                        'inline-flex items-center gap-2',
-                        'px-4 py-2 rounded-full',
-                        'text-sm font-medium text-white',
-                        'transition-all duration-200 hover:opacity-80'
-                      )}
-                      style={{ backgroundColor: show.color || '#dc2626' }}
-                    >
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/>
-                      </svg>
-                      {t.subscribe}
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Videos Grid */}
-        <section className="py-10 sm:py-14">
-          <div className="xl:container mx-auto px-4">
-            {videos.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {videos.map((video) => (
-                    <VideoCard
-                      key={video.id}
-                      video={video}
-                      locale={locale}
-                      showColor={show.color || undefined}
-                    />
-                  ))}
-                </div>
-
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  locale={locale}
-                  baseUrl={`/${locale}/emisiuni/${slug}`}
-                  accentColor={show.color || undefined}
-                />
-
-                <p className="text-center text-sm text-slate-500 mt-6">
-                  {t.page} {currentPage} {t.of} {totalPages} ({totalItems} {t.episodes})
-                </p>
-              </>
-            ) : (
-              <div className="text-center py-20">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-800/50 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <p className="text-xl text-slate-400">{t.noVideos}</p>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-    );
   } catch (error) {
-    console.error('Error fetching show:', error);
+    fetchError = error;
+  }
+
+  if (fetchError || !videosResponse) {
+    console.error('Error fetching show:', fetchError);
     notFound();
   }
+
+  if (!show) {
+    notFound();
+  }
+
+  const videos = videosResponse.member;
+  const totalItems = videosResponse.totalItems;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      {/* Hero Header */}
+      <section className="relative py-14 sm:py-20 border-b border-slate-800 overflow-hidden">
+        {/* Background Gradient with Show Color */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `
+              radial-gradient(circle at 30% 30%, ${show.color || '#dc2626'} 0%, transparent 50%),
+              radial-gradient(circle at 70% 70%, ${show.color || '#7f1d1d'} 0%, transparent 50%)
+            `,
+          }}
+        />
+
+        {/* Background Image if available */}
+        {show.thumbnailUrl && (
+          <div className="absolute inset-0 opacity-10">
+            <Image
+              src={show.thumbnailUrl}
+              alt=""
+              fill
+              className="object-cover blur-2xl"
+            />
+          </div>
+        )}
+
+        <div className="relative xl:container mx-auto px-4">
+          {/* Back Link */}
+          <Link
+            href={`/${locale}/emisiuni`}
+            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-8 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            {t.backToAll}
+          </Link>
+
+          <div className="flex flex-col md:flex-row gap-8 items-start">
+            {/* Show Thumbnail */}
+            {show.thumbnailUrl && (
+              <div className="flex-shrink-0 w-40 h-40 md:w-48 md:h-48 relative rounded-2xl overflow-hidden border-2 border-slate-700/50 shadow-2xl">
+                <Image
+                  src={show.thumbnailUrl}
+                  alt={show.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+
+            {/* Show Info */}
+            <div className="flex-1">
+              <div
+                className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4"
+                style={{
+                  backgroundColor: `${show.color || '#dc2626'}20`,
+                  color: show.color || '#dc2626',
+                  border: `1px solid ${show.color || '#dc2626'}40`,
+                }}
+              >
+                Video Show
+              </div>
+
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-white mb-4">
+                {show.name}
+              </h1>
+
+              {show.description && (
+                <p className="text-lg text-slate-300 max-w-2xl mb-6">
+                  {show.description}
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="text-slate-400">
+                  <strong className="text-white">{show.videosCount}</strong> {t.episodes}
+                </span>
+
+                {show.youtubeChannelId && (
+                  <a
+                    href={`https://www.youtube.com/channel/${show.youtubeChannelId}?sub_confirmation=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      'inline-flex items-center gap-2',
+                      'px-4 py-2 rounded-full',
+                      'text-sm font-medium text-white',
+                      'transition-all duration-200 hover:opacity-80'
+                    )}
+                    style={{ backgroundColor: show.color || '#dc2626' }}
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/>
+                    </svg>
+                    {t.subscribe}
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Videos Grid */}
+      <section className="py-10 sm:py-14">
+        <div className="xl:container mx-auto px-4">
+          {videos.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {videos.map((video) => (
+                  <VideoCard
+                    key={video.id}
+                    video={video}
+                    locale={locale}
+                    showColor={show.color || undefined}
+                  />
+                ))}
+              </div>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                locale={locale}
+                baseUrl={`/${locale}/emisiuni/${slug}`}
+                accentColor={show.color || undefined}
+              />
+
+              <p className="text-center text-sm text-slate-500 mt-6">
+                {t.page} {currentPage} {t.of} {totalPages} ({totalItems} {t.episodes})
+              </p>
+            </>
+          ) : (
+            <div className="text-center py-20">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-800/50 flex items-center justify-center">
+                <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-xl text-slate-400">{t.noVideos}</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
 }

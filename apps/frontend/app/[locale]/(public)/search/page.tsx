@@ -56,6 +56,7 @@ function SearchContent({ params }: SearchPageProps) {
       setSearchQuery(query);
       performSearch(query, 1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   const performSearch = async (q: string, page: number) => {
@@ -226,6 +227,7 @@ function SearchContent({ params }: SearchPageProps) {
                     >
                       {imageUrl && featuredImage && (
                         <div className="aspect-video bg-gray-200 dark:bg-gray-700">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imageUrl}
                             alt={featuredImage.image.alt || article.title}

@@ -72,6 +72,7 @@ export function ReactionButtons({ postId, initialCounts, locale }: ReactionButto
   // Fetch current counts
   useEffect(() => {
     fetchCounts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
   const fetchCounts = async () => {

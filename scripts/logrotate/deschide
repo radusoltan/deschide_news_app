@@ -1,0 +1,77 @@
+# =============================================================================
+# Deschide News — Logrotate Configuration
+# =============================================================================
+# Install:
+#   sudo cp /var/www/deschide_news_app/scripts/logrotate/deschide /etc/logrotate.d/deschide
+#   sudo logrotate --debug /etc/logrotate.d/deschide   # Dry-run test
+#   sudo logrotate --force /etc/logrotate.d/deschide   # Force rotation
+# =============================================================================
+
+# Symfony application logs (prod.log, dev.log, etc.)
+/var/www/deschide_news_app/apps/backend/var/log/*.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 www-data www-data
+    sharedscripts
+    postrotate
+        # Signal PHP-FPM to reopen log file handles
+        systemctl reload php8.4-fpm > /dev/null 2>&1 || true
+    endscript
+}
+
+# PHP-FPM logs specific to Deschide
+/var/log/php/deschide-*.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 www-data www-data
+    sharedscripts
+    postrotate
+        systemctl reload php8.4-fpm > /dev/null 2>&1 || true
+    endscript
+}
+
+# PM2 / Next.js frontend logs
+/var/log/pm2/deschide-*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 www-data www-data
+    sharedscripts
+    postrotate
+        # PM2 automatically handles log rotation signals
+        pm2 reloadLogs > /dev/null 2>&1 || true
+    endscript
+}
+
+# Deployment logs
+/var/www/deschide_news_app/deploy.log {
+    monthly
+    rotate 12
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 www-data www-data
+}
+
+# Messenger worker logs (if using file-based logging)
+/var/log/deschide/messenger-*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 www-data www-data
+}

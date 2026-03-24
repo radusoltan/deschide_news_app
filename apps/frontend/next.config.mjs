@@ -1,3 +1,4 @@
+import { withSentryConfig } from '@sentry/nextjs';
 import bundleAnalyzer from '@next/bundle-analyzer';
 
 const withBundleAnalyzer = bundleAnalyzer({
@@ -6,6 +7,9 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Standalone output for production deployment (Docker, PM2 cluster)
+  output: 'standalone',
+
   // Configure port via environment variable or default to 3005
   env: {
     PORT: process.env.PORT || '3005',
@@ -165,4 +169,14 @@ const nextConfig = {
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+const config = withBundleAnalyzer(nextConfig);
+
+// Only wrap with Sentry if DSN is configured (empty DSN = disabled)
+export default process.env.NEXT_PUBLIC_SENTRY_DSN
+  ? withSentryConfig(config, {
+      // Suppresses source map upload logs during build
+      silent: true,
+      org: "deschide-news",
+      project: "deschide-frontend",
+    })
+  : config;

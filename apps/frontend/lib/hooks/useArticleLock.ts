@@ -174,7 +174,8 @@ export function useArticleLock({
         releaseLock();
       }
     };
-  }, [articleId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [articleId, autoAcquire]);
 
   // Handle page unload (release lock)
   useEffect(() => {

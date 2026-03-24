@@ -1,0 +1,64 @@
+# =============================================================================
+# Deschide News — Symfony Messenger Worker (Template Unit)
+# =============================================================================
+# Usage:
+#   sudo systemctl enable deschide-messenger@1
+#   sudo systemctl start deschide-messenger@1
+#   sudo systemctl start deschide-messenger@2   # Second worker instance
+#   sudo systemctl status deschide-messenger@*
+#
+# Install:
+#   sudo cp deschide-messenger@.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable deschide-messenger@{1..2}
+#   sudo systemctl start deschide-messenger@{1..2}
+# =============================================================================
+
+[Unit]
+Description=Deschide News Messenger Worker %i
+Documentation=https://symfony.com/doc/current/messenger.html
+After=network.target postgresql.service redis.service rabbitmq-server.service
+Wants=postgresql.service redis.service rabbitmq-server.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+
+WorkingDirectory=/var/www/deschide_news_app/apps/backend
+ExecStart=/usr/bin/php bin/console messenger:consume async --time-limit=3600 --memory-limit=256M --no-interaction
+ExecReload=/bin/kill -USR1 $MAINPID
+
+# Restart policy
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadOnlyPaths=/
+
+# Allow write access to required directories
+ReadWritePaths=/var/www/deschide_news_app/apps/backend/var
+ReadWritePaths=/var/www/deschide_news_app/apps/backend/public/uploads
+
+# Environment
+Environment=APP_ENV=prod
+Environment=MESSENGER_CONSUMER_NAME=worker-%i
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=deschide-messenger-%i
+
+# Resource limits
+LimitNOFILE=8192
+MemoryMax=512M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

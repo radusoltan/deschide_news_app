@@ -52,7 +52,7 @@ export default function MobileBottomNav({
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isMounted] = useState(true);
 
   // Navigation items configuration
   const navItems: NavItem[] = [
@@ -134,11 +134,6 @@ export default function MobileBottomNav({
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
-
-  // Mount animation
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Render nav item
   const renderNavItem = (item: NavItem) => {

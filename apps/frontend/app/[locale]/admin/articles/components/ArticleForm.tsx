@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { createArticleAction, updateArticleAction, type ArticleFormState } from '@/app/actions/articles';
@@ -84,14 +84,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
   const [isImagePickerOpen, setIsImagePickerOpen] = useState(false);
   const [isImageUploadOpen, setIsImageUploadOpen] = useState(false);
 
-  // Fetch attached images on mount (only for edit mode)
-  useEffect(() => {
-    if (article?.id) {
-      fetchAttachedImages();
-    }
-  }, [article?.id]);
-
-  const fetchAttachedImages = async () => {
+  const fetchAttachedImages = useCallback(async () => {
     if (!article?.id) return;
 
     try {
@@ -103,7 +96,14 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
     } catch (error) {
       console.error('Failed to fetch attached images:', error);
     }
-  };
+  }, [article?.id]);
+
+  // Fetch attached images on mount (only for edit mode)
+  useEffect(() => {
+    if (article?.id) {
+      fetchAttachedImages();
+    }
+  }, [article?.id, fetchAttachedImages]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

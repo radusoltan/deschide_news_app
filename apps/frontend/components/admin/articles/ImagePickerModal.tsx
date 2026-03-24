@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import NextImage from 'next/image';
 import { FiX, FiSearch, FiCheck, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import type { Image } from '@/lib/types/image';
 
@@ -41,14 +42,7 @@ export default function ImagePickerModal({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch images when modal opens or page/search changes
-  useEffect(() => {
-    if (isOpen) {
-      fetchImages();
-    }
-  }, [isOpen, currentPage, debouncedSearchQuery]);
-
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams({
@@ -77,7 +71,14 @@ export default function ImagePickerModal({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+
+  // Fetch images when modal opens or page/search changes
+  useEffect(() => {
+    if (isOpen) {
+      fetchImages();
+    }
+  }, [isOpen, currentPage, debouncedSearchQuery, fetchImages]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -200,11 +201,13 @@ export default function ImagePickerModal({
                     `}
                   >
                     {/* Image Preview */}
-                    <div className="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                      <img
+                    <div className="aspect-video bg-gray-100 dark:bg-gray-700 relative flex items-center justify-center overflow-hidden">
+                      <NextImage
                         src={imageUrl}
                         alt={image.alt || 'Image preview'}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        unoptimized
                       />
                     </div>
 

@@ -115,7 +115,7 @@ export const BrandShowcase: React.FC = () => {
           <div>
             <p className="text-sm font-medium text-gray-600 mb-2">Body Regular</p>
             <Text variant="body">
-              This is standard body text (17px) used for article content. It's optimized for
+              This is standard body text (17px) used for article content. It&apos;s optimized for
               long-form reading with comfortable line height and spacing.
             </Text>
           </div>

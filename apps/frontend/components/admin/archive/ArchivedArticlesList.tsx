@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { buildLocalizedUrl, buildArticleUrl } from '@/lib/utils/url-builder';
 import type { Locale } from '@/lib/types';
@@ -182,11 +182,14 @@ export default function ArchivedArticlesList({
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
 
-  useEffect(() => {
-    fetchArticles();
-  }, [page, locale]);
+  const showNotification = useCallback((message: string, type: 'success' | 'error') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: 'success' });
+    }, 3000);
+  }, []);
 
-  const fetchArticles = async () => {
+  const fetchArticles = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(
@@ -212,7 +215,11 @@ export default function ArchivedArticlesList({
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl, page, itemsPerPage, locale, t.errorUnarchive, showNotification]);
+
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]);
 
   const formatDate = (dateString: string) => {
     const localeMap: Record<string, string> = {
@@ -231,13 +238,6 @@ export default function ArchivedArticlesList({
   const truncateTitle = (title: string, maxLength: number = 50) => {
     if (title.length <= maxLength) return title;
     return title.substring(0, maxLength) + '...';
-  };
-
-  const showNotification = (message: string, type: 'success' | 'error') => {
-    setNotification({ show: true, message, type });
-    setTimeout(() => {
-      setNotification({ show: false, message: '', type: 'success' });
-    }, 3000);
   };
 
   const handleUnarchiveClick = (article: Article) => {

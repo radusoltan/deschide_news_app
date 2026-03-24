@@ -126,6 +126,7 @@ function FacebookPreview({
     <div>
       {imageUrl && (
         <div className="relative aspect-[1.91/1] bg-gray-200">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt={title}
@@ -160,6 +161,7 @@ function TwitterPreview({
     <div className="border border-gray-300 rounded-2xl overflow-hidden">
       {imageUrl && (
         <div className="relative aspect-[2/1] bg-gray-200">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt={title}
@@ -196,6 +198,7 @@ function LinkedInPreview({
     <div className="border border-gray-300">
       {imageUrl && (
         <div className="relative aspect-[1.91/1] bg-gray-200">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl}
             alt={title}

@@ -119,9 +119,9 @@ final class ArticleProvider implements ProviderInterface
 
             // Method 2: category[id]=X parsed as nested array (legacy support)
             if (!$categoryId) {
-                $categoryArray = $request->query->all('category');
-                if (\is_array($categoryArray) && isset($categoryArray['id'])) {
-                    $categoryId = (int) $categoryArray['id'];
+                $categoryParam = $request->query->get('category');
+                if (\is_array($categoryParam) && isset($categoryParam['id'])) {
+                    $categoryId = (int) $categoryParam['id'];
                 }
             }
 

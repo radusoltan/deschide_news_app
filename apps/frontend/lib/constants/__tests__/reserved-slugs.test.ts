@@ -8,8 +8,8 @@ import { isReservedSlug, validateSlug, getReservedSlugs, RESERVED_SLUGS } from '
 
 describe('Reserved Slugs', () => {
   describe('RESERVED_SLUGS constant', () => {
-    it('should contain all 17 reserved slugs', () => {
-      expect(RESERVED_SLUGS).toHaveLength(17);
+    it('should contain all 18 reserved slugs', () => {
+      expect(RESERVED_SLUGS).toHaveLength(18);
     });
 
     it('should include critical system routes', () => {
@@ -68,7 +68,7 @@ describe('Reserved Slugs', () => {
   describe('getReservedSlugs', () => {
     it('should return all reserved slugs', () => {
       const slugs = getReservedSlugs();
-      expect(slugs).toHaveLength(17);
+      expect(slugs).toHaveLength(18);
       expect(slugs).toEqual(RESERVED_SLUGS);
     });
 
@@ -155,8 +155,8 @@ describe('Reserved Slugs', () => {
 
   describe('Backend compatibility', () => {
     it('should match backend reserved slugs count', () => {
-      // Backend has 17 reserved slugs in ReservedSlug.php
-      expect(RESERVED_SLUGS).toHaveLength(17);
+      // Backend has 18 reserved slugs in ReservedSlug.php
+      expect(RESERVED_SLUGS).toHaveLength(18);
     });
 
     it('should include all backend reserved slugs', () => {
