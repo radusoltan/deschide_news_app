@@ -188,7 +188,8 @@ export default function ImagePickerModal({
                 const isSelected = selectedIds.has(image.id);
                 const isAttached = attachedImageIds.includes(image.id);
                 // Use CDN for image URLs
-                const imageUrl = `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${image.filename}`;
+                const imagePath = image.path || `images/${image.filename}`;
+                const imageUrl = `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/${imagePath}`;
 
                 return (
                   <div
@@ -206,6 +207,7 @@ export default function ImagePickerModal({
                         src={imageUrl}
                         alt={image.alt || 'Image preview'}
                         fill
+                        loading="eager"
                         className="object-cover"
                         unoptimized
                       />

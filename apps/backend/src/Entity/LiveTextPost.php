@@ -82,29 +82,29 @@ class LiveTextPost
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::INTEGER)]
-    #[Groups(['livetext_post:read', 'livetext:detail'])]
+    #[Groups(['livetext_post:read', 'livetext:read', 'livetext:detail'])]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'Content cannot be blank.')]
     #[Assert\Length(min: 1, max: 10000, minMessage: 'Content must be at least {{ limit }} characters long.', maxMessage: 'Content cannot be longer than {{ limit }} characters.')]
-    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:detail'])]
+    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:read', 'livetext:detail'])]
     private ?string $content = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:detail'])]
+    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:read', 'livetext:detail'])]
     private ?string $contentHtml = null;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
-    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:detail'])]
+    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:read', 'livetext:detail'])]
     private bool $isKeyPoint = false;
 
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
-    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:detail'])]
+    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:read', 'livetext:detail'])]
     private int $position = 0;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:detail'])]
+    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:read', 'livetext:detail'])]
     private ?DateTimeInterface $publishedAt = null;
 
     // Relationships
@@ -118,19 +118,19 @@ class LiveTextPost
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Author must be specified.')]
-    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:detail'])]
+    #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:read', 'livetext:detail'])]
     #[MaxDepth(1)]
     private ?User $author = null;
 
     // Timestamps
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['livetext_post:read', 'livetext:detail'])]
+    #[Groups(['livetext_post:read', 'livetext:read', 'livetext:detail'])]
     private ?DateTimeInterface $createdAt = null;
 
     #[Gedmo\Timestampable(on: 'update')]
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['livetext_post:read', 'livetext:detail'])]
+    #[Groups(['livetext_post:read', 'livetext:read', 'livetext:detail'])]
     private ?DateTimeInterface $updatedAt = null;
 
     public function __construct()

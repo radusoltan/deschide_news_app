@@ -51,9 +51,10 @@ function SortableImageCard({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Construct image URL from CDN
-  const imageUrl = attachedImage.image.filename
-    ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${attachedImage.image.filename}`
+  // Construct image URL from CDN — use path (includes subdirectory) with filename fallback
+  const imagePath = attachedImage.image.path || `images/${attachedImage.image.filename}`;
+  const imageUrl = (attachedImage.image.path || attachedImage.image.filename)
+    ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/${imagePath}`
     : '';
 
   return (
@@ -85,6 +86,7 @@ function SortableImageCard({
             src={imageUrl}
             alt={attachedImage.image.alt || 'Attached image'}
             fill
+            loading="eager"
             className="object-cover"
             unoptimized
           />

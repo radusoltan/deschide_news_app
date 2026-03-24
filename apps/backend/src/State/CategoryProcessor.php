@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\DeleteOperationInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Category;
+use App\Service\PerformanceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use LogicException;
@@ -21,7 +22,8 @@ final class CategoryProcessor implements ProcessorInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly RequestStack $requestStack
+        private readonly RequestStack $requestStack,
+        private readonly PerformanceService $performance
     ) {
     }
 
@@ -53,8 +55,10 @@ final class CategoryProcessor implements ProcessorInterface
                     throw new LogicException('Cannot delete category with existing articles');
                 }
 
+                $categoryId = $managedEntity->getId();
                 $this->entityManager->remove($managedEntity);
                 $this->entityManager->flush();
+                $this->performance->invalidateCategory($categoryId);
             }
 
             return null;
@@ -115,6 +119,9 @@ final class CategoryProcessor implements ProcessorInterface
                 if ($locale !== 'ro') {
                     $this->addTranslation($data, $locale);
                 }
+
+                // Invalidate category list cache after create
+                $this->performance->invalidateCategory($data->getId());
             } else {
                 // UPDATE: Existing entity
                 if ($locale === 'ro') {
@@ -125,6 +132,9 @@ final class CategoryProcessor implements ProcessorInterface
                     // Add/Update translation for non-default locale
                     $this->addTranslation($data, $locale);
                 }
+
+                // Invalidate cache after update
+                $this->performance->invalidateCategory($data->getId());
 
                 // Reload entity with correct locale
                 $data->setTranslatableLocale($locale);

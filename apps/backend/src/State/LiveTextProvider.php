@@ -69,7 +69,7 @@ final class LiveTextProvider implements ProviderInterface
         }
 
         // Handle collection retrieval
-        // For collections, we eager load category and author to avoid N+1
+        // For collections, we eager load category, author, posts and sportMatch to avoid N+1
         $queryBuilder = $repository->createQueryBuilder('lt')
             ->leftJoin('lt.author', 'u')
             ->addSelect('u')
@@ -78,7 +78,13 @@ final class LiveTextProvider implements ProviderInterface
             ->leftJoin('lt.collaborators', 'col')
             ->addSelect('col')
             ->leftJoin('col.user', 'colUser')
-            ->addSelect('colUser');
+            ->addSelect('colUser')
+            ->leftJoin('lt.posts', 'p')
+            ->addSelect('p')
+            ->leftJoin('p.author', 'postAuthor')
+            ->addSelect('postAuthor')
+            ->leftJoin('lt.sportMatch', 'sm')
+            ->addSelect('sm');
 
         // Apply filters from query parameters
         if ($request) {

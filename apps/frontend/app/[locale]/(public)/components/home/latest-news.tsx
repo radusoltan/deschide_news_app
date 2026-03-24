@@ -34,6 +34,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
 
   const featuredArticle = articles[0];
   const featuredImage = getFeaturedImage(featuredArticle.articleImages);
+  // Use article_hero for featured (1600×600, aspect 8:3) — highest resolution thumbnail
   const featuredThumbnail = featuredImage ? getThumbnailByProfile(featuredImage, 'article_hero') : null;
   const gridArticles = articles.slice(1, 7);
   const labels = sectionLabels[locale] || sectionLabels.ro;
@@ -107,7 +108,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
             <div className="w-full pb-5">
               <article className="group relative overflow-hidden rounded-sm">
                 <Link href={buildArticleUrl(featuredArticle, locale as Locale)} className="block">
-                  <div className="relative aspect-video max-h-[28rem] overflow-hidden">
+                  <div className="relative aspect-[8/3] max-h-[28rem] overflow-hidden">
                     {featuredThumbnail ? (
                       <Image
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"

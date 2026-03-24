@@ -174,7 +174,7 @@ class LiveText implements Translatable
      * @var Collection<int, LiveTextPost>
      */
     #[ORM\OneToMany(targetEntity: LiveTextPost::class, mappedBy: 'liveText', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[Groups(['livetext:detail'])]
+    #[Groups(['livetext:read', 'livetext:detail'])]
     #[MaxDepth(2)]
     private Collection $posts;
 
