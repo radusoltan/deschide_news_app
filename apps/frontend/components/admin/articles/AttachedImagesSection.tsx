@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import NextImage from 'next/image';
 import dynamic from 'next/dynamic';
 import { DndContext, closestCenter, DragEndEvent, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -78,12 +79,14 @@ function SortableImageCard({
       )}
 
       {/* Image Preview */}
-      <div className="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+      <div className="aspect-video bg-gray-100 dark:bg-gray-700 relative flex items-center justify-center overflow-hidden">
         {imageUrl ? (
-          <img
+          <NextImage
             src={imageUrl}
             alt={attachedImage.image.alt || 'Attached image'}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            unoptimized
           />
         ) : (
           <FiImage className="w-12 h-12 text-gray-400" />

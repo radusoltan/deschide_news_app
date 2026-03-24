@@ -9,6 +9,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import * as Sentry from '@sentry/nextjs';
 
 export default function PublicError({
   error,
@@ -20,6 +21,9 @@ export default function PublicError({
   useEffect(() => {
     // Log error to console in development
     console.error('[Public Route Error]', error);
+
+    // Send to Sentry error tracking (no-op if DSN is not configured)
+    Sentry.captureException(error);
   }, [error]);
 
   return (

@@ -1,0 +1,50 @@
+# =============================================================================
+# Deschide News — Scheduled Tasks Service
+# =============================================================================
+# Triggered by deschide-scheduler.timer every 5 minutes.
+# Runs: cleanup-expired-locks + publish-scheduled-articles
+#
+# Install:
+#   sudo cp deschide-scheduler.service /etc/systemd/system/
+#   sudo cp deschide-scheduler.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now deschide-scheduler.timer
+# =============================================================================
+
+[Unit]
+Description=Deschide News Scheduled Tasks
+Documentation=man:systemd.service(5)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/deschide_news_app/apps/backend
+
+# Run both scheduled commands sequentially
+ExecStart=/usr/bin/php bin/console app:cleanup-expired-locks --no-interaction
+ExecStart=/usr/bin/php bin/console app:publish-scheduled-articles --no-interaction
+
+# Environment
+Environment=APP_ENV=prod
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadOnlyPaths=/
+ReadWritePaths=/var/www/deschide_news_app/apps/backend/var
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=deschide-scheduler
+
+# Timeout (should complete within 2 minutes)
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

@@ -8,6 +8,8 @@
  */
 
 import { useEffect } from 'react';
+import Link from 'next/link';
+import * as Sentry from '@sentry/nextjs';
 
 export default function GlobalError({
   error,
@@ -20,10 +22,8 @@ export default function GlobalError({
     // Log error to error reporting service
     console.error('[Global Error]', error);
 
-    // TODO: Send to error tracking service (Sentry, etc.)
-    // if (typeof window !== 'undefined') {
-    //   Sentry.captureException(error);
-    // }
+    // Send to Sentry error tracking (no-op if DSN is not configured)
+    Sentry.captureException(error);
   }, [error]);
 
   return (
@@ -74,12 +74,12 @@ export default function GlobalError({
               >
                 Încearcă din nou
               </button>
-              <a
+              <Link
                 href="/"
                 className="px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
               >
                 Pagina principală
-              </a>
+              </Link>
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@
 
 import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import * as Sentry from '@sentry/nextjs';
 import { ArticleError } from '@/components/errors';
 import type { Locale } from '@/lib/types';
 
@@ -25,10 +26,8 @@ export default function ArticlePageError({ error, reset }: ArticleErrorProps) {
       console.error('Article error:', error);
     }
 
-    // TODO: Log to error tracking service in production
-    // if (process.env.NODE_ENV === 'production') {
-    //   logErrorToService(error);
-    // }
+    // Send to Sentry error tracking (no-op if DSN is not configured)
+    Sentry.captureException(error);
   }, [error]);
 
   return <ArticleError error={error} locale={locale} onRetry={reset} />;

@@ -171,6 +171,7 @@ export function LazyImage({
 
       {/* Placeholder Image (blur-up) */}
       {!isLoaded && placeholder && !hasError && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={placeholder}
           alt=""
@@ -181,6 +182,7 @@ export function LazyImage({
 
       {/* Actual Image */}
       {isInView && !hasError && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={alt}

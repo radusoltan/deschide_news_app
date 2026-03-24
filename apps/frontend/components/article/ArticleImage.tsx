@@ -61,6 +61,7 @@ function ImageLightbox({
       </button>
 
       <div className="max-w-7xl max-h-screen p-4" onClick={(e) => e.stopPropagation()}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
           alt={alt}

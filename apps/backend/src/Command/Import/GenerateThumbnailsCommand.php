@@ -142,10 +142,10 @@ class GenerateThumbnailsCommand extends Command
                     ++$stats['error'];
                 }
 
-                // Flush every batch to avoid memory issues
+                // Periodic GC to manage memory (do NOT call em->clear() because
+                // ImageService::generateThumbnail() already flushes per thumbnail,
+                // and clear() would detach Image/ThumbnailProfile entities still in use)
                 if (($index + 1) % $batchSize === 0) {
-                    $this->entityManager->flush();
-                    $this->entityManager->clear();
                     gc_collect_cycles();
                 }
 
@@ -160,9 +160,8 @@ class GenerateThumbnailsCommand extends Command
             $io->progressAdvance();
         }
 
-        // Final flush
+        // Final flush (ImageService already flushes per thumbnail, but ensure nothing is left)
         $this->entityManager->flush();
-        $this->entityManager->clear();
 
         $io->progressFinish();
 

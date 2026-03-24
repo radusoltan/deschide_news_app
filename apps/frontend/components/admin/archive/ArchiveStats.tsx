@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
  * Archive Statistics Component
@@ -80,7 +80,7 @@ export function ArchiveStats({ token, onRefresh }: ArchiveStatsProps) {
   const [locale] = useState<keyof typeof translations>('ro'); // Default to Romanian
   const t = translations[locale];
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -107,11 +107,11 @@ export function ArchiveStats({ token, onRefresh }: ArchiveStatsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchStats();
-  }, [token]);
+  }, [fetchStats]);
 
   const handleRefresh = () => {
     fetchStats();

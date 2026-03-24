@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
     Button,
     Modal,
@@ -54,12 +54,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
   const [success, setSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    fetchImportantArticles();
-    fetchAllArticles();
-  }, []);
-
-  const fetchImportantArticles = async () => {
+  const fetchImportantArticles = useCallback(async () => {
     try {
       const token = await getAuthToken();
       if (!token) {
@@ -85,9 +80,9 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
     } finally {
       setLoading(false);
     }
-  };
+  }, [locale]);
 
-  const fetchAllArticles = async () => {
+  const fetchAllArticles = useCallback(async () => {
     try {
       const token = await getAuthToken();
       if (!token) return;
@@ -106,7 +101,12 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
     } catch (err) {
       console.error('Failed to load articles:', err);
     }
-  };
+  }, [locale]);
+
+  useEffect(() => {
+    fetchImportantArticles();
+    fetchAllArticles();
+  }, [fetchImportantArticles, fetchAllArticles]);
 
   const handleAddArticle = async () => {
     if (!selectedArticle) return;

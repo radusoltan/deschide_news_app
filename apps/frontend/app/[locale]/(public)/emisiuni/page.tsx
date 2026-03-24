@@ -339,128 +339,136 @@ export default async function EmisiuniPage({ params, searchParams }: EmisiuniPag
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
   const itemsPerPage = 12;
 
+  let videosResponse = null;
+  let showsResponse = null;
+  let fetchError: unknown = null;
+
   try {
     // Fetch videos and shows in parallel
-    const [videosResponse, showsResponse] = await Promise.all([
+    [videosResponse, showsResponse] = await Promise.all([
       fetchAllVideos(currentPage, itemsPerPage, locale),
       fetchVideoShows(locale),
     ]);
-
-    const videos = videosResponse.member;
-    const shows = showsResponse.member;
-    const totalItems = videosResponse.totalItems;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-        {/* Header Section */}
-        <section className="relative py-12 sm:py-16 border-b border-slate-800">
-          {/* Background Pattern */}
-          <div
-            className="absolute inset-0 opacity-[0.02]"
-            style={{
-              backgroundImage: `
-                radial-gradient(circle at 20% 30%, #dc2626 0%, transparent 40%),
-                radial-gradient(circle at 80% 70%, #7f1d1d 0%, transparent 40%)
-              `,
-            }}
-          />
-
-          <div className="relative xl:container mx-auto px-4">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 flex items-center justify-center rounded-xl bg-red-600/20 border border-red-500/30">
-                <svg className="w-7 h-7 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/>
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-heading font-bold text-white">
-                  {t.title}
-                </h1>
-                <p className="text-slate-400 mt-1">
-                  {t.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Shows Filter */}
-            {shows.length > 0 && (
-              <div className="mt-8">
-                <p className="text-sm text-slate-500 mb-3">{t.filterByShow}</p>
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/${locale}/emisiuni`}
-                    className={cn(
-                      'px-4 py-2 rounded-full text-sm font-medium',
-                      'transition-all duration-200',
-                      !showParam
-                        ? 'bg-red-600 text-white'
-                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
-                    )}
-                  >
-                    {t.allShows}
-                  </Link>
-                  {shows.map((show) => (
-                    <Link
-                      key={show.id}
-                      href={`/${locale}/emisiuni/${show.slug}`}
-                      className={cn(
-                        'px-4 py-2 rounded-full text-sm font-medium',
-                        'bg-slate-800 text-slate-300 hover:bg-slate-700',
-                        'border border-slate-700 hover:border-slate-600',
-                        'transition-all duration-200'
-                      )}
-                    >
-                      {show.name}
-                      <span className="ml-1.5 text-slate-500">({show.videosCount})</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Videos Grid */}
-        <section className="py-10 sm:py-14">
-          <div className="xl:container mx-auto px-4">
-            {videos.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {videos.map((video) => (
-                    <VideoCard key={video.id} video={video} locale={locale} />
-                  ))}
-                </div>
-
-                {/* Pagination */}
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  locale={locale}
-                  baseUrl={`/${locale}/emisiuni`}
-                />
-
-                {/* Page Info */}
-                <p className="text-center text-sm text-slate-500 mt-6">
-                  {t.page} {currentPage} {t.of} {totalPages} ({totalItems} videos)
-                </p>
-              </>
-            ) : (
-              <div className="text-center py-20">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-800/50 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <p className="text-xl text-slate-400">{t.noVideos}</p>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-    );
   } catch (error) {
-    console.error('Error fetching videos:', error);
+    fetchError = error;
+  }
+
+  if (fetchError || !videosResponse || !showsResponse) {
+    console.error('Error fetching videos:', fetchError);
     notFound();
   }
+
+  const videos = videosResponse.member;
+  const shows = showsResponse.member;
+  const totalItems = videosResponse.totalItems;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      {/* Header Section */}
+      <section className="relative py-12 sm:py-16 border-b border-slate-800">
+        {/* Background Pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `
+              radial-gradient(circle at 20% 30%, #dc2626 0%, transparent 40%),
+              radial-gradient(circle at 80% 70%, #7f1d1d 0%, transparent 40%)
+            `,
+          }}
+        />
+
+        <div className="relative xl:container mx-auto px-4">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 flex items-center justify-center rounded-xl bg-red-600/20 border border-red-500/30">
+              <svg className="w-7 h-7 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-heading font-bold text-white">
+                {t.title}
+              </h1>
+              <p className="text-slate-400 mt-1">
+                {t.description}
+              </p>
+            </div>
+          </div>
+
+          {/* Shows Filter */}
+          {shows.length > 0 && (
+            <div className="mt-8">
+              <p className="text-sm text-slate-500 mb-3">{t.filterByShow}</p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href={`/${locale}/emisiuni`}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-medium',
+                    'transition-all duration-200',
+                    !showParam
+                      ? 'bg-red-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                  )}
+                >
+                  {t.allShows}
+                </Link>
+                {shows.map((show) => (
+                  <Link
+                    key={show.id}
+                    href={`/${locale}/emisiuni/${show.slug}`}
+                    className={cn(
+                      'px-4 py-2 rounded-full text-sm font-medium',
+                      'bg-slate-800 text-slate-300 hover:bg-slate-700',
+                      'border border-slate-700 hover:border-slate-600',
+                      'transition-all duration-200'
+                    )}
+                  >
+                    {show.name}
+                    <span className="ml-1.5 text-slate-500">({show.videosCount})</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Videos Grid */}
+      <section className="py-10 sm:py-14">
+        <div className="xl:container mx-auto px-4">
+          {videos.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {videos.map((video) => (
+                  <VideoCard key={video.id} video={video} locale={locale} />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                locale={locale}
+                baseUrl={`/${locale}/emisiuni`}
+              />
+
+              {/* Page Info */}
+              <p className="text-center text-sm text-slate-500 mt-6">
+                {t.page} {currentPage} {t.of} {totalPages} ({totalItems} videos)
+              </p>
+            </>
+          ) : (
+            <div className="text-center py-20">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-800/50 flex items-center justify-center">
+                <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-xl text-slate-400">{t.noVideos}</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
 }

@@ -1,0 +1,7 @@
+sentry:
+    dsn: '%env(SENTRY_DSN)%'
+    options:
+        environment: '%kernel.environment%'
+        traces_sample_rate: 0.1
+        send_default_pii: false
+        max_breadcrumbs: 50

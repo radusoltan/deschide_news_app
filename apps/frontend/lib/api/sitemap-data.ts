@@ -90,7 +90,7 @@ export async function fetchAllArticlesForSitemap(): Promise<SitemapArticle[]> {
     }
 
     const data = await response.json();
-    const articles = data['hydra:member'] || [];
+    const articles = data['member'] ?? data['hydra:member'] ?? [];
 
     // For each article, we need to fetch translations
     // In production, you might want to optimize this with a dedicated endpoint
@@ -153,7 +153,7 @@ export async function fetchArticlesByLocale(locale: Locale): Promise<SitemapArti
     }
 
     const data = await response.json();
-    return data['hydra:member'] || [];
+    return data['member'] ?? data['hydra:member'] ?? [];
   } catch (error) {
     console.error(`Error fetching articles for locale ${locale}:`, error);
     return [];
@@ -185,7 +185,7 @@ export async function fetchRecentArticlesForNewsSitemap(): Promise<SitemapArticl
     }
 
     const data = await response.json();
-    return data['hydra:member'] || [];
+    return data['member'] ?? data['hydra:member'] ?? [];
   } catch (error) {
     console.error('Error fetching recent articles for news sitemap:', error);
     return [];
@@ -211,7 +211,7 @@ export async function fetchAllCategoriesForSitemap(): Promise<SitemapCategory[]>
     }
 
     const data = await response.json();
-    return data['hydra:member'] || [];
+    return data['member'] ?? data['hydra:member'] ?? [];
   } catch (error) {
     console.error('Error fetching categories for sitemap:', error);
     return [];
@@ -236,7 +236,7 @@ export async function fetchAllAuthorsForSitemap(): Promise<SitemapAuthor[]> {
     }
 
     const data = await response.json();
-    return data['hydra:member'] || [];
+    return data['member'] ?? data['hydra:member'] ?? [];
   } catch (error) {
     console.error('Error fetching authors for sitemap:', error);
     return [];
@@ -261,7 +261,7 @@ export async function getArticleCount(): Promise<number> {
     if (!response.ok) return 0;
 
     const data = await response.json();
-    return data['hydra:totalItems'] || 0;
+    return data['totalItems'] ?? data['hydra:totalItems'] ?? 0;
   } catch (error) {
     console.error('Error fetching article count:', error);
     return 0;
@@ -302,7 +302,7 @@ export async function fetchArchivedArticlesForSitemap(): Promise<ArchivedArticle
       }
 
       const data = await response.json();
-      const articles = data['hydra:member'] || [];
+      const articles = data['member'] ?? data['hydra:member'] ?? [];
 
       // Map to our interface
       const mappedArticles = articles.map((article: any) => ({

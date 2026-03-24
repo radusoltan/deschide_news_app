@@ -1,0 +1,27 @@
+# =============================================================================
+# Deschide News — Scheduled Tasks Timer
+# =============================================================================
+# Triggers deschide-scheduler.service every 5 minutes.
+#
+# Install:
+#   sudo cp deschide-scheduler.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now deschide-scheduler.timer
+#
+# Check status:
+#   systemctl list-timers deschide-scheduler.timer
+#   journalctl -u deschide-scheduler.service --since "1 hour ago"
+# =============================================================================
+
+[Unit]
+Description=Deschide News Scheduled Tasks Timer
+Documentation=man:systemd.timer(5)
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+RandomizedDelaySec=30
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

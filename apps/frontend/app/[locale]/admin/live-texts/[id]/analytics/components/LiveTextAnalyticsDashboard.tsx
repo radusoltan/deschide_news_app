@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Eye,
   Users,
@@ -30,7 +30,7 @@ export function LiveTextAnalyticsDashboard({
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setIsRefreshing(true);
       const data = await getLiveTextAnalytics(liveTextId, true);
@@ -44,7 +44,7 @@ export function LiveTextAnalyticsDashboard({
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  };
+  }, [liveTextId]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -52,7 +52,7 @@ export function LiveTextAnalyticsDashboard({
     // Auto-refresh every 60 seconds
     const interval = setInterval(fetchAnalytics, 60000);
     return () => clearInterval(interval);
-  }, [liveTextId]);
+  }, [fetchAnalytics]);
 
   if (isLoading) {
     return (

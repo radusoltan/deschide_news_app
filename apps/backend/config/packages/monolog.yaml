@@ -1,0 +1,54 @@
+when@dev:
+    monolog:
+        handlers:
+            main:
+                type: rotating_file
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug
+                max_files: 14
+                channels: ["!event", "!doctrine"]
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ["!event", "!doctrine"]
+
+when@prod:
+    monolog:
+        handlers:
+            main:
+                type: rotating_file
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: info
+                max_files: 30
+                formatter: App\Service\JsonLogFormatter
+                channels: ["!event"]
+            error:
+                type: rotating_file
+                path: "%kernel.logs_dir%/error.log"
+                level: error
+                max_files: 60
+                formatter: App\Service\JsonLogFormatter
+            deprecation:
+                type: rotating_file
+                path: "%kernel.logs_dir%/deprecation.log"
+                level: warning
+                max_files: 4
+                channels: [deprecation]
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ["!event", "!doctrine"]
+
+when@test:
+    monolog:
+        handlers:
+            main:
+                type: fingers_crossed
+                action_level: warning
+                handler: nested
+                channels: ["!event"]
+            nested:
+                type: rotating_file
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug
+                max_files: 3

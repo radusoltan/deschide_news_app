@@ -102,6 +102,12 @@ class UrlRedirect
     private DateTimeImmutable $createdAt;
 
     /**
+     * Whether this redirect is active.
+     */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
+    private bool $isActive = true;
+
+    /**
      * When this redirect was last accessed.
      */
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
@@ -227,6 +233,18 @@ class UrlRedirect
     public function setLastAccessedAt(?DateTimeImmutable $lastAccessedAt): self
     {
         $this->lastAccessedAt = $lastAccessedAt;
+
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
 
         return $this;
     }

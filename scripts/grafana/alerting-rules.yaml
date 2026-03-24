@@ -1,0 +1,221 @@
+###############################################################################
+# Deschide News — Grafana Alerting Rules
+#
+# These rules can be loaded by Prometheus (via prometheus.yml rule_files) or
+# imported into Grafana's built-in alerting system (Grafana 10+).
+#
+# Prometheus usage:
+#   rule_files:
+#     - "/etc/prometheus/rules/deschide-alerting-rules.yaml"
+#
+# Grafana Unified Alerting usage:
+#   Provision via grafana/provisioning/alerting/ directory or import through
+#   the Grafana UI (Alerting > Alert rules > Import).
+###############################################################################
+
+groups:
+  - name: deschide-alerts
+    interval: 30s
+    rules:
+
+      #########################################################################
+      # API Performance Alerts
+      #########################################################################
+
+      - alert: HighAPILatency
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(deschide_news_http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: deschide-api
+          team: backend
+        annotations:
+          summary: "High API latency detected (p95 > 2s)"
+          description: >
+            The 95th percentile API response time has exceeded 2 seconds
+            for the last 5 minutes. Current value: {{ $value | printf "%.2f" }}s.
+          runbook_url: "https://wiki.deschide.md/runbooks/high-api-latency"
+
+      - alert: HighErrorRate
+        expr: >
+          (
+            sum(rate(deschide_news_http_request_duration_seconds_count{status=~"5.."}[5m]))
+            /
+            sum(rate(deschide_news_http_request_duration_seconds_count[5m]))
+          ) > 0.05
+        for: 3m
+        labels:
+          severity: critical
+          service: deschide-api
+          team: backend
+        annotations:
+          summary: "High 5xx error rate (> 5%)"
+          description: >
+            More than 5% of API requests are returning 5xx errors over the
+            last 3 minutes. Current error rate: {{ $value | printf "%.2f" }}%.
+            Immediate investigation required.
+          runbook_url: "https://wiki.deschide.md/runbooks/high-error-rate"
+
+      - alert: APIDown
+        expr: >
+          up{job="deschide"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: deschide-api
+          team: backend
+        annotations:
+          summary: "Deschide News API is down"
+          description: >
+            The Prometheus scrape target for the Deschide News API has been
+            unreachable for 2 minutes. The backend may be crashed or
+            unresponsive.
+          runbook_url: "https://wiki.deschide.md/runbooks/api-down"
+
+      #########################################################################
+      # PostgreSQL Alerts
+      #########################################################################
+
+      - alert: PostgreSQLHighConnections
+        expr: >
+          pg_stat_activity_count{datname="deschide"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: postgresql
+          team: infrastructure
+        annotations:
+          summary: "PostgreSQL connections above 80"
+          description: >
+            The number of active PostgreSQL connections to the deschide
+            database has exceeded 80 for 5 minutes. Current count:
+            {{ $value }}. Max connections is typically 100.
+          runbook_url: "https://wiki.deschide.md/runbooks/pg-high-connections"
+
+      - alert: PostgreSQLSlowQueries
+        expr: >
+          histogram_quantile(0.95,
+            sum(rate(pg_stat_statements_seconds_bucket{datname="deschide"}[5m])) by (le)
+          ) > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: postgresql
+          team: backend
+        annotations:
+          summary: "PostgreSQL p95 query duration exceeds 5s"
+          description: >
+            The 95th percentile query execution time has been above 5
+            seconds for 10 minutes. This may indicate missing indexes or
+            expensive queries. Current p95: {{ $value | printf "%.2f" }}s.
+
+      #########################################################################
+      # Redis Alerts
+      #########################################################################
+
+      - alert: RedisHighMemory
+        expr: >
+          redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          service: redis
+          team: infrastructure
+        annotations:
+          summary: "Redis memory usage above 90%"
+          description: >
+            Redis memory consumption has exceeded 90% of the configured
+            maximum for 10 minutes. Used: {{ $value | printf "%.2f" }}%.
+            Consider increasing maxmemory or reviewing eviction policies.
+          runbook_url: "https://wiki.deschide.md/runbooks/redis-high-memory"
+
+      - alert: RedisDown
+        expr: >
+          redis_up == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: redis
+          team: infrastructure
+        annotations:
+          summary: "Redis is down"
+          description: >
+            The Redis instance used by Deschide News (DB 1) has been
+            unreachable for 2 minutes. This affects caching, sessions,
+            and Prometheus metric storage.
+
+      #########################################################################
+      # Disk & System Alerts
+      #########################################################################
+
+      - alert: DiskUsageHigh
+        expr: >
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.15
+        for: 15m
+        labels:
+          severity: critical
+          service: system
+          team: infrastructure
+        annotations:
+          summary: "Disk space critically low (< 15% free)"
+          description: >
+            Root filesystem has less than 15% free space remaining for
+            15 minutes. Available: {{ $value | printf "%.2f" }}%.
+            Immediate action required to prevent service disruption.
+          runbook_url: "https://wiki.deschide.md/runbooks/disk-usage-high"
+
+      - alert: HighMemoryUsage
+        expr: >
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+          team: infrastructure
+        annotations:
+          summary: "System memory usage above 90%"
+          description: >
+            System memory utilization has exceeded 90% for 10 minutes.
+            Current usage: {{ $value | printf "%.2f" }}%. OOM killer may
+            become active.
+
+      #########################################################################
+      # Elasticsearch Alerts
+      #########################################################################
+
+      - alert: ElasticsearchDown
+        expr: >
+          elasticsearch_cluster_health_status{color="red"} == 1
+        for: 5m
+        labels:
+          severity: critical
+          service: elasticsearch
+          team: infrastructure
+        annotations:
+          summary: "Elasticsearch cluster health is RED"
+          description: >
+            The Elasticsearch cluster health has been RED for 5 minutes.
+            Article and image search functionality is degraded or
+            unavailable.
+
+      #########################################################################
+      # PHP-FPM Alerts
+      #########################################################################
+
+      - alert: PHPFPMHighWorkerUsage
+        expr: >
+          phpfpm_active_processes{job="deschide"} / phpfpm_total_processes{job="deschide"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          service: php-fpm
+          team: backend
+        annotations:
+          summary: "PHP-FPM worker pool utilization above 85%"
+          description: >
+            More than 85% of PHP-FPM workers are active for 5 minutes.
+            Active: {{ $value | printf "%.0f" }}%. Consider scaling up
+            the worker pool.

@@ -1,36 +1,56 @@
 'use client';
 
 import Link from 'next/link';
+import NextImage from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { logout } from '@/app/actions/auth';
+
+const DARK_MODE_EVENT = 'darkmode-change';
+
+function getIsDark(): boolean {
+  return localStorage.getItem('color-theme') === 'dark' ||
+    (!('color-theme' in localStorage) &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
+}
+
+function subscribeDarkMode(callback: () => void) {
+  window.addEventListener('storage', callback);
+  window.addEventListener(DARK_MODE_EVENT, callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener(DARK_MODE_EVENT, callback);
+  };
+}
+
+function setDarkModeValue(isDark: boolean) {
+  localStorage.setItem('color-theme', isDark ? 'dark' : 'light');
+  window.dispatchEvent(new Event(DARK_MODE_EVENT));
+}
 
 export default function Navbar({ username = 'Admin' }: { username?: string }) {
   const params = useParams();
   const router = useRouter();
   const locale = params.locale as string;
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Initialize darkMode only on client-side to avoid hydration mismatch
-  useEffect(() => {
-    setMounted(true);
-    const isDark = localStorage.getItem('color-theme') === 'dark' ||
-      (!('color-theme' in localStorage) &&
-        window.matchMedia('(prefers-color-scheme: dark)').matches);
-    setDarkMode(isDark);
+  // Detect client-side mount without calling setState in an effect
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
+  // Read dark mode from localStorage via useSyncExternalStore (no setState needed)
+  const darkMode = useSyncExternalStore(
+    subscribeDarkMode,
+    getIsDark,
+    () => false,
+  );
 
-  // Update dark mode class when darkMode state changes (after mount)
+  // Update dark mode class when darkMode value changes (after mount)
   useEffect(() => {
     if (!mounted) return;
     if (darkMode) {
@@ -54,12 +74,10 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
   const toggleDarkMode = () => {
     if (darkMode) {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('color-theme', 'light');
-      setDarkMode(false);
+      setDarkModeValue(false);
     } else {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('color-theme', 'dark');
-      setDarkMode(true);
+      setDarkModeValue(true);
     }
   };
 
@@ -258,10 +276,13 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
                 aria-haspopup="true"
               >
                 <span className="sr-only">Open user menu</span>
-                <img
+                <NextImage
                   className="w-8 h-8 rounded-full"
                   src="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
                   alt="User settings"
+                  width={32}
+                  height={32}
+                  unoptimized
                 />
               </button>
               {profileOpen && (
