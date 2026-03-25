@@ -1,32 +1,56 @@
+/**
+ * Homepage - Deschide News App
+ * TailNews-inspired layout: Hero full-width, then 8+4 main+sidebar grid
+ */
+
 import type { Metadata } from 'next'
 import dynamic from 'next/dynamic';
-import ImportantList from "./components/home/important";
-import LatestNews from "./components/home/latest-news";
-import CategorySection from '@/components/CategorySection';
 import { fetchFrontPageCategories } from '@/lib/api/categories';
 import { fetchLatestArticles } from '@/lib/api/articles';
+import { fetchImportantArticles } from '@/lib/api/important-articles';
+import { getTrendingArticles } from '@/lib/api/statistics';
 import { generateHomepageMetadata } from '@/lib/seo/meta-tags';
-import type { Article } from '@/lib/types/article';
-import { fetchAllSpecialArticles } from '@/lib/api/special-articles';
-import type { SpecialArticle } from '@/components/special/SpecialArticleBanner';
 import { fetchHomepageVideos, fetchVideoShows } from '@/lib/api/video-shows';
 import type { YouTubeVideo, VideoShow } from '@/lib/types/video';
-import { LiveTextHomepage } from '@/components/live';
+import type { Article, ImportantArticle } from '@/lib/types/article';
+import type { Locale } from '@/lib/types';
 
-// Lazy load non-critical components for better initial load performance
-const VideoShowsSlider = dynamic(() => import('@/components/video/VideoShowsSlider').then(mod => ({ default: mod.VideoShowsSlider })), {
-  loading: () => <div className="h-96 bg-slate-900 animate-pulse" />,
-});
+// Section components
+import HeroSection from './components/home/HeroSection';
+import CategorySection from './components/home/CategorySection';
+import type { CategorySectionLayout } from './components/home/CategorySection';
+import HomepageSidebar from './components/home/HomepageSidebar';
+import OpinionSection from './components/home/OpinionSection';
+import LatestNewsSection from './components/home/LatestNewsSection';
+import NewsletterCTA from './components/home/NewsletterCTA';
+import TelegramCTA from './components/home/TelegramCTA';
 
-const TrendingArticles = dynamic(() => import('@/components/public/TrendingArticles').then(mod => ({ default: mod.TrendingArticles })), {
-  loading: () => <div className="h-64 bg-gray-50 animate-pulse my-12" />,
-});
+// ============================================================
+// TEMPORAR DEZACTIVAT: Secțiunea Transmisiuni Live
+// Motiv: Redesign în curs, va fi reactivată ulterior
+// Data dezactivării: 2026-03-25
+// Componente păstrate: components/live/LiveTextHomepage.tsx
+// ============================================================
+// import { LiveTextHomepage } from '@/components/live';
 
-const BreakingNewsTicker = dynamic(() => import('@/components/public/BreakingNewsTicker').then(mod => ({ default: mod.BreakingNewsTicker })), {
-  loading: () => null,
-});
+// Lazy load non-critical components
+const VideoShowsSlider = dynamic(
+  () => import('@/components/video/VideoShowsSlider').then(mod => ({ default: mod.VideoShowsSlider })),
+  { loading: () => <div className="h-96 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] animate-pulse rounded-[var(--radius-card)]" /> },
+);
 
-type Locale = 'ro' | 'en' | 'ru';
+const BreakingNewsTicker = dynamic(
+  () => import('@/components/public/BreakingNewsTicker').then(mod => ({ default: mod.BreakingNewsTicker })),
+  { loading: () => null },
+);
+
+// Cycle through layout variants for visual rhythm
+const LAYOUT_CYCLE: CategorySectionLayout[] = [
+  'featured-grid',  // D — most visually impactful, first category
+  'grid-3col',      // A — classic 3-col grid
+  'compact-list',   // B — dense compact rows
+  'grid-4col',      // C — 4-col wide grid
+];
 
 // Generate dynamic metadata based on locale
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -35,7 +59,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return generateHomepageMetadata(validLocale);
 }
 
-// Enable ISR (Incremental Static Regeneration) with 60-second revalidation
+// ISR revalidation
 export const revalidate = 60;
 
 interface PageProps {
@@ -46,60 +70,70 @@ export default async function HomePage({ params }: PageProps) {
   const { locale: localeParam } = await params
   const locale = localeParam as Locale
 
-  // Fetch categories and breaking news in parallel
+  // Fetch all homepage data in parallel
   let frontPageCategories: any[] = [];
-  let breakingArticles: Article[] = [];
+  let homepageVideos: YouTubeVideo[] = [];
+  let videoShows: VideoShow[] = [];
+  let latestArticles: Article[] = [];
+  let importantArticles: ImportantArticle[] = [];
+  let trendingArticles: any[] = [];
 
-  const [categoriesResult, breakingResult] = await Promise.allSettled([
+  const [
+    categoriesResult,
+    videosResult,
+    showsResult,
+    latestResult,
+    importantResult,
+    trendingResult,
+  ] = await Promise.allSettled([
     fetchFrontPageCategories(locale),
-    fetchLatestArticles(locale, 3), // Use latest for breaking news ticker
+    fetchHomepageVideos(12, locale),
+    fetchVideoShows(locale),
+    fetchLatestArticles(locale, 18),
+    fetchImportantArticles(locale),
+    getTrendingArticles(5, locale),
   ]);
 
   if (categoriesResult.status === 'fulfilled') {
-    frontPageCategories = (categoriesResult.value.member || []).filter(cat => cat.onFrontPage === true);
-  }
-  if (breakingResult.status === 'fulfilled') {
-    breakingArticles = breakingResult.value.member || [];
-  }
-
-  // Fetch special articles (breaking, alert, flash)
-  let specialArticles: SpecialArticle[] = [];
-  try {
-    const articles = await fetchAllSpecialArticles(locale, 3);
-    // Transform to SpecialArticle format
-    specialArticles = articles
-      .filter(article => article.badge)
-      .map(article => ({
-        id: article.id,
-        title: article.title,
-        slug: article.slug,
-        lead: article.lead,
-        badge: article.badge as 'breaking' | 'alert' | 'flash',
-        category: article.category as any,
-        authors: article.authors as any,
-        articleImages: article.articleImages as any,
-        publishedAt: article.publishedAt,
-      }));
-  } catch (error) {
-    console.error('Failed to fetch special articles:', error);
-    specialArticles = [];
+    frontPageCategories = (categoriesResult.value.member || []).filter(
+      (cat: any) => cat.onFrontPage === true
+    );
   }
 
-  // Fetch YouTube videos for homepage slider
-  let homepageVideos: YouTubeVideo[] = [];
-  let videoShows: VideoShow[] = [];
-  try {
-    const [videosResponse, showsResponse] = await Promise.all([
-      fetchHomepageVideos(12, locale),
-      fetchVideoShows(locale),
-    ]);
-    homepageVideos = videosResponse.member || [];
-    videoShows = showsResponse.member || [];
-  } catch (error) {
-    console.error('Failed to fetch homepage videos:', error);
-    homepageVideos = [];
-    videoShows = [];
+  if (videosResult.status === 'fulfilled') {
+    homepageVideos = videosResult.value.member || [];
   }
+
+  if (showsResult.status === 'fulfilled') {
+    videoShows = showsResult.value.member || [];
+  }
+
+  if (latestResult.status === 'fulfilled') {
+    latestArticles = latestResult.value.member || [];
+  }
+
+  if (importantResult.status === 'fulfilled') {
+    importantArticles = importantResult.value.member || [];
+  }
+
+  if (trendingResult.status === 'fulfilled') {
+    trendingArticles = trendingResult.value || [];
+  }
+
+  // Deduplicate: compute IDs used by HeroSection (important articles + backfill)
+  const heroUsedIds = new Set<number>();
+  importantArticles.slice(0, 7).forEach((item) => {
+    if (item.article?.id) heroUsedIds.add(item.article.id);
+  });
+  // Hero also uses first ~4 latest articles for backfill into small cards
+  latestArticles.slice(0, 4).forEach((a) => {
+    if (a.id) heroUsedIds.add(a.id);
+  });
+
+  // Filter latest articles excluding hero IDs, take first 8
+  const latestForSection = latestArticles
+    .filter((a) => !heroUsedIds.has(a.id))
+    .slice(0, 8);
 
   // H1 titles per locale for SEO
   const h1Titles: Record<string, string> = {
@@ -110,39 +144,92 @@ export default async function HomePage({ params }: PageProps) {
 
   return (
     <>
-      {/* SEO H1 - visually hidden but present for search engines */}
+      {/* SEO H1 - visually hidden */}
       <h1 className="sr-only">{h1Titles[locale] || h1Titles.ro}</h1>
 
       {/* Breaking News Ticker */}
-      <BreakingNewsTicker locale={locale} articles={breakingArticles} />
+      <BreakingNewsTicker locale={locale} articles={[]} />
 
-      {/* Hero / Important Articles Section */}
-      <ImportantList locale={locale} />
-
-      {/* Live Broadcasts Section - Shows only when there are live LiveTexts */}
+      {/* TEMPORAR DEZACTIVAT — Transmisiuni Live — vezi comentariul de import de mai sus
       <LiveTextHomepage locale={locale} />
+      */}
 
-      {/* Latest News Section */}
-      <LatestNews locale={locale} />
+      {/* ============================================================ */}
+      {/*  MAIN HOMEPAGE CONTAINER                                      */}
+      {/* ============================================================ */}
+      <div className="bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)] min-h-screen">
+        <div className="max-w-[1440px] mx-auto px-4 lg:px-6">
 
-      {/* Trending Articles Section */}
-      <TrendingArticles locale={locale as Locale} limit={5} />
+          {/* ── Hero Zone (full-width) ── */}
+          <section className="pt-6 pb-10">
+            <HeroSection locale={locale} />
+          </section>
 
-      {/* Video Emissions Slider - Shows only when videos are available */}
-      {homepageVideos.length > 0 && (
-        <VideoShowsSlider
-          videos={homepageVideos}
-          videoShows={videoShows}
-          locale={locale}
-        />
-      )}
+          {/* ── Latest News Section (Featured + Grid + Sidebar) ── */}
+          {latestForSection.length > 0 && (
+            <LatestNewsSection
+              articles={latestForSection}
+              popularArticles={trendingArticles}
+              locale={locale}
+            />
+          )}
 
-      {/* Dynamic Category Sections - Only categories with onFrontPage=true */}
-      {frontPageCategories.map((category) => (
-        <div key={category.id}>
-          <CategorySection category={category} locale={locale} />
+          {/* ── Opinions — NYT-style editorial section (full-width) ── */}
+          <OpinionSection locale={locale} />
+
+          {/* ── Main + Sidebar (8 + 4 columns) ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
+
+            {/* Main content column */}
+            <div className="lg:col-span-8 space-y-12">
+
+              {/* Category sections with alternating layouts */}
+              {frontPageCategories.map((category, index) => (
+                <CategorySection
+                  key={category.id}
+                  category={category}
+                  locale={locale}
+                  layout={LAYOUT_CYCLE[index % LAYOUT_CYCLE.length]}
+                />
+              ))}
+
+              {/* Video section (full-width within main column) */}
+              {homepageVideos.length > 0 && (
+                <section>
+                  <div className="flex items-center gap-4 mb-6">
+                    <h2
+                      className="font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] whitespace-nowrap border-b-2 border-[var(--color-section-tech)] pb-1"
+                      style={{ fontSize: 'var(--font-size-2xl)' }}
+                    >
+                      {locale === 'ru' ? 'Видео' : locale === 'en' ? 'Video' : 'Video'}
+                    </h2>
+                    <div className="flex-1 h-px bg-[var(--color-border)] dark:bg-[var(--color-border-dark)]" />
+                  </div>
+                  <VideoShowsSlider
+                    videos={homepageVideos}
+                    videoShows={videoShows}
+                    locale={locale}
+                  />
+                </section>
+              )}
+
+            </div>
+
+            {/* Sidebar column */}
+            <div className="lg:col-span-4">
+              <HomepageSidebar locale={locale} />
+            </div>
+
+          </div>
+
+          {/* ── Full-width CTAs (below main+sidebar grid) ── */}
+          <div className="space-y-12 pb-16">
+            <NewsletterCTA locale={locale} />
+            <TelegramCTA locale={locale} />
+          </div>
+
         </div>
-      ))}
+      </div>
     </>
   )
 }
