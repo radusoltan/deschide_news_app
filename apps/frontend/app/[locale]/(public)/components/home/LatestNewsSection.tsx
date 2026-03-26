@@ -103,11 +103,12 @@ function FeaturedArticleCard({ article, locale }: { article: Article; locale: st
   const articleUrl = buildArticleUrl(article, locale as Locale);
   const categorySlug = getCategorySlugFromArticle(article.category);
   const categoryTitle = getCategoryTitle(article.category);
+  const sectionColor = getSectionColor(categorySlug);
 
   return (
-    <article className="group relative overflow-hidden">
+    <article className="group relative overflow-hidden rounded-lg">
       <Link href={articleUrl} className="block">
-        <div className="relative aspect-[16/9] md:aspect-[2/1] overflow-hidden">
+        <div className="relative aspect-[16/9] md:aspect-[2/1] overflow-hidden rounded-lg bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)]">
           {imageToUse ? (
             <Image
               src={buildImageUrl(imageToUse.path)}
@@ -118,7 +119,7 @@ function FeaturedArticleCard({ article, locale }: { article: Article; locale: st
               priority
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-neutral-700 via-neutral-800 to-neutral-900" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-skeleton)] to-[var(--color-border)] dark:from-[var(--color-skeleton-dark)] dark:to-[var(--color-border-dark)]" />
           )}
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
@@ -138,12 +139,11 @@ function FeaturedArticleCard({ article, locale }: { article: Article; locale: st
             </p>
           )}
           {categoryTitle && (
-            <div className="pt-2">
-              <span className="text-gray-100 font-sans" style={{ fontSize: 'var(--font-size-sm)' }}>
-                <span className="inline-block h-3 border-l-2 border-[var(--color-breaking)] mr-2" />
-                {categoryTitle}
-              </span>
-            </div>
+            <span
+              className="inline-block mt-2 text-xs font-semibold tracking-wider uppercase font-sans text-gray-100"
+            >
+              {categoryTitle}
+            </span>
           )}
         </div>
       </Link>
@@ -151,7 +151,7 @@ function FeaturedArticleCard({ article, locale }: { article: Article; locale: st
   );
 }
 
-/** Grid article card — image top, title, excerpt, red-accent category (TailNews style) */
+/** Grid article card — vertical card matching CategorySection's VerticalCard style */
 function GridArticleCard({ article, locale }: { article: Article; locale: string }) {
   const featuredImage = getFeaturedImage(article.articleImages || []);
   const thumbnail = featuredImage ? getThumbnailByProfile(featuredImage, 'card_medium') : null;
@@ -159,53 +159,48 @@ function GridArticleCard({ article, locale }: { article: Article; locale: string
   const articleUrl = buildArticleUrl(article, locale as Locale);
   const categorySlug = getCategorySlugFromArticle(article.category);
   const categoryTitle = getCategoryTitle(article.category);
+  const sectionColor = getSectionColor(categorySlug);
 
   return (
-    <article className="group flex flex-row sm:flex-col border-b-2 sm:border-b-0 border-dotted border-[var(--color-border)] dark:border-[var(--color-border-dark)] pb-3 sm:pb-0">
-      {/* Image */}
-      <Link href={articleUrl} className="block flex-shrink-0 w-1/3 sm:w-full">
-        <div className="relative aspect-[4/3] sm:aspect-video overflow-hidden">
+    <article className="group">
+      <Link href={articleUrl} className="block">
+        {/* Image */}
+        <div className="relative aspect-[3/2] overflow-hidden rounded-lg mb-3 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)]">
           {imageToUse ? (
             <Image
               src={buildImageUrl(imageToUse.path)}
               alt={featuredImage?.alt || article.title}
               fill
-              className="object-cover w-full transition-transform duration-500 group-hover:scale-105"
-              sizes="(max-width: 640px) 33vw, (max-width: 1024px) 50vw, 22vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 22vw"
             />
           ) : (
-            <div className="absolute inset-0 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-skeleton)] to-[var(--color-border)] dark:from-[var(--color-skeleton-dark)] dark:to-[var(--color-border-dark)]" />
           )}
         </div>
-      </Link>
 
-      {/* Text */}
-      <div className="py-0 sm:py-3 pl-3 sm:pl-0">
-        <h3
-          className="font-sans font-bold leading-tight mb-2 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)]"
-          style={{ fontSize: 'var(--font-size-lg)' }}
-        >
-          <Link href={articleUrl} className="hover:text-[var(--color-accent)] transition-colors block">
-            {article.title}
-          </Link>
+        {/* Title */}
+        <h3 className="font-sans font-bold leading-tight line-clamp-2 text-base lg:text-lg text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] group-hover:text-[var(--color-accent)] transition-colors duration-200">
+          {article.title}
         </h3>
 
+        {/* Excerpt */}
         {article.lead && (
-          <p
-            className="hidden md:block text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] leading-tight mb-1 line-clamp-2 font-serif"
-            style={{ fontSize: 'var(--font-size-sm)' }}
-          >
+          <p className="mt-1 text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] line-clamp-2 font-serif">
             {article.lead}
           </p>
         )}
+      </Link>
 
-        {categoryTitle && (
-          <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] font-sans" style={{ fontSize: 'var(--font-size-xs)' }}>
-            <span className="inline-block h-3 border-l-2 border-[var(--color-breaking)] mr-2" />
-            {categoryTitle}
-          </span>
-        )}
-      </div>
+      {/* Category badge */}
+      {categoryTitle && (
+        <span
+          className="inline-block mt-2 text-xs font-semibold tracking-wider uppercase font-sans"
+          style={{ color: sectionColor }}
+        >
+          {categoryTitle}
+        </span>
+      )}
     </article>
   );
 }
@@ -355,15 +350,22 @@ function LatestNewsSectionContent({ articles, popularArticles, locale }: LatestN
 
         {/* ── Main content (RIGHT on desktop) ── */}
         <div className="w-full lg:w-2/3 overflow-hidden">
-          {/* Section header — red accent bar + title */}
-          <div className="py-3 mb-5">
+          {/* Section header — matches CategorySection SectionHeader */}
+          <div className="flex items-center gap-4 mb-6">
             <h2
-              className="font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] flex items-center"
-              style={{ fontSize: 'var(--font-size-2xl)' }}
+              className="font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] whitespace-nowrap border-b-2 pb-1"
+              style={{ fontSize: 'var(--font-size-2xl)', borderBottomColor: 'var(--color-breaking)' }}
             >
-              <span className="inline-block h-5 border-l-[3px] border-[var(--color-breaking)] mr-3" />
               {l.latest}
             </h2>
+            <div className="flex-1 h-px bg-[var(--color-border)] dark:bg-[var(--color-border-dark)]" />
+            <Link
+              href={buildLocalizedUrl('/', locale as Locale)}
+              className="text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] font-medium transition-colors font-sans whitespace-nowrap"
+              style={{ fontSize: 'var(--font-size-sm)' }}
+            >
+              {l.viewAll} →
+            </Link>
           </div>
 
           {/* Featured article — full width overlay */}
@@ -373,7 +375,7 @@ function LatestNewsSectionContent({ articles, popularArticles, locale }: LatestN
 
           {/* Grid: 3 columns, 2 rows */}
           {gridArticles.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3 pt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-3">
               {gridArticles.map((article) => (
                 <GridArticleCard key={article.id} article={article} locale={locale} />
               ))}
@@ -419,20 +421,19 @@ function LatestNewsSectionSkeleton() {
 
         {/* Main content skeleton */}
         <div className="w-full lg:w-2/3">
-          <div className="py-3 mb-5">
-            <div className="flex items-center gap-3">
-              <div className="w-1 h-5 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)]" />
-              <div className="w-48 h-7 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] rounded animate-pulse" />
-            </div>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-40 h-8 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] rounded animate-pulse" />
+            <div className="flex-1 h-px bg-[var(--color-border)] dark:bg-[var(--color-border-dark)]" />
+            <div className="w-20 h-4 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] rounded animate-pulse" />
           </div>
-          <div className="aspect-[2/1] bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] animate-pulse mb-5" />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="aspect-[2/1] bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] animate-pulse rounded-lg mb-5" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="aspect-video bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] mb-3" />
+                <div className="aspect-[3/2] bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] rounded-lg mb-3" />
                 <div className="h-5 w-full bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] rounded mb-2" />
-                <div className="h-4 w-3/4 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] rounded mb-2" />
-                <div className="h-3 w-20 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] rounded" />
+                <div className="h-5 w-3/4 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] rounded mb-2" />
+                <div className="h-4 w-full bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] rounded" />
               </div>
             ))}
           </div>

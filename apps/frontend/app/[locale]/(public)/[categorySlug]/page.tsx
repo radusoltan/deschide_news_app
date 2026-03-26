@@ -166,15 +166,15 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           <div className="w-full lg:w-2/3 overflow-hidden">
             {articles.length > 0 ? (
               <div className="space-y-6">
-                {/* Section header — red accent bar + category title */}
-                <div className="py-3">
+                {/* Section header — matches homepage CategorySection SectionHeader */}
+                <div className="flex items-center gap-4">
                   <h1
-                    className="font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] flex items-center"
-                    style={{ fontSize: 'var(--font-size-2xl)' }}
+                    className="font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] whitespace-nowrap border-b-2 pb-1"
+                    style={{ fontSize: 'var(--font-size-2xl)', borderBottomColor: sectionColor }}
                   >
-                    <span className="inline-block h-5 border-l-[3px] mr-3" style={{ borderColor: sectionColor }} />
                     {category.title}
                   </h1>
+                  <div className="flex-1 h-px bg-[var(--color-border)] dark:bg-[var(--color-border-dark)]" />
                 </div>
 
                 {/* Hero article — full-width overlay */}
@@ -182,9 +182,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                   <HeroCard article={heroArticle} locale={locale as Locale} />
                 )}
 
-                {/* Articles grid — 3 columns (TailNews style) */}
+                {/* Articles grid — 3 columns */}
                 {gridArticles.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3 pt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-3">
                     {gridArticles.map((article) => (
                       <GridArticleCard key={article.id} article={article} locale={locale as Locale} />
                     ))}
@@ -218,15 +218,15 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
 function HeroCard({ article, locale }: { article: Article; locale: Locale }) {
   const featuredImage = getFeaturedImage(article.articleImages || []);
-  const thumbnail = featuredImage ? getThumbnailByProfile(featuredImage, 'article_hero') : null;
+  const thumbnail = featuredImage ? getThumbnailByProfile(featuredImage, 'hero_small') : null;
   const imageToUse = thumbnail || featuredImage;
   const articleUrl = buildArticleUrl(article, locale);
   const categoryTitle = getCatTitle(article.category);
 
   return (
-    <article className="group relative overflow-hidden">
+    <article className="group relative overflow-hidden rounded-lg">
       <Link href={articleUrl} className="block">
-        <div className="relative aspect-[16/9] md:aspect-[2/1] overflow-hidden">
+        <div className="relative aspect-[16/9] md:aspect-[2/1] overflow-hidden rounded-lg bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)]">
           {imageToUse ? (
             <Image
               src={buildImageUrl(imageToUse.path)}
@@ -237,7 +237,7 @@ function HeroCard({ article, locale }: { article: Article; locale: Locale }) {
               priority
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-neutral-700 via-neutral-800 to-neutral-900" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-skeleton)] to-[var(--color-border)] dark:from-[var(--color-skeleton-dark)] dark:to-[var(--color-border-dark)]" />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
         </div>
@@ -255,20 +255,9 @@ function HeroCard({ article, locale }: { article: Article; locale: Locale }) {
             </p>
           )}
           {categoryTitle && (
-            <div className="pt-2">
-              <span className="text-gray-100 font-sans" style={{ fontSize: 'var(--font-size-sm)' }}>
-                <span className="inline-block h-3 border-l-2 border-[var(--color-breaking)] mr-2" />
-                {categoryTitle}
-              </span>
-            </div>
-          )}
-          {article.publishedAt && (
-            <time dateTime={article.publishedAt} className="block mt-2 text-xs text-white/60 font-sans">
-              {new Date(article.publishedAt).toLocaleDateString(
-                locale === 'ru' ? 'ru-RU' : locale === 'en' ? 'en-US' : 'ro-RO',
-                { day: 'numeric', month: 'long', year: 'numeric' }
-              )}
-            </time>
+            <span className="inline-block mt-2 text-xs font-semibold tracking-wider uppercase font-sans text-gray-100">
+              {categoryTitle}
+            </span>
           )}
         </div>
       </Link>
@@ -285,52 +274,50 @@ function GridArticleCard({ article, locale }: { article: Article; locale: Locale
   const thumbnail = featuredImage ? getThumbnailByProfile(featuredImage, 'card_medium') : null;
   const imageToUse = thumbnail || featuredImage;
   const articleUrl = buildArticleUrl(article, locale);
+  const categorySlug = getCategorySlugFromArticle(article.category);
   const categoryTitle = getCatTitle(article.category);
+  const catSectionColor = getSectionColor(categorySlug);
 
   return (
-    <article className="group flex flex-row sm:flex-col border-b-2 sm:border-b-0 border-dotted border-[var(--color-border)] dark:border-[var(--color-border-dark)] pb-3 sm:pb-0">
-      <Link href={articleUrl} className="block flex-shrink-0 w-1/3 sm:w-full">
-        <div className="relative aspect-[4/3] sm:aspect-video overflow-hidden">
+    <article className="group">
+      <Link href={articleUrl} className="block">
+        {/* Image */}
+        <div className="relative aspect-[3/2] overflow-hidden rounded-lg mb-3 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)]">
           {imageToUse ? (
             <Image
               src={buildImageUrl(imageToUse.path)}
               alt={featuredImage?.alt || article.title}
               fill
-              className="object-cover w-full transition-transform duration-500 group-hover:scale-105"
-              sizes="(max-width: 640px) 33vw, (max-width: 1024px) 50vw, 22vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 22vw"
             />
           ) : (
-            <div className="absolute inset-0 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)]" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-skeleton)] to-[var(--color-border)] dark:from-[var(--color-skeleton-dark)] dark:to-[var(--color-border-dark)]" />
           )}
         </div>
-      </Link>
 
-      <div className="py-0 sm:py-3 pl-3 sm:pl-0">
-        <h3
-          className="font-sans font-bold leading-tight mb-2 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)]"
-          style={{ fontSize: 'var(--font-size-lg)' }}
-        >
-          <Link href={articleUrl} className="hover:text-[var(--color-accent)] transition-colors block">
-            {article.title}
-          </Link>
+        {/* Title */}
+        <h3 className="font-sans font-bold leading-tight line-clamp-2 text-base lg:text-lg text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] group-hover:text-[var(--color-accent)] transition-colors duration-200">
+          {article.title}
         </h3>
 
+        {/* Excerpt */}
         {article.lead && (
-          <p
-            className="hidden md:block text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] leading-tight mb-1 line-clamp-2 font-serif"
-            style={{ fontSize: 'var(--font-size-sm)' }}
-          >
+          <p className="mt-1 text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] line-clamp-2 font-serif">
             {article.lead}
           </p>
         )}
+      </Link>
 
-        {categoryTitle && (
-          <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] font-sans" style={{ fontSize: 'var(--font-size-xs)' }}>
-            <span className="inline-block h-3 border-l-2 border-[var(--color-breaking)] mr-2" />
-            {categoryTitle}
-          </span>
-        )}
-      </div>
+      {/* Category badge */}
+      {categoryTitle && (
+        <span
+          className="inline-block mt-2 text-xs font-semibold tracking-wider uppercase font-sans"
+          style={{ color: catSectionColor }}
+        >
+          {categoryTitle}
+        </span>
+      )}
     </article>
   );
 }
