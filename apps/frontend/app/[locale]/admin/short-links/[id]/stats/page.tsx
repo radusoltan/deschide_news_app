@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getShortLinkStats } from '@/lib/api/short-links';
-import { getAccessToken } from '@/lib/auth/session';
+import { getAccessToken } from '@/lib/dal';
 import ClicksOverTimeChart from './components/ClicksOverTimeChart';
 import DeviceTypesChart from './components/DeviceTypesChart';
 import TopReferrersChart from './components/TopReferrersChart';

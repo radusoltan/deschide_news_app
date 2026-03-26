@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import CreateShortLinkForm from '../components/CreateShortLinkForm';
-import { getAccessToken } from '@/lib/auth/session';
+import { getAccessToken } from '@/lib/dal';
 
 interface NewShortLinkPageProps {
   params: Promise<{

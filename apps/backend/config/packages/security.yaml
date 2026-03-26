@@ -56,6 +56,9 @@ security:
         # Public trending endpoint (for frontend) - MUST come before admin stats
         - { path: ^/api/admin/stats/trending, roles: PUBLIC_ACCESS }
 
+        # Admin notification endpoints (require ROLE_EDITOR or ROLE_ADMIN)
+        - { path: ^/api/admin/notifications, roles: [ROLE_ADMIN, ROLE_EDITOR] }
+
         # Admin statistics endpoints (require ROLE_ADMIN) - MUST come before general /api/stats
         - { path: ^/api/admin/stats, roles: ROLE_ADMIN }
 

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Spinner } from 'flowbite-react';
 import ShortLinksTable from './components/ShortLinksTable';
 import { getShortLinks } from '@/lib/api/short-links';
-import { getAccessToken } from '@/lib/auth/session';
+import { getAccessToken } from '@/lib/dal';
 
 interface ShortLinksPageProps {
   params: Promise<{

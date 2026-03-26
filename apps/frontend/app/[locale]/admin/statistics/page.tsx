@@ -9,7 +9,7 @@ import { TrendingArticlesTable } from '@/components/admin/stats/TrendingArticles
 import { RealTimeStats } from '@/components/admin/stats/RealTimeStats';
 import { DateRangePicker } from '@/components/admin/stats/DateRangePicker';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
-import { getAccessToken } from '@/lib/auth/session';
+import { getAccessToken } from '@/lib/dal';
 
 interface Props {
   searchParams: Promise<{

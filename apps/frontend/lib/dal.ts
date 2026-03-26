@@ -39,12 +39,11 @@ export const verifySession = cache(async () => {
 // ============================================================================
 
 /**
- * Get access token from current session
- * Returns null if not authenticated
+ * Get a fresh access token from current session, refreshing if expired.
+ * Returns null if not authenticated or refresh failed.
  */
 export async function getAccessToken(): Promise<string | null> {
-  const session = await verifySession();
-  return session.isAuth && session.tokens ? session.tokens.accessToken : null;
+  return getFreshAccessToken();
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
@@ -54,11 +53,16 @@ interface ApiRequestOptions extends RequestInit {
 }
 
 /**
- * Get a fresh access token, refreshing if necessary
- * Uses Server Action to properly update the session cookie after token refresh
- * @returns Fresh access token or null if refresh failed
+ * Get a fresh access token, refreshing if necessary.
+ * Uses Server Action to properly update the session cookie after token refresh.
+ *
+ * Wrapped with React cache() to deduplicate within a single server render.
+ * This prevents race conditions when multiple concurrent fetches (e.g.,
+ * getArticles + getCategories on the same page) all detect an expired token
+ * and try to refresh simultaneously — with single_use refresh tokens, only
+ * the first refresh succeeds; the rest must reuse the same result.
  */
-async function getFreshAccessToken(): Promise<string | null> {
+const getFreshAccessToken = cache(async (): Promise<string | null> => {
   const session = await getSession();
   if (!session) return null;
 
@@ -92,7 +96,7 @@ async function getFreshAccessToken(): Promise<string | null> {
     console.error('[DAL] Token refresh failed:', error);
     return null;
   }
-}
+});
 
 async function authenticatedFetch(
   endpoint: string,
@@ -156,6 +160,8 @@ export interface Article {
   content?: string;
   excerpt?: string;
   status?: string;
+  badge?: string | null;
+  isFeatured?: boolean;
   publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -241,6 +247,8 @@ export async function createArticle(
     status?: string;
     category?: string;
     authors?: string[]; // Array of author IRIs
+    badge?: string | null;
+    isFeatured?: boolean;
   },
   locale: string = 'ro'
 ): Promise<Article> {
@@ -280,6 +288,8 @@ export async function updateArticle(
     status?: string;
     category?: string;
     authors?: string[]; // Array of author IRIs
+    badge?: string | null;
+    isFeatured?: boolean;
   },
   locale: string = 'ro'
 ): Promise<Article> {

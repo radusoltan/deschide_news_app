@@ -1,6 +1,8 @@
-@import "tailwindcss";
+@reference "tailwindcss";
 
 /* Flowbite Admin Dashboard Styles */
+/* Note: Full Tailwind is imported in globals.css with our custom dark variant.
+   We use @reference here so @apply works without generating duplicate utilities. */
 
 /* Primary Color Theme */
 :root {

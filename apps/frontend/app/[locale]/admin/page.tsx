@@ -5,7 +5,7 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { getAccessToken } from '@/lib/auth/session';
+import { getAccessToken } from '@/lib/dal';
 import { getSiteStats, getTrendingArticles } from '@/lib/api/statistics';
 import { apiRequest } from '@/lib/api/client';
 import { ArticleViewsChart } from '@/components/admin/stats/ArticleViewsChart';

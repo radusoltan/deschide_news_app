@@ -35,28 +35,40 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->getEntityManager()->flush();
     }
 
-    //    /**
-    //     * @return User[] Returns an array of User objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('u.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    /**
+     * Find users that have any of the specified roles.
+     * Uses native SQL because PostgreSQL JSON columns don't support LIKE in DQL.
+     *
+     * @param string[] $roles
+     * @return User[]
+     */
+    public function findByRoles(array $roles): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
 
-    //    public function findOneBySomeField($value): ?User
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        $conditions = [];
+        $params = [];
+        foreach ($roles as $i => $role) {
+            $conditions[] = \sprintf('CAST(u.roles AS TEXT) LIKE :role_%d', $i);
+            $params[\sprintf('role_%d', $i)] = \sprintf('%%"%s"%%', $role);
+        }
+
+        $sql = \sprintf(
+            'SELECT u.id FROM "user" u WHERE u.is_active = true AND (%s)',
+            implode(' OR ', $conditions),
+        );
+
+        $result = $conn->executeQuery($sql, $params);
+        $ids = array_column($result->fetchAllAssociative(), 'id');
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('u')
+            ->where('u.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->getQuery()
+            ->getResult();
+    }
 }

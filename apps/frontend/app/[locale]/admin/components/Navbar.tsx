@@ -5,12 +5,13 @@ import NextImage from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { logout } from '@/app/actions/auth';
+import NotificationBell from './NotificationBell';
 
 const DARK_MODE_EVENT = 'darkmode-change';
 
 function getIsDark(): boolean {
-  return localStorage.getItem('color-theme') === 'dark' ||
-    (!('color-theme' in localStorage) &&
+  return localStorage.getItem('theme-preference') === 'dark' ||
+    (!('theme-preference' in localStorage) &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);
 }
 
@@ -24,7 +25,7 @@ function subscribeDarkMode(callback: () => void) {
 }
 
 function setDarkModeValue(isDark: boolean) {
-  localStorage.setItem('color-theme', isDark ? 'dark' : 'light');
+  localStorage.setItem('theme-preference', isDark ? 'dark' : 'light');
   window.dispatchEvent(new Event(DARK_MODE_EVENT));
 }
 
@@ -50,14 +51,10 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
     () => false,
   );
 
-  // Update dark mode class when darkMode value changes (after mount)
+  // Update data-theme attribute when darkMode value changes (after mount)
   useEffect(() => {
     if (!mounted) return;
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
   }, [darkMode, mounted]);
 
   // Close profile dropdown on click outside
@@ -72,13 +69,9 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
   }, []);
 
   const toggleDarkMode = () => {
-    if (darkMode) {
-      document.documentElement.classList.remove('dark');
-      setDarkModeValue(false);
-    } else {
-      document.documentElement.classList.add('dark');
-      setDarkModeValue(true);
-    }
+    const newValue = !darkMode;
+    document.documentElement.setAttribute('data-theme', newValue ? 'dark' : 'light');
+    setDarkModeValue(newValue);
   };
 
   const toggleSidebar = () => {
@@ -198,20 +191,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
             </button>
 
             {/* Notifications */}
-            <button
-              type="button"
-              className="p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
-            >
-              <span className="sr-only">View notifications</span>
-              <svg
-                className="w-6 h-6"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-              </svg>
-            </button>
+            <NotificationBell username={username} />
 
             {/* Apps */}
             <button

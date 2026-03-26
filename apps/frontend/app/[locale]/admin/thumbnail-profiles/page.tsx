@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { apiRequest } from '@/lib/api/client';
-import { getAccessToken } from '@/lib/auth/session';
+import { getAccessToken } from '@/lib/dal';
 
 interface ThumbnailProfile {
   id: number;

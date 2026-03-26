@@ -1,6 +1,6 @@
 import { getArticles, getCategories } from '@/lib/dal';
 import { apiRequest } from '@/lib/api/client';
-import { getAccessToken } from '@/lib/auth/session';
+import { getAccessToken } from '@/lib/dal';
 import { ArticlesTableClient } from './ArticlesTableClient';
 import { ArticlesPageClient } from './components/ArticlesPageClient';
 import { ArticlesPagination } from './components/ArticlesPagination';

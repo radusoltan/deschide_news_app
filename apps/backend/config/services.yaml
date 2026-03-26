@@ -9,6 +9,9 @@ parameters:
     varnish.port: '%env(int:default::VARNISH_PORT)%'
     varnish.enabled: '%env(bool:default::VARNISH_ENABLED)%'
 
+    # Notification cleanup
+    app.notification_retention_days: 90
+
     # Cloudflare CDN configuration
     cloudflare.api_token: '%env(default::CLOUDFLARE_API_TOKEN)%'
     cloudflare.zone_id: '%env(default::CLOUDFLARE_ZONE_ID)%'
@@ -126,6 +129,18 @@ services:
     Prometheus\CollectorRegistry:
         arguments:
             - '@Prometheus\Storage\Redis'
+
+    # Mercure JWT Cookie Listener (sets subscribe cookie at login)
+    App\EventListener\MercureJwtCookieListener:
+        arguments:
+            $mercureJwtSecret: '%env(MERCURE_JWT_SECRET)%'
+
+    # Admin Notification Service (Mercure real-time + DB persistence)
+    App\Service\NotificationService:
+        arguments:
+            $httpClient: '@http_client'
+            $mercureUrl: '%env(MERCURE_URL)%'
+            $mercurePublisherJwt: '%env(MERCURE_JWT_SECRET)%'
 
     # LiveText Notification Service (Mercure)
     App\Service\LiveTextNotificationService:
