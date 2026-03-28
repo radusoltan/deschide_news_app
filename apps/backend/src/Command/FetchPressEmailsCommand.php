@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Entity\Article;
-use App\Enum\ArticleStatus;
-use App\Repository\ArticleRepository;
-use App\Repository\CategoryRepository;
+use App\Entity\PressRelease;
+use App\Enum\NotificationImportance;
+use App\Enum\NotificationType;
+use App\Repository\PressReleaseRepository;
+use App\Service\NotificationService;
 use App\Service\PressEmailParser;
 use App\Service\ZohoMailService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,11 +22,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:fetch-press-emails',
-    description: 'Fetch press release emails from Zoho Mail and create draft articles',
+    description: 'Fetch press release emails from Zoho Mail and queue them for editorial review',
 )]
 class FetchPressEmailsCommand extends Command
 {
-    /** @var array<string, string> sender domain → allowed */
     private const WHITELIST_DOMAINS = [
         'ipn.md',
         'gov.md',
@@ -40,8 +40,8 @@ class FetchPressEmailsCommand extends Command
         private readonly ZohoMailService $zohoMail,
         private readonly PressEmailParser $parser,
         private readonly EntityManagerInterface $em,
-        private readonly ArticleRepository $articleRepository,
-        private readonly CategoryRepository $categoryRepository,
+        private readonly PressReleaseRepository $pressReleaseRepository,
+        private readonly NotificationService $notificationService,
         private readonly LoggerInterface $logger,
     ) {
         parent::__construct();
@@ -51,7 +51,7 @@ class FetchPressEmailsCommand extends Command
     {
         $this
             ->addOption('limit', 'l', InputOption::VALUE_REQUIRED, 'Max emails to process', '20')
-            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Parse emails but do not create articles')
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Parse emails but do not queue them')
         ;
     }
 
@@ -64,7 +64,7 @@ class FetchPressEmailsCommand extends Command
         $io->title('Press Email Fetcher');
 
         if ($dryRun) {
-            $io->note('DRY RUN — no articles will be created');
+            $io->note('DRY RUN — no press releases will be queued');
         }
 
         // Step 1: List emails
@@ -89,18 +89,12 @@ class FetchPressEmailsCommand extends Command
             return Command::SUCCESS;
         }
 
-        // Step 3: Process each email
+        // Step 3: Process each email → PressRelease (pending)
         $io->section('[3/4] Processing emails');
-        $created = 0;
+        $queued = 0;
         $skipped = 0;
         $errors = 0;
         $processedIds = [];
-
-        // Pre-load category map: slug → Category entity
-        $categoryMap = [];
-        foreach ($this->categoryRepository->findAll() as $cat) {
-            $categoryMap[$cat->getSlug()] = $cat;
-        }
 
         foreach ($filtered as $email) {
             $messageId = $email['messageId'];
@@ -109,10 +103,10 @@ class FetchPressEmailsCommand extends Command
 
             $io->text(sprintf('  → [%s] %s', $from, mb_substr($subject, 0, 70)));
 
-            // Deduplication check
-            $existing = $this->articleRepository->findOneBy(['sourceEmail' => $messageId]);
+            // Deduplication: check PressRelease table
+            $existing = $this->pressReleaseRepository->findBySourceEmailId($messageId);
             if ($existing !== null) {
-                $io->text('    ⏭  Already processed (sourceEmail exists)');
+                $io->text('    ⏭  Already queued');
                 $skipped++;
                 continue;
             }
@@ -147,36 +141,37 @@ class FetchPressEmailsCommand extends Command
             ));
 
             if ($dryRun) {
-                $io->text('    📋 DRY RUN — would create article');
-                $created++;
+                $io->text('    📋 DRY RUN — would queue');
+                $queued++;
                 $processedIds[] = $messageId;
                 continue;
             }
 
-            // Create article
+            // Create PressRelease (pending editorial review)
             try {
-                $article = new Article();
-                $article->setTitle($parsed['title']);
-                $article->setLead($parsed['lead']);
-                $article->setContent($parsed['content']);
-                $article->setStatus(ArticleStatus::NEW);
-                $article->setSourceEmail($messageId);
-                $article->setTranslatableLocale('ro');
+                $pr = new PressRelease();
+                $pr->setTitle($parsed['title']);
+                $pr->setLead($parsed['lead']);
+                $pr->setContent($parsed['content']);
+                $pr->setSourceEmailId($messageId);
+                $pr->setSenderAddress($from);
+                $pr->setSenderName($parsed['sourceName']);
+                $pr->setSourceUrl($parsed['sourceUrl']);
+                $pr->setCategorySlug($parsed['categorySlug']);
+                $pr->setEmailSubject($subject);
+                $pr->setReceivedAt(new \DateTimeImmutable(
+                    '@' . (int) (((int) $email['receivedTime']) / 1000)
+                ));
 
-                $category = $categoryMap[$parsed['categorySlug']] ?? $categoryMap['societate'] ?? null;
-                if ($category !== null) {
-                    $article->setCategory($category);
-                }
-
-                $this->em->persist($article);
+                $this->em->persist($pr);
                 $this->em->flush();
 
-                $io->text(sprintf('    ✅ Article #%d created', $article->getId()));
-                $created++;
+                $io->text(sprintf('    ✅ PressRelease #%d queued', $pr->getId()));
+                $queued++;
                 $processedIds[] = $messageId;
             } catch (\Throwable $e) {
-                $io->text('    ❌ Failed to create article: ' . $e->getMessage());
-                $this->logger->error('Press fetcher: article creation failed', [
+                $io->text('    ❌ Failed to queue: ' . $e->getMessage());
+                $this->logger->error('Press fetcher: queue failed', [
                     'messageId' => $messageId,
                     'error' => $e->getMessage(),
                 ]);
@@ -184,8 +179,8 @@ class FetchPressEmailsCommand extends Command
             }
         }
 
-        // Step 4: Mark processed emails as read
-        $io->section('[4/4] Marking processed emails as read');
+        // Step 4: Mark processed emails as read + notify editors
+        $io->section('[4/4] Marking emails as read & notifying editors');
         if (!empty($processedIds) && !$dryRun) {
             try {
                 $this->zohoMail->markAsRead($processedIds);
@@ -193,20 +188,35 @@ class FetchPressEmailsCommand extends Command
             } catch (\Throwable $e) {
                 $io->warning('Failed to mark emails as read: ' . $e->getMessage());
             }
+
+            // Notify editors about new press releases
+            if ($queued > 0) {
+                try {
+                    $this->notificationService->notify(
+                        type: NotificationType::PRESS_QUEUE_NEW,
+                        title: sprintf('%d comunicate de presă noi în coadă', $queued),
+                        message: 'Verifică coada de comunicate și aprobă articolele relevante.',
+                        importance: NotificationImportance::MEDIUM,
+                        actionUrl: '/admin/press-queue',
+                    );
+                } catch (\Throwable $e) {
+                    $this->logger->warning('Failed to send press queue notification', ['error' => $e->getMessage()]);
+                }
+            }
         }
 
         // Summary
         $io->newLine();
         $io->definitionList(
             ['Emails scanned' => count($filtered)],
-            ['Articles created' => $created],
+            ['Queued for review' => $queued],
             ['Skipped' => $skipped],
             ['Errors' => $errors],
         );
 
         $this->logger->info('Press fetcher completed', [
             'scanned' => count($filtered),
-            'created' => $created,
+            'queued' => $queued,
             'skipped' => $skipped,
             'errors' => $errors,
         ]);
@@ -216,7 +226,7 @@ class FetchPressEmailsCommand extends Command
             return Command::FAILURE;
         }
 
-        $io->success("Done. {$created} articles created.");
+        $io->success("Done. {$queued} press releases queued for editorial review.");
         return Command::SUCCESS;
     }
 

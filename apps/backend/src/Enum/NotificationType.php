@@ -14,4 +14,5 @@ enum NotificationType: string
     case JOB_FAILED = 'job_failed';
     case ARTICLE_AUTO_CREATED = 'article_auto_created';
     case ARTICLE_TRANSLATED = 'article_translated';
+    case PRESS_QUEUE_NEW = 'press_queue_new';
 }
