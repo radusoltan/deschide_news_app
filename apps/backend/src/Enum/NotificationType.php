@@ -12,4 +12,6 @@ enum NotificationType: string
     case USER_ACTION = 'user_action';
     case SYSTEM_ERROR = 'system_error';
     case JOB_FAILED = 'job_failed';
+    case ARTICLE_AUTO_CREATED = 'article_auto_created';
+    case ARTICLE_TRANSLATED = 'article_translated';
 }

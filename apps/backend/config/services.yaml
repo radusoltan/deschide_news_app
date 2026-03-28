@@ -12,6 +12,10 @@ parameters:
     # Notification cleanup
     app.notification_retention_days: 90
 
+    # Gemini CLI path for translation workflow
+    gemini_cli_path: '%env(default:gemini_cli_default:GEMINI_CLI_PATH)%'
+    gemini_cli_default: '/usr/bin/gemini'
+
     # Cloudflare CDN configuration
     cloudflare.api_token: '%env(default::CLOUDFLARE_API_TOKEN)%'
     cloudflare.zone_id: '%env(default::CLOUDFLARE_ZONE_ID)%'
@@ -204,6 +208,12 @@ services:
         arguments:
             $elasticsearchUrl: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+
+    # Translation Handler (Gemini CLI subprocess)
+    App\MessageHandler\TranslateArticleHandler:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $projectDir: '%kernel.project_dir%'
 
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:

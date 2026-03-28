@@ -12,6 +12,7 @@ use App\Entity\Author;
 use App\Entity\Category;
 use App\Entity\Tag;
 use App\Enum\ArticleStatus;
+use App\Event\ArticleAutoCreatedEvent;
 use App\Event\ArticlePublishedEvent;
 use App\Event\ArticleUpdatedEvent;
 use App\Message\CheckOrphanedTagsMessage;
@@ -271,6 +272,11 @@ final class ArticleProcessor implements ProcessorInterface
                 // Dispatch notification for new published articles
                 if ($data->getStatus() === ArticleStatus::PUBLISHED) {
                     $this->eventDispatcher->dispatch(new ArticlePublishedEvent($data));
+                }
+
+                // Dispatch notification if article was auto-created by agent (detected by sourceEmail)
+                if ($data->getSourceEmail() !== null) {
+                    $this->eventDispatcher->dispatch(new ArticleAutoCreatedEvent($data));
                 }
             } else {
                 // UPDATE: Existing entity

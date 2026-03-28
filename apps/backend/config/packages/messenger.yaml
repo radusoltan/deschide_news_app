@@ -14,6 +14,15 @@ framework:
             # Statistics operations transport (medium priority)
             stats_async: '%env(MESSENGER_TRANSPORT_DSN)%'
 
+            # Translation operations transport (long-running, separate queue)
+            translations:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 5000
+                    multiplier: 3
+                    max_delay: 60000
+
         routing:
             # Route your messages to the transports
             # Cache messages (Sprint 2)
@@ -30,6 +39,9 @@ framework:
 
             # Short link analytics (async for fast redirects)
             'App\Message\ShortLinkClickMessage': async
+
+            # Translation workflow (long-running Gemini CLI calls)
+            'App\Message\TranslateArticleMessage': translations
 
 # when@test:
 #    framework:

@@ -254,6 +254,28 @@ class Article implements Translatable
     #[Groups(['article:read'])]
     private ?string $webcode = null;
 
+    // Source email ID (set when article is auto-created by email-press-redactor agent)
+    #[ORM\Column(length: 64, nullable: true, unique: true)]
+    #[Groups(['article:read', 'article:write'])]
+    private ?string $sourceEmail = null;
+
+    // Translation workflow fields
+    #[ORM\Column(options: ['default' => false])]
+    #[Groups(['article:read', 'article:write'])]
+    private bool $requestTranslation = false;
+
+    #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['article:read'])]
+    private ?string $translationStatus = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(['article:read'])]
+    private ?\DateTimeImmutable $translatedAt = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['article:read'])]
+    private ?string $translatedBy = null;
+
     public function __construct()
     {
         $this->authors = new ArrayCollection();
@@ -342,6 +364,11 @@ class Article implements Translatable
     }
 
     public function isFeatured(): bool
+    {
+        return $this->isFeatured;
+    }
+
+    public function getIsFeatured(): bool
     {
         return $this->isFeatured;
     }
@@ -603,6 +630,66 @@ class Article implements Translatable
         $this->status = ArticleStatus::PUBLISHED;
         $this->archivedAt = null;
         $this->archiveReason = null;
+
+        return $this;
+    }
+
+    public function getSourceEmail(): ?string
+    {
+        return $this->sourceEmail;
+    }
+
+    public function setSourceEmail(?string $sourceEmail): static
+    {
+        $this->sourceEmail = $sourceEmail;
+
+        return $this;
+    }
+
+    public function isRequestTranslation(): bool
+    {
+        return $this->requestTranslation;
+    }
+
+    public function setRequestTranslation(bool $requestTranslation): static
+    {
+        $this->requestTranslation = $requestTranslation;
+
+        return $this;
+    }
+
+    public function getTranslationStatus(): ?string
+    {
+        return $this->translationStatus;
+    }
+
+    public function setTranslationStatus(?string $translationStatus): static
+    {
+        $this->translationStatus = $translationStatus;
+
+        return $this;
+    }
+
+    public function getTranslatedAt(): ?\DateTimeImmutable
+    {
+        return $this->translatedAt;
+    }
+
+    public function setTranslatedAt(?\DateTimeImmutable $translatedAt): static
+    {
+        $this->translatedAt = $translatedAt;
+
+        return $this;
+    }
+
+    public function getTranslatedBy(): ?string
+    {
+        return $this->translatedBy;
+    }
+
+    public function setTranslatedBy(?string $translatedBy): static
+    {
+        $this->translatedBy = $translatedBy;
 
         return $this;
     }

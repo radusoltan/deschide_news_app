@@ -8,7 +8,7 @@ use App\Entity\User;
 use App\Enum\NotificationType;
 use App\Repository\UserRepository;
 
-final readonly class NotificationFilterService
+readonly class NotificationFilterService
 {
     private const array TYPE_ROLE_MAP = [
         'article_published' => ['ROLE_EDITOR', 'ROLE_ADMIN'],
@@ -17,6 +17,8 @@ final readonly class NotificationFilterService
         'user_action' => ['ROLE_ADMIN'],
         'system_error' => ['ROLE_ADMIN'],
         'job_failed' => ['ROLE_ADMIN'],
+        'article_auto_created' => ['ROLE_EDITOR', 'ROLE_SUPER_ADMIN'],
+        'article_translated' => ['ROLE_EDITOR', 'ROLE_SUPER_ADMIN'],
     ];
 
     public function __construct(
