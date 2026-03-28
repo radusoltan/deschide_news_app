@@ -220,6 +220,16 @@ services:
         arguments:
             $youtubeApiKey: '%env(YOUTUBE_API_KEY)%'
 
+    # Zoho Mail Service (Press Email Fetcher)
+    App\Service\ZohoMailService:
+        arguments:
+            $zohoClientId: '%env(ZOHO_CLIENT_ID)%'
+            $zohoClientSecret: '%env(ZOHO_CLIENT_SECRET)%'
+            $zohoRefreshToken: '%env(ZOHO_REFRESH_TOKEN)%'
+            $zohoAccountId: '%env(ZOHO_ACCOUNT_ID)%'
+            $zohoInboxFolderId: '%env(ZOHO_INBOX_FOLDER_ID)%'
+            $zohoAccountsUrl: '%env(ZOHO_ACCOUNTS_URL)%'
+
 # Test environment specific configuration
 when@test:
     services:
