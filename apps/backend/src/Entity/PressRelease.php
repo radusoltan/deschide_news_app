@@ -130,6 +130,26 @@ class PressRelease
     #[Groups(['press:read'])]
     private int $contentLength = 0;
 
+    /** Original attachment filename from email (e.g. "masa-bucuriei.jpg") */
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $attachmentFilename = null;
+
+    /** Path to downloaded attachment on disk (relative to project dir) */
+    #[ORM\Column(length: 500, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $attachmentPath = null;
+
+    /** MIME type of attachment */
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $attachmentMimeType = null;
+
+    /** Attachment size in bytes */
+    #[ORM\Column(nullable: true)]
+    #[Groups(['press:read'])]
+    private ?int $attachmentSize = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -188,4 +208,18 @@ class PressRelease
     public function setArticle(?Article $article): static { $this->article = $article; return $this; }
 
     public function getContentLength(): int { return $this->contentLength; }
+
+    public function getAttachmentFilename(): ?string { return $this->attachmentFilename; }
+    public function setAttachmentFilename(?string $attachmentFilename): static { $this->attachmentFilename = $attachmentFilename; return $this; }
+
+    public function getAttachmentPath(): ?string { return $this->attachmentPath; }
+    public function setAttachmentPath(?string $attachmentPath): static { $this->attachmentPath = $attachmentPath; return $this; }
+
+    public function getAttachmentMimeType(): ?string { return $this->attachmentMimeType; }
+    public function setAttachmentMimeType(?string $attachmentMimeType): static { $this->attachmentMimeType = $attachmentMimeType; return $this; }
+
+    public function getAttachmentSize(): ?int { return $this->attachmentSize; }
+    public function setAttachmentSize(?int $attachmentSize): static { $this->attachmentSize = $attachmentSize; return $this; }
+
+    public function hasAttachment(): bool { return $this->attachmentPath !== null; }
 }

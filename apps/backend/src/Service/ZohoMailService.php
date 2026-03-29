@@ -63,6 +63,48 @@ class ZohoMailService
     }
 
     /**
+     * Get attachment info for an email.
+     *
+     * @return array<int, array{attachmentId: string, attachmentName: string, attachmentSize: int}>
+     */
+    public function getAttachments(string $messageId, ?string $folderId = null): array
+    {
+        $folder = $folderId ?? $this->zohoInboxFolderId;
+
+        $data = $this->apiRequest('GET', "/folders/{$folder}/messages/{$messageId}/attachmentinfo");
+
+        return array_map(fn(array $att) => [
+            'attachmentId' => (string) $att['attachmentId'],
+            'attachmentName' => $att['attachmentName'] ?? 'unknown',
+            'attachmentSize' => (int) ($att['attachmentSize'] ?? 0),
+        ], $data['data']['attachments'] ?? []);
+    }
+
+    /**
+     * Download an attachment as binary content.
+     */
+    public function downloadAttachment(string $messageId, string $attachmentId, ?string $folderId = null): string
+    {
+        $folder = $folderId ?? $this->zohoInboxFolderId;
+        $token = $this->getAccessToken();
+        $url = "https://mail.zoho.com/api/accounts/{$this->zohoAccountId}/folders/{$folder}/messages/{$messageId}/attachments/{$attachmentId}";
+
+        $response = $this->httpClient->request('GET', $url, [
+            'headers' => ['Authorization' => "Zoho-oauthtoken {$token}"],
+        ]);
+
+        if ($response->getStatusCode() === 401) {
+            $this->accessToken = null;
+            $token = $this->getAccessToken();
+            $response = $this->httpClient->request('GET', $url, [
+                'headers' => ['Authorization' => "Zoho-oauthtoken {$token}"],
+            ]);
+        }
+
+        return $response->getContent();
+    }
+
+    /**
      * Mark emails as read.
      *
      * @param string[] $messageIds

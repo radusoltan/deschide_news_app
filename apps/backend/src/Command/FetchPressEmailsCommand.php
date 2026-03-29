@@ -14,6 +14,7 @@ use App\Service\ZohoMailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -36,6 +37,9 @@ class FetchPressEmailsCommand extends Command
         'pnru.md',
     ];
 
+    private const IMAGE_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
     public function __construct(
         private readonly ZohoMailService $zohoMail,
         private readonly PressEmailParser $parser,
@@ -43,6 +47,7 @@ class FetchPressEmailsCommand extends Command
         private readonly PressReleaseRepository $pressReleaseRepository,
         private readonly NotificationService $notificationService,
         private readonly LoggerInterface $logger,
+        #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
     ) {
         parent::__construct();
     }
@@ -163,10 +168,18 @@ class FetchPressEmailsCommand extends Command
                     '@' . (int) (((int) $email['receivedTime']) / 1000)
                 ));
 
+                // Download image attachment if present
+                if ($email['hasAttachment'] || $email['hasInline']) {
+                    $this->downloadImageAttachment($pr, $messageId, $email['folderId'], $io);
+                }
+
                 $this->em->persist($pr);
                 $this->em->flush();
 
-                $io->text(sprintf('    ✅ PressRelease #%d queued', $pr->getId()));
+                $io->text(sprintf('    ✅ PressRelease #%d queued%s',
+                    $pr->getId(),
+                    $pr->hasAttachment() ? ' (+ image: ' . $pr->getAttachmentFilename() . ')' : '',
+                ));
                 $queued++;
                 $processedIds[] = $messageId;
             } catch (\Throwable $e) {
@@ -239,5 +252,71 @@ class FetchPressEmailsCommand extends Command
         }
 
         return false;
+    }
+
+    private function downloadImageAttachment(PressRelease $pr, string $messageId, string $folderId, SymfonyStyle $io): void
+    {
+        try {
+            $attachments = $this->zohoMail->getAttachments($messageId, $folderId);
+
+            // Find first image attachment
+            $imageAtt = null;
+            foreach ($attachments as $att) {
+                $ext = strtolower(pathinfo($att['attachmentName'], PATHINFO_EXTENSION));
+                if (in_array($ext, self::IMAGE_EXTENSIONS, true)) {
+                    $imageAtt = $att;
+                    break;
+                }
+            }
+
+            if ($imageAtt === null) {
+                return;
+            }
+
+            // Download binary
+            $binary = $this->zohoMail->downloadAttachment($messageId, $imageAtt['attachmentId'], $folderId);
+            if (empty($binary)) {
+                $io->text('    ⚠  Empty attachment download');
+                return;
+            }
+
+            // Save to press-attachments directory
+            $storageDir = $this->projectDir . '/var/press-attachments';
+            if (!is_dir($storageDir)) {
+                mkdir($storageDir, 0755, true);
+            }
+
+            $ext = strtolower(pathinfo($imageAtt['attachmentName'], PATHINFO_EXTENSION));
+            $filename = sprintf('press_%s_%s.%s', $messageId, bin2hex(random_bytes(4)), $ext);
+            $filepath = $storageDir . '/' . $filename;
+
+            file_put_contents($filepath, $binary);
+
+            // Detect MIME type
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($filepath);
+
+            if (!in_array($mimeType, self::IMAGE_MIME_TYPES, true)) {
+                unlink($filepath);
+                $io->text('    ⚠  Attachment is not an image: ' . $mimeType);
+                return;
+            }
+
+            $pr->setAttachmentFilename($imageAtt['attachmentName']);
+            $pr->setAttachmentPath('var/press-attachments/' . $filename);
+            $pr->setAttachmentMimeType($mimeType);
+            $pr->setAttachmentSize(strlen($binary));
+
+            $io->text(sprintf('    📎 Image: %s (%d KB)',
+                $imageAtt['attachmentName'],
+                (int) (strlen($binary) / 1024),
+            ));
+        } catch (\Throwable $e) {
+            $this->logger->warning('Press fetcher: attachment download failed', [
+                'messageId' => $messageId,
+                'error' => $e->getMessage(),
+            ]);
+            $io->text('    ⚠  Attachment download failed: ' . $e->getMessage());
+        }
     }
 }

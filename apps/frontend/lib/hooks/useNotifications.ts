@@ -85,14 +85,25 @@ export function useNotifications(username: string): UseNotificationsResult {
       }
     };
 
+    let errorCount = 0;
     eventSource.onerror = () => {
-      console.warn('[Notifications] SSE connection lost, auto-reconnecting...');
+      errorCount++;
+      if (errorCount === 1) {
+        console.warn('[Notifications] SSE connection lost. Mercure may not be running.');
+      }
+      // Stop retrying after 3 failures to avoid console spam
+      if (errorCount >= 3) {
+        eventSource.close();
+        eventSourceRef.current = null;
+      }
     };
 
     return () => {
       isMountedRef.current = false;
-      eventSource.close();
-      eventSourceRef.current = null;
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
     };
   }, [username]);
 
