@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Enum\ArticleStatus;
 use App\Enum\AuthorStatus;
+use App\Enum\AuthorType;
 use App\Repository\AuthorRepository;
 use App\State\AuthorProcessor;
 use App\State\AuthorProvider;
@@ -108,6 +109,10 @@ class Author implements Translatable
     private Collection $articles;
 
     // Metadata
+    #[ORM\Column(type: Types::STRING, length: 20, enumType: AuthorType::class)]
+    #[Groups(['author:read', 'author:write', 'article:read'])]
+    private AuthorType $type = AuthorType::JOURNALIST;
+
     #[ORM\Column(type: Types::STRING, length: 20, enumType: AuthorStatus::class)]
     #[Groups(['author:read', 'author:write'])]
     private AuthorStatus $status = AuthorStatus::ACTIVE;
@@ -136,6 +141,12 @@ class Author implements Translatable
     #[Assert\Url]
     #[Groups(['author:read', 'author:write'])]
     private ?string $website = null;
+
+    // Auto-attribution
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    #[Assert\Length(max: 100)]
+    #[Groups(['author:read', 'author:write', 'article:read'])]
+    private ?string $emailDomain = null;
 
     // Timestamps
     #[Gedmo\Timestampable(on: 'create')]
@@ -252,6 +263,18 @@ class Author implements Translatable
         return $this;
     }
 
+    public function getType(): AuthorType
+    {
+        return $this->type;
+    }
+
+    public function setType(AuthorType $type): self
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
     public function getStatus(): AuthorStatus
     {
         return $this->status;
@@ -320,6 +343,18 @@ class Author implements Translatable
     public function setWebsite(?string $website): self
     {
         $this->website = $website;
+
+        return $this;
+    }
+
+    public function getEmailDomain(): ?string
+    {
+        return $this->emailDomain;
+    }
+
+    public function setEmailDomain(?string $emailDomain): self
+    {
+        $this->emailDomain = $emailDomain;
 
         return $this;
     }
