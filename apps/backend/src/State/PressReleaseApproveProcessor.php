@@ -8,17 +8,18 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Article;
 use App\Entity\ArticleImage;
+use App\Entity\Author;
 use App\Entity\Image;
 use App\Entity\PressRelease;
 use App\Enum\ArticleStatus;
 use App\Enum\PressReleaseStatus;
 use App\Repository\ArticleRepository;
+use App\Repository\AuthorRepository;
 use App\Repository\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class PressReleaseApproveProcessor implements ProcessorInterface
@@ -27,6 +28,7 @@ class PressReleaseApproveProcessor implements ProcessorInterface
         private readonly EntityManagerInterface $em,
         private readonly CategoryRepository $categoryRepository,
         private readonly ArticleRepository $articleRepository,
+        private readonly AuthorRepository $authorRepository,
         private readonly Security $security,
         private readonly LoggerInterface $logger,
         #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
@@ -64,6 +66,12 @@ class PressReleaseApproveProcessor implements ProcessorInterface
         }
         if ($category !== null) {
             $article->setCategory($category);
+        }
+
+        // Auto-assign author based on sender email domain
+        $author = $this->resolveAuthorFromSenderEmail($data->getSenderAddress());
+        if ($author !== null) {
+            $article->addAuthor($author);
         }
 
         $this->em->persist($article);
@@ -147,5 +155,41 @@ class PressReleaseApproveProcessor implements ProcessorInterface
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Extract domain from sender email and look up matching author.
+     */
+    private function resolveAuthorFromSenderEmail(string $senderEmail): ?Author
+    {
+        $domain = $this->extractDomain($senderEmail);
+        if ($domain === null) {
+            return null;
+        }
+
+        return $this->authorRepository->findByEmailDomain($domain);
+    }
+
+    /**
+     * Extract the domain part from an email address.
+     */
+    private function extractDomain(string $email): ?string
+    {
+        // Handle "Name <email@domain>" format
+        if (preg_match('/<([^>]+)>/', $email, $matches)) {
+            $email = $matches[1];
+        }
+
+        $email = trim($email);
+
+        $atPos = strrpos($email, '@');
+        if ($atPos === false) {
+            return null;
+        }
+
+        $domain = substr($email, $atPos + 1);
+        $domain = strtolower(trim($domain));
+
+        return $domain !== '' ? $domain : null;
     }
 }
