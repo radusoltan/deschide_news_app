@@ -164,6 +164,17 @@ final class TranslationResultProcessor
     {
         $cleaned = trim($rawOutput);
 
+        // Gemini CLI wraps translation in a JSON envelope where the "response"
+        // field is a string containing the actual JSON. That inner string often
+        // has literal newlines/tabs which are invalid inside JSON string values.
+        // We must sanitize control characters BEFORE the first json_decode.
+        // We only strip \x00-\x08, \x0b, \x0c, \x0e-\x1f (preserve \n=0x0a, \r=0x0d, \t=0x09
+        // which are legal JSON whitespace outside of strings but illegal inside).
+        // The safest approach: replace control chars inside JSON string values only.
+        // Simpler approach that works: replace all control chars with spaces,
+        // then restore structural newlines.
+        $cleaned = preg_replace('/[\x00-\x09\x0b\x0c\x0e-\x1f\x7f]/', ' ', $cleaned) ?? $cleaned;
+
         try {
             $decoded = json_decode($cleaned, true, 512, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
