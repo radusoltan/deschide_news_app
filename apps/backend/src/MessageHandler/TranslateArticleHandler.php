@@ -16,7 +16,7 @@ use Symfony\Component\Process\Process;
 #[AsMessageHandler]
 final readonly class TranslateArticleHandler
 {
-    private const TIMEOUT = 120;
+    private const TIMEOUT = 300;
     private const AGENT_FILE = '.gemini/agents/journalistic-translator.md';
 
     public function __construct(
@@ -115,19 +115,25 @@ final readonly class TranslateArticleHandler
 
     private function runGemini(string $promptJson): string
     {
-        // Read agent system prompt to pipe via stdin
+        // Read agent system prompt
         $agentFile = $this->projectDir . '/' . self::AGENT_FILE;
         $systemPrompt = '';
         if (is_file($agentFile)) {
             $systemPrompt = file_get_contents($agentFile);
         }
 
-        // Gemini CLI v0.34+: use -p for non-interactive mode, -o json for JSON output
-        // System prompt piped via stdin, article JSON passed as -p argument
+        // Write prompt to temp file to avoid CLI argument length limits
+        $tmpFile = tempnam(sys_get_temp_dir(), 'gemini_prompt_');
+        file_put_contents($tmpFile, $promptJson);
+
+        // Combine system prompt + article JSON via stdin
+        $stdinContent = $systemPrompt . "\n\n---\n\nArticle JSON to translate:\n" . $promptJson;
+
+        // Gemini CLI: use -p with short instruction, full content via stdin
         $process = new Process(
             command: [
                 $this->geminiCliPath,
-                '-p', $promptJson,
+                '-p', 'Translate the article from the input below. Return JSON with translations key containing ru and en.',
                 '-o', 'json',
             ],
             cwd: $this->projectDir,
@@ -135,11 +141,10 @@ final readonly class TranslateArticleHandler
             timeout: self::TIMEOUT,
         );
 
-        if (!empty($systemPrompt)) {
-            $process->setInput($systemPrompt);
-        }
-
+        $process->setInput($stdinContent);
         $process->run();
+
+        @unlink($tmpFile);
 
         if (!$process->isSuccessful()) {
             throw new \RuntimeException(

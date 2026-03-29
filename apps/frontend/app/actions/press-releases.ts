@@ -93,6 +93,47 @@ export async function approvePressRelease(id: number): Promise<{ success: boolea
   }
 }
 
+export interface FetchEmailsResult {
+  success: boolean;
+  queued: number;
+  skipped: number;
+  errors: number;
+  error?: string;
+}
+
+export async function fetchPressEmails(): Promise<FetchEmailsResult> {
+  const token = await getAccessToken();
+  if (!token) {
+    return { success: false, queued: 0, skipped: 0, errors: 0, error: 'Nu ești autentificat' };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/press-emails/fetch`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        queued: 0,
+        skipped: 0,
+        errors: 1,
+        error: err.error || `Eroare HTTP ${res.status}`,
+      };
+    }
+
+    return await res.json();
+  } catch (err) {
+    return { success: false, queued: 0, skipped: 0, errors: 1, error: String(err) };
+  }
+}
+
 export async function rejectPressRelease(id: number): Promise<{ success: boolean; error?: string }> {
   const token = await getAccessToken();
   if (!token) return { success: false, error: 'Nu ești autentificat' };
