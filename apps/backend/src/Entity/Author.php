@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
@@ -38,6 +42,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_author_email', columns: ['email'])]
 #[ORM\Index(name: 'idx_author_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_author_is_active', columns: ['is_active'])]
+#[ORM\Index(name: 'idx_author_type', columns: ['type'])]
 // Composite indexes for common queries
 #[ORM\Index(name: 'idx_author_active_status', columns: ['is_active', 'status'])]
 #[ApiResource(
@@ -66,6 +71,19 @@ use Symfony\Component\Validator\Constraints as Assert;
     provider: AuthorProvider::class,
     processor: AuthorProcessor::class
 )]
+#[ApiFilter(SearchFilter::class, properties: [
+    'type' => 'exact',
+    'status' => 'exact',
+    'firstName' => 'partial',
+    'lastName' => 'partial',
+    'slug' => 'exact',
+])]
+#[ApiFilter(BooleanFilter::class, properties: ['isActive'])]
+#[ApiFilter(OrderFilter::class, properties: [
+    'firstName' => 'ASC',
+    'lastName' => 'ASC',
+    'createdAt' => 'DESC',
+])]
 class Author implements Translatable
 {
     #[ORM\Id]

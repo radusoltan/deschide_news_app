@@ -125,6 +125,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     'tags' => 'exact',
     'tags.id' => 'exact',
     'tags.slug' => 'exact',
+    'authors.type' => 'exact',
 ])]
 #[ApiFilter(OrderFilter::class, properties: [
     'publishedAt' => 'DESC',
