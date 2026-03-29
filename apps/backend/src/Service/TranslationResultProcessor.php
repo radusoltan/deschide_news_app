@@ -187,6 +187,10 @@ final class TranslationResultProcessor
             $responseStr = preg_replace('/\s*```\s*$/m', '', $responseStr ?? $decoded['response']);
             $responseStr = trim($responseStr ?? $decoded['response']);
 
+            // Fix control characters that break JSON parsing (Gemini sometimes
+            // embeds raw newlines/tabs inside JSON string values)
+            $responseStr = preg_replace('/[\x00-\x1f\x7f]/', ' ', $responseStr) ?? $responseStr;
+
             try {
                 $inner = json_decode($responseStr, true, 512, \JSON_THROW_ON_ERROR);
             } catch (\JsonException $e) {
