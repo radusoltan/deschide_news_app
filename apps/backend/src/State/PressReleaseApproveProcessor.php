@@ -10,6 +10,7 @@ use App\Entity\Article;
 use App\Entity\PressRelease;
 use App\Enum\ArticleStatus;
 use App\Enum\PressReleaseStatus;
+use App\Repository\ArticleRepository;
 use App\Repository\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -20,6 +21,7 @@ class PressReleaseApproveProcessor implements ProcessorInterface
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly CategoryRepository $categoryRepository,
+        private readonly ArticleRepository $articleRepository,
         private readonly Security $security,
     ) {
     }
@@ -40,8 +42,13 @@ class PressReleaseApproveProcessor implements ProcessorInterface
         $article->setLead($data->getLead());
         $article->setContent($data->getContent());
         $article->setStatus(ArticleStatus::NEW);
-        $article->setSourceEmail($data->getSourceEmailId());
         $article->setTranslatableLocale('ro');
+
+        // Only set sourceEmail if no existing article has it (unique constraint)
+        $existingArticle = $this->articleRepository->findOneBy(['sourceEmail' => $data->getSourceEmailId()]);
+        if ($existingArticle === null) {
+            $article->setSourceEmail($data->getSourceEmailId());
+        }
 
         // Map category
         $category = $this->categoryRepository->findOneBy(['slug' => $data->getCategorySlug()]);

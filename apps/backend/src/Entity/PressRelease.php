@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
@@ -24,6 +26,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Index(name: 'idx_press_release_received', columns: ['received_at'])]
 #[UniqueEntity('sourceEmailId', message: 'This email has already been imported.')]
 #[ORM\HasLifecycleCallbacks]
+#[ApiFilter(SearchFilter::class, properties: ['status' => 'exact', 'categorySlug' => 'exact', 'senderAddress' => 'partial'])]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -116,6 +119,12 @@ class PressRelease
     #[ORM\JoinColumn(nullable: true)]
     #[Groups(['press:read'])]
     private ?Article $article = null;
+
+    #[Groups(['press:read'])]
+    public function getArticleId(): ?int
+    {
+        return $this->article?->getId();
+    }
 
     #[ORM\Column(type: Types::INTEGER)]
     #[Groups(['press:read'])]
