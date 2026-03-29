@@ -106,8 +106,8 @@ final readonly class TranslateArticleHandler
             'title' => $article->getTitle(),
             'lead' => $article->getLead() ?? '',
             'content' => $article->getContent(),
-            'category' => $article->getCategory()?->getName() ?? '',
-            'authorName' => $article->getAuthors()->first()?->getName() ?? '',
+            'category' => $article->getCategory()?->getTitle() ?? '',
+            'authorName' => $article->getAuthors()->first()?->getFullName() ?? '',
         ];
 
         return json_encode($data, \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR);
@@ -131,6 +131,7 @@ final readonly class TranslateArticleHandler
                 '-o', 'json',
             ],
             cwd: $this->projectDir,
+            env: ['HOME' => '/home/radu', 'PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin'],
             timeout: self::TIMEOUT,
         );
 
