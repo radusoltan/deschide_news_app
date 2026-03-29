@@ -183,6 +183,8 @@ export interface GetArticlesParams {
   page?: number;
   itemsPerPage?: number;
   locale?: string;
+  category?: number;
+  status?: string;
 }
 
 /**
@@ -192,11 +194,13 @@ export interface GetArticlesParams {
 export async function getArticles(
   params: GetArticlesParams = {}
 ): Promise<ArticlesCollection> {
-  const { page = 1, itemsPerPage = 30, locale = 'ro' } = params;
+  const { page = 1, itemsPerPage = 30, locale = 'ro', category, status } = params;
 
   const queryParams = new URLSearchParams();
   queryParams.set('page', page.toString());
   queryParams.set('itemsPerPage', itemsPerPage.toString());
+  if (category) queryParams.set('category', category.toString());
+  if (status) queryParams.set('status', status);
 
   const response = await authenticatedFetch(
     `/api/articles?${queryParams.toString()}`,
