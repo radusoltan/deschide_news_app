@@ -43,12 +43,14 @@ class PressEmailParser
     {
         $text = $this->stripHtml($html);
 
-        if (mb_strlen($text) < 300) {
+        // Skip "Flux de știri" / "Agenda" digest emails
+        if (preg_match('/^(IPN:\s*)?Flux de știri/ui', $subject) || preg_match('/^Agenda:/ui', $subject)) {
             return null;
         }
 
-        // Skip "Flux de știri" / "Agenda" digest emails
-        if (preg_match('/^(IPN:\s*)?Flux de știri/ui', $subject) || preg_match('/^Agenda:/ui', $subject)) {
+        // Editorialists/columnists may send shorter emails with links to full articles
+        $minLength = $this->isEditorialist($fromAddress) ? 100 : 300;
+        if (mb_strlen($text) < $minLength) {
             return null;
         }
 
@@ -256,6 +258,7 @@ class PressEmailParser
             str_contains($fromAddress, 'parlament.md') => 'Parlamentul Republicii Moldova',
             str_contains($fromAddress, 'bnm.md') => 'Banca Națională a Moldovei',
             str_contains($fromAddress, 'pnru.md') => 'Partidul Nostru',
+            str_contains($fromAddress, 'vvovc@yahoo.fr') => 'Vitalie Vovc',
             default => $fromAddress,
         };
     }
@@ -276,6 +279,19 @@ class PressEmailParser
         }
 
         return 'societate';
+    }
+
+    private function isEditorialist(string $fromAddress): bool
+    {
+        $editorialists = ['vvovc@yahoo.fr'];
+
+        foreach ($editorialists as $email) {
+            if (str_contains(strtolower($fromAddress), $email)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function removeDiacritics(string $text): string

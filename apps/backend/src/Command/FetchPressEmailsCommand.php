@@ -9,6 +9,7 @@ use App\Enum\NotificationImportance;
 use App\Enum\NotificationType;
 use App\Repository\PressReleaseRepository;
 use App\Service\NotificationService;
+use App\Service\DocxExtractor;
 use App\Service\PressEmailParser;
 use App\Service\ZohoMailService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,12 +38,20 @@ class FetchPressEmailsCommand extends Command
         'pnru.md',
     ];
 
+    /** Individual whitelisted email addresses (for editorialists, columnists). */
+    private const WHITELIST_EMAILS = [
+        'vvovc@yahoo.fr',
+    ];
+
     private const IMAGE_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     private const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+    private const DOCX_EXTENSIONS = ['docx'];
 
     public function __construct(
         private readonly ZohoMailService $zohoMail,
         private readonly PressEmailParser $parser,
+        private readonly DocxExtractor $docxExtractor,
         private readonly EntityManagerInterface $em,
         private readonly PressReleaseRepository $pressReleaseRepository,
         private readonly NotificationService $notificationService,
@@ -56,6 +65,7 @@ class FetchPressEmailsCommand extends Command
     {
         $this
             ->addOption('limit', 'l', InputOption::VALUE_REQUIRED, 'Max emails to process', '20')
+            ->addOption('start', 's', InputOption::VALUE_REQUIRED, 'Email offset (skip first N emails)', '0')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Parse emails but do not queue them')
         ;
     }
@@ -64,6 +74,7 @@ class FetchPressEmailsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $limit = (int) $input->getOption('limit');
+        $start = (int) $input->getOption('start');
         $dryRun = (bool) $input->getOption('dry-run');
 
         $io->title('Press Email Fetcher');
@@ -75,7 +86,7 @@ class FetchPressEmailsCommand extends Command
         // Step 1: List emails
         $io->section('[1/4] Fetching email list from Zoho Mail');
         try {
-            $emails = $this->zohoMail->listEmails($limit);
+            $emails = $this->zohoMail->listEmails($limit, $start);
         } catch (\Throwable $e) {
             $io->error('Failed to fetch emails: ' . $e->getMessage());
             $this->logger->error('Press fetcher: Zoho API error', ['error' => $e->getMessage()]);
@@ -129,6 +140,14 @@ class FetchPressEmailsCommand extends Command
                 $io->text('    ⏭  Empty email body');
                 $skipped++;
                 continue;
+            }
+
+            // Check for .docx attachment — use its content instead of email body
+            if ($email['hasAttachment']) {
+                $docxContent = $this->tryExtractDocx($messageId, $email['folderId'], $io);
+                if ($docxContent !== null) {
+                    $html = $docxContent;
+                }
             }
 
             // Parse
@@ -245,8 +264,16 @@ class FetchPressEmailsCommand extends Command
 
     private function isWhitelisted(string $fromAddress): bool
     {
+        $from = strtolower($fromAddress);
+
         foreach (self::WHITELIST_DOMAINS as $domain) {
-            if (str_contains($fromAddress, $domain)) {
+            if (str_contains($from, $domain)) {
+                return true;
+            }
+        }
+
+        foreach (self::WHITELIST_EMAILS as $email) {
+            if (str_contains($from, strtolower($email))) {
                 return true;
             }
         }
@@ -318,5 +345,48 @@ class FetchPressEmailsCommand extends Command
             ]);
             $io->text('    ⚠  Attachment download failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Try to find and extract content from a .docx attachment.
+     * Returns HTML content if a docx was found, null otherwise.
+     */
+    private function tryExtractDocx(string $messageId, string $folderId, SymfonyStyle $io): ?string
+    {
+        try {
+            $attachments = $this->zohoMail->getAttachments($messageId, $folderId);
+
+            foreach ($attachments as $att) {
+                $ext = strtolower(pathinfo($att['attachmentName'], PATHINFO_EXTENSION));
+                if (!in_array($ext, self::DOCX_EXTENSIONS, true)) {
+                    continue;
+                }
+
+                // Download the docx
+                $binary = $this->zohoMail->downloadAttachment($messageId, $att['attachmentId'], $folderId);
+                $tmpDir = $this->projectDir . '/var/press-attachments';
+                if (!is_dir($tmpDir)) {
+                    mkdir($tmpDir, 0755, true);
+                }
+                $tmpFile = $tmpDir . '/docx_' . uniqid() . '.docx';
+                file_put_contents($tmpFile, $binary);
+
+                $html = $this->docxExtractor->extractHtml($tmpFile);
+                unlink($tmpFile);
+
+                if ($html !== null && mb_strlen(strip_tags($html)) > 100) {
+                    $io->text(sprintf('    📄 Docx: %s (%d KB) → extracted %d chars',
+                        $att['attachmentName'],
+                        (int) ($att['attachmentSize'] / 1024),
+                        mb_strlen(strip_tags($html)),
+                    ));
+                    return $html;
+                }
+            }
+        } catch (\Throwable $e) {
+            $io->text('    ⚠  Docx extraction failed: ' . $e->getMessage());
+        }
+
+        return null;
     }
 }
