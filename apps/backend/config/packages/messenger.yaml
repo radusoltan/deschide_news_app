@@ -17,6 +17,8 @@ framework:
             # Translation operations transport (long-running, separate queue)
             translations:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: translations
                 retry_strategy:
                     max_retries: 3
                     delay: 5000
