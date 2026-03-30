@@ -127,10 +127,28 @@ function flattenTree(tree: MenuItem[], expandedIds: Set<number>): FlatItem[] {
   return result;
 }
 
-/** Extract numeric ID from an IRI like /api/menu-items/5 */
-function extractIdFromIri(iri: string): number | null {
+/** Extract numeric ID from an IRI string, nested object, or number */
+function extractIdFromIri(iri: string | number | Record<string, unknown> | null | undefined): number | null {
+  if (iri == null) return null;
+  if (typeof iri === 'number') return iri;
+  if (typeof iri === 'object') {
+    // API may return parent as a nested object: {"@id": "/api/menu-items/5", "id": 5, ...}
+    if (typeof iri['@id'] === 'string') return extractIdFromIri(iri['@id']);
+    if (typeof iri.id === 'number') return iri.id as number;
+    return null;
+  }
+  if (typeof iri !== 'string') return null;
   const match = iri.match(/\/(\d+)$/);
   return match ? parseInt(match[1], 10) : null;
+}
+
+/** Normalize parent field to a string IRI or null (API may return nested object) */
+function normalizeParentIri(parent: string | number | Record<string, unknown> | null | undefined): string | null {
+  if (parent == null) return null;
+  if (typeof parent === 'string') return parent;
+  if (typeof parent === 'object' && typeof parent['@id'] === 'string') return parent['@id'];
+  if (typeof parent === 'number') return `/api/menu-items/${parent}`;
+  return null;
 }
 
 /**
@@ -151,9 +169,9 @@ function computePatchOps(
   // Build a map of original state for comparison
   const originalMap = new Map<number, { position: number; parentIri: string | null }>();
   for (const topItem of originalTree) {
-    originalMap.set(topItem.id, { position: topItem.position, parentIri: topItem.parent });
+    originalMap.set(topItem.id, { position: topItem.position, parentIri: normalizeParentIri(topItem.parent) });
     for (const child of topItem.children || []) {
-      originalMap.set(child.id, { position: child.position, parentIri: child.parent });
+      originalMap.set(child.id, { position: child.position, parentIri: normalizeParentIri(child.parent) });
     }
   }
 
