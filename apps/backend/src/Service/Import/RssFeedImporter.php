@@ -51,6 +51,30 @@ final class RssFeedImporter
     private const BATCH_SIZE = 20;
     private const IMAGE_DIR = 'images/rss';
 
+    /**
+     * Maps RSS category names (lowercase) → existing DB category titles.
+     * Prevents creation of duplicate categories during import.
+     */
+    private const CATEGORY_MAP = [
+        'social'       => 'Societate',
+        'economic'     => 'Economie',
+        'politic'      => 'Politică',
+        'alegeri'      => 'Politică',
+        'editorial'    => 'Opinii',
+        'externe'      => 'Externe',
+        'cultura'      => 'Cultură',
+        'advertorial'  => 'Economie',
+        'transnistria' => 'Politică',
+        'sport'        => 'Sport',
+        'diaspora'     => 'Diaspora',
+        'sanatate'     => 'Sănătate',
+        'educatie'     => 'Educație',
+        'justitie'     => 'Justiție',
+        'mediu'        => 'Mediu',
+        'tehnologie'   => 'Tehnologie',
+        'stiinta'      => 'Știință',
+    ];
+
     /** @var array<string, Category> */
     private array $categoryCache = [];
 
@@ -323,14 +347,19 @@ final class RssFeedImporter
             return $this->categoryCache[$key];
         }
 
+        // Resolve via static mapping first to avoid duplicates
+        $resolvedName = self::CATEGORY_MAP[$key] ?? $name;
+
         $category = $this->categoryRepository->createQueryBuilder('c')
             ->where('LOWER(c.title) = LOWER(:title)')
-            ->setParameter('title', $name)
+            ->setParameter('title', $resolvedName)
             ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
 
         if ($category === null) {
+            // Only create if truly unknown — log warning for unmapped categories
+            $this->logger->warning('RSS import: unmapped category, creating new', ['rss_category' => $name]);
             $category = new Category();
             $category->setTranslatableLocale('ro');
             $category->setTitle(ucfirst(mb_strtolower($name)));
