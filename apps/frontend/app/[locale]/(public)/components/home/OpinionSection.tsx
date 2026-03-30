@@ -26,7 +26,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { fetchLatestArticles } from '@/lib/api/articles';
+import { fetchArticlesByCategory } from '@/lib/api/articles';
 import {
   getFeaturedImage,
   getThumbnailByProfile,
@@ -70,6 +70,7 @@ const PLACEHOLDER_AUTHORS = [
 
 interface OpinionSectionProps {
   locale: string;
+  categoryId: number;
 }
 
 /** Large opinion card — image + label + bold serif title + excerpt + byline */
@@ -232,12 +233,11 @@ function OpinionSmallCard({
 /*  Main section                                                       */
 /* ================================================================== */
 
-async function OpinionSectionContent({ locale }: OpinionSectionProps) {
+async function OpinionSectionContent({ locale, categoryId }: OpinionSectionProps) {
   let articles: Article[] = [];
 
   try {
-    // TODO: Replace with opinions-category filter when available
-    const response = await fetchLatestArticles(locale, 8);
+    const response = await fetchArticlesByCategory(categoryId, locale, 8);
     articles = response.member || [];
   } catch (error) {
     console.error('Failed to fetch opinion articles:', error);
@@ -382,10 +382,10 @@ function OpinionSectionSkeleton() {
 /*  Export                                                              */
 /* ================================================================== */
 
-export default function OpinionSection({ locale }: OpinionSectionProps) {
+export default function OpinionSection({ locale, categoryId }: OpinionSectionProps) {
   return (
     <Suspense fallback={<OpinionSectionSkeleton />}>
-      <OpinionSectionContent locale={locale} />
+      <OpinionSectionContent locale={locale} categoryId={categoryId} />
     </Suspense>
   );
 }
