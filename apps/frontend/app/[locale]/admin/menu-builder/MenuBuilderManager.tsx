@@ -438,6 +438,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
             headers: {
               'Content-Type': 'application/merge-patch+json',
               Authorization: `Bearer ${token}`,
+              'Accept-Language': locale,
             },
             body: JSON.stringify(op.data),
           })
@@ -450,7 +451,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         throw new Error(`${failures.length} of ${ops.length} updates failed`);
       }
     },
-    []
+    [locale]
   );
 
   // ==========================================================================
@@ -648,6 +649,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
           headers: {
             'Content-Type': 'application/merge-patch+json',
             Authorization: `Bearer ${token}`,
+            'Accept-Language': locale,
           },
           body: JSON.stringify({ isActive: !item.isActive }),
         });
