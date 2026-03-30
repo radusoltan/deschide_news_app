@@ -11,6 +11,8 @@ export interface MenuItem {
   label: string;
   url: string | null;
   category: string | null; // IRI like /api/categories/32
+  categorySlug: string | null;
+  categoryTitle: string | null;
   position: number;
   isActive: boolean;
   openInNewTab: boolean;
