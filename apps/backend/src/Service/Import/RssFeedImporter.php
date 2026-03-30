@@ -26,23 +26,28 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 /**
  * Temporary RSS feed importer for deschide.md content population.
  *
- * Feed structure (RSS 2.0, no content:encoded — description only):
+ * Strategy: RSS feed provides item list + metadata, then Supabase REST API
+ * is queried per-article (by slug) to fetch full content_text HTML.
  *
- *  RSS Tag          → Symfony Field                    | Transform
- *  ──────────────────────────────────────────────────────────────────
- *  <title>          → Article.title                    | strip_tags, trim
- *  <guid>           → ExternalArticleMapping.externalId| deduplication key
- *  <description>    → Article.lead + Article.content   | lead=strip_tags; content=as-is
- *  <category>       → Category (findOrCreate)          | default: 'General'
- *  <author>         → Author (findOrCreate)            | default: 'Redacția'
- *  <pubDate>        → Article.publishedAt              | DateTimeImmutable
- *  <enclosure url>  → Image (download + attach)        | download to uploads/images/rss/
- *  <link>           → metadata.original_link           | stored for reference
+ *  Source               → Symfony Field                    | Transform
+ *  ──────────────────────────────────────────────────────────────────────
+ *  RSS <title>          → Article.title                    | strip_tags, trim
+ *  RSS <guid>           → ExternalArticleMapping.externalId| deduplication key
+ *  Supabase content_text→ Article.content                  | full HTML body
+ *  Supabase lead_text   → Article.lead                     | strip_tags, truncate 500
+ *  RSS <description>    → fallback for lead+content        | if Supabase unavailable
+ *  RSS <category>       → Category (findOrCreate)          | default: 'General'
+ *  RSS <author>         → Author (findOrCreate)            | default: 'Redacția'
+ *  RSS <pubDate>        → Article.publishedAt              | DateTimeImmutable
+ *  RSS <enclosure url>  → Image (download + attach)        | download to uploads/images/rss/
+ *  RSS <link>           → metadata.original_link           | stored for reference
  */
 final class RssFeedImporter
 {
     private const SOURCE_NAME = 'rss_deschide_md';
     private const FEED_URL = 'https://krjjgzewhghcdzckcjmb.supabase.co/functions/v1/rss';
+    private const SUPABASE_URL = 'https://krjjgzewhghcdzckcjmb.supabase.co';
+    private const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtyampnemV3aGdoY2R6Y2tjam1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzIwNjMsImV4cCI6MjA3Nzc0ODA2M30.RKs9-zwJCKXGu2Jc45KEUw-oUS9yjZfPbMGKCNzaHAE';
     private const BATCH_SIZE = 20;
     private const IMAGE_DIR = 'images/rss';
 
@@ -153,10 +158,22 @@ final class RssFeedImporter
             return ['status' => 'errors', 'message' => 'Item fără titlu — skip'];
         }
 
+        // Extract slug from <link> URL (last path segment)
+        $originalLink = (string) ($item->link ?? '');
+        $slug = $this->extractSlugFromUrl($originalLink);
+
+        // Fetch full content from Supabase REST API
+        $fullArticle = $slug !== '' ? $this->fetchFromSupabase($slug) : null;
+
+        // Content: prefer Supabase content_text, fallback to RSS description
         $description = trim((string) ($item->description ?? ''));
-        $lead = mb_substr(strip_tags($description), 0, 500);
-        // No <content:encoded> in this feed — description is the only text
-        $content = $description !== '' ? '<p>' . nl2br(htmlspecialchars(strip_tags($description), \ENT_QUOTES, 'UTF-8')) . '</p>' : '';
+        if ($fullArticle !== null && !empty($fullArticle['content_text'])) {
+            $content = $fullArticle['content_text'];
+            $lead = mb_substr(strip_tags($fullArticle['lead_text'] ?? $description), 0, 500);
+        } else {
+            $lead = mb_substr(strip_tags($description), 0, 500);
+            $content = $description !== '' ? '<p>' . nl2br(htmlspecialchars(strip_tags($description), \ENT_QUOTES, 'UTF-8')) . '</p>' : '';
+        }
 
         $categoryName = trim((string) ($item->category ?? ''));
         if ($categoryName === '') {
@@ -188,10 +205,10 @@ final class RssFeedImporter
             }
         }
 
-        $originalLink = (string) ($item->link ?? '');
-
+        $contentLen = mb_strlen(strip_tags($content));
         if ($dryRun) {
-            return ['status' => 'imported', 'message' => \sprintf('[DRY-RUN] %s | cat: %s | autor: %s', $title, $categoryName, $authorName)];
+            $source = ($fullArticle !== null && !empty($fullArticle['content_text'])) ? 'supabase' : 'rss-fallback';
+            return ['status' => 'imported', 'message' => \sprintf('[DRY-RUN] %s | cat: %s | %d chars (%s)', $title, $categoryName, $contentLen, $source)];
         }
 
         $category = $this->findOrCreateCategory($categoryName);
@@ -232,6 +249,8 @@ final class RssFeedImporter
             'original_link' => $originalLink,
             'original_category' => $categoryName,
             'original_author' => $authorName,
+            'content_source' => ($fullArticle !== null && !empty($fullArticle['content_text'])) ? 'supabase' : 'rss_description',
+            'content_length' => $contentLen,
             'imported_at' => (new \DateTimeImmutable())->format('c'),
         ]);
         $this->em->persist($mapping);
@@ -244,7 +263,57 @@ final class RssFeedImporter
             ));
         }
 
-        return ['status' => 'imported', 'message' => \sprintf('OK: %s', $title)];
+        return ['status' => 'imported', 'message' => \sprintf('OK: %s (%d chars)', $title, $contentLen)];
+    }
+
+    /**
+     * Extract the article slug from a deschide.md URL.
+     * Example: https://deschide.md/articole/my-article-slug → my-article-slug
+     */
+    private function extractSlugFromUrl(string $url): string
+    {
+        $path = parse_url($url, \PHP_URL_PATH);
+        if ($path === null || $path === false) {
+            return '';
+        }
+
+        $segments = explode('/', rtrim($path, '/'));
+
+        return end($segments) ?: '';
+    }
+
+    /**
+     * Fetch full article data from Supabase REST API by slug.
+     *
+     * @return array{content_text: string, lead_text: string|null}|null
+     */
+    private function fetchFromSupabase(string $slug): ?array
+    {
+        try {
+            $response = $this->httpClient->request('GET', self::SUPABASE_URL . '/rest/v1/articles', [
+                'timeout' => 10,
+                'query' => [
+                    'slug' => 'eq.' . $slug,
+                    'select' => 'content_text,lead_text',
+                    'limit' => '1',
+                ],
+                'headers' => [
+                    'apikey' => self::SUPABASE_ANON_KEY,
+                    'Authorization' => 'Bearer ' . self::SUPABASE_ANON_KEY,
+                ],
+            ]);
+
+            $data = $response->toArray();
+
+            return !empty($data[0]['content_text']) ? $data[0] : null;
+        } catch (\Throwable $e) {
+            $this->logger->warning('Supabase fetch failed for slug', [
+                'slug' => $slug,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     private function findOrCreateCategory(string $name): Category
