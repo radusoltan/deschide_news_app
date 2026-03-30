@@ -76,14 +76,17 @@ interface FlatItem {
  * Build an ordered tree from the API response.
  * The API may return items with `children` already populated (if using
  * ?exists[parent]=false), or it may return a flat list with `parent` IRIs.
- * We handle both cases.
+ * We handle both cases and deduplicate to avoid rendering the same item twice.
  */
 function buildTree(items: MenuItem[]): MenuItem[] {
-  // If items already have children arrays populated by the API, return top-level only
-  const topLevel = items.filter((i) => !i.parent);
-  const childMap = new Map<number, MenuItem[]>();
+  // Index every item by ID for fast lookup
+  const byId = new Map<number, MenuItem>();
+  for (const item of items) {
+    byId.set(item.id, item);
+  }
 
-  // Also collect items that declare a parent (flat response)
+  // Collect children by parent ID from the `parent` field
+  const childMap = new Map<number, MenuItem[]>();
   for (const item of items) {
     if (item.parent) {
       const parentId = extractIdFromIri(item.parent);
@@ -95,19 +98,31 @@ function buildTree(items: MenuItem[]): MenuItem[] {
     }
   }
 
-  // Merge: if a top-level item has both embedded children and flat children,
-  // prefer the embedded ones. Otherwise use childMap.
-  return topLevel
+  // Top-level = items without a parent
+  const topLevel = items.filter((i) => !i.parent);
+
+  // IDs that are assigned as children — used to prevent duplicates
+  const childIds = new Set<number>();
+
+  const result = topLevel
     .sort((a, b) => a.position - b.position)
     .map((item) => {
-      const embedded = item.children && item.children.length > 0 ? item.children : [];
+      // Prefer children declared via `parent` field (reflects optimistic updates);
+      // fall back to embedded `children` array from the API.
       const fromMap = childMap.get(item.id) || [];
-      const children = embedded.length > 0 ? embedded : fromMap;
+      const embedded = item.children && item.children.length > 0 ? item.children : [];
+      const children = fromMap.length > 0 ? fromMap : embedded;
+
+      for (const child of children) childIds.add(child.id);
+
       return {
         ...item,
         children: children.sort((a, b) => a.position - b.position),
       };
     });
+
+  // Filter out top-level items that are actually children (deduplicate)
+  return result.filter((item) => !childIds.has(item.id));
 }
 
 /** Flatten tree into a render-order list with depth info */
@@ -481,12 +496,32 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
       // Recalculate depths based on new positions and the moved item
       const recalculated = recalculateDepths(newFlatItems, active.id as number);
 
-      // Optimistic update: update the raw items so the UI reflects immediately
-      const newRawItems = recalculated.map((fi) => ({
+      // Optimistic update: rebuild raw items with correct parent and children
+      // First, build items with updated parent field and clear stale children
+      const updatedItems = recalculated.map((fi) => ({
         ...fi.item,
         parent: fi.parentId ? `/api/menu-items/${fi.parentId}` : null,
+        children: [] as MenuItem[],
       }));
-      setRawMenuItems(newRawItems);
+
+      // Rebuild children arrays for dropdowns
+      const itemMap = new Map<number, MenuItem>();
+      for (const item of updatedItems) {
+        itemMap.set(item.id, item);
+      }
+      for (const item of updatedItems) {
+        if (item.parent) {
+          const parentId = extractIdFromIri(item.parent);
+          if (parentId !== null) {
+            const parent = itemMap.get(parentId);
+            if (parent) {
+              parent.children.push(item);
+            }
+          }
+        }
+      }
+
+      setRawMenuItems(updatedItems);
 
       // Compute patches
       const ops = computePatchOps(recalculated, tree);
