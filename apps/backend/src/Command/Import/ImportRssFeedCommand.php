@@ -14,7 +14,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:import:rss-feed',
-    description: 'Importă articole din feed-ul RSS deschide.md (temporar — pentru populare conținut)',
+    description: 'Importă articole din deschide.md via Supabase REST API (paginat, toate articolele)',
 )]
 final class ImportRssFeedCommand extends Command
 {
@@ -39,7 +39,7 @@ final class ImportRssFeedCommand extends Command
         $dryRun = (bool) $input->getOption('dry-run');
         $dispatchTranslations = !$input->getOption('no-translate');
 
-        $io->title('Import RSS Feed — deschide.md');
+        $io->title('Import deschide.md — Supabase REST API');
 
         if ($dryRun) {
             $io->warning('MOD DRY-RUN: nimic nu se salvează în baza de date.');
