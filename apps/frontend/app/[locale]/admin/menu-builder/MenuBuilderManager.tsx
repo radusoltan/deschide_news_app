@@ -32,7 +32,6 @@ import {
   HiOutlineTrash,
   HiPlus,
   HiOutlineExclamationCircle,
-  HiPencil,
   HiExternalLink,
   HiFolder,
 } from 'react-icons/hi';
@@ -46,8 +45,6 @@ import DragOverlayItem from './DragOverlayItem';
 // ============================================================================
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
-const LOCALES = ['ro', 'en', 'ru'] as const;
-const LOCALE_LABELS: Record<string, string> = { ro: 'RO', en: 'EN', ru: 'RU' };
 
 // ============================================================================
 // Auth helper
@@ -252,7 +249,6 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [showAddLinkModal, setShowAddLinkModal] = useState(false);
   const [showAddDropdownModal, setShowAddDropdownModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Form state - Add Category
@@ -267,11 +263,6 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
 
   // Form state - Add Dropdown
   const [dropdownLabel, setDropdownLabel] = useState('');
-
-  // Form state - Edit
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [editLabels, setEditLabels] = useState<Record<string, string>>({});
-  const [editLocaleTab, setEditLocaleTab] = useState<string>('ro');
 
   // Form state - Delete
   const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
@@ -487,9 +478,8 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
       // Reorder the flat list
       const newFlatItems = arrayMove(flatItems, oldIndex, newIndex);
 
-      // Recalculate depths: items placed between a dropdown and the next top-level
-      // item (or end of list) become children of that dropdown.
-      const recalculated = recalculateDepths(newFlatItems);
+      // Recalculate depths based on new positions and the moved item
+      const recalculated = recalculateDepths(newFlatItems, active.id as number);
 
       // Optimistic update: update the raw items so the UI reflects immediately
       const newRawItems = recalculated.map((fi) => ({
@@ -524,11 +514,14 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
 
   /**
    * After reordering, recalculate which items are children of which dropdowns.
-   * Rule: a non-dropdown item placed immediately after a dropdown (with no
-   * top-level item in between) becomes a child of that dropdown.
-   * A dropdown item always stays at depth 0.
+   * Rules:
+   * - Dropdowns always stay at depth 0.
+   * - The moved item's depth is determined by context: if placed after a
+   *   dropdown (among its children), it becomes a child; otherwise top-level.
+   * - Non-moved items keep their original depth, but orphaned children
+   *   (whose dropdown moved away) become top-level.
    */
-  function recalculateDepths(items: FlatItem[]): FlatItem[] {
+  function recalculateDepths(items: FlatItem[], movedItemId: number): FlatItem[] {
     const result: FlatItem[] = [];
     let currentDropdownId: number | null = null;
 
@@ -537,12 +530,18 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         // Dropdowns always at top level
         result.push({ ...fi, depth: 0, parentId: null });
         currentDropdownId = fi.item.id;
-      } else if (fi.depth === 1 || (currentDropdownId !== null && fi.depth <= 1)) {
-        // Item was already a child or is placed right after a dropdown
-        // Keep it as a child
+      } else if (fi.item.id === movedItemId) {
+        // Moved item: determine depth from context
+        if (currentDropdownId !== null) {
+          result.push({ ...fi, depth: 1, parentId: currentDropdownId });
+        } else {
+          result.push({ ...fi, depth: 0, parentId: null });
+        }
+      } else if (fi.depth === 1 && currentDropdownId !== null) {
+        // Non-moved child that still has a valid dropdown parent above
         result.push({ ...fi, depth: 1, parentId: currentDropdownId });
       } else {
-        // Top-level item
+        // Top-level item (or orphaned child whose dropdown moved away)
         result.push({ ...fi, depth: 0, parentId: null });
         currentDropdownId = null;
       }
@@ -632,39 +631,6 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
       });
     }
   }, [tree]);
-
-  // ==========================================================================
-  // Toggle active
-  // ==========================================================================
-
-  const handleToggleActive = useCallback(
-    async (item: MenuItem) => {
-      setSaving(true);
-      try {
-        const token = await getAuthToken();
-        if (!token) throw new Error('Not authenticated');
-
-        const response = await fetch(`${API_BASE_URL}/api/menu-items/${item.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/merge-patch+json',
-            Authorization: `Bearer ${token}`,
-            'Accept-Language': locale,
-          },
-          body: JSON.stringify({ isActive: !item.isActive }),
-        });
-
-        if (!response.ok) throw new Error('Failed to toggle status');
-
-        await fetchMenuItems();
-      } catch (err) {
-        showErrorMessage(err instanceof Error ? err.message : 'Failed to update status');
-      } finally {
-        setSaving(false);
-      }
-    },
-    [fetchMenuItems, showErrorMessage]
-  );
 
   // ==========================================================================
   // Add Category
@@ -874,88 +840,6 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
   }, [dropdownLabel, activeTab, locale, tree, fetchMenuItems, showSuccessMessage, showErrorMessage]);
 
   // ==========================================================================
-  // Edit (with translation tabs)
-  // ==========================================================================
-
-  const openEditModal = useCallback(
-    async (item: MenuItem) => {
-      setEditingItem(item);
-      setEditLocaleTab('ro');
-
-      const labels: Record<string, string> = {};
-      const token = await getAuthToken();
-      if (!token) return;
-
-      for (const loc of LOCALES) {
-        try {
-          const response = await fetch(
-            `${API_BASE_URL}/api/menu-items/${item.id}`,
-            {
-              headers: {
-                'Accept-Language': loc,
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            labels[loc] = data.label || '';
-          } else {
-            labels[loc] = item.label;
-          }
-        } catch {
-          labels[loc] = item.label;
-        }
-      }
-
-      setEditLabels(labels);
-      setShowEditModal(true);
-    },
-    []
-  );
-
-  const handleSaveEdit = useCallback(async () => {
-    if (!editingItem) return;
-
-    setSaving(true);
-    try {
-      const token = await getAuthToken();
-      if (!token) throw new Error('Not authenticated');
-
-      for (const loc of LOCALES) {
-        const label = editLabels[loc]?.trim();
-        if (!label) continue;
-
-        const response = await fetch(
-          `${API_BASE_URL}/api/menu-items/${editingItem.id}`,
-          {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/merge-patch+json',
-              Authorization: `Bearer ${token}`,
-              'Accept-Language': loc,
-            },
-            body: JSON.stringify({ label }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to save ${loc.toUpperCase()} translation`);
-        }
-      }
-
-      showSuccessMessage('Menu item updated');
-      setShowEditModal(false);
-      setEditingItem(null);
-      await fetchMenuItems();
-    } catch (err) {
-      showErrorMessage(err instanceof Error ? err.message : 'Failed to update');
-    } finally {
-      setSaving(false);
-    }
-  }, [editingItem, editLabels, fetchMenuItems, showSuccessMessage, showErrorMessage]);
-
-  // ==========================================================================
   // Delete
   // ==========================================================================
 
@@ -1143,8 +1027,6 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                     fi.item.children.length > 0
                   }
                   onToggleExpand={() => toggleExpand(fi.item.id)}
-                  onToggleActive={handleToggleActive}
-                  onEdit={openEditModal}
                   onDelete={openDeleteModal}
                   saving={saving}
                 />
@@ -1173,10 +1055,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                 <th scope="col" className="px-4 py-3 w-36">
                   Type
                 </th>
-                <th scope="col" className="px-4 py-3 w-24">
-                  Status
-                </th>
-                <th scope="col" className="px-4 py-3 w-44">
+                <th scope="col" className="px-4 py-3 w-28">
                   Actions
                 </th>
               </tr>
@@ -1254,51 +1133,17 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                     )}
                   </td>
 
-                  {/* Status toggle */}
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleToggleActive(item)}
-                      disabled={saving}
-                      className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-                      style={{
-                        backgroundColor: item.isActive ? '#2563eb' : '#d1d5db',
-                      }}
-                      title={
-                        item.isActive
-                          ? 'Active - click to deactivate'
-                          : 'Inactive - click to activate'
-                      }
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          item.isActive ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </td>
-
                   {/* Actions */}
                   <td className="px-4 py-3">
-                    <div className="flex gap-1 items-center">
-                      <Button
-                        size="xs"
-                        color="light"
-                        onClick={() => openEditModal(item)}
-                        disabled={saving}
-                        title="Edit translations"
-                      >
-                        <HiPencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="xs"
-                        color="failure"
-                        onClick={() => openDeleteModal(item)}
-                        disabled={saving}
-                        title="Delete"
-                      >
-                        <HiOutlineTrash className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      size="xs"
+                      color="failure"
+                      onClick={() => openDeleteModal(item)}
+                      disabled={saving}
+                      title="Delete"
+                    >
+                      <HiOutlineTrash className="h-4 w-4" />
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -1557,92 +1402,6 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
             onClick={() => {
               setShowAddDropdownModal(false);
               setDropdownLabel('');
-            }}
-          >
-            Cancel
-          </Button>
-        </ModalFooter>
-      </Modal>
-
-      {/* ================================================================== */}
-      {/* Edit Modal with Translation Tabs                                   */}
-      {/* ================================================================== */}
-      <Modal
-        show={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setEditingItem(null);
-        }}
-      >
-        <ModalHeader>Edit Menu Item</ModalHeader>
-        <ModalBody>
-          {editingItem && (
-            <div className="space-y-4">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Type:{' '}
-                {editingItem.type === 'dropdown' ? (
-                  <Badge color="warning" size="sm">Dropdown</Badge>
-                ) : editingItem.type === 'category' ? (
-                  <Badge color="info" size="sm">Category</Badge>
-                ) : (
-                  <Badge color="purple" size="sm">External Link</Badge>
-                )}
-              </div>
-
-              {/* Locale tabs */}
-              <div className="border-b border-gray-200 dark:border-gray-600">
-                <ul className="flex flex-wrap -mb-px text-sm font-medium text-center">
-                  {LOCALES.map((loc) => (
-                    <li key={loc} className="mr-2">
-                      <button
-                        onClick={() => setEditLocaleTab(loc)}
-                        className={`inline-block p-3 border-b-2 rounded-t-lg ${
-                          editLocaleTab === loc
-                            ? 'text-blue-600 border-blue-600 dark:text-blue-400 dark:border-blue-400'
-                            : 'border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300'
-                        }`}
-                      >
-                        {LOCALE_LABELS[loc]}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Label input for selected locale */}
-              <div>
-                <label
-                  htmlFor="edit-label"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                >
-                  Label ({LOCALE_LABELS[editLocaleTab]})
-                </label>
-                <input
-                  type="text"
-                  id="edit-label"
-                  value={editLabels[editLocaleTab] || ''}
-                  onChange={(e) =>
-                    setEditLabels((prev) => ({
-                      ...prev,
-                      [editLocaleTab]: e.target.value,
-                    }))
-                  }
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-            </div>
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button onClick={handleSaveEdit} disabled={saving}>
-            {saving ? <Spinner size="sm" className="mr-2" /> : null}
-            Save All Translations
-          </Button>
-          <Button
-            color="gray"
-            onClick={() => {
-              setShowEditModal(false);
-              setEditingItem(null);
             }}
           >
             Cancel
