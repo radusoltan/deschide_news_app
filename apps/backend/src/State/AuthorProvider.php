@@ -7,6 +7,7 @@ namespace App\State;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Entity\Author;
+use App\Enum\AuthorType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -64,6 +65,31 @@ final class AuthorProvider implements ProviderInterface
         $queryBuilder = $repository->createQueryBuilder('a')
             ->orderBy('a.lastName', 'ASC')
             ->addOrderBy('a.firstName', 'ASC');
+
+        // Apply filters from query parameters
+        if ($request) {
+            // Filter by type (e.g., ?type=agency)
+            if ($type = $request->query->get('type')) {
+                $validTypes = array_map(fn (AuthorType $t) => $t->value, AuthorType::cases());
+                if (\in_array($type, $validTypes, true)) {
+                    $queryBuilder->andWhere('a.type = :type')
+                        ->setParameter('type', $type);
+                }
+            }
+
+            // Filter by status (e.g., ?status=active)
+            if ($status = $request->query->get('status')) {
+                $queryBuilder->andWhere('a.status = :status')
+                    ->setParameter('status', $status);
+            }
+
+            // Filter by isActive (e.g., ?isActive=true)
+            if ($request->query->has('isActive')) {
+                $isActive = filter_var($request->query->get('isActive'), FILTER_VALIDATE_BOOLEAN);
+                $queryBuilder->andWhere('a.isActive = :isActive')
+                    ->setParameter('isActive', $isActive);
+            }
+        }
 
         $query = $queryBuilder->getQuery();
         $query->setHint(

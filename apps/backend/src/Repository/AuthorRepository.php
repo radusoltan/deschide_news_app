@@ -68,6 +68,20 @@ class AuthorRepository extends ServiceEntityRepository
     }
 
     /**
+     * Find an author by their email domain (used for auto-attribution of press releases).
+     */
+    public function findByEmailDomain(string $domain): ?Author
+    {
+        return $this->createQueryBuilder('a')
+            ->where('a.emailDomain = :domain')
+            ->andWhere('a.isActive = true')
+            ->setParameter('domain', $domain)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
      * Find top authors (most articles).
      *
      * @return Author[]

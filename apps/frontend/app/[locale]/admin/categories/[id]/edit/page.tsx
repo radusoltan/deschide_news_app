@@ -89,6 +89,8 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
             slug: category.slug,
             status: category.status || 'active',
             onFrontPage: category.onFrontPage || false,
+            inMenu: category.inMenu || false,
+            inFooterMenu: category.inFooterMenu || false,
             parentId,
           }}
         />

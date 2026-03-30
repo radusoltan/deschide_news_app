@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { HiPencil, HiSearch, HiX, HiLockClosed } from 'react-icons/hi';
 import Link from 'next/link';
 import { DeleteArticleButton } from './components/DeleteArticleButton';
@@ -59,10 +60,24 @@ interface ArticleLock {
 }
 
 export function ArticlesTableClient({ articles, locale, categories, totalItems }: ArticlesTableClientProps) {
+  const router = useRouter();
+  const currentSearchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>(currentSearchParams.get('status') || 'all');
+  const [categoryFilter, setCategoryFilter] = useState<string>(currentSearchParams.get('category') || 'all');
   const [activeLocks, setActiveLocks] = useState<Map<number, ArticleLock>>(new Map());
+
+  // Navigate with server-side filters
+  const applyServerFilter = useCallback((key: string, value: string) => {
+    const params = new URLSearchParams(currentSearchParams.toString());
+    if (value === 'all' || value === '') {
+      params.delete(key);
+    } else {
+      params.set(key, value);
+    }
+    params.delete('page'); // reset to page 1 on filter change
+    router.push(`?${params.toString()}`);
+  }, [router, currentSearchParams]);
 
   // Server-side search state
   const [searchResults, setSearchResults] = useState<Article[] | null>(null);
@@ -178,6 +193,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
     setCategoryFilter('all');
     setSearchResults(null);
     setSearchTotalItems(0);
+    router.push('?');
   };
 
   const formatDate = (dateString?: string) => {
@@ -248,7 +264,10 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
             <select
               id="status-filter"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                applyServerFilter('status', e.target.value);
+              }}
               className="block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Status</option>
@@ -269,7 +288,10 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
             <select
               id="category-filter"
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                applyServerFilter('category', e.target.value);
+              }}
               className="block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Categories</option>

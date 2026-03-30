@@ -3,224 +3,297 @@
 import Link from 'next/link';
 import { useIntl } from 'react-intl';
 import { Logo } from '@/components/brand/Logo';
+import { getMenuItemHref } from '@/lib/api/public-menu';
+import type { MenuItem } from '@/lib/types/menu';
 
 interface FooterProps {
   locale: string;
+  menuItems?: MenuItem[];
 }
 
-export default function Footer({ locale }: FooterProps) {
+export default function Footer({ locale, menuItems = [] }: FooterProps) {
   const intl = useIntl();
 
   return (
-    <footer className="bg-brand-oxford-900 text-white/80">
+    <footer className="bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-sunken-dark)] text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)]">
       {/* Footer content */}
       <div id="footer-content" className="relative pt-8 xl:pt-16 pb-6 xl:pb-12">
-        <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2 overflow-hidden">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-4 xl:px-6 overflow-hidden">
           <div className="flex flex-wrap flex-row lg:justify-between -mx-3">
             {/* Left side - Brand and Social */}
             <div className="flex-shrink max-w-full w-full lg:w-2/5 px-3 lg:pr-16">
               <div className="flex items-center mb-4">
-                <Logo variant="white" size="lg" />
+                <Logo variant="blue" size="lg" />
               </div>
-              <p className="text-white/80">{intl.formatMessage({ id: 'footer.tagline' })}</p>
-              <ul className="space-x-3 mt-6 mb-6 Lg:mb-0">
-                {/* Facebook */}
-                <li className="inline-block">
-                  <a
-                    target="_blank"
-                    className="hover:text-white transition-colors group"
-                    rel="noopener noreferrer"
-                    href="https://facebook.com"
-                    title="Facebook"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="2rem"
-                      height="2rem"
-                      viewBox="0 0 512 512"
-                      className="group-hover:scale-110 transition-transform"
+              <p className="font-serif text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] text-[var(--font-size-base)] leading-relaxed mb-6">
+                {intl.formatMessage({ id: 'footer.tagline' })}
+              </p>
+
+              {/* Social Links */}
+              <div className="space-y-3 mb-6 lg:mb-0">
+                <h3 className="font-sans text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] text-[var(--font-size-sm)] font-semibold uppercase tracking-wider">
+                  {intl.formatMessage({ id: 'footer.followUs', defaultMessage: 'Urmărește-ne' })}
+                </h3>
+                <ul className="flex gap-4">
+                  {/* Telegram - prominently featured */}
+                  <li>
+                    <a
+                      target="_blank"
+                      className="flex items-center gap-2 text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors group font-sans text-[var(--font-size-sm)] font-medium"
+                      rel="noopener noreferrer"
+                      href="https://t.me/deschide"
+                      title="Telegram"
                     >
-                      <path
-                        fill="currentColor"
-                        d="M455.27,32H56.73A24.74,24.74,0,0,0,32,56.73V455.27A24.74,24.74,0,0,0,56.73,480H256V304H202.45V240H256V189c0-57.86,40.13-89.36,91.82-89.36,24.73,0,51.33,1.86,57.51,2.68v60.43H364.15c-28.12,0-33.48,13.3-33.48,32.9V240h67l-8.75,64H330.67V480h124.6A24.74,24.74,0,0,0,480,455.27V56.73A24.74,24.74,0,0,0,455.27,32Z"
-                      ></path>
-                    </svg>
-                  </a>
-                </li>
-                {/* Twitter */}
-                <li className="inline-block">
-                  <a
-                    target="_blank"
-                    className="hover:text-white transition-colors group"
-                    rel="noopener noreferrer"
-                    href="https://twitter.com"
-                    title="Twitter"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="2rem"
-                      height="2rem"
-                      viewBox="0 0 512 512"
-                      className="group-hover:scale-110 transition-transform"
+                      <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-.1.01-1.81 1.14-.81.56-1.46.4-2.16-.13-.24-.18-.43-.33-.78-.49-.42-.2-.9-.31-1.44-.31-.64 0-1.27.2-1.27.2z"/>
+                      </svg>
+                      Telegram
+                    </a>
+                  </li>
+
+                  {/* Facebook */}
+                  <li>
+                    <a
+                      target="_blank"
+                      className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors group"
+                      rel="noopener noreferrer"
+                      href="https://facebook.com/deschide"
+                      title="Facebook"
                     >
-                      <path
-                        fill="currentColor"
-                        d="M496,109.5a201.8,201.8,0,0,1-56.55,15.3,97.51,97.51,0,0,0,43.33-53.6,197.74,197.74,0,0,1-62.56,23.5A99.14,99.14,0,0,0,348.31,64c-54.42,0-98.46,43.4-98.46,96.9a93.21,93.21,0,0,0,2.54,22.1,280.7,280.7,0,0,1-203-101.3A95.69,95.69,0,0,0,36,130.4C36,164,53.53,193.7,80,211.1A97.5,97.5,0,0,1,35.22,199v1.2c0,47,34,86.1,79,95a100.76,100.76,0,0,1-25.94,3.4,94.38,94.38,0,0,1-18.51-1.8c12.51,38.5,48.92,66.5,92.05,67.3A199.59,199.59,0,0,1,39.5,405.6,203,203,0,0,1,16,404.2,278.68,278.68,0,0,0,166.74,448c181.36,0,280.44-147.7,280.44-275.8,0-4.2-.11-8.4-.31-12.5A198.48,198.48,0,0,0,496,109.5Z"
-                      ></path>
-                    </svg>
-                  </a>
-                </li>
-                {/* YouTube */}
-                <li className="inline-block">
-                  <a
-                    target="_blank"
-                    className="hover:text-white transition-colors group"
-                    rel="noopener noreferrer"
-                    href="https://youtube.com"
-                    title="Youtube"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="2rem"
-                      height="2rem"
-                      viewBox="0 0 512 512"
-                      className="group-hover:scale-110 transition-transform"
+                      <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                      </svg>
+                    </a>
+                  </li>
+
+                  {/* Twitter/X */}
+                  <li>
+                    <a
+                      target="_blank"
+                      className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors group"
+                      rel="noopener noreferrer"
+                      href="https://twitter.com/deschide"
+                      title="Twitter/X"
                     >
-                      <path
-                        fill="currentColor"
-                        d="M508.64,148.79c0-45-33.1-81.2-74-81.2C379.24,65,322.74,64,265,64H247c-57.6,0-114.2,1-169.6,3.6-40.8,0-73.9,36.4-73.9,81.4C1,184.59-.06,220.19,0,255.79q-.15,53.4,3.4,106.9c0,45,33.1,81.5,73.9,81.5,58.2,2.7,117.9,3.9,178.6,3.8q91.2.3,178.6-3.8c40.9,0,74-36.5,74-81.5,2.4-35.7,3.5-71.3,3.4-107Q512.24,202.29,508.64,148.79ZM207,353.89V157.39l145,98.2Z"
-                      ></path>
-                    </svg>
-                  </a>
-                </li>
-                {/* Instagram */}
-                <li className="inline-block">
-                  <a
-                    target="_blank"
-                    className="hover:text-white transition-colors group"
-                    rel="noopener noreferrer"
-                    href="https://instagram.com"
-                    title="Instagram"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="2rem"
-                      height="2rem"
-                      viewBox="0 0 512 512"
-                      className="group-hover:scale-110 transition-transform"
+                      <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/>
+                      </svg>
+                    </a>
+                  </li>
+
+                  {/* YouTube */}
+                  <li>
+                    <a
+                      target="_blank"
+                      className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors group"
+                      rel="noopener noreferrer"
+                      href="https://youtube.com/@deschide"
+                      title="YouTube"
                     >
-                      <path
-                        fill="currentColor"
-                        d="M349.33,69.33a93.62,93.62,0,0,1,93.34,93.34V349.33a93.62,93.62,0,0,1-93.34,93.34H162.67a93.62,93.62,0,0,1-93.34-93.34V162.67a93.62,93.62,0,0,1,93.34-93.34H349.33m0-37.33H162.67C90.8,32,32,90.8,32,162.67V349.33C32,421.2,90.8,480,162.67,480H349.33C421.2,480,480,421.2,480,349.33V162.67C480,90.8,421.2,32,349.33,32Z"
-                      ></path>
-                      <path
-                        fill="currentColor"
-                        d="M377.33,162.67a28,28,0,1,1,28-28A27.94,27.94,0,0,1,377.33,162.67Z"
-                      ></path>
-                      <path
-                        fill="currentColor"
-                        d="M256,181.33A74.67,74.67,0,1,1,181.33,256,74.75,74.75,0,0,1,256,181.33M256,144A112,112,0,1,0,368,256,112,112,0,0,0,256,144Z"
-                      ></path>
-                    </svg>
-                  </a>
-                </li>
-              </ul>
+                      <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                      </svg>
+                    </a>
+                  </li>
+
+                  {/* Instagram */}
+                  <li>
+                    <a
+                      target="_blank"
+                      className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors group"
+                      rel="noopener noreferrer"
+                      href="https://instagram.com/deschide"
+                      title="Instagram"
+                    >
+                      <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                      </svg>
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
 
             {/* Right side - Footer columns */}
             <div className="flex-shrink max-w-full w-full lg:w-3/5 px-3">
-              <div className="flex flex-wrap flex-row">
-                {/* Categories Column */}
-                <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
-                  <h4 className="text-sm leading-normal mb-3 uppercase text-brand-mindaro-400 font-heading">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {/* Categories Column — dynamic from MenuItem API */}
+                <div>
+                  <h3 className="font-sans text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] text-[var(--font-size-sm)] font-semibold uppercase tracking-wider mb-3">
                     {intl.formatMessage({ id: 'footer.categories' })}
-                  </h4>
-                  <ul className="font-body">
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/politic`}>{intl.formatMessage({ id: 'categories.politics' })}</Link>
-                    </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/externe`}>{intl.formatMessage({ id: 'nav.externe' })}</Link>
-                    </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/social`}>{intl.formatMessage({ id: 'categories.society' })}</Link>
-                    </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/editorial`}>{intl.formatMessage({ id: 'nav.editorial' })}</Link>
-                    </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/all`}>{intl.formatMessage({ id: 'nav.all' })}</Link>
-                    </li>
+                  </h3>
+                  <ul className="space-y-2 font-sans text-[var(--font-size-sm)]">
+                    {menuItems.length > 0 ? menuItems.map((item) => (
+                      <li key={item.id}>
+                        <Link
+                          href={getMenuItemHref(item, locale)}
+                          className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                          {...(item.type === 'external_link' && item.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    )) : (
+                      <>
+                        <li>
+                          <Link
+                            href={locale === 'ro' ? '/politica' : `/${locale}/politica`}
+                            className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                          >
+                            {intl.formatMessage({ id: 'categories.politics' })}
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={locale === 'ro' ? '/economie' : `/${locale}/economie`}
+                            className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                          >
+                            {intl.formatMessage({ id: 'categories.economy', defaultMessage: 'Economie' })}
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href={locale === 'ro' ? '/societate' : `/${locale}/societate`}
+                            className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                          >
+                            {intl.formatMessage({ id: 'categories.society' })}
+                          </Link>
+                        </li>
+                      </>
+                    )}
                   </ul>
                 </div>
 
                 {/* Quick Links Column */}
-                <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
-                  <h4 className="text-sm leading-normal mb-3 uppercase text-brand-mindaro-400 font-heading">
+                <div>
+                  <h3 className="font-sans text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] text-[var(--font-size-sm)] font-semibold uppercase tracking-wider mb-3">
                     {intl.formatMessage({ id: 'footer.quickLinks' })}
-                  </h4>
-                  <ul className="font-body">
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}`}>{intl.formatMessage({ id: 'common.home' })}</Link>
+                  </h3>
+                  <ul className="space-y-2 font-sans text-[var(--font-size-sm)]">
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/' : `/${locale}`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'common.home' })}
+                      </Link>
                     </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/all`}>{intl.formatMessage({ id: 'footer.latestNews' })}</Link>
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/all' : `/${locale}/all`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'footer.latestNews' })}
+                      </Link>
                     </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/trending`}>{intl.formatMessage({ id: 'footer.trending' })}</Link>
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/trending' : `/${locale}/trending`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'footer.trending' })}
+                      </Link>
                     </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/archive`} className="flex items-center gap-1.5">
-                        <svg className="w-4 h-4 text-brand-mindaro-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/archive' : `/${locale}/archive`}
+                        className="flex items-center gap-1.5 text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                         </svg>
                         {intl.formatMessage({ id: 'footer.archive' })}
                       </Link>
                     </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/contact`}>{intl.formatMessage({ id: 'common.contact' })}</Link>
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/contact' : `/${locale}/contact`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'common.contact' })}
+                      </Link>
                     </li>
                   </ul>
                 </div>
 
                 {/* About Us Column */}
-                <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
-                  <h4 className="text-sm leading-normal mb-3 uppercase text-brand-mindaro-400 font-heading">
+                <div>
+                  <h3 className="font-sans text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] text-[var(--font-size-sm)] font-semibold uppercase tracking-wider mb-3">
                     {intl.formatMessage({ id: 'footer.aboutUs' })}
-                  </h4>
-                  <ul className="font-body">
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/about`}>{intl.formatMessage({ id: 'footer.ourStory' })}</Link>
+                  </h3>
+                  <ul className="space-y-2 font-sans text-[var(--font-size-sm)]">
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/about' : `/${locale}/about`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'footer.ourStory' })}
+                      </Link>
                     </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/team`}>{intl.formatMessage({ id: 'footer.ourTeam' })}</Link>
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/team' : `/${locale}/team`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'footer.ourTeam' })}
+                      </Link>
                     </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/careers`}>{intl.formatMessage({ id: 'footer.careers' })}</Link>
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/careers' : `/${locale}/careers`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'footer.careers' })}
+                      </Link>
                     </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/advertise`}>{intl.formatMessage({ id: 'footer.advertise' })}</Link>
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/advertise' : `/${locale}/advertise`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'footer.advertise' })}
+                      </Link>
                     </li>
                   </ul>
                 </div>
 
                 {/* Legal Column */}
-                <div className="flex-shrink max-w-full w-1/2 md:w-1/4 mb-6 lg:mb-0">
-                  <h4 className="text-sm leading-normal mb-3 uppercase text-brand-mindaro-400 font-heading">
+                <div>
+                  <h3 className="font-sans text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] text-[var(--font-size-sm)] font-semibold uppercase tracking-wider mb-3">
                     {intl.formatMessage({ id: 'footer.legal' })}
-                  </h4>
-                  <ul className="font-body">
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/privacy`}>{intl.formatMessage({ id: 'footer.privacyPolicy' })}</Link>
+                  </h3>
+                  <ul className="space-y-2 font-sans text-[var(--font-size-sm)]">
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/privacy' : `/${locale}/privacy`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'footer.privacyPolicy' })}
+                      </Link>
                     </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/terms`}>{intl.formatMessage({ id: 'footer.termsOfUse' })}</Link>
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/terms' : `/${locale}/terms`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'footer.termsOfUse' })}
+                      </Link>
                     </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/license`}>{intl.formatMessage({ id: 'footer.license' })}</Link>
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/license' : `/${locale}/license`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'footer.license' })}
+                      </Link>
                     </li>
-                    <li className="py-1 hover:text-brand-tomato-500 transition-colors">
-                      <Link href={`/${locale}/gdpr`}>{intl.formatMessage({ id: 'footer.gdpr' })}</Link>
+                    <li>
+                      <Link
+                        href={locale === 'ro' ? '/gdpr' : `/${locale}/gdpr`}
+                        className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                      >
+                        {intl.formatMessage({ id: 'footer.gdpr' })}
+                      </Link>
                     </li>
                   </ul>
                 </div>
@@ -231,14 +304,12 @@ export default function Footer({ locale }: FooterProps) {
       </div>
 
       {/* Footer copyright */}
-      <div className="footer-dark">
-        <div className="container py-4 border-t border-white/10">
-          <div className="row">
-            <div className="col-12 col-md text-center">
-              <p className="d-block my-3 text-white/60 font-body">
-                Copyright © {new Date().getFullYear()} Deschide News | {intl.formatMessage({ id: 'footer.copyright' })}
-              </p>
-            </div>
+      <div className="border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-4 xl:px-6 py-4">
+          <div className="text-center">
+            <p className="font-sans text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)] text-[var(--font-size-sm)]">
+              © {new Date().getFullYear()} Deschide News | {intl.formatMessage({ id: 'footer.copyright' })}
+            </p>
           </div>
         </div>
       </div>

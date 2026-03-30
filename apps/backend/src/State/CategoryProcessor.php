@@ -14,6 +14,7 @@ use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use LogicException;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
  * @implements ProcessorInterface<Category>
@@ -23,7 +24,8 @@ final class CategoryProcessor implements ProcessorInterface
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly RequestStack $requestStack,
-        private readonly PerformanceService $performance
+        private readonly PerformanceService $performance,
+        private readonly SluggerInterface $slugger,
     ) {
     }
 
@@ -81,6 +83,8 @@ final class CategoryProcessor implements ProcessorInterface
                 $existingEntity->setTitle($data->getTitle());
                 $existingEntity->setStatus($data->getStatus());
                 $existingEntity->setOnFrontPage($data->isOnFrontPage());
+                $existingEntity->setInMenu($data->isInMenu());
+                $existingEntity->setInFooterMenu($data->isInFooterMenu());
 
                 // Handle parent (get managed entity)
                 if ($data->getParent()) {
@@ -154,6 +158,13 @@ final class CategoryProcessor implements ProcessorInterface
 
         if ($category->getTitle()) {
             $translationRepo->translate($category, 'title', $locale, $category->getTitle());
+
+            // Generate translated slug: use explicit slug if provided, otherwise auto-generate from title
+            $slug = $category->getSlug();
+            $translatedSlug = ($slug && $slug !== '' && $slug !== $this->slugger->slug($category->getTitle())->lower()->toString())
+                ? $slug
+                : $this->slugger->slug($category->getTitle())->lower()->toString();
+            $translationRepo->translate($category, 'slug', $locale, $translatedSlug);
         }
 
         $this->entityManager->flush();

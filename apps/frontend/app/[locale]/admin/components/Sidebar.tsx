@@ -117,6 +117,25 @@ export default function Sidebar() {
                   </Link>
                 </li>
 
+                {/* Press Queue */}
+                <li>
+                  <Link
+                    href={`/${locale}/admin/press-queue`}
+                    className={linkClass(`/${locale}/admin/press-queue`)}
+                  >
+                    <svg
+                      className={iconClass(`/${locale}/admin/press-queue`)}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                    </svg>
+                    <span className="ml-3">Press Queue</span>
+                  </Link>
+                </li>
+
                 {/* Categories */}
                 <li>
                   <Link
@@ -132,6 +151,28 @@ export default function Sidebar() {
                       <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                     </svg>
                     <span className="ml-3">Categories</span>
+                  </Link>
+                </li>
+
+                {/* Menu Builder */}
+                <li>
+                  <Link
+                    href={`/${locale}/admin/menu-builder`}
+                    className={linkClass(`/${locale}/admin/menu-builder`)}
+                  >
+                    <svg
+                      className={iconClass(`/${locale}/admin/menu-builder`)}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="ml-3">Menu Builder</span>
                   </Link>
                 </li>
 

@@ -1,13 +1,550 @@
 @import "tailwindcss";
 
 /* ============================================
-   DESCHIDE BRAND DESIGN SYSTEM
-   Based on DESCHIDE_BRANDBOOK.pdf
+   DESCHIDE NEWS DESIGN SYSTEM
+   Single source of truth via @theme directive
    ============================================ */
 
-@layer base {
+/* Tailwind CSS 4 @theme directive — single source of truth */
+@theme {
+  /* Colors — oklch values from DESIGN_TOKENS.md */
 
-  /* CSS Custom Properties - Brand Colors in RGB for opacity support */
+  /* Surface Colors */
+  --color-surface: oklch(98% 0.005 90);
+  --color-surface-elevated: oklch(100% 0 0);
+  --color-surface-sunken: oklch(95% 0.005 90);
+
+  /* Text Colors */
+  --color-text-primary: oklch(20% 0 0);
+  --color-text-secondary: oklch(40% 0 0);
+  --color-text-tertiary: oklch(55% 0 0);
+
+  /* Brand and Accent */
+  --color-accent: oklch(45% 0.15 165);
+  --color-accent-hover: oklch(40% 0.17 165);
+  --color-breaking: oklch(55% 0.22 25);
+
+  /* Section Colors (Guardian-inspired) */
+  --color-section-politics: oklch(55% 0.18 25);
+  --color-section-economy: oklch(55% 0.15 260);
+  --color-section-culture: oklch(55% 0.12 330);
+  --color-section-sport: oklch(55% 0.15 145);
+  --color-section-opinion: oklch(55% 0.15 55);
+  --color-section-society: oklch(55% 0.12 290);
+  --color-section-tech: oklch(55% 0.15 230);
+  --color-section-world: oklch(55% 0.10 200);
+
+  /* UI Colors */
+  --color-border: oklch(85% 0.005 90);
+  --color-focus: oklch(55% 0.25 260);
+  --color-skeleton: oklch(90% 0.005 90);
+
+  /* Dark Mode Colors — OKLCH with subtle blue tint for anti-halation */
+  --color-surface-dark: oklch(15% 0.02 260);
+  --color-surface-elevated-dark: oklch(20% 0.02 260);
+  --color-surface-sunken-dark: oklch(12% 0.02 260);
+  --color-text-primary-dark: oklch(90% 0.01 260);
+  --color-text-secondary-dark: oklch(70% 0.01 260);
+  --color-text-tertiary-dark: oklch(60% 0.01 260);
+  --color-border-dark: oklch(30% 0.02 260);
+  --color-focus-dark: oklch(65% 0.25 260);
+  --color-skeleton-dark: oklch(25% 0.02 260);
+
+  /* Typography — fluid clamp scale from DESIGN_TOKENS.md */
+  --font-size-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --font-size-sm: clamp(0.875rem, 0.825rem + 0.25vw, 1rem);
+  --font-size-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --font-size-lg: clamp(1.125rem, 1.05rem + 0.375vw, 1.25rem);
+  --font-size-xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
+  --font-size-2xl: clamp(1.5rem, 1.25rem + 1.25vw, 2rem);
+  --font-size-3xl: clamp(2.25rem, 1.75rem + 2.5vw, 3.5rem);
+  --font-size-4xl: clamp(2.75rem, 2rem + 3.75vw, 4.5rem);
+
+  /* Line heights */
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+  --leading-loose: 1.75;
+
+  /* Font families (CSS variable references from next/font) */
+  --font-sans: var(--font-golos), system-ui, sans-serif;
+  --font-serif: var(--font-noto-serif), Georgia, 'Times New Roman', serif;
+
+  /* Spacing (base 4px) */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+
+  /* Breakpoints (FT Origami) */
+  --breakpoint-xs: 320px;
+  --breakpoint-sm: 490px;
+  --breakpoint-md: 740px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1440px;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-card: 12px;
+  --radius-card-lg: 16px;
+  --radius-full: 9999px;
+}
+
+/* Dark mode custom variant — uses :is() for real specificity so dark: utilities beat base utilities */
+@custom-variant dark (&:is([data-theme="dark"], [data-theme="dark"] *));
+
+/* ============================================
+   PREMIUM ANIMATIONS & MICRO-INTERACTIONS
+   ============================================ */
+
+/* Fade In Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide Animations */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Pulse for Breaking News */
+@keyframes breaking-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Shimmer Effect for Loading States */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Skeleton Loading */
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Scale Animations */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scale-up {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.02);
+  }
+}
+
+/* Spinner Animation */
+@keyframes spin-smooth {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Live Broadcast Scan Line Animation */
+@keyframes live-scan {
+  0% {
+    top: 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+/* Text Reveal Animation */
+@keyframes text-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Animation Utility Classes */
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.5s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out forwards;
+}
+
+.animate-breaking-pulse {
+  animation: breaking-pulse 2s ease-in-out infinite;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out forwards;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+.animate-live-scan {
+  animation: live-scan 3s linear infinite;
+}
+
+.animate-text-reveal {
+  animation: text-reveal 0.6s ease-out forwards;
+}
+
+/* Stagger Delays for Sequential Animations */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+
+/* Hover Effects */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px var(--color-text-primary);
+}
+
+.hover-lift-sm {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift-sm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--color-text-secondary);
+}
+
+.hover-scale {
+  transition: transform 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+.hover-scale-sm {
+  transition: transform 0.2s ease;
+}
+
+.hover-scale-sm:hover {
+  transform: scale(1.01);
+}
+
+/* Image Hover Effects */
+.hover-image-zoom {
+  overflow: hidden;
+}
+
+.hover-image-zoom img {
+  transition: transform 0.6s ease;
+}
+
+.hover-image-zoom:hover img {
+  transform: scale(1.05);
+}
+
+/* Focus States - WCAG 2.2 AA compliant */
+.focus-accent:focus {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] :focus-visible {
+  outline-color: var(--color-focus-dark);
+}
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(90deg,
+      var(--color-skeleton) 0%,
+      var(--color-border) 50%,
+      var(--color-skeleton) 100%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+/* Dark mode skeleton */
+.dark .skeleton {
+  background: linear-gradient(90deg,
+      var(--color-skeleton-dark) 0%,
+      var(--color-border-dark) 50%,
+      var(--color-skeleton-dark) 100%);
+}
+
+/* Shimmer Effect for Cards */
+.shimmer-effect {
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Breaking News Badge Animation */
+.breaking-news-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--color-breaking);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+}
+
+.breaking-news-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  animation: breaking-pulse 2s ease-in-out infinite;
+}
+
+/* Live Badge with Pulse Dot */
+.live-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--color-breaking);
+  color: white;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-sm);
+}
+
+.live-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+  animation: live-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+/* Text on Photo - Critical for readability on images */
+.text-on-photo {
+  color: white;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.8),
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.text-on-photo-strong {
+  color: white;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+/* Premium Card Gradient Overlays */
+.card-overlay-gradient {
+  background: linear-gradient(to top,
+      rgba(0, 0, 0, 0.9) 0%,
+      rgba(0, 0, 0, 0.6) 40%,
+      rgba(0, 0, 0, 0.2) 70%,
+      transparent 100%);
+}
+
+/* Smooth Transitions */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-fast {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Underline Animation */
+.underline-animate {
+  position: relative;
+  display: inline-block;
+}
+
+.underline-animate::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-accent);
+  transition: width 0.3s ease;
+}
+
+.underline-animate:hover::after {
+  width: 100%;
+}
+
+/* Performance Optimization */
+.will-animate {
+  will-change: transform, opacity;
+}
+
+/* Article body dark mode */
+[data-theme="dark"] .article-body {
+  color: var(--color-text-primary-dark);
+}
+[data-theme="dark"] .article-body a {
+  color: var(--color-accent);
+}
+[data-theme="dark"] .article-body blockquote {
+  border-left-color: var(--color-border-dark);
+  background-color: var(--color-surface-elevated-dark);
+}
+[data-theme="dark"] .article-body pre {
+  background-color: var(--color-surface-sunken-dark);
+}
+[data-theme="dark"] .article-body code {
+  background-color: var(--color-surface-sunken-dark);
+}
+
+/* Images dark mode filter (optional) */
+[data-theme="dark"] img:not([data-no-dim]) {
+  filter: brightness(0.9);
+}
+
+/* Disable animations for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   LEGACY ADMIN PANEL SUPPORT
+   Backward compatibility only - DO NOT USE in public components
+   ============================================ */
+
+@layer legacy {
+  /* Legacy Brand Colors - Admin Panel Only */
   :root {
     /* Oxford Blue (Primary - 40% usage) */
     --brand-oxford-50: 240 244 249;
@@ -20,7 +557,6 @@
     --brand-oxford-700: 31 63 116;
     --brand-oxford-800: 28 54 96;
     --brand-oxford-900: 17 34 64;
-    /* Primary #112240 */
     --brand-oxford-950: 10 22 41;
 
     /* Tomato (Secondary - 40-50% usage) */
@@ -30,7 +566,6 @@
     --brand-tomato-300: 248 171 163;
     --brand-tomato-400: 243 123 110;
     --brand-tomato-500: 240 94 69;
-    /* Primary #F05E45 */
     --brand-tomato-600: 221 60 40;
     --brand-tomato-700: 186 46 30;
     --brand-tomato-800: 154 41 29;
@@ -45,7 +580,6 @@
     --brand-red-400: 248 113 113;
     --brand-red-500: 239 68 68;
     --brand-red-600: 233 38 40;
-    /* Primary #E92628 */
     --brand-red-700: 200 30 32;
     --brand-red-800: 165 29 31;
     --brand-red-900: 136 30 31;
@@ -57,687 +591,11 @@
     --brand-mindaro-200: 236 251 194;
     --brand-mindaro-300: 225 249 153;
     --brand-mindaro-400: 212 251 140;
-    /* Primary #D4FB8C */
     --brand-mindaro-500: 191 229 86;
     --brand-mindaro-600: 160 198 59;
     --brand-mindaro-700: 122 154 47;
     --brand-mindaro-800: 98 122 41;
     --brand-mindaro-900: 82 103 37;
     --brand-mindaro-950: 44 57 16;
-  }
-}
-
-@layer components {
-
-  /* Brand Color Utilities - Text */
-  .text-brand-oxford {
-    color: rgb(var(--brand-oxford-900));
-  }
-
-  .text-brand-tomato {
-    color: rgb(var(--brand-tomato-500));
-  }
-
-  .text-brand-red {
-    color: rgb(var(--brand-red-600));
-  }
-
-  /* WARNING: Mindaro should never be used for text - accessibility issue */
-
-  /* Brand Color Utilities - Background */
-  .bg-brand-oxford {
-    background-color: rgb(var(--brand-oxford-900));
-  }
-
-  .bg-brand-oxford-light {
-    background-color: rgb(var(--brand-oxford-100));
-  }
-
-  /* Oxford Blue Shade Variants (for hover states and variations) */
-  .bg-brand-oxford-950 {
-    background-color: rgb(var(--brand-oxford-950));
-  }
-
-  .bg-brand-oxford-900 {
-    background-color: rgb(var(--brand-oxford-900));
-  }
-
-  .bg-brand-oxford-800 {
-    background-color: rgb(var(--brand-oxford-800));
-  }
-
-  .bg-brand-oxford-700 {
-    background-color: rgb(var(--brand-oxford-700));
-  }
-
-  .hover\:bg-brand-oxford-800:hover {
-    background-color: rgb(var(--brand-oxford-800));
-  }
-
-  .hover\:bg-brand-oxford-700:hover {
-    background-color: rgb(var(--brand-oxford-700));
-  }
-
-  .dark\:bg-brand-oxford-900:is(.dark *) {
-    background-color: rgb(var(--brand-oxford-900));
-  }
-
-  .dark\:hover\:bg-brand-oxford-800:is(.dark *):hover {
-    background-color: rgb(var(--brand-oxford-800));
-  }
-
-  /* Text color variants for Oxford Blue */
-  .text-brand-oxford-900 {
-    color: rgb(var(--brand-oxford-900));
-  }
-
-  .text-brand-oxford-800 {
-    color: rgb(var(--brand-oxford-800));
-  }
-
-  .text-brand-oxford-700 {
-    color: rgb(var(--brand-oxford-700));
-  }
-
-  /* Mindaro text color variants (for accent highlights) */
-  .text-brand-mindaro-400 {
-    color: rgb(var(--brand-mindaro-400));
-  }
-
-  .hover\:text-brand-mindaro-400:hover {
-    color: rgb(var(--brand-mindaro-400));
-  }
-
-  /* Tomato text color variants */
-  .text-brand-tomato-500 {
-    color: rgb(var(--brand-tomato-500));
-  }
-
-  .hover\:text-brand-tomato-500:hover {
-    color: rgb(var(--brand-tomato-500));
-  }
-
-  /* Focus border variant */
-  .focus\:border-brand-oxford-900:focus {
-    border-color: rgb(var(--brand-oxford-900));
-  }
-
-  .bg-brand-tomato {
-    background-color: rgb(var(--brand-tomato-500));
-  }
-
-  .bg-brand-tomato-light {
-    background-color: rgb(var(--brand-tomato-100));
-  }
-
-  .bg-brand-red {
-    background-color: rgb(var(--brand-red-600));
-  }
-
-  .bg-brand-mindaro {
-    background-color: rgb(var(--brand-mindaro-400));
-  }
-
-  /* Brand Gradient Utilities */
-  .gradient-oxford-tomato {
-    background: linear-gradient(135deg,
-        rgb(var(--brand-oxford-900)) 0%,
-        rgb(var(--brand-tomato-500)) 100%);
-  }
-
-  .gradient-tomato-red {
-    background: linear-gradient(135deg,
-        rgb(var(--brand-tomato-500)) 0%,
-        rgb(var(--brand-red-600)) 100%);
-  }
-
-  .gradient-oxford-soft {
-    background: linear-gradient(180deg,
-        rgb(var(--brand-oxford-900)) 0%,
-        rgb(var(--brand-oxford-700)) 100%);
-  }
-
-  .gradient-tomato-soft {
-    background: linear-gradient(180deg,
-        rgb(var(--brand-tomato-600)) 0%,
-        rgb(var(--brand-tomato-400)) 100%);
-  }
-
-  /* Text on Photo - Critical for readability on images */
-  .text-on-photo {
-    color: white;
-    text-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.8),
-      0 2px 8px rgba(0, 0, 0, 0.5),
-      0 4px 16px rgba(17, 34, 64, 0.4);
-    /* Subtle oxford blue shadow */
-  }
-
-  .text-on-photo-strong {
-    color: white;
-  }
-
-  /* Brand Border Utilities */
-  .border-brand-oxford {
-    border-color: rgb(var(--brand-oxford-900));
-  }
-
-  .border-brand-tomato {
-    border-color: rgb(var(--brand-tomato-500));
-  }
-
-  .border-brand-red {
-    border-color: rgb(var(--brand-red-600));
-  }
-
-  /* Accent Bars (brand design pattern) */
-  .accent-bar-oxford {
-    border-left: 4px solid rgb(var(--brand-oxford-900));
-  }
-
-  .accent-bar-tomato {
-    border-left: 4px solid rgb(var(--brand-tomato-500));
-  }
-
-  .accent-bar-red {
-    border-left: 4px solid rgb(var(--brand-red-600));
-  }
-
-  /* Brand Button Styles */
-  .btn-brand-primary {
-    @apply text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
-    background-color: rgb(var(--brand-oxford-900));
-  }
-
-  .btn-brand-primary:hover {
-    background-color: rgb(var(--brand-oxford-900) / 0.9);
-  }
-
-  .btn-brand-primary:focus {
-    --tw-ring-color: rgb(var(--brand-oxford-900));
-  }
-
-  .btn-brand-secondary {
-    @apply text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
-    background-color: rgb(var(--brand-tomato-500));
-  }
-
-  .btn-brand-secondary:hover {
-    background-color: rgb(var(--brand-tomato-500) / 0.9);
-  }
-
-  .btn-brand-secondary:focus {
-    --tw-ring-color: rgb(var(--brand-tomato-500));
-  }
-
-  .btn-brand-accent {
-    @apply text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
-    background-color: rgb(var(--brand-red-600));
-  }
-
-  .btn-brand-accent:hover {
-    background-color: rgb(var(--brand-red-600) / 0.9);
-  }
-
-  .btn-brand-accent:focus {
-    --tw-ring-color: rgb(var(--brand-red-600));
-  }
-
-  .btn-brand-outline {
-    @apply border-2 font-medium px-6 py-3 rounded-lg hover:text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
-    border-color: rgb(var(--brand-oxford-900));
-    color: rgb(var(--brand-oxford-900));
-  }
-
-  .btn-brand-outline:hover {
-    background-color: rgb(var(--brand-oxford-900));
-  }
-
-  .btn-brand-outline:focus {
-    --tw-ring-color: rgb(var(--brand-oxford-900));
-  }
-}
-
-@layer utilities {
-
-  /* Typography Utilities */
-  .font-heading {
-    font-family: var(--font-heading);
-    text-transform: uppercase;
-    /* League Spartan MUST be uppercase */
-    font-weight: 700;
-  }
-
-  .font-body {
-    font-family: var(--font-body);
-  }
-
-  /* Responsive spacing helpers */
-  .container-deschide {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-
-  /* Anti-aliasing for brand fonts */
-  .text-crisp {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-  }
-
-  /* ============================================
-     PREMIUM ANIMATIONS & MICRO-INTERACTIONS
-     ============================================ */
-
-  /* Fade In Animations */
-  @keyframes fade-in-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes fade-in {
-    from {
-      opacity: 0;
-    }
-
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes fade-in-down {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Slide Animations */
-  @keyframes slide-in-right {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  @keyframes slide-in-left {
-    from {
-      transform: translateX(-100%);
-      opacity: 0;
-    }
-
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  /* Pulse for Breaking News - Brand Tomato */
-  @keyframes brand-pulse {
-
-    0%,
-    100% {
-      opacity: 1;
-    }
-
-    50% {
-      opacity: 0.7;
-    }
-  }
-
-  /* Shimmer Effect for Loading States */
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-
-    100% {
-      background-position: 1000px 0;
-    }
-  }
-
-  /* Skeleton Loading - Oxford Blue Gradient */
-  @keyframes skeleton-loading {
-    0% {
-      background-position: 200% 0;
-    }
-
-    100% {
-      background-position: -200% 0;
-    }
-  }
-
-  /* Scale Animations */
-  @keyframes scale-in {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  @keyframes scale-up {
-    from {
-      transform: scale(1);
-    }
-
-    to {
-      transform: scale(1.02);
-    }
-  }
-
-  /* Spinner Animation */
-  @keyframes spin-smooth {
-    from {
-      transform: rotate(0deg);
-    }
-
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  /* Live Broadcast Scan Line Animation */
-  @keyframes live-scan {
-    0% {
-      top: 0;
-      opacity: 0;
-    }
-    10% {
-      opacity: 1;
-    }
-    90% {
-      opacity: 1;
-    }
-    100% {
-      top: 100%;
-      opacity: 0;
-    }
-  }
-
-  /* Animation Utility Classes */
-  .animate-fade-in-up {
-    animation: fade-in-up 0.5s ease-out forwards;
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out forwards;
-  }
-
-  .animate-fade-in-down {
-    animation: fade-in-down 0.5s ease-out forwards;
-  }
-
-  .animate-slide-in-right {
-    animation: slide-in-right 0.3s ease-out forwards;
-  }
-
-  .animate-slide-in-left {
-    animation: slide-in-left 0.3s ease-out forwards;
-  }
-
-  .animate-brand-pulse {
-    animation: brand-pulse 2s ease-in-out infinite;
-  }
-
-  .animate-scale-in {
-    animation: scale-in 0.3s ease-out forwards;
-  }
-
-  .animate-shimmer {
-    animation: shimmer 2s infinite linear;
-  }
-
-  .animate-live-scan {
-    animation: live-scan 3s linear infinite;
-  }
-
-  /* Stagger Delays for Sequential Animations */
-  .stagger-1 {
-    animation-delay: 0.1s;
-  }
-
-  .stagger-2 {
-    animation-delay: 0.2s;
-  }
-
-  .stagger-3 {
-    animation-delay: 0.3s;
-  }
-
-  .stagger-4 {
-    animation-delay: 0.4s;
-  }
-
-  .stagger-5 {
-    animation-delay: 0.5s;
-  }
-
-  .stagger-6 {
-    animation-delay: 0.6s;
-  }
-
-  /* Hover Effects - Lift with Brand Shadow */
-  .hover-lift {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  .hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 30px rgba(17, 34, 64, 0.15);
-    /* Oxford Blue shadow */
-  }
-
-  .hover-lift-sm {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .hover-lift-sm:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(17, 34, 64, 0.12);
-  }
-
-  /* Hover Scale Effect */
-  .hover-scale {
-    transition: transform 0.3s ease;
-  }
-
-  .hover-scale:hover {
-    transform: scale(1.02);
-  }
-
-  .hover-scale-sm {
-    transition: transform 0.2s ease;
-  }
-
-  .hover-scale-sm:hover {
-    transform: scale(1.01);
-  }
-
-  /* Image Hover Effects */
-  .hover-image-zoom {
-    overflow: hidden;
-  }
-
-  .hover-image-zoom img {
-    transition: transform 0.6s ease;
-  }
-
-  .hover-image-zoom:hover img {
-    transform: scale(1.05);
-  }
-
-  /* Focus States - Brand Tomato Ring */
-  .focus-brand:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(240, 94, 69, 0.4);
-    /* Tomato focus ring */
-  }
-
-  .focus-brand-oxford:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(17, 34, 64, 0.3);
-    /* Oxford Blue focus ring */
-  }
-
-  /* Loading Skeleton - Oxford Blue Gradient */
-  .skeleton-brand {
-    background: linear-gradient(90deg,
-        rgb(var(--brand-oxford-50)) 0%,
-        rgb(var(--brand-oxford-100)) 50%,
-        rgb(var(--brand-oxford-50)) 100%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s ease-in-out infinite;
-  }
-
-  .skeleton-brand-dark {
-    background: linear-gradient(90deg,
-        rgba(17, 34, 64, 0.05) 0%,
-        rgba(17, 34, 64, 0.1) 50%,
-        rgba(17, 34, 64, 0.05) 100%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s ease-in-out infinite;
-  }
-
-  /* Shimmer Effect for Cards */
-  .shimmer-effect {
-    background: linear-gradient(90deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.3) 50%,
-        transparent 100%);
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
-  }
-
-  /* Smooth Transitions */
-  .transition-smooth {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .transition-fast {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Breaking News Badge Animation */
-  .breaking-news-badge {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: rgb(var(--brand-red-600));
-    color: white;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: 0.875rem;
-  }
-
-  .breaking-news-badge::before {
-    content: '';
-    width: 8px;
-    height: 8px;
-    background: white;
-    border-radius: 50%;
-    animation: brand-pulse 2s ease-in-out infinite;
-  }
-
-  /* Premium Card Gradient Overlays */
-  .card-overlay-gradient {
-    background: linear-gradient(to top,
-        rgba(17, 34, 64, 0.9) 0%,
-        rgba(17, 34, 64, 0.6) 40%,
-        rgba(17, 34, 64, 0.2) 70%,
-        transparent 100%);
-  }
-
-  .card-overlay-gradient-tomato {
-    background: linear-gradient(to top,
-        rgba(240, 94, 69, 0.9) 0%,
-        rgba(240, 94, 69, 0.6) 40%,
-        rgba(240, 94, 69, 0.2) 70%,
-        transparent 100%);
-  }
-
-  /* Smooth Opacity Transitions */
-  .opacity-transition {
-    transition: opacity 0.3s ease;
-  }
-
-  .opacity-transition:hover {
-    opacity: 0.8;
-  }
-
-  /* Text Reveal Animation */
-  @keyframes text-reveal {
-    from {
-      clip-path: inset(0 100% 0 0);
-    }
-
-    to {
-      clip-path: inset(0 0 0 0);
-    }
-  }
-
-  .animate-text-reveal {
-    animation: text-reveal 0.6s ease-out forwards;
-  }
-
-  /* Underline Animation */
-  .underline-animate {
-    position: relative;
-    display: inline-block;
-  }
-
-  .underline-animate::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: rgb(var(--brand-tomato-500));
-    transition: width 0.3s ease;
-  }
-
-  .underline-animate:hover::after {
-    width: 100%;
-  }
-
-  /* Performance Optimization */
-  .will-animate {
-    will-change: transform, opacity;
-  }
-
-  /* Disable animations for reduced motion preference */
-  @media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
   }
 }

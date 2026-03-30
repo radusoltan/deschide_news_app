@@ -7,34 +7,111 @@ import { useIntl } from 'react-intl'
 import LanguageSwitcher from '@/app/components/LanguageSwitcher'
 import { Logo } from '@/components/brand/Logo'
 import { buildLocalizedUrl, buildCategoryUrl } from '@/lib/utils/url-builder'
+import { getMenuItemHref } from '@/lib/api/public-menu'
 import type { Locale } from '@/lib/types'
 import type { Category } from '@/lib/types/article'
+import type { MenuItem } from '@/lib/types/menu'
 
 interface HeaderProps {
   locale: string;
   categories?: Category[];
+  menuItems?: MenuItem[];
 }
 
-export default function Header({ locale, categories = [] }: HeaderProps) {
+interface DarkModeToggleProps {
+  compact?: boolean;
+}
+
+function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
+
+  useEffect(() => {
+    // Read theme preference on mount
+    const stored = localStorage.getItem('theme-preference') as 'light' | 'dark' | 'system' || 'system'
+    setTheme(stored)
+
+    if (stored === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark')
+    } else if (stored === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light')
+    } else {
+      // System preference
+      document.documentElement.removeAttribute('data-theme')
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark')
+      }
+    }
+  }, [])
+
+  const cycleTheme = () => {
+    const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
+    setTheme(nextTheme)
+    localStorage.setItem('theme-preference', nextTheme)
+
+    if (nextTheme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark')
+    } else if (nextTheme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light')
+    } else {
+      // System preference
+      document.documentElement.removeAttribute('data-theme')
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark')
+      } else {
+        document.documentElement.removeAttribute('data-theme')
+      }
+    }
+  }
+
+  const iconClass = compact ? 'w-4 h-4' : 'w-5 h-5'
+
+  return (
+    <button
+      onClick={cycleTheme}
+      className={`flex items-center justify-center min-h-[44px] min-w-[44px] text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] dark:focus:ring-offset-[var(--color-surface-dark)] rounded-sm ${compact ? 'px-2' : 'px-3'}`}
+      aria-label={`Current theme: ${theme}. Click to cycle between light, dark, and system themes.`}
+      title={`Theme: ${theme}`}
+    >
+      {theme === 'light' && (
+        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      )}
+      {theme === 'dark' && (
+        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+      )}
+      {theme === 'system' && (
+        <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
+export default function Header({ locale, categories = [], menuItems = [] }: HeaderProps) {
   const intl = useIntl()
   const router = useRouter()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isStiriDropdownOpen, setIsStiriDropdownOpen] = useState(false)
-  const [isMobileStiriOpen, setIsMobileStiriOpen] = useState(false)
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
+  const [mobileOpenDropdownId, setMobileOpenDropdownId] = useState<number | null>(null)
   const [isCompact, setIsCompact] = useState(false)
-  const stiriDropdownRef = useRef<HTMLLIElement>(null)
+  const dropdownRef = useRef<HTMLLIElement>(null)
 
-  // Separate categories into menu items and dropdown items based on inMenu flag
-  const menuCategories = categories.filter((cat) => cat.inMenu === true)
-  const dropdownCategories = categories.filter((cat) => cat.inMenu !== true)
+  // menuItems is now a tree: top-level items with children nested
+  // Fallback to categories if no menu items from API
+  const hasMenuItems = menuItems.length > 0
+  const menuCategories = hasMenuItems ? [] : categories.filter((cat) => cat.inMenu === true)
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (stiriDropdownRef.current && !stiriDropdownRef.current.contains(event.target as Node)) {
-        setIsStiriDropdownOpen(false)
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdownId(null)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -70,250 +147,371 @@ export default function Header({ locale, categories = [] }: HeaderProps) {
     <>
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50">
-        <nav className={`bg-brand-oxford-900 transition-shadow duration-300 ${isCompact ? 'shadow-lg' : ''}`}>
-          <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
-            <div className="flex justify-between">
-              {/* Logo */}
-              <div className="flex items-center">
-                <Logo
-                  variant="white"
-                  size={isCompact ? 'sm' : 'md'}
-                  href={buildLocalizedUrl('/', locale as Locale)}
-                />
-              </div>
+        <nav className={`backdrop-blur-md bg-[var(--color-surface-elevated)]/95 dark:bg-[var(--color-surface-elevated-dark)]/95 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] transition-all duration-300 ${isCompact ? 'shadow-lg' : ''}`}>
+          <div className="max-w-[1440px] mx-auto px-3 sm:px-4 xl:px-6">
+            <div className="flex items-center justify-between">
+              {/* Desktop Layout */}
+              <div className="hidden lg:flex items-center flex-1">
+                {/* Logo - Left */}
+                <div className="flex items-center">
+                  <Logo
+                    variant="blue"
+                    size={isCompact ? 'sm' : 'md'}
+                    href={buildLocalizedUrl('/', locale as Locale)}
+                  />
+                </div>
 
-              <div className="flex flex-row">
-                {/* Desktop Navigation */}
-                <ul className="navbar hidden lg:flex lg:flex-row text-white text-sm items-center font-heading uppercase">
-                  {/* Stiri dropdown for other categories (inMenu=false) */}
-                  {dropdownCategories.length > 0 && (
-                      <li
-                          ref={stiriDropdownRef}
-                          className="relative border-l border-white/10 hover:bg-brand-oxford-800"
-                      >
-                        <button
-                            onClick={() => setIsStiriDropdownOpen(!isStiriDropdownOpen)}
-                            className={`flex items-center uppercase gap-1 border-b-2 border-transparent hover:text-brand-mindaro-400 transition-all ${isCompact ? 'py-2 px-4' : 'py-3 px-6'}`}
-                            aria-expanded={isStiriDropdownOpen}
-                            aria-haspopup="true"
-                        >
-                          {intl.formatMessage({ id: 'nav.stiri', defaultMessage: 'Știri' })}
-                          <svg
-                              className={`w-4 h-4 transition-transform ${isStiriDropdownOpen ? 'rotate-180' : ''}`}
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
+                {/* Center Navigation */}
+                <nav className="flex-1 flex justify-center">
+                  <ul className="flex items-center font-sans text-[var(--font-size-sm)] font-medium">
+                    {/* Dynamic menu items from API (tree structure with dropdowns) */}
+                    {hasMenuItems ? menuItems.map((item) => {
+                      const isDropdown = item.type === 'dropdown' || (item.children && item.children.length > 0)
+                      const isOpen = openDropdownId === item.id
 
-                        {isStiriDropdownOpen && (
-                            <div className="absolute top-full left-0 mt-0 w-48 bg-white border border-gray-200 rounded-b-lg shadow-lg z-50 overflow-hidden">
-                              {dropdownCategories.map((category) => (
+                      if (isDropdown) {
+                        return (
+                          <li key={item.id} className="relative" ref={isOpen ? dropdownRef : undefined}>
+                            <button
+                              onClick={() => setOpenDropdownId(isOpen ? null : item.id)}
+                              onMouseEnter={() => setOpenDropdownId(item.id)}
+                              className={`flex items-center gap-1 px-4 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors border-b-2 border-transparent hover:border-[var(--color-accent)] ${isCompact ? 'py-2' : 'py-3'} min-h-[44px]`}
+                              aria-expanded={isOpen}
+                              aria-haspopup="true"
+                            >
+                              {item.label}
+                              <svg
+                                className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+
+                            {isOpen && item.children && item.children.length > 0 && (
+                              <div
+                                className="absolute top-full left-0 mt-0 w-48 bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded-b-lg shadow-lg z-50 overflow-hidden"
+                                onMouseLeave={() => setOpenDropdownId(null)}
+                              >
+                                {item.children.map((child) => (
                                   <Link
-                                      key={category.id}
-                                      href={buildCategoryUrl(category, locale as Locale)}
-                                      className="block uppercase px-4 py-3 text-gray-700 hover:bg-gray-100 hover:text-brand-tomato-500 transition-colors normal-case"
-                                      onClick={() => setIsStiriDropdownOpen(false)}
+                                    key={child.id}
+                                    href={getMenuItemHref(child, locale)}
+                                    className="block px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-sans text-[var(--font-size-sm)]"
+                                    onClick={() => setOpenDropdownId(null)}
+                                    {...(child.type === 'external_link' && child.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                                   >
-                                    {category.title}
+                                    {child.label}
                                   </Link>
-                              ))}
-                            </div>
-                        )}
+                                ))}
+                              </div>
+                            )}
+                          </li>
+                        )
+                      }
+
+                      return (
+                        <li key={item.id} className="relative">
+                          <Link
+                            className={`block px-4 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors border-b-2 border-transparent hover:border-[var(--color-accent)] ${isCompact ? 'py-2' : 'py-3'} min-h-[44px] flex items-center`}
+                            href={getMenuItemHref(item, locale)}
+                            {...(item.type === 'external_link' && item.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                          >
+                            {item.label}
+                            {item.type === 'external_link' && item.openInNewTab && (
+                              <svg className="w-3 h-3 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                            )}
+                          </Link>
+                        </li>
+                      )
+                    }) : menuCategories.map((category) => (
+                      <li key={category.id} className="relative">
+                        <Link
+                          className={`block px-4 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors border-b-2 border-transparent hover:border-[var(--color-accent)] ${isCompact ? 'py-2' : 'py-3'} min-h-[44px] flex items-center`}
+                          href={buildCategoryUrl(category, locale as Locale)}
+                        >
+                          {category.title}
+                        </Link>
                       </li>
-                  )}
+                    ))}
+                  </ul>
+                </nav>
 
-                  {/* Dynamic menu categories (inMenu=true) */}
-                  {menuCategories.map((category) => (
-                    <li key={category.id} className="relative border-l border-white/10 hover:bg-brand-oxford-800">
-                      <Link
-                        className={`block border-b-2 border-transparent hover:text-brand-mindaro-400 transition-all ${isCompact ? 'py-2 px-4' : 'py-3 px-6'}`}
-                        href={buildCategoryUrl(category, locale as Locale)}
-                      >
-                        {category.title}
-                      </Link>
-                    </li>
-                  ))}
-
-                  {/* All Articles */}
-                  <li className="relative border-l border-white/10 hover:bg-brand-oxford-800">
-                    <Link
-                      className={`block border-b-2 border-transparent hover:text-brand-mindaro-400 transition-all ${isCompact ? 'py-2 px-4' : 'py-3 px-6'}`}
-                      href={buildLocalizedUrl('/all', locale as Locale)}
-                    >
-                      {intl.formatMessage({ id: 'nav.all', defaultMessage: 'Toate' })}
-                    </Link>
-                  </li>
-                </ul>
-
-                {/* Language Switcher, Search & Mobile Menu */}
-                <div className="flex flex-row items-center text-white">
-                  {/* Language Switcher */}
-                  <div className="relative border-r lg:border-l border-white/10 px-3 py-2">
-                    <LanguageSwitcher />
-                  </div>
-
+                {/* Right Side - Search, Language, Dark Mode */}
+                <div className="flex items-center gap-1">
                   {/* Search Button */}
-                  <div className="search-dropdown relative border-r lg:border-l border-white/10 hover:bg-brand-oxford-800">
+                  <div className="search-dropdown relative">
                     <button
-                      className={`block border-b-2 border-transparent hover:text-brand-mindaro-400 transition-all ${isCompact ? 'py-2 px-4' : 'py-3 px-6'}`}
+                      className={`flex items-center justify-center min-h-[44px] min-w-[44px] text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] dark:focus:ring-offset-[var(--color-surface-dark)] rounded-sm ${isCompact ? 'px-2' : 'px-3'}`}
                       onClick={() => setIsSearchOpen(!isSearchOpen)}
                       aria-label={intl.formatMessage({ id: 'common.search' })}
                     >
                       {!isSearchOpen ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                           <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
                         </svg>
                       ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                           <path fillRule="evenodd" d="M13.854 2.146a.5.5 0 0 1 0 .708l-11 11a.5.5 0 0 1-.708-.708l11-11a.5.5 0 0 1 .708 0Z"/>
                           <path fillRule="evenodd" d="M2.146 2.146a.5.5 0 0 0 0 .708l11 11a.5.5 0 0 0 .708-.708l-11-11a.5.5 0 0 0-.708 0Z"/>
                         </svg>
                       )}
                     </button>
                     {isSearchOpen && (
-                      <div className="dropdown-menu absolute left-auto right-0 top-full z-50 text-left bg-white text-gray-700 border border-gray-100 mt-1 p-3" style={{ minWidth: '15rem' }}>
-                        <form onSubmit={handleSearch} className="flex flex-wrap items-stretch w-full relative">
+                      <div className="absolute left-auto right-0 top-full z-50 mt-2 w-80 bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded-lg shadow-lg p-4">
+                        <form onSubmit={handleSearch} className="flex gap-2">
                           <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="flex-shrink flex-grow max-w-full leading-5 w-px flex-1 relative py-2 px-5 text-gray-800 bg-white border border-gray-300 overflow-x-auto focus:outline-none focus:border-brand-oxford-900 focus:ring-0"
+                            className="flex-1 py-2 px-4 bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)] border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded-md text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] placeholder-[var(--color-text-tertiary)] dark:placeholder-[var(--color-text-tertiary-dark)] focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)] font-sans text-[var(--font-size-sm)]"
                             placeholder={intl.formatMessage({ id: 'common.search' })}
                             aria-label={intl.formatMessage({ id: 'common.search' })}
                             autoFocus
                           />
-                          <div className="flex -mr-px">
-                            <button className="flex items-center py-2 px-5 -ml-1 leading-5 text-white bg-brand-oxford-900 hover:bg-brand-tomato-500 transition-colors focus:outline-none focus:ring-0" type="submit">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-                              </svg>
-                            </button>
-                          </div>
+                          <button
+                            className="px-4 py-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] dark:focus:ring-offset-[var(--color-surface-dark)] font-sans text-[var(--font-size-sm)] font-medium"
+                            type="submit"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                            </svg>
+                          </button>
                         </form>
                       </div>
                     )}
                   </div>
 
-                  {/* Mobile Menu Button */}
-                  <div className="relative hover:bg-brand-oxford-800 block lg:hidden">
-                    <button
-                      type="button"
-                      className={`menu-mobile block border-b-2 border-transparent font-heading uppercase text-sm hover:text-brand-mindaro-400 transition-all ${isCompact ? 'py-2 px-4' : 'py-3 px-6'}`}
-                      onClick={() => setIsMobileMenuOpen(true)}
-                    >
-                      <span className="sr-only">Mobile menu</span>
-                      <svg className="inline-block h-6 w-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
-                      {intl.formatMessage({ id: 'common.menu' })}
-                    </button>
+                  {/* Language Switcher */}
+                  <div className="relative">
+                    <LanguageSwitcher />
                   </div>
+
+                  {/* Dark Mode Toggle */}
+                  <DarkModeToggle compact={isCompact} />
                 </div>
               </div>
+
+              {/* Mobile Layout */}
+              <div className="flex lg:hidden items-center justify-between w-full">
+                {/* Mobile Menu Button - Left */}
+                <button
+                  type="button"
+                  className="flex items-center justify-center min-h-[44px] min-w-[44px] text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] dark:focus:ring-offset-[var(--color-surface-dark)] rounded-sm"
+                  onClick={() => setIsMobileMenuOpen(true)}
+                  aria-label={intl.formatMessage({ id: 'common.menu' })}
+                >
+                  <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+
+                {/* Logo - Center */}
+                <div className="flex items-center">
+                  <Logo
+                    variant="blue"
+                    size={isCompact ? 'sm' : 'md'}
+                    href={buildLocalizedUrl('/', locale as Locale)}
+                  />
+                </div>
+
+                {/* Search Button - Right */}
+                <button
+                  className="flex items-center justify-center min-h-[44px] min-w-[44px] text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] dark:focus:ring-offset-[var(--color-surface-dark)] rounded-sm"
+                  onClick={() => setIsSearchOpen(!isSearchOpen)}
+                  aria-label={intl.formatMessage({ id: 'common.search' })}
+                >
+                  {!isSearchOpen ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                      <path fillRule="evenodd" d="M13.854 2.146a.5.5 0 0 1 0 .708l-11 11a.5.5 0 0 1-.708-.708l11-11a.5.5 0 0 1 .708 0Z"/>
+                      <path fillRule="evenodd" d="M2.146 2.146a.5.5 0 0 0 0 .708l11 11a.5.5 0 0 0 .708-.708l-11-11a.5.5 0 0 0-.708 0Z"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
+
+            {/* Mobile Search Dropdown */}
+            {isSearchOpen && (
+              <div className="lg:hidden mt-2 pb-3">
+                <form onSubmit={handleSearch} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="flex-1 py-2 px-4 bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)] border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded-md text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] placeholder-[var(--color-text-tertiary)] dark:placeholder-[var(--color-text-tertiary-dark)] focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:border-[var(--color-focus)] font-sans text-[var(--font-size-sm)]"
+                    placeholder={intl.formatMessage({ id: 'common.search' })}
+                    aria-label={intl.formatMessage({ id: 'common.search' })}
+                    autoFocus
+                  />
+                  <button
+                    className="px-4 py-2 bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] dark:focus:ring-offset-[var(--color-surface-dark)] font-sans text-[var(--font-size-sm)] font-medium"
+                    type="submit"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                    </svg>
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
         </nav>
       </header>
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="side-area fixed w-full h-full inset-0 z-50">
+        <div className="fixed w-full h-full inset-0 z-50 lg:hidden">
           {/* Background Overlay */}
           <div
-            className="back-menu fixed bg-brand-oxford-900 bg-opacity-90 w-full h-full inset-x-0 top-0"
+            className="fixed bg-black/60 backdrop-blur-sm w-full h-full inset-0"
             onClick={() => setIsMobileMenuOpen(false)}
-          >
-            <div className="cursor-pointer text-white absolute right-64 p-2 hover:text-brand-mindaro-400 transition-colors">
-              <svg className="bi bi-x" width="2rem" height="2rem" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" d="M11.854 4.146a.5.5 0 010 .708l-7 7a.5.5 0 01-.708-.708l7-7a.5.5 0 01.708 0z" clipRule="evenodd" />
-                <path fillRule="evenodd" d="M4.146 4.146a.5.5 0 000 .708l7 7a.5.5 0 00.708-.708l-7-7a.5.5 0 00-.708 0z" clipRule="evenodd" />
-              </svg>
+          />
+
+          {/* Mobile Sidebar */}
+          <nav className="fixed right-0 w-80 max-w-[85vw] h-full bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] border-l border-[var(--color-border)] dark:border-[var(--color-border-dark)] shadow-xl overflow-auto animate-slide-in-right">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+              <Logo variant="blue" size="sm" />
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center justify-center min-h-[44px] min-w-[44px] text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-text-primary)] dark:hover:text-[var(--color-text-primary-dark)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface-elevated)] dark:focus:ring-offset-[var(--color-surface-elevated-dark)] rounded-sm"
+                aria-label="Close menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-          </div>
 
-          {/* Mobile Navbar */}
-          <nav className="side-menu flex flex-col right-0 w-64 fixed top-0 bg-white dark:bg-brand-oxford-900 h-full overflow-auto z-40">
-            <div className="mb-auto">
-              <nav className="relative flex flex-wrap">
-                <div className="text-center py-4 w-full border-b border-gray-100 dark:border-white/10">
-                  <Logo variant="blue" size="sm" className="dark:!text-white" />
-                </div>
-                <ul className="w-full float-none flex flex-col font-body">
-                  {/* Home */}
-                  <li className="relative">
-                    <Link
-                      href={buildLocalizedUrl('/', locale as Locale)}
-                      className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {intl.formatMessage({ id: 'common.home' })}
-                    </Link>
-                  </li>
+            {/* Navigation Links */}
+            <div className="py-4">
+              <ul className="space-y-1 font-sans">
+                {/* Home */}
+                <li>
+                  <Link
+                    href={buildLocalizedUrl('/', locale as Locale)}
+                    className="flex items-center px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-medium text-[var(--font-size-base)] min-h-[44px]"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <svg className="w-5 h-5 mr-3 text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    {intl.formatMessage({ id: 'common.home' })}
+                  </Link>
+                </li>
 
-                  {/* Dynamic menu categories (inMenu=true) */}
-                  {menuCategories.map((category) => (
-                    <li key={category.id} className="relative">
+                {/* Dynamic menu items from API (tree with dropdowns) */}
+                {hasMenuItems ? menuItems.map((item) => {
+                  const isDropdown = item.type === 'dropdown' || (item.children && item.children.length > 0)
+                  const isMobileOpen = mobileOpenDropdownId === item.id
+
+                  if (isDropdown) {
+                    return (
+                      <li key={item.id}>
+                        <button
+                          onClick={() => setMobileOpenDropdownId(isMobileOpen ? null : item.id)}
+                          className="w-full flex items-center justify-between px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-medium text-[var(--font-size-base)] min-h-[44px]"
+                        >
+                          <div className="flex items-center">
+                            <svg className="w-5 h-5 mr-3 text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                            </svg>
+                            <span>{item.label}</span>
+                          </div>
+                          <svg
+                            className={`w-4 h-4 transition-transform ${isMobileOpen ? 'rotate-180' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+
+                        {isMobileOpen && item.children && item.children.length > 0 && (
+                          <ul className="bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-sunken-dark)] space-y-1">
+                            {item.children.map((child) => (
+                              <li key={child.id}>
+                                <Link
+                                  href={getMenuItemHref(child, locale)}
+                                  className="flex items-center pl-12 pr-4 py-3 text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors text-[var(--font-size-sm)] min-h-[44px]"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  {...(child.type === 'external_link' && child.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                                >
+                                  {child.label}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    )
+                  }
+
+                  return (
+                    <li key={item.id}>
                       <Link
-                        href={buildCategoryUrl(category, locale as Locale)}
-                        className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors"
+                        href={getMenuItemHref(item, locale)}
+                        className="flex items-center px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-medium text-[var(--font-size-base)] min-h-[44px]"
                         onClick={() => setIsMobileMenuOpen(false)}
+                        {...(item.type === 'external_link' && item.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                       >
-                        {category.title}
+                        <span className="w-5 h-5 mr-3 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-[var(--color-section-politics)]" />
+                        </span>
+                        {item.label}
                       </Link>
                     </li>
-                  ))}
-
-                  {/* Stiri section for dropdown categories */}
-                  {dropdownCategories.length > 0 && (
-                    <li className="relative">
-                      <button
-                        onClick={() => setIsMobileStiriOpen(!isMobileStiriOpen)}
-                        className="w-full flex items-center justify-between py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors"
-                      >
-                        <span>{intl.formatMessage({ id: 'nav.stiri', defaultMessage: 'Știri' })}</span>
-                        <svg
-                          className={`w-4 h-4 transition-transform ${isMobileStiriOpen ? 'rotate-180' : ''}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-
-                      {isMobileStiriOpen && (
-                        <ul className="bg-gray-50 dark:bg-brand-oxford-800">
-                          {dropdownCategories.map((category) => (
-                            <li key={category.id}>
-                              <Link
-                                href={buildCategoryUrl(category, locale as Locale)}
-                                className="block py-2 px-8 border-b border-gray-100 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-brand-oxford-700 dark:text-white transition-colors text-sm"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                              >
-                                {category.title}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  )}
-
-                  {/* All Articles */}
-                  <li className="relative">
+                  )
+                }) : menuCategories.map((category) => (
+                  <li key={category.id}>
                     <Link
-                      href={buildLocalizedUrl('/all', locale as Locale)}
-                      className="block py-2 px-5 border-b border-gray-100 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-brand-oxford-800 dark:text-white transition-colors"
+                      href={buildCategoryUrl(category, locale as Locale)}
+                      className="flex items-center px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-medium text-[var(--font-size-base)] min-h-[44px]"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      {intl.formatMessage({ id: 'nav.all', defaultMessage: 'Toate' })}
+                      <span className="w-5 h-5 mr-3 flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-[var(--color-section-politics)]" />
+                      </span>
+                      {category.title}
                     </Link>
                   </li>
-                </ul>
-              </nav>
+                ))}
+              </ul>
+
+              {/* Settings Section */}
+              <div className="mt-6 pt-4 border-t border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+                <div className="px-4 py-2">
+                  <h3 className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] font-medium text-[var(--font-size-sm)] uppercase tracking-wider">
+                    {intl.formatMessage({ id: 'common.settings', defaultMessage: 'Setări' })}
+                  </h3>
+                </div>
+
+                <div className="space-y-1">
+                  {/* Language Switcher */}
+                  <div className="px-4 py-2">
+                    <div className="text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)] text-[var(--font-size-xs)] mb-2 uppercase tracking-wider">
+                      {intl.formatMessage({ id: 'common.language', defaultMessage: 'Limba' })}
+                    </div>
+                    <LanguageSwitcher />
+                  </div>
+
+                  {/* Theme Toggle */}
+                  <div className="px-4 py-2">
+                    <div className="text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)] text-[var(--font-size-xs)] mb-2 uppercase tracking-wider">
+                      {intl.formatMessage({ id: 'common.theme', defaultMessage: 'Temă' })}
+                    </div>
+                    <DarkModeToggle />
+                  </div>
+                </div>
+              </div>
             </div>
           </nav>
         </div>

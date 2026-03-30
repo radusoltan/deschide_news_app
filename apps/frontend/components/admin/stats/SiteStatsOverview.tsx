@@ -5,7 +5,7 @@
  */
 
 import { getSiteStats, type DateRange } from '@/lib/api/statistics';
-import { getAccessToken } from '@/lib/auth/session';
+import { getAccessToken } from '@/lib/dal';
 
 interface Props {
   dateRange?: DateRange;

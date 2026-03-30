@@ -1,6 +1,6 @@
 import { getArticles, getCategories } from '@/lib/dal';
 import { apiRequest } from '@/lib/api/client';
-import { getAccessToken } from '@/lib/auth/session';
+import { getAccessToken } from '@/lib/dal';
 import { ArticlesTableClient } from './ArticlesTableClient';
 import { ArticlesPageClient } from './components/ArticlesPageClient';
 import { ArticlesPagination } from './components/ArticlesPagination';
@@ -11,15 +11,19 @@ interface ArticlesPageProps {
   }>;
   searchParams: Promise<{
     page?: string;
+    category?: string;
+    status?: string;
   }>;
 }
 
 export default async function ArticlesPage({ params, searchParams }: ArticlesPageProps) {
   const { locale } = await params;
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, category: categoryParam, status: statusParam } = await searchParams;
 
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
   const itemsPerPage = 20; // 20 articles per page
+  const categoryFilter = categoryParam ? parseInt(categoryParam, 10) : undefined;
+  const statusFilter = statusParam || undefined;
 
   // Fetch articles from API
   let articlesData: any[] = [];
@@ -27,7 +31,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
   let error: string | null = null;
 
   try {
-    const data = await getArticles({ locale, page: currentPage, itemsPerPage });
+    const data = await getArticles({ locale, page: currentPage, itemsPerPage, category: categoryFilter, status: statusFilter });
     articlesData = data.member;
     totalItems = data.totalItems || 0;
   } catch (err) {

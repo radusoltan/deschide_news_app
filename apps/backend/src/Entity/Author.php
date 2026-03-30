@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
@@ -12,6 +16,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Enum\ArticleStatus;
 use App\Enum\AuthorStatus;
+use App\Enum\AuthorType;
 use App\Repository\AuthorRepository;
 use App\State\AuthorProcessor;
 use App\State\AuthorProvider;
@@ -37,6 +42,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_author_email', columns: ['email'])]
 #[ORM\Index(name: 'idx_author_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_author_is_active', columns: ['is_active'])]
+#[ORM\Index(name: 'idx_author_type', columns: ['type'])]
 // Composite indexes for common queries
 #[ORM\Index(name: 'idx_author_active_status', columns: ['is_active', 'status'])]
 #[ApiResource(
@@ -65,6 +71,19 @@ use Symfony\Component\Validator\Constraints as Assert;
     provider: AuthorProvider::class,
     processor: AuthorProcessor::class
 )]
+#[ApiFilter(SearchFilter::class, properties: [
+    'type' => 'exact',
+    'status' => 'exact',
+    'firstName' => 'partial',
+    'lastName' => 'partial',
+    'slug' => 'exact',
+])]
+#[ApiFilter(BooleanFilter::class, properties: ['isActive'])]
+#[ApiFilter(OrderFilter::class, properties: [
+    'firstName' => 'ASC',
+    'lastName' => 'ASC',
+    'createdAt' => 'DESC',
+])]
 class Author implements Translatable
 {
     #[ORM\Id]
@@ -108,6 +127,10 @@ class Author implements Translatable
     private Collection $articles;
 
     // Metadata
+    #[ORM\Column(type: Types::STRING, length: 20, enumType: AuthorType::class)]
+    #[Groups(['author:read', 'author:write', 'article:read'])]
+    private AuthorType $type = AuthorType::JOURNALIST;
+
     #[ORM\Column(type: Types::STRING, length: 20, enumType: AuthorStatus::class)]
     #[Groups(['author:read', 'author:write'])]
     private AuthorStatus $status = AuthorStatus::ACTIVE;
@@ -136,6 +159,12 @@ class Author implements Translatable
     #[Assert\Url]
     #[Groups(['author:read', 'author:write'])]
     private ?string $website = null;
+
+    // Auto-attribution
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    #[Assert\Length(max: 100)]
+    #[Groups(['author:read', 'author:write', 'article:read'])]
+    private ?string $emailDomain = null;
 
     // Timestamps
     #[Gedmo\Timestampable(on: 'create')]
@@ -252,6 +281,18 @@ class Author implements Translatable
         return $this;
     }
 
+    public function getType(): AuthorType
+    {
+        return $this->type;
+    }
+
+    public function setType(AuthorType $type): self
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
     public function getStatus(): AuthorStatus
     {
         return $this->status;
@@ -320,6 +361,18 @@ class Author implements Translatable
     public function setWebsite(?string $website): self
     {
         $this->website = $website;
+
+        return $this;
+    }
+
+    public function getEmailDomain(): ?string
+    {
+        return $this->emailDomain;
+    }
+
+    public function setEmailDomain(?string $emailDomain): self
+    {
+        $this->emailDomain = $emailDomain;
 
         return $this;
     }

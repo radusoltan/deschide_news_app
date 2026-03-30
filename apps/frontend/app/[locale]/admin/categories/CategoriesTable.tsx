@@ -78,7 +78,7 @@ export default function CategoriesTable({ categories, totalItems, locale }: Cate
                 Status
               </th>
               <th scope="col" className="px-6 py-3">
-                On Front Page
+                Visibility
               </th>
               <th scope="col" className="px-6 py-3">
                 Created
@@ -115,11 +115,14 @@ export default function CategoriesTable({ categories, totalItems, locale }: Cate
                 </td>
                 <td className="px-6 py-4">{getStatusBadge(category.status)}</td>
                 <td className="px-6 py-4">
-                  {category.onFrontPage ? (
-                    <Badge color="info">Yes</Badge>
-                  ) : (
-                    <span className="text-gray-400">No</span>
-                  )}
+                  <div className="flex flex-wrap gap-1">
+                    {category.onFrontPage && <Badge color="info" size="xs">Front Page</Badge>}
+                    {category.inMenu && <Badge color="purple" size="xs">Menu</Badge>}
+                    {category.inFooterMenu && <Badge color="gray" size="xs">Footer</Badge>}
+                    {!category.onFrontPage && !category.inMenu && !category.inFooterMenu && (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4">{formatDate(category.createdAt)}</td>
                 <td className="px-6 py-4 text-right">

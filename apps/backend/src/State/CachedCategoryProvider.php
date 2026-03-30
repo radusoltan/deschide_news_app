@@ -69,9 +69,18 @@ final class CachedCategoryProvider implements ProviderInterface
             return $category;
         }
 
-        // Collection retrieval
+        // Collection retrieval — cache key must include ALL query filters
         $page = $request ? (int) $request->query->get('page', 1) : 1;
-        $cacheKey = "api:categories:list:page{$page}:{$locale}";
+        $filterParts = [];
+        if ($request) {
+            foreach (['status', 'onFrontPage', 'inMenu', 'inFooterMenu', 'itemsPerPage'] as $param) {
+                if ($request->query->has($param)) {
+                    $filterParts[] = "{$param}=" . $request->query->get($param);
+                }
+            }
+        }
+        $filterHash = $filterParts ? md5(implode('&', $filterParts)) : 'all';
+        $cacheKey = "api:categories:list:page{$page}:{$locale}:{$filterHash}";
 
         $cached = $this->performance->getCached($cacheKey);
         if ($cached !== null) {

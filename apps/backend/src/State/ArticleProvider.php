@@ -157,6 +157,17 @@ final class ArticleProvider implements ProviderInterface
                     ->setParameter('titleSearch', '%' . $title . '%');
             }
 
+            // Filter by author type (e.g., ?authors.type=agency)
+            $authorsArray = $request->query->all('authors');
+            if (\is_array($authorsArray) && isset($authorsArray['type'])) {
+                $authorType = $authorsArray['type'];
+                $validAuthorTypes = ['journalist', 'agency', 'press_office'];
+                if (\in_array($authorType, $validAuthorTypes, true)) {
+                    $queryBuilder->andWhere('au.type = :authorType')
+                        ->setParameter('authorType', $authorType);
+                }
+            }
+
             // Filter by badge (breaking, alert, flash)
             if ($badge = $request->query->get('badge')) {
                 // Validate badge value against enum values

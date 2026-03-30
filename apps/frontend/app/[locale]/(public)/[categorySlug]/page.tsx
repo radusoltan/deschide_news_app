@@ -1,6 +1,7 @@
 /**
- * Category Page - Premium Editorial Design
- * Displays articles within a specific category
+ * Category Page — TailNews-aligned design
+ * Matches homepage layout: sidebar LEFT (1/3) + main content RIGHT (2/3)
+ * Uses design system tokens exclusively — no legacy brand-* classes.
  * Route: /{locale}/{categorySlug}
  */
 
@@ -10,136 +11,182 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { fetchCategories } from '@/lib/api/categories';
 import { fetchArticlesByCategory } from '@/lib/api/articles';
+import { getTrendingArticles } from '@/lib/api/statistics';
 import { isReservedSlug } from '@/lib/constants/reserved-slugs';
 import { generateCategoryMetadata } from '@/lib/seo/meta-tags';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
-import MostPopular from '@/components/MostPopular';
-import ArticleCard from '@/components/ArticleCard';
+import { getSectionColor, getCategorySlugFromArticle } from '@/components/cards/utils';
 import type { Locale } from '@/lib/types';
 import type { Article, Category } from '@/lib/types/article';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 120;
 
-// Generate dynamic SEO metadata
-export async function generateMetadata({
-  params,
-}: CategoryPageProps): Promise<Metadata> {
+/* ================================================================== */
+/*  Localized labels                                                   */
+/* ================================================================== */
+
+const labels = {
+  ro: { mostRead: 'Cele mai citite', inTrend: 'În trend', ad: 'Publicitate', noArticles: 'Niciun articol găsit', noArticlesDesc: 'Nu există articole în această categorie momentan.', prev: 'Înapoi', next: 'Următoarea' },
+  en: { mostRead: 'Most Read', inTrend: 'Trending', ad: 'Advertisement', noArticles: 'No articles found', noArticlesDesc: 'There are no articles in this category yet.', prev: 'Previous', next: 'Next' },
+  ru: { mostRead: 'Самые читаемые', inTrend: 'В тренде', ad: 'Реклама', noArticles: 'Статьи не найдены', noArticlesDesc: 'В этой категории пока нет статей.', prev: 'Назад', next: 'Далее' },
+} as const;
+
+/* Static placeholder articles for "In Trend" — same as homepage, will be replaced with API data later */
+const TRENDING_PLACEHOLDER: Record<string, Array<{ id: number; title: string; category: string; categoryColor: string }>> = {
+  ro: [
+    { id: 1001, title: 'Alegerile prezidențiale 2025: ultimele sondaje', category: 'Politică', categoryColor: 'var(--color-section-politics)' },
+    { id: 1002, title: 'Cursul valutar: leul moldovenesc se stabilizează', category: 'Economie', categoryColor: 'var(--color-section-economy)' },
+    { id: 1003, title: 'Festival internațional de film la Chișinău', category: 'Cultură', categoryColor: 'var(--color-section-culture)' },
+    { id: 1004, title: 'Reforma sistemului educațional: ce se schimbă', category: 'Societate', categoryColor: 'var(--color-section-society)' },
+    { id: 1005, title: 'Integrarea europeană: noi pași spre aderare', category: 'Externe', categoryColor: 'var(--color-section-world)' },
+    { id: 1006, title: 'Campionatul național de fotbal: rezultatele etapei', category: 'Sport', categoryColor: 'var(--color-section-sport)' },
+    { id: 1007, title: 'Tehnologiile verzi: Moldova accelerează tranziția', category: 'Tehnologie', categoryColor: 'var(--color-section-tech)' },
+    { id: 1008, title: 'Diaspora moldovenească: noi politici de repatriere', category: 'Societate', categoryColor: 'var(--color-section-society)' },
+    { id: 1009, title: 'Parlamentul aprobă bugetul pentru anul viitor', category: 'Politică', categoryColor: 'var(--color-section-politics)' },
+    { id: 1010, title: 'Exporturile agricole cresc cu 15% în trimestrul III', category: 'Economie', categoryColor: 'var(--color-section-economy)' },
+  ],
+  en: [
+    { id: 1001, title: 'Presidential elections 2025: latest polls', category: 'Politics', categoryColor: 'var(--color-section-politics)' },
+    { id: 1002, title: 'Exchange rate: Moldovan leu stabilizes', category: 'Economy', categoryColor: 'var(--color-section-economy)' },
+    { id: 1003, title: 'International film festival in Chișinău', category: 'Culture', categoryColor: 'var(--color-section-culture)' },
+    { id: 1004, title: 'Education system reform: what changes', category: 'Society', categoryColor: 'var(--color-section-society)' },
+    { id: 1005, title: 'European integration: new steps toward accession', category: 'World', categoryColor: 'var(--color-section-world)' },
+    { id: 1006, title: 'National football championship: round results', category: 'Sport', categoryColor: 'var(--color-section-sport)' },
+    { id: 1007, title: 'Green technologies: Moldova accelerates transition', category: 'Tech', categoryColor: 'var(--color-section-tech)' },
+    { id: 1008, title: 'Moldovan diaspora: new repatriation policies', category: 'Society', categoryColor: 'var(--color-section-society)' },
+    { id: 1009, title: 'Parliament approves next year\'s budget', category: 'Politics', categoryColor: 'var(--color-section-politics)' },
+    { id: 1010, title: 'Agricultural exports grow 15% in Q3', category: 'Economy', categoryColor: 'var(--color-section-economy)' },
+  ],
+  ru: [
+    { id: 1001, title: 'Президентские выборы 2025: последние опросы', category: 'Политика', categoryColor: 'var(--color-section-politics)' },
+    { id: 1002, title: 'Курс валют: молдавский лей стабилизируется', category: 'Экономика', categoryColor: 'var(--color-section-economy)' },
+    { id: 1003, title: 'Международный кинофестиваль в Кишинёве', category: 'Культура', categoryColor: 'var(--color-section-culture)' },
+    { id: 1004, title: 'Реформа системы образования: что меняется', category: 'Общество', categoryColor: 'var(--color-section-society)' },
+    { id: 1005, title: 'Европейская интеграция: новые шаги', category: 'Мир', categoryColor: 'var(--color-section-world)' },
+    { id: 1006, title: 'Чемпионат по футболу: результаты тура', category: 'Спорт', categoryColor: 'var(--color-section-sport)' },
+    { id: 1007, title: 'Зелёные технологии: Молдова ускоряет переход', category: 'Технологии', categoryColor: 'var(--color-section-tech)' },
+    { id: 1008, title: 'Молдавская диаспора: новая политика репатриации', category: 'Общество', categoryColor: 'var(--color-section-society)' },
+    { id: 1009, title: 'Парламент утвердил бюджет на следующий год', category: 'Политика', categoryColor: 'var(--color-section-politics)' },
+    { id: 1010, title: 'Экспорт сельхозпродукции вырос на 15% в III квартале', category: 'Экономика', categoryColor: 'var(--color-section-economy)' },
+  ],
+};
+
+/* ================================================================== */
+/*  Metadata                                                           */
+/* ================================================================== */
+
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { locale, categorySlug } = await params;
   const validLocale = (['ro', 'en', 'ru'].includes(locale) ? locale : 'ro') as Locale;
-
-  if (isReservedSlug(categorySlug)) {
-    return { title: 'Page Not Found' };
-  }
-
+  if (isReservedSlug(categorySlug)) return { title: 'Page Not Found' };
   try {
     const categoriesResponse = await fetchCategories(validLocale);
-    const categories = categoriesResponse.member || [];
-    const category = categories.find((cat: Category) => cat.slug === categorySlug);
-
-    if (!category) {
-      return { title: 'Category Not Found' };
-    }
-
+    const category = (categoriesResponse.member || []).find((cat: Category) => cat.slug === categorySlug);
+    if (!category) return { title: 'Category Not Found' };
     return generateCategoryMetadata(category.title, category.slug, validLocale, category.description);
   } catch {
     return { title: 'Category | Deschide News' };
   }
 }
 
+/* ================================================================== */
+/*  Page                                                               */
+/* ================================================================== */
+
 interface CategoryPageProps {
   params: Promise<{ locale: string; categorySlug: string }>;
   searchParams: Promise<{ page?: string }>;
 }
 
-function getCategoryTitle(category: Category | string): string {
-  return typeof category === 'object' && category?.title ? category.title : 'Categorie';
-}
-
-function getExcerpt(article: Article, maxLength: number = 120): string {
-  if (article.lead) {
-    return article.lead.length > maxLength ? article.lead.substring(0, maxLength) + '...' : article.lead;
-  }
-  if (article.content) {
-    const text = article.content.replace(/<[^>]*>/g, '');
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-  }
-  return '';
+function getCatTitle(category: Category | string): string {
+  return typeof category === 'object' && category?.title ? category.title : '';
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { locale, categorySlug } = await params;
   const { page: pageParam } = await searchParams;
 
-  if (isReservedSlug(categorySlug)) {
-    notFound();
-  }
+  if (isReservedSlug(categorySlug)) notFound();
 
   // Fetch category
   let category: Category | null = null;
   try {
     const categoriesResponse = await fetchCategories(locale);
-    const categories = categoriesResponse.member || [];
-    category = categories.find((cat: Category) => cat.slug === categorySlug) || null;
-  } catch {
-    // Category fetch failed
-  }
-
-  if (!category) {
-    notFound();
-  }
+    category = (categoriesResponse.member || []).find((cat: Category) => cat.slug === categorySlug) || null;
+  } catch { /* */ }
+  if (!category) notFound();
 
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
   const itemsPerPage = 10;
 
-  // Fetch articles
+  // Fetch articles + trending in parallel
   let articles: Article[] = [];
   let totalItems = 0;
-  try {
-    const response = await fetchArticlesByCategory(category.id, locale, itemsPerPage);
-    articles = response.member || [];
-    totalItems = response.totalItems || 0;
-  } catch {
-    articles = [];
+  let trendingArticles: any[] = [];
+
+  const [articlesResult, trendingResult] = await Promise.allSettled([
+    fetchArticlesByCategory(category.id, locale, itemsPerPage),
+    getTrendingArticles(5, locale),
+  ]);
+
+  if (articlesResult.status === 'fulfilled') {
+    articles = articlesResult.value.member || [];
+    totalItems = articlesResult.value.totalItems || 0;
+  }
+  if (trendingResult.status === 'fulfilled') {
+    trendingArticles = trendingResult.value || [];
   }
 
   const heroArticle = articles[0];
   const gridArticles = articles.slice(1);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const l = labels[locale as keyof typeof labels] || labels.ro;
+  const sectionColor = getSectionColor(categorySlug);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Main Content */}
-      <main className="xl:container mx-auto px-3 sm:px-4 xl:px-2 py-6">
-        <div className="flex flex-row flex-wrap">
-          {/* Articles Section - 2/3 width */}
-          <div className="flex-shrink max-w-full w-full lg:w-2/3 overflow-hidden">
+    <div className="min-h-screen bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)]">
+      <main className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
+        {/* Layout: sidebar LEFT (1/3) + main RIGHT (2/3) — matching homepage */}
+        <div className="flex flex-col-reverse lg:flex-row gap-8">
+
+          {/* ── Sidebar (LEFT on desktop, BELOW on mobile) ── */}
+          <aside className="w-full lg:w-1/3 lg:pr-8 lg:pt-14">
+            <div className="sticky top-24 space-y-8">
+              {trendingArticles.length > 0 && (
+                <MostPopularWidget articles={trendingArticles} locale={locale} label={l.mostRead} />
+              )}
+              <InTrendWidget locale={locale} label={l.inTrend} />
+              <AdPlaceholder label={l.ad} />
+            </div>
+          </aside>
+
+          {/* ── Main content (RIGHT on desktop) ── */}
+          <div className="w-full lg:w-2/3 overflow-hidden">
             {articles.length > 0 ? (
               <div className="space-y-6">
-                {/* Section Header - matching homepage pattern */}
-                <div className="w-full">
-                  <h1 className="text-brand-oxford-900 text-2xl font-heading uppercase">
-                    <span className="inline-block h-5 border-l-3 border-brand-tomato-500 mr-2"></span>
+                {/* Section header — matches homepage CategorySection SectionHeader */}
+                <div className="flex items-center gap-4">
+                  <h1
+                    className="font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] whitespace-nowrap border-b-2 pb-1"
+                    style={{ fontSize: 'var(--font-size-2xl)', borderBottomColor: sectionColor }}
+                  >
                     {category.title}
                   </h1>
+                  <div className="flex-1 h-px bg-[var(--color-border)] dark:bg-[var(--color-border-dark)]" />
                 </div>
 
-                {/* Hero Article */}
+                {/* Hero article — full-width overlay */}
                 {heroArticle && (
                   <HeroCard article={heroArticle} locale={locale as Locale} />
                 )}
 
-                {/* Articles Grid - Simple 3-column layout */}
+                {/* Articles grid — 3 columns */}
                 {gridArticles.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-3">
                     {gridArticles.map((article) => (
-                      <ArticleCard
-                        key={article.id}
-                        article={article}
-                        locale={locale as Locale}
-                        thumbnailProfile="article_card"
-                      />
+                      <GridArticleCard key={article.id} article={article} locale={locale as Locale} />
                     ))}
                   </div>
                 )}
@@ -151,126 +198,217 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                     totalPages={totalPages}
                     locale={locale}
                     categorySlug={category.slug}
+                    labels={{ prev: l.prev, next: l.next }}
                   />
                 )}
               </div>
             ) : (
-              <EmptyState />
+              <EmptyState label={l.noArticles} description={l.noArticlesDesc} />
             )}
           </div>
-
-          {/* Sidebar - 1/3 width */}
-          <aside className="flex-shrink max-w-full w-full lg:w-1/3 lg:pl-8 lg:pt-14 lg:pb-8 order-first lg:order-last">
-            <div className="sticky top-24 space-y-6">
-              <MostPopular locale={locale as Locale} categoryId={category.id} limit={5} />
-              <AdPlaceholder />
-            </div>
-          </aside>
         </div>
       </main>
     </div>
   );
 }
 
-/* ========== Components ========== */
+/* ================================================================== */
+/*  Hero Card — overlay on image (matches LatestNewsSection)           */
+/* ================================================================== */
 
 function HeroCard({ article, locale }: { article: Article; locale: Locale }) {
   const featuredImage = getFeaturedImage(article.articleImages || []);
-  const thumbnail = featuredImage ? getThumbnailByProfile(featuredImage, 'article_hero') : null;
+  const thumbnail = featuredImage ? getThumbnailByProfile(featuredImage, 'hero_small') : null;
   const imageToUse = thumbnail || featuredImage;
   const articleUrl = buildArticleUrl(article, locale);
-  const excerpt = getExcerpt(article, 200);
+  const categoryTitle = getCatTitle(article.category);
 
   return (
-    <article className="group">
-      <Link href={articleUrl} className="block relative rounded overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
-        {/* Image Container */}
-        <div className="relative aspect-[2/1] md:aspect-[21/9] bg-brand-oxford-100">
+    <article className="group relative overflow-hidden rounded-lg">
+      <Link href={articleUrl} className="block">
+        <div className="relative aspect-[16/9] md:aspect-[2/1] overflow-hidden rounded-lg bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)]">
           {imageToUse ? (
             <Image
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
               src={buildImageUrl(imageToUse.path)}
               alt={featuredImage?.alt || article.title}
               fill
-              sizes="(max-width: 768px) 100vw, 900px"
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
+              sizes="(max-width: 1024px) 100vw, 66vw"
               priority
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-brand-oxford-200 to-brand-oxford-100 flex items-center justify-center">
-              <svg className="w-16 h-16 text-brand-oxford-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-skeleton)] to-[var(--color-border)] dark:from-[var(--color-skeleton-dark)] dark:to-[var(--color-border-dark)]" />
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
+        </div>
 
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-brand-oxford-900/90 via-brand-oxford-900/40 to-transparent" />
-
-          {/* Content */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-            <span className="inline-block px-3 py-1 bg-brand-tomato text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3">
-              {getCategoryTitle(article.category)}
-            </span>
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-heading font-bold text-white leading-tight mb-2 group-hover:text-brand-mindaro-400 transition-colors">
-              {article.title}
-            </h2>
-            <p className="hidden md:block text-white/70 text-base max-w-2xl line-clamp-2">
-              {excerpt}
+        <div className="absolute bottom-0 left-0 right-0 px-5 pt-8 pb-5">
+          <h2
+            className="font-sans font-bold text-white leading-tight mb-3 text-on-photo-strong"
+            style={{ fontSize: 'var(--font-size-2xl)' }}
+          >
+            {article.title}
+          </h2>
+          {article.lead && (
+            <p className="text-gray-100 hidden sm:inline-block font-serif line-clamp-2" style={{ fontSize: 'var(--font-size-sm)' }}>
+              {article.lead}
             </p>
-            <div className="flex items-center gap-3 mt-3 text-white/50 text-sm">
-              {article.publishedAt && (
-                <time dateTime={article.publishedAt}>
-                  {new Date(article.publishedAt).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
-                </time>
-              )}
-              {article.viewCount && (
-                <>
-                  <span className="w-1 h-1 rounded-full bg-white/30" />
-                  <span>{article.viewCount.toLocaleString()} vizualizări</span>
-                </>
-              )}
-            </div>
-          </div>
+          )}
+          {categoryTitle && (
+            <span className="inline-block mt-2 text-xs font-semibold tracking-wider uppercase font-sans text-gray-100">
+              {categoryTitle}
+            </span>
+          )}
         </div>
       </Link>
     </article>
   );
 }
 
-function Pagination({ currentPage, totalPages, locale, categorySlug }: {
+/* ================================================================== */
+/*  Grid Article Card (matches LatestNewsSection GridArticleCard)       */
+/* ================================================================== */
+
+function GridArticleCard({ article, locale }: { article: Article; locale: Locale }) {
+  const featuredImage = getFeaturedImage(article.articleImages || []);
+  const thumbnail = featuredImage ? getThumbnailByProfile(featuredImage, 'card_medium') : null;
+  const imageToUse = thumbnail || featuredImage;
+  const articleUrl = buildArticleUrl(article, locale);
+  const categorySlug = getCategorySlugFromArticle(article.category);
+  const categoryTitle = getCatTitle(article.category);
+  const catSectionColor = getSectionColor(categorySlug);
+
+  return (
+    <article className="group">
+      <Link href={articleUrl} className="block">
+        {/* Image */}
+        <div className="relative aspect-[3/2] overflow-hidden rounded-lg mb-3 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)]">
+          {imageToUse ? (
+            <Image
+              src={buildImageUrl(imageToUse.path)}
+              alt={featuredImage?.alt || article.title}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 22vw"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-skeleton)] to-[var(--color-border)] dark:from-[var(--color-skeleton-dark)] dark:to-[var(--color-border-dark)]" />
+          )}
+        </div>
+
+        {/* Title */}
+        <h3 className="font-sans font-bold leading-tight line-clamp-2 text-base lg:text-lg text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] group-hover:text-[var(--color-accent)] transition-colors duration-200">
+          {article.title}
+        </h3>
+
+        {/* Excerpt */}
+        {article.lead && (
+          <p className="mt-1 text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] line-clamp-2 font-serif">
+            {article.lead}
+          </p>
+        )}
+      </Link>
+
+      {/* Category badge */}
+      {categoryTitle && (
+        <span
+          className="inline-block mt-2 text-xs font-semibold tracking-wider uppercase font-sans"
+          style={{ color: catSectionColor }}
+        >
+          {categoryTitle}
+        </span>
+      )}
+    </article>
+  );
+}
+
+/* ================================================================== */
+/*  Most Popular — gray header + numbered list (matches homepage)      */
+/* ================================================================== */
+
+function MostPopularWidget({
+  articles,
+  locale,
+  label,
+}: {
+  articles: Array<{ id: number; title: string | null; slug: string | null; category: { slug: string } | null }>;
+  locale: string;
+  label: string;
+}) {
+  return (
+    <div className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)]">
+      <div className="p-4 bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-sunken-dark)]">
+        <h2 className="font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)]" style={{ fontSize: 'var(--font-size-lg)' }}>
+          {label}
+        </h2>
+      </div>
+      <ul>
+        {articles.slice(0, 5).map((article, index) => {
+          const catSlug = article.category?.slug || 'news';
+          const artSlug = article.slug || '';
+          const articleUrl = `/${locale === 'ro' ? '' : locale + '/'}${catSlug}/${artSlug}`;
+          return (
+            <li
+              key={article.id}
+              className="border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] last:border-b-0 hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] transition-colors"
+            >
+              <Link
+                href={articleUrl}
+                className="flex items-center gap-3 px-4 py-3 font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors"
+                style={{ fontSize: 'var(--font-size-base)' }}
+              >
+                <span className="flex-shrink-0 text-3xl font-bold leading-none font-sans text-[var(--color-border)] dark:text-[var(--color-border-dark)] select-none min-w-[1.5rem]">
+                  {index + 1}
+                </span>
+                <span className="line-clamp-2">{article.title}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Pagination                                                         */
+/* ================================================================== */
+
+function Pagination({ currentPage, totalPages, locale, categorySlug, labels: pLabels }: {
   currentPage: number;
   totalPages: number;
   locale: string;
   categorySlug: string;
+  labels: { prev: string; next: string };
 }) {
   const pages = generatePageNumbers(currentPage, totalPages);
 
   return (
-    <nav className="flex items-center justify-center gap-2 pt-8" aria-label="Paginare">
+    <nav className="flex items-center justify-center gap-2 pt-8" aria-label="Pagination">
       {currentPage > 1 && (
         <Link
           href={`/${locale}/${categorySlug}?page=${currentPage - 1}`}
-          className="group flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-brand-oxford-900 rounded-lg hover:bg-brand-oxford-900 hover:text-white hover:border-brand-oxford-900 transition-all duration-200 shadow-sm"
+          className="group flex items-center gap-2 px-4 py-2.5 bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] border border-[var(--color-border)] dark:border-[var(--color-border-dark)] text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] rounded-lg hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] transition-all duration-200"
         >
           <svg className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          <span className="text-sm font-medium">Înapoi</span>
+          <span className="text-sm font-medium font-sans">{pLabels.prev}</span>
         </Link>
       )}
 
       <div className="flex items-center gap-1">
         {pages.map((pageNum, idx) => (
           pageNum === '...' ? (
-            <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">...</span>
+            <span key={`ellipsis-${idx}`} className="px-2 text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)] font-sans">...</span>
           ) : (
             <Link
               key={pageNum}
               href={`/${locale}/${categorySlug}?page=${pageNum}`}
-              className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-medium font-sans transition-all duration-200 ${
                 currentPage === pageNum
-                  ? 'bg-brand-oxford-900 text-white shadow-md'
-                  : 'bg-white border border-gray-200 text-brand-oxford-900 hover:border-brand-tomato hover:text-brand-tomato'
+                  ? 'bg-[var(--color-text-primary)] dark:bg-[var(--color-text-primary-dark)] text-[var(--color-surface)] dark:text-[var(--color-surface-dark)]'
+                  : 'bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] border border-[var(--color-border)] dark:border-[var(--color-border-dark)] text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)]'
               }`}
             >
               {pageNum}
@@ -282,9 +420,9 @@ function Pagination({ currentPage, totalPages, locale, categorySlug }: {
       {currentPage < totalPages && (
         <Link
           href={`/${locale}/${categorySlug}?page=${currentPage + 1}`}
-          className="group flex items-center gap-2 px-4 py-2.5 bg-brand-oxford-900 text-white rounded-lg hover:bg-brand-oxford-800 transition-all duration-200 shadow-md"
+          className="group flex items-center gap-2 px-4 py-2.5 bg-[var(--color-text-primary)] dark:bg-[var(--color-text-primary-dark)] text-[var(--color-surface)] dark:text-[var(--color-surface-dark)] rounded-lg hover:opacity-90 transition-all duration-200"
         >
-          <span className="text-sm font-medium">Următoarea</span>
+          <span className="text-sm font-medium font-sans">{pLabels.next}</span>
           <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
@@ -294,43 +432,100 @@ function Pagination({ currentPage, totalPages, locale, categorySlug }: {
   );
 }
 
-function EmptyState() {
+/* ================================================================== */
+/*  Empty State                                                        */
+/* ================================================================== */
+
+function EmptyState({ label, description }: { label: string; description: string }) {
   return (
-    <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
-      <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-gray-100 flex items-center justify-center">
-        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="text-center py-16 bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-[var(--radius-card)] border border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
+      <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] flex items-center justify-center">
+        <svg className="w-8 h-8 text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
         </svg>
       </div>
-      <h3 className="text-lg font-bold text-brand-oxford-900 mb-2">Niciun articol găsit</h3>
-      <p className="text-gray-500 text-sm">Nu există articole în această categorie momentan.</p>
+      <h3 className="font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] mb-2" style={{ fontSize: 'var(--font-size-lg)' }}>{label}</h3>
+      <p className="text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)] font-sans" style={{ fontSize: 'var(--font-size-sm)' }}>{description}</p>
     </div>
   );
 }
 
-function AdPlaceholder() {
+/* ================================================================== */
+/*  In Trend Widget (static data — matches homepage)                   */
+/* ================================================================== */
+
+function InTrendWidget({ locale, label }: { locale: string; label: string }) {
+  const items = TRENDING_PLACEHOLDER[locale] || TRENDING_PLACEHOLDER.ro;
+
   return (
-    <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
-      <p className="text-xs text-gray-400 uppercase tracking-wider mb-3 text-center">Publicitate</p>
-      <div className="aspect-square bg-gray-50 rounded-lg flex items-center justify-center border border-dashed border-gray-200">
-        <span className="text-sm text-gray-400">300×300</span>
+    <div>
+      <h2
+        className="font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] mb-4 pb-2 border-b-2 border-[var(--color-accent)]"
+        style={{ fontSize: 'var(--font-size-lg)' }}
+      >
+        {label}
+      </h2>
+
+      <ul className="space-y-0">
+        {items.map((item) => (
+          <li
+            key={item.id}
+            className="group py-3 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] last:border-b-0"
+          >
+            <span
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider font-sans mb-1"
+              style={{ color: item.categoryColor }}
+            >
+              <span
+                className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: item.categoryColor }}
+              />
+              {item.category}
+            </span>
+            <p
+              className="font-sans font-medium leading-snug text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] group-hover:text-[var(--color-accent)] transition-colors cursor-pointer line-clamp-2"
+              style={{ fontSize: 'var(--font-size-sm)' }}
+            >
+              {item.title}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Ad Placeholder                                                     */
+/* ================================================================== */
+
+function AdPlaceholder({ label }: { label: string }) {
+  return (
+    <div className="text-center">
+      <span className="text-xs text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)] uppercase tracking-wider font-sans block mb-2">
+        {label}
+      </span>
+      <div className="mx-auto w-[300px] h-[250px] bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] flex items-center justify-center">
+        <span className="text-xs text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)] font-sans">
+          300 x 250
+        </span>
       </div>
     </div>
   );
 }
 
+/* ================================================================== */
+/*  Helpers                                                            */
+/* ================================================================== */
+
 function generatePageNumbers(current: number, total: number): (number | string)[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
   const pages: (number | string)[] = [1];
   if (current > 3) pages.push('...');
-
   for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
     if (!pages.includes(i)) pages.push(i);
   }
-
   if (current < total - 2) pages.push('...');
   if (!pages.includes(total)) pages.push(total);
-
   return pages;
 }

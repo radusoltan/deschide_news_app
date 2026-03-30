@@ -4,7 +4,7 @@
  */
 
 import { Suspense } from 'react';
-import { getAccessToken } from '@/lib/auth/session';
+import { getAccessToken } from '@/lib/dal';
 import { redirect } from 'next/navigation';
 import { ArchiveStats } from '@/components/admin/archive/ArchiveStats';
 import BulkArchiveForm from '@/components/admin/archive/BulkArchiveForm';

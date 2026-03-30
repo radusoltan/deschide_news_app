@@ -1,0 +1,25 @@
+{
+	order mercure after encode
+}
+
+:3000 {
+	log {
+		output stderr
+		format console
+		level WARN
+	}
+
+	route {
+		mercure {
+			transport_url {$MERCURE_TRANSPORT_URL:bolt:///var/www/deschide_news_app/var/mercure.db}
+			publisher_jwt {env.MERCURE_JWT_SECRET} {env.MERCURE_JWT_ALGORITHM}
+			subscriber_jwt {env.MERCURE_JWT_SECRET} {env.MERCURE_JWT_ALGORITHM}
+			cors_origins http://localhost:3005 http://127.0.0.1:3005
+			publish_origins *
+			anonymous
+			subscriptions
+		}
+
+		respond /healthz 200
+	}
+}

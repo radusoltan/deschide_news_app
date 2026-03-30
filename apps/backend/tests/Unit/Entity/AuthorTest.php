@@ -8,6 +8,7 @@ use App\Entity\Article;
 use App\Entity\Author;
 use App\Enum\ArticleStatus;
 use App\Enum\AuthorStatus;
+use App\Enum\AuthorType;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -424,6 +425,96 @@ class AuthorTest extends TestCase
         $this->assertEquals(100, \strlen($author->getTwitter()));
     }
 
+    // AuthorType Tests
+
+    public function testDefaultTypeIsJournalist(): void
+    {
+        $author = new Author();
+
+        $this->assertSame(AuthorType::JOURNALIST, $author->getType());
+    }
+
+    public function testSetAndGetTypeJournalist(): void
+    {
+        $author = new Author();
+
+        $result = $author->setType(AuthorType::JOURNALIST);
+
+        $this->assertSame($author, $result);
+        $this->assertSame(AuthorType::JOURNALIST, $author->getType());
+    }
+
+    public function testSetAndGetTypeAgency(): void
+    {
+        $author = new Author();
+
+        $result = $author->setType(AuthorType::AGENCY);
+
+        $this->assertSame($author, $result);
+        $this->assertSame(AuthorType::AGENCY, $author->getType());
+    }
+
+    public function testSetAndGetTypePressOffice(): void
+    {
+        $author = new Author();
+
+        $result = $author->setType(AuthorType::PRESS_OFFICE);
+
+        $this->assertSame($author, $result);
+        $this->assertSame(AuthorType::PRESS_OFFICE, $author->getType());
+    }
+
+    public function testSetTypeOverridesPrevious(): void
+    {
+        $author = new Author();
+
+        $author->setType(AuthorType::AGENCY);
+        $this->assertSame(AuthorType::AGENCY, $author->getType());
+
+        $author->setType(AuthorType::PRESS_OFFICE);
+        $this->assertSame(AuthorType::PRESS_OFFICE, $author->getType());
+    }
+
+    // EmailDomain Tests
+
+    public function testGetEmailDomainDefaultsToNull(): void
+    {
+        $author = new Author();
+
+        $this->assertNull($author->getEmailDomain());
+    }
+
+    public function testSetAndGetEmailDomain(): void
+    {
+        $author = new Author();
+
+        $result = $author->setEmailDomain('ipn.md');
+
+        $this->assertSame($author, $result);
+        $this->assertSame('ipn.md', $author->getEmailDomain());
+    }
+
+    public function testEmailDomainCanBeNull(): void
+    {
+        $author = new Author();
+
+        $author->setEmailDomain('gov.md');
+        $this->assertSame('gov.md', $author->getEmailDomain());
+
+        $author->setEmailDomain(null);
+        $this->assertNull($author->getEmailDomain());
+    }
+
+    public function testEmailDomainMaxLength(): void
+    {
+        $author = new Author();
+        $longDomain = str_repeat('a', 100);
+
+        $author->setEmailDomain($longDomain);
+
+        $this->assertEquals(100, \strlen($author->getEmailDomain()));
+    }
+
     // Fluent Interface Test
 
     public function testFluentInterface(): void
@@ -449,5 +540,21 @@ class AuthorTest extends TestCase
         $this->assertEquals(AuthorStatus::ACTIVE, $author->getStatus());
         $this->assertTrue($author->isActive());
         $this->assertEquals('@johndoe', $author->getTwitter());
+    }
+
+    public function testFluentInterfaceWithTypeAndEmailDomain(): void
+    {
+        $author = new Author();
+
+        $result = $author
+            ->setFirstName('IPN')
+            ->setLastName('Info-Prim Neo')
+            ->setEmail('contact@ipn.md')
+            ->setType(AuthorType::AGENCY)
+            ->setEmailDomain('ipn.md');
+
+        $this->assertSame($author, $result);
+        $this->assertSame(AuthorType::AGENCY, $author->getType());
+        $this->assertSame('ipn.md', $author->getEmailDomain());
     }
 }

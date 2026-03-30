@@ -11,11 +11,16 @@ use App\Entity\Article;
 use App\Entity\Author;
 use App\Entity\Category;
 use App\Entity\Tag;
+use App\Enum\ArticleStatus;
+use App\Event\ArticleAutoCreatedEvent;
+use App\Event\ArticlePublishedEvent;
+use App\Event\ArticleUpdatedEvent;
 use App\Message\CheckOrphanedTagsMessage;
 use App\Service\PerformanceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -30,7 +35,8 @@ final class ArticleProcessor implements ProcessorInterface
         private readonly RequestStack $requestStack,
         private readonly MessageBusInterface $messageBus,
         private readonly PerformanceService $performanceService,
-        private readonly CacheItemPoolInterface $doctrineResultCachePool
+        private readonly CacheItemPoolInterface $doctrineResultCachePool,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -89,6 +95,9 @@ final class ArticleProcessor implements ProcessorInterface
                 if (!$existingEntity) {
                     throw new RuntimeException('Article not found');
                 }
+
+                // Capture old status before update for notification dispatching
+                $oldStatus = $existingEntity->getStatus();
 
                 // CRITICAL: For Gedmo Translatable to work correctly:
                 // 1. Set the locale on the entity BEFORE making changes
@@ -259,6 +268,16 @@ final class ArticleProcessor implements ProcessorInterface
                 if ($locale !== 'ro') {
                     $this->addTranslation($data, $locale);
                 }
+
+                // Dispatch notification for new published articles
+                if ($data->getStatus() === ArticleStatus::PUBLISHED) {
+                    $this->eventDispatcher->dispatch(new ArticlePublishedEvent($data));
+                }
+
+                // Dispatch notification if article was auto-created by agent (detected by sourceEmail)
+                if ($data->getSourceEmail() !== null) {
+                    $this->eventDispatcher->dispatch(new ArticleAutoCreatedEvent($data));
+                }
             } else {
                 // UPDATE: Existing entity
                 // For default locale (ro), changes are tracked automatically
@@ -299,6 +318,14 @@ final class ArticleProcessor implements ProcessorInterface
                 // Invalidate article cache after UPDATE
                 if ($data->getId()) {
                     $this->invalidateArticleCache($data->getId());
+                }
+
+                // Dispatch notification events after successful update
+                $newStatus = $data->getStatus();
+                if ($oldStatus !== ArticleStatus::PUBLISHED && $newStatus === ArticleStatus::PUBLISHED) {
+                    $this->eventDispatcher->dispatch(new ArticlePublishedEvent($data));
+                } elseif ($newStatus === ArticleStatus::PUBLISHED) {
+                    $this->eventDispatcher->dispatch(new ArticleUpdatedEvent($data));
                 }
             }
 

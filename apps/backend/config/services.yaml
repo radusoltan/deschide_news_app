@@ -9,6 +9,13 @@ parameters:
     varnish.port: '%env(int:default::VARNISH_PORT)%'
     varnish.enabled: '%env(bool:default::VARNISH_ENABLED)%'
 
+    # Notification cleanup
+    app.notification_retention_days: 90
+
+    # Gemini CLI path for translation workflow
+    gemini_cli_path: '%env(default:gemini_cli_default:GEMINI_CLI_PATH)%'
+    gemini_cli_default: '/usr/bin/gemini'
+
     # Cloudflare CDN configuration
     cloudflare.api_token: '%env(default::CLOUDFLARE_API_TOKEN)%'
     cloudflare.zone_id: '%env(default::CLOUDFLARE_ZONE_ID)%'
@@ -127,6 +134,18 @@ services:
         arguments:
             - '@Prometheus\Storage\Redis'
 
+    # Mercure JWT Cookie Listener (sets subscribe cookie at login)
+    App\EventListener\MercureJwtCookieListener:
+        arguments:
+            $mercureJwtSecret: '%env(MERCURE_JWT_SECRET)%'
+
+    # Admin Notification Service (Mercure real-time + DB persistence)
+    App\Service\NotificationService:
+        arguments:
+            $httpClient: '@http_client'
+            $mercureUrl: '%env(MERCURE_URL)%'
+            $mercurePublisherJwt: '%env(MERCURE_JWT_SECRET)%'
+
     # LiveText Notification Service (Mercure)
     App\Service\LiveTextNotificationService:
         arguments:
@@ -190,10 +209,26 @@ services:
             $elasticsearchUrl: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
 
+    # Translation Handler (Gemini CLI subprocess)
+    App\MessageHandler\TranslateArticleHandler:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $projectDir: '%kernel.project_dir%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:
             $youtubeApiKey: '%env(YOUTUBE_API_KEY)%'
+
+    # Zoho Mail Service (Press Email Fetcher)
+    App\Service\ZohoMailService:
+        arguments:
+            $zohoClientId: '%env(ZOHO_CLIENT_ID)%'
+            $zohoClientSecret: '%env(ZOHO_CLIENT_SECRET)%'
+            $zohoRefreshToken: '%env(ZOHO_REFRESH_TOKEN)%'
+            $zohoAccountId: '%env(ZOHO_ACCOUNT_ID)%'
+            $zohoInboxFolderId: '%env(ZOHO_INBOX_FOLDER_ID)%'
+            $zohoAccountsUrl: '%env(ZOHO_ACCOUNTS_URL)%'
 
 # Test environment specific configuration
 when@test:

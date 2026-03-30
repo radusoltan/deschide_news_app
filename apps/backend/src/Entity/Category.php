@@ -85,10 +85,11 @@ class Category implements Translatable
     #[Groups(['category:read', 'category:write', 'article:read'])]
     private ?string $title = null;
 
+    #[Gedmo\Translatable]
     #[Gedmo\Slug(fields: ['title'], unique: true, updatable: true)]
     #[ORM\Column(type: Types::STRING, length: 255, unique: true)]
     #[AppAssert\ReservedSlug]
-    #[Groups(['category:read', 'article:read'])]
+    #[Groups(['category:read', 'category:write', 'article:read'])]
     private ?string $slug = null;
 
     // Parent-child hierarchy
@@ -221,6 +222,11 @@ class Category implements Translatable
         return $this->onFrontPage;
     }
 
+    public function getOnFrontPage(): bool
+    {
+        return $this->onFrontPage;
+    }
+
     public function setOnFrontPage(bool $onFrontPage): self
     {
         $this->onFrontPage = $onFrontPage;
@@ -233,6 +239,11 @@ class Category implements Translatable
         return $this->inMenu;
     }
 
+    public function getInMenu(): bool
+    {
+        return $this->inMenu;
+    }
+
     public function setInMenu(bool $inMenu): self
     {
         $this->inMenu = $inMenu;
@@ -241,6 +252,11 @@ class Category implements Translatable
     }
 
     public function isInFooterMenu(): bool
+    {
+        return $this->inFooterMenu;
+    }
+
+    public function getInFooterMenu(): bool
     {
         return $this->inFooterMenu;
     }
