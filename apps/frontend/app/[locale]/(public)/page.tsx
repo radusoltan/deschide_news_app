@@ -120,6 +120,15 @@ export default async function HomePage({ params }: PageProps) {
     trendingArticles = trendingResult.value || [];
   }
 
+  // Separate "Opinii" category from other front-page categories.
+  // OpinionSection has a dedicated layout; exclude it from the generic loop.
+  const opiniiCategory = frontPageCategories.find(
+    (cat: any) => cat.slug === 'opinii'
+  );
+  const categoriesForSections = frontPageCategories.filter(
+    (cat: any) => cat.slug !== 'opinii'
+  );
+
   // Deduplicate: compute IDs used by HeroSection (important articles + backfill)
   const heroUsedIds = new Set<number>();
   importantArticles.slice(0, 7).forEach((item) => {
@@ -175,7 +184,9 @@ export default async function HomePage({ params }: PageProps) {
           )}
 
           {/* ── Opinions — NYT-style editorial section (full-width) ── */}
-          <OpinionSection locale={locale} />
+          {opiniiCategory && (
+            <OpinionSection locale={locale} categoryId={opiniiCategory.id} />
+          )}
 
           {/* ── Main + Sidebar (8 + 4 columns) ── */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-12">
@@ -184,7 +195,7 @@ export default async function HomePage({ params }: PageProps) {
             <div className="lg:col-span-8 space-y-12">
 
               {/* Category sections with alternating layouts */}
-              {frontPageCategories.map((category, index) => (
+              {categoriesForSections.map((category, index) => (
                 <CategorySection
                   key={category.id}
                   category={category}
