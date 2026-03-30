@@ -159,7 +159,7 @@ function SearchContent({ params }: SearchPageProps) {
     <div className="container mx-auto px-4 py-8">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+        <h1 className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-white mb-6">
           {t.title}
         </h1>
 
@@ -171,13 +171,13 @@ function SearchContent({ params }: SearchPageProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.placeholder}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              className="flex-1 px-4 py-3 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:border-transparent dark:bg-[var(--color-surface-elevated-dark)] dark:border-[var(--color-border)] dark:text-white"
               autoFocus
             />
             <button
               type="submit"
               disabled={loading || !searchQuery.trim()}
-              className="px-6 py-3 bg-brand-tomato-500 text-white rounded-lg hover:bg-brand-tomato-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
+              className="px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent)] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {loading ? t.loading : t.searchButton}
             </button>
@@ -191,18 +191,18 @@ function SearchContent({ params }: SearchPageProps) {
           {/* Results Header */}
           <div className="mb-6">
             {totalResults > 0 ? (
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">
                 {t.found} <strong>{totalResults}</strong> {t.results} {t.resultsFor}{' '}
                 <strong>&quot;{query}&quot;</strong>
               </p>
             ) : loading ? (
-              <p className="text-gray-600 dark:text-gray-400">{t.loading}</p>
+              <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">{t.loading}</p>
             ) : (
               <div>
                 <p className="text-gray-600 dark:text-gray-400 mb-2">
                   {t.noResults} <strong>&quot;{query}&quot;</strong>
                 </p>
-                <p className="text-gray-500 dark:text-gray-500 text-sm">
+                <p className="text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary)] text-sm">
                   {t.suggestions}
                 </p>
               </div>
@@ -223,10 +223,10 @@ function SearchContent({ params }: SearchPageProps) {
                     <Link
                       key={article.id}
                       href={`/${locale}/${article.category.slug}/${article.slug}`}
-                      className="block bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden"
+                      className="block bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden"
                     >
                       {imageUrl && featuredImage && (
-                        <div className="aspect-video bg-gray-200 dark:bg-gray-700">
+                        <div className="aspect-video bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-elevated-dark)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={imageUrl}
@@ -236,18 +236,18 @@ function SearchContent({ params }: SearchPageProps) {
                         </div>
                       )}
                       <div className="p-4">
-                        <div className="text-xs text-brand-tomato-500 font-semibold mb-2">
+                        <div className="text-xs text-[var(--color-accent)] font-semibold mb-2">
                           {article.category.title}
                         </div>
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                        <h2 className="text-lg font-bold text-[var(--color-text-primary)] dark:text-white mb-2 line-clamp-2">
                           {article.title}
                         </h2>
                         {article.excerpt && (
-                          <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3">
+                          <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] text-sm line-clamp-3">
                             {article.excerpt}
                           </p>
                         )}
-                        <div className="mt-3 text-xs text-gray-500 dark:text-gray-500">
+                        <div className="mt-3 text-xs text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary)]">
                           {new Date(article.publishedAt).toLocaleDateString(locale)}
                         </div>
                       </div>
@@ -262,7 +262,7 @@ function SearchContent({ params }: SearchPageProps) {
                   {currentPage > 1 && (
                     <button
                       onClick={() => performSearch(query, currentPage - 1)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300"
+                      className="px-4 py-2 bg-[var(--color-surface-sunken)] text-[var(--color-text-secondary)] rounded hover:bg-[var(--color-border)] dark:bg-[var(--color-surface-elevated-dark)] dark:text-[var(--color-text-secondary)]"
                     >
                       ←
                     </button>
@@ -287,8 +287,8 @@ function SearchContent({ params }: SearchPageProps) {
                           onClick={() => performSearch(query, pageNum)}
                           className={`px-4 py-2 rounded ${
                             currentPage === pageNum
-                              ? 'bg-brand-tomato-500 text-white'
-                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300'
+                              ? 'bg-[var(--color-accent)] text-white'
+                              : 'bg-[var(--color-surface-sunken)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] dark:bg-[var(--color-surface-elevated-dark)] dark:text-[var(--color-text-secondary)]'
                           }`}
                         >
                           {pageNum}
@@ -300,7 +300,7 @@ function SearchContent({ params }: SearchPageProps) {
                   {currentPage < totalPages && (
                     <button
                       onClick={() => performSearch(query, currentPage + 1)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300"
+                      className="px-4 py-2 bg-[var(--color-surface-sunken)] text-[var(--color-text-secondary)] rounded hover:bg-[var(--color-border)] dark:bg-[var(--color-surface-elevated-dark)] dark:text-[var(--color-text-secondary)]"
                     >
                       →
                     </button>

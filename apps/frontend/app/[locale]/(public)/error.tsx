@@ -47,19 +47,19 @@ export default function PublicError({
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">
+        <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3">
           Ups! A apărut o problemă
         </h1>
 
         {/* Description */}
-        <p className="text-gray-600 mb-6">
+        <p className="text-[var(--color-text-secondary)] mb-6">
           Nu am putut încărca această pagină. Vă rugăm să încercați din nou sau
           să reveniți mai târziu.
         </p>
 
         {/* Error digest */}
         {error.digest && (
-          <p className="text-xs text-gray-400 mb-6 font-mono bg-gray-100 py-2 px-4 rounded-lg inline-block">
+          <p className="text-xs text-[var(--color-text-tertiary)] mb-6 font-mono bg-[var(--color-surface-sunken)] py-2 px-4 rounded-lg inline-block">
             {error.digest}
           </p>
         )}
@@ -68,13 +68,13 @@ export default function PublicError({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={reset}
-            className="px-5 py-2.5 bg-brand-tomato text-white font-medium rounded-lg hover:bg-brand-tomato-600 transition-colors"
+            className="px-5 py-2.5 bg-[var(--color-accent)] text-white font-medium rounded-lg hover:bg-[var(--color-accent)] transition-colors"
           >
             Încearcă din nou
           </button>
           <Link
             href="/"
-            className="px-5 py-2.5 bg-gray-100 text-gray-800 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-5 py-2.5 bg-[var(--color-surface-sunken)] text-[var(--color-text-primary)] font-medium rounded-lg hover:bg-[var(--color-border)] transition-colors"
           >
             Acasă
           </Link>
@@ -82,25 +82,25 @@ export default function PublicError({
 
         {/* Alternative navigation */}
         <div className="mt-8 pt-6 border-t">
-          <p className="text-sm text-gray-500 mb-3">Sau navigați către:</p>
+          <p className="text-sm text-[var(--color-text-tertiary)] mb-3">Sau navigați către:</p>
           <div className="flex flex-wrap justify-center gap-2">
             <Link
               href="/archive"
-              className="text-sm text-brand-oxford hover:underline"
+              className="text-sm text-[var(--color-text-primary)] hover:underline"
             >
               Arhivă
             </Link>
-            <span className="text-gray-300">•</span>
+            <span className="text-[var(--color-border)]">•</span>
             <Link
               href="/search"
-              className="text-sm text-brand-oxford hover:underline"
+              className="text-sm text-[var(--color-text-primary)] hover:underline"
             >
               Căutare
             </Link>
-            <span className="text-gray-300">•</span>
+            <span className="text-[var(--color-border)]">•</span>
             <Link
               href="/contact"
-              className="text-sm text-brand-oxford hover:underline"
+              className="text-sm text-[var(--color-text-primary)] hover:underline"
             >
               Contact
             </Link>

@@ -369,9 +369,9 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
   const t = content[locale as keyof typeof content] || content.ro;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-dark)]">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-brand-oxford-900 via-brand-oxford-800 to-brand-oxford-700 py-16 md:py-24 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[var(--color-surface-dark)] via-[var(--color-surface-elevated-dark)] to-[var(--color-surface-elevated-dark)] py-16 md:py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
         <div className="container mx-auto px-4 max-w-4xl relative z-10">
           <div className="text-center animate-fade-in-up">
@@ -386,16 +386,16 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         {/* Introduction */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8 border-l-4 border-brand-tomato-500 animate-fade-in">
-          <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+        <div className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-2xl shadow-lg p-8 mb-8 border-l-4 border-[var(--color-accent)] animate-fade-in">
+          <p className="text-lg text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] leading-relaxed">
             {t.intro}
           </p>
         </div>
 
         {/* Table of Contents */}
-        <div className="bg-gradient-to-br from-brand-oxford-50 to-white dark:from-gray-800 dark:to-gray-750 rounded-2xl shadow-md p-8 mb-12 animate-fade-in stagger-1">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
-            <svg className="w-8 h-8 text-brand-tomato-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-gradient-to-br from-[var(--color-surface-sunken)] to-[var(--color-surface-elevated)] dark:from-[var(--color-surface-elevated-dark)] dark:to-[var(--color-surface-elevated-dark)] rounded-2xl shadow-md p-8 mb-12 animate-fade-in stagger-1">
+          <h2 className="text-2xl font-bold text-[var(--color-text-primary)] dark:text-white mb-6 flex items-center gap-3">
+            <svg className="w-8 h-8 text-[var(--color-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
             </svg>
             {t.toc.title}
@@ -405,9 +405,9 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
               <a
                 key={index}
                 href={`#${t.sections[index].id}`}
-                className="group flex items-start gap-3 text-gray-700 dark:text-gray-300 hover:text-brand-tomato-500 dark:hover:text-brand-tomato-500 transition-colors duration-200"
+                className="group flex items-start gap-3 text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] transition-colors duration-200"
               >
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-brand-tomato-500 text-white flex items-center justify-center text-sm font-bold group-hover:scale-110 transition-transform duration-200">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--color-accent)] text-white flex items-center justify-center text-sm font-bold group-hover:scale-110 transition-transform duration-200">
                   {index + 1}
                 </span>
                 <span className="underline-animate font-medium">{item}</span>
@@ -422,14 +422,14 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
             <section
               key={section.id}
               id={section.id}
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-8 hover:shadow-lg transition-all duration-300 animate-fade-in"
+              className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-2xl shadow-md p-8 hover:shadow-lg transition-all duration-300 animate-fade-in"
               style={{ animationDelay: `${(index + 2) * 100}ms` }}
             >
               <div className="flex items-start gap-4 mb-6">
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-brand-tomato-500 to-brand-red-600 flex items-center justify-center shadow-md">
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-breaking)] flex items-center justify-center shadow-md">
                   <span className="text-white font-bold text-lg">{index + 1}</span>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex-1">
+                <h2 className="text-2xl md:text-3xl font-bold text-[var(--color-text-primary)] dark:text-white flex-1">
                   {section.title}
                 </h2>
               </div>
@@ -438,7 +438,7 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
                 {section.content.map((paragraph, pIndex) => (
                   <p
                     key={pIndex}
-                    className="text-gray-700 dark:text-gray-300 leading-relaxed"
+                    className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] leading-relaxed"
                   >
                     {paragraph}
                   </p>
@@ -449,7 +449,7 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-12 bg-gradient-to-br from-brand-tomato-500 to-brand-red-600 rounded-2xl shadow-xl p-8 text-center animate-fade-in-up">
+        <div className="mt-12 bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-breaking)] rounded-2xl shadow-xl p-8 text-center animate-fade-in-up">
           <h3 className="text-2xl font-bold text-white mb-4">
             {locale === 'ro' && 'Aveți întrebări?'}
             {locale === 'en' && 'Have questions?'}
@@ -462,7 +462,7 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
           </p>
           <a
             href="mailto:privacy@deschide.md"
-            className="inline-flex items-center gap-2 bg-white text-brand-tomato-500 font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors duration-200 shadow-lg hover:shadow-xl"
+            className="inline-flex items-center gap-2 bg-white text-[var(--color-accent)] font-semibold px-8 py-3 rounded-lg hover:bg-[var(--color-surface-sunken)] transition-colors duration-200 shadow-lg hover:shadow-xl"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

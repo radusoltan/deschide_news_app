@@ -92,12 +92,12 @@ export default function ArticleCard({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-heading text-brand-oxford-900 line-clamp-2 group-hover:text-brand-tomato-500 transition-colors">
+            <h3 className="text-sm font-sans text-[var(--color-text-primary)] line-clamp-2 group-hover:text-[var(--color-accent)] transition-colors">
               {article.title}
             </h3>
             {showDate && article.publishedAt && (
               <time
-                className="text-xs text-gray-500 mt-1 block"
+                className="text-xs text-[var(--color-text-tertiary)] mt-1 block"
                 dateTime={article.publishedAt}
               >
                 {formatDate(article.publishedAt, locale)}
@@ -113,12 +113,12 @@ export default function ArticleCard({
     return (
       <article className={`group ${className}`}>
         <Link href={articleUrl} className="block hover:opacity-90 transition-opacity">
-          <h3 className="text-sm font-heading text-brand-oxford-900 line-clamp-2 group-hover:text-brand-tomato-500 transition-colors mb-1">
+          <h3 className="text-sm font-sans text-[var(--color-text-primary)] line-clamp-2 group-hover:text-[var(--color-accent)] transition-colors mb-1">
             {article.title}
           </h3>
           {showDate && article.publishedAt && (
             <time
-              className="text-xs text-gray-500"
+              className="text-xs text-[var(--color-text-tertiary)]"
               dateTime={article.publishedAt}
             >
               {formatDate(article.publishedAt, locale)}
@@ -131,11 +131,11 @@ export default function ArticleCard({
 
   // Default variant - Premium Editorial Card Design
   return (
-    <article className={`group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 border border-brand-oxford-900/10 hover:border-brand-tomato/30 hover:-translate-y-1 ${className}`}>
+    <article className={`group bg-[var(--color-surface-elevated)] rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 border border-[var(--color-border)] hover:border-[var(--color-accent)]/30 hover:-translate-y-1 ${className}`}>
       <Link href={articleUrl} className="block">
         {/* Premium Thumbnail with Gradient Overlay */}
         {imageUrl && (
-          <div className="relative w-full aspect-[16/10] overflow-hidden bg-gradient-to-br from-brand-oxford-100 to-brand-oxford-50">
+          <div className="relative w-full aspect-[16/10] overflow-hidden bg-gradient-to-br from-[var(--color-surface-sunken)] to-[var(--color-surface-sunken)]">
             <Image
               src={imageUrl}
               alt={featuredImage?.alt || article.title}
@@ -145,7 +145,7 @@ export default function ArticleCard({
             />
 
             {/* Subtle Gradient Overlay on Image */}
-            <div className="absolute inset-0 bg-gradient-to-t from-brand-oxford-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-surface-dark)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
             {/* Archive Badge */}
             {isArchived && (
@@ -162,7 +162,7 @@ export default function ArticleCard({
             {/* Category Badge - Positioned over image */}
             {showCategory && article.category && (
               <div className="absolute top-3 left-3 z-10">
-                <span className="inline-block px-3 py-1.5 rounded-md bg-brand-tomato text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:bg-brand-tomato-600 transition-colors duration-300">
+                <span className="inline-block px-3 py-1.5 rounded-md bg-[var(--color-accent)] text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:bg-[var(--color-accent)] transition-colors duration-300">
                   {article.category.title}
                 </span>
               </div>
@@ -173,20 +173,20 @@ export default function ArticleCard({
         {/* Content Area */}
         <div className="p-5">
           {/* Title - Brandbook Typography */}
-          <h3 className="text-lg font-semibold text-brand-oxford-900 line-clamp-2 group-hover:text-brand-tomato-500 transition-colors duration-300 mb-3 leading-tight">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)] line-clamp-2 group-hover:text-[var(--color-accent)] transition-colors duration-300 mb-3 leading-tight">
             {article.title}
           </h3>
 
           {/* Lead Text */}
           {showLead && article.lead && (
-            <p className="text-sm font-body text-brand-oxford-900/70 line-clamp-2 mb-3 leading-relaxed">
+            <p className="text-sm font-serif text-[var(--color-text-secondary)] line-clamp-2 mb-3 leading-relaxed">
               {article.lead}
             </p>
           )}
 
           {/* Date and Time - Premium Styling */}
           {showDate && article.publishedAt && (
-            <div className="flex items-center gap-2 text-xs text-brand-oxford-900/50 font-medium">
+            <div className="flex items-center gap-2 text-xs text-[var(--color-text-tertiary)] font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -198,7 +198,7 @@ export default function ArticleCard({
         </div>
 
         {/* Subtle Mindaro Accent Bar on Hover */}
-        <div className="h-1 bg-gradient-to-r from-brand-mindaro-400 via-brand-tomato to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div className="h-1 bg-gradient-to-r from-[var(--color-accent)] via-[var(--color-accent)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       </Link>
     </article>
   );

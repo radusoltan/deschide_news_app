@@ -13,10 +13,10 @@ interface ImportantListProps {
  * Category badge component with distinctive styling
  */
 const CategoryBadge = ({ title, variant = 'default' }: { title: string; variant?: 'default' | 'hero' }) => {
-  const baseClasses = "inline-flex items-center font-heading tracking-wider rounded shadow-lg";
+  const baseClasses = "inline-flex items-center font-sans tracking-wider rounded shadow-lg";
   const variantClasses = variant === 'hero'
-    ? "px-4 py-1.5 text-xs bg-brand-tomato text-white"
-    : "px-2.5 py-1 text-[10px] bg-brand-tomato text-white";
+    ? "px-4 py-1.5 text-xs bg-[var(--color-accent)] text-white"
+    : "px-2.5 py-1 text-[10px] bg-[var(--color-accent)] text-white";
 
   return (
     <span className={`${baseClasses} ${variantClasses}`}>
@@ -82,7 +82,7 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
   };
 
   return (
-    <section className="bg-white py-6">
+    <section className="bg-[var(--color-surface-elevated)] py-6">
       <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
         {/* Main grid: 4 columns - Hero spans 2 cols + 2 rows, 4 secondary cards fill the rest */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
@@ -128,13 +128,13 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
                 </div>
 
                 {/* Title with text shadow for readability */}
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-heading text-white text-on-photo-strong mb-2 leading-tight line-clamp-3 group-hover:text-brand-mindaro-400 transition-colors duration-300">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-sans text-white text-on-photo-strong mb-2 leading-tight line-clamp-3 group-hover:text-[var(--color-accent)] transition-colors duration-300">
                   {mainArticle.article.title}
                 </h2>
 
                 {/* Lead text */}
                 {mainArticle.article.lead && (
-                  <p className="text-white text-on-photo text-sm line-clamp-2 max-w-xl font-body leading-relaxed">
+                  <p className="text-white text-on-photo text-sm line-clamp-2 max-w-xl font-serif leading-relaxed">
                     {mainArticle.article.lead}
                   </p>
                 )}
@@ -142,7 +142,7 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
                 {/* Read more indicator */}
                 <div className="mt-3 flex items-center text-white/70 text-sm font-medium transition-colors duration-300">
                   <span className="group-hover:text-white">Read article</span>
-                  <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-300 text-brand-mindaro-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-300 text-[var(--color-accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
@@ -198,7 +198,7 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
                     </div>
 
                     {/* Title with text shadow */}
-                    <h3 className="text-sm sm:text-base font-heading text-white text-on-photo-strong leading-snug line-clamp-2 group-hover:text-brand-mindaro-400 transition-colors duration-300">
+                    <h3 className="text-sm sm:text-base font-sans text-white text-on-photo-strong leading-snug line-clamp-2 group-hover:text-[var(--color-accent)] transition-colors duration-300">
                       {importantArticle.article.title}
                     </h3>
                   </div>

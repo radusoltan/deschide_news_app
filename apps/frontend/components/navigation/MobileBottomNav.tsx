@@ -140,7 +140,7 @@ export default function MobileBottomNav({
     const Icon = item.icon;
     const active = isActive(item);
 
-    const commonClasses = `flex flex-col items-center justify-center gap-1 min-h-[44px] min-w-[44px] px-2 transition-all duration-200 ease-out touch-target ${active ? 'text-brand-tomato-500' : 'text-gray-500 hover:text-gray-700 active:scale-95'}`;
+    const commonClasses = `flex flex-col items-center justify-center gap-1 min-h-[44px] min-w-[44px] px-2 transition-all duration-200 ease-out touch-target ${active ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] active:scale-95'}`;
 
     const content = (
       <>
@@ -159,7 +159,7 @@ export default function MobileBottomNav({
         </span>
         {/* Active indicator dot */}
         {active && (
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-tomato-500 animate-scale-in" />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[var(--color-accent)] animate-scale-in" />
         )}
       </>
     );
@@ -206,10 +206,10 @@ export default function MobileBottomNav({
         {/* Backdrop blur container */}
         <div className="relative">
           {/* Border top with subtle shadow */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--color-border)] to-transparent" />
 
           {/* Navigation content */}
-          <div className="bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-2px_16px_rgba(17,34,64,0.08)]">
+          <div className="bg-[var(--color-surface-elevated)]/95 backdrop-blur-md border-t border-[var(--color-border)] shadow-[0_-2px_16px_rgba(17,34,64,0.08)]">
             {/* Safe area padding */}
             <div className="h-16 flex items-center justify-around px-2">
               {navItems.map(renderNavItem)}
@@ -218,7 +218,7 @@ export default function MobileBottomNav({
 
           {/* Bottom glow effect on active */}
           <div
-            className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-brand-tomato-500/20 to-transparent pointer-events-none opacity-0 transition-opacity duration-300"
+            className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-[var(--color-accent)]/20 to-transparent pointer-events-none opacity-0 transition-opacity duration-300"
             style={{
               opacity: navItems.some(isActive) ? 0.6 : 0,
             }}

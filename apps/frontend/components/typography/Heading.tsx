@@ -34,13 +34,13 @@ export const Heading: React.FC<HeadingProps> = ({
   const Tag = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4';
 
   // Base styles - League Spartan MUST be uppercase
-  const baseStyles = 'font-heading text-crisp'; // font-heading includes uppercase transform
+  const baseStyles = 'font-sans text-crisp'; // font-sans includes uppercase transform
 
   // Color variants following brandbook
   const colorVariants = {
-    oxford: 'text-brand-oxford',
-    tomato: 'text-brand-tomato',
-    default: 'text-gray-900 dark:text-white',
+    oxford: 'text-[var(--color-text-primary)]',
+    tomato: 'text-[var(--color-accent)]',
+    default: 'text-[var(--color-text-primary)] dark:text-white',
   };
 
   // Typography scale with responsive sizing
@@ -92,12 +92,12 @@ export const HeroHeading: React.FC<Omit<HeadingProps, 'level'>> = ({
   align = 'left',
   responsive = true,
 }) => {
-  const baseStyles = 'font-heading text-crisp';
+  const baseStyles = 'font-sans text-crisp';
 
   const colorVariants = {
-    oxford: 'text-brand-oxford',
-    tomato: 'text-brand-tomato',
-    default: 'text-gray-900 dark:text-white',
+    oxford: 'text-[var(--color-text-primary)]',
+    tomato: 'text-[var(--color-accent)]',
+    default: 'text-[var(--color-text-primary)] dark:text-white',
   };
 
   const sizeStyles = responsive

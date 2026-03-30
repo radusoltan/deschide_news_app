@@ -58,9 +58,9 @@ export default async function LocaleLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="manifest" href="/site.webmanifest" />
 
-        {/* Theme color - Deschide Accent Blue */}
-        <meta name="theme-color" content="#2563eb" />
-        <meta name="msapplication-TileColor" content="#2563eb" />
+        {/* Theme color - Deschide Accent (oklch(45% 0.15 165) ≈ teal) */}
+        <meta name="theme-color" content="#1a7a6d" />
+        <meta name="msapplication-TileColor" content="#1a7a6d" />
 
         {/* Preconnect to external domains for performance */}
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL} crossOrigin="anonymous" />

@@ -102,11 +102,11 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
     return (
       <div className="container mx-auto px-4 py-8">
         {/* Author Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <div className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-lg shadow-lg p-8 mb-8">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Author Avatar */}
             <div className="flex-shrink-0">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-brand-tomato-500 to-brand-tomato-600 flex items-center justify-center text-white text-4xl font-bold">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-breaking)] flex items-center justify-center text-white text-4xl font-bold">
                 {author.firstName?.[0]}
                 {author.lastName?.[0]}
               </div>
@@ -114,25 +114,25 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
 
             {/* Author Info */}
             <div className="flex-1">
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-white mb-2">
                 {author.fullName || `${author.firstName} ${author.lastName}`}
               </h1>
               {author.title && (
-                <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-lg text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] mb-4">
                   {author.title}
                 </p>
               )}
-              <p className="text-gray-700 dark:text-gray-300 mb-4">
+              <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] mb-4">
                 {totalItems} {t.articleCount}
               </p>
 
               {/* Bio */}
               {author.bio && (
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)] dark:text-white mb-2">
                     {t.bio}
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] leading-relaxed">
                     {author.bio}
                   </p>
                 </div>
@@ -143,7 +143,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                 <div className="mt-4">
                   <a
                     href={`mailto:${author.email}`}
-                    className="inline-flex items-center gap-2 text-brand-tomato-500 hover:text-brand-tomato-600"
+                    className="inline-flex items-center gap-2 text-[var(--color-accent)] hover:text-[var(--color-accent)]"
                   >
                     <svg
                       className="w-5 h-5"
@@ -168,7 +168,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
 
         {/* Articles Section */}
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+          <h2 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-white mb-6">
             {t.articles}
           </h2>
 
@@ -188,7 +188,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                   {currentPage > 1 && (
                     <a
                       href={`/${locale}/author/${slug}?page=${currentPage - 1}`}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                      className="px-4 py-2 bg-[var(--color-surface-sunken)] text-[var(--color-text-secondary)] rounded hover:bg-[var(--color-border)] dark:bg-[var(--color-surface-elevated-dark)] dark:text-[var(--color-text-secondary)] dark:hover:bg-[var(--color-border)]"
                     >
                       {t.previous}
                     </a>
@@ -214,8 +214,8 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                           href={`/${locale}/author/${slug}?page=${pageNum}`}
                           className={`px-4 py-2 rounded ${
                             currentPage === pageNum
-                              ? 'bg-brand-tomato-500 text-white'
-                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                              ? 'bg-[var(--color-accent)] text-white'
+                              : 'bg-[var(--color-surface-sunken)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] dark:bg-[var(--color-surface-elevated-dark)] dark:text-[var(--color-text-secondary)] dark:hover:bg-[var(--color-border)]'
                           }`}
                         >
                           {pageNum}
@@ -228,7 +228,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                   {currentPage < totalPages && (
                     <a
                       href={`/${locale}/author/${slug}?page=${currentPage + 1}`}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                      className="px-4 py-2 bg-[var(--color-surface-sunken)] text-[var(--color-text-secondary)] rounded hover:bg-[var(--color-border)] dark:bg-[var(--color-surface-elevated-dark)] dark:text-[var(--color-text-secondary)] dark:hover:bg-[var(--color-border)]"
                     >
                       {t.next}
                     </a>
@@ -238,7 +238,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
             </>
           ) : (
             <div className="text-center py-12">
-              <p className="text-gray-600 dark:text-gray-400 text-lg">{t.noArticles}</p>
+              <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] text-lg">{t.noArticles}</p>
             </div>
           )}
         </div>

@@ -101,7 +101,7 @@ export const Logo: React.FC<LogoProps> = ({
       {/* Text with matched alignment */}
       <span
         className={cn(
-          'font-heading font-bold tracking-tight select-none',
+          'font-sans font-bold tracking-tight select-none',
           currentSize.fontSize,
           currentSize.lineHeight
         )}
@@ -174,7 +174,7 @@ export const LogoIcon: React.FC<LogoIconProps> = ({
   return (
     <div
       className={cn(
-        'font-heading font-bold',
+        'font-sans font-bold',
         'flex items-center justify-center',
         'rounded-lg',
         sizes[size],
@@ -213,7 +213,7 @@ export const LogoWithTagline: React.FC<LogoWithTaglineProps> = ({
       {tagline && (
         <p
           className={cn(
-            'font-body font-medium text-gray-600 dark:text-gray-400',
+            'font-serif font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-text-tertiary)]',
             taglineSizes[size]
           )}
         >

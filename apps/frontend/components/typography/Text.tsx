@@ -35,7 +35,7 @@ export const Text: React.FC<TextProps> = ({
   weight,
 }) => {
   // Base styles - Poppins font
-  const baseStyles = 'font-body text-crisp';
+  const baseStyles = 'font-serif text-crisp';
 
   // Typography variants from design system
   const variantStyles = {
@@ -48,9 +48,9 @@ export const Text: React.FC<TextProps> = ({
 
   // Color options
   const colorStyles = {
-    oxford: 'text-brand-oxford',
-    tomato: 'text-brand-tomato',
-    gray: 'text-gray-700 dark:text-gray-300',
+    oxford: 'text-[var(--color-text-primary)]',
+    tomato: 'text-[var(--color-accent)]',
+    gray: 'text-[var(--color-text-secondary)] dark:text-gray-300',
     white: 'text-white',
   };
 
@@ -99,13 +99,13 @@ export const ArticleBody: React.FC<Omit<TextProps, 'variant' | 'as'>> = ({
   return (
     <div
       className={cn(
-        'font-body text-body leading-relaxed text-gray-800 dark:text-gray-200',
+        'font-serif text-body leading-relaxed text-[var(--color-text-primary)] dark:text-gray-200',
         'prose prose-lg max-w-none',
-        'prose-headings:font-heading prose-headings:uppercase',
+        'prose-headings:font-sans prose-headings:uppercase',
         'prose-h2:text-h2 prose-h3:text-h3',
         'prose-p:text-body prose-p:leading-relaxed',
-        'prose-a:text-brand-tomato prose-a:no-underline hover:prose-a:underline',
-        'prose-strong:text-brand-oxford prose-strong:font-semibold',
+        'prose-a:text-[var(--color-accent)] prose-a:no-underline hover:prose-a:underline',
+        'prose-strong:text-[var(--color-text-primary)] prose-strong:font-semibold',
         className
       )}
       {...props}
@@ -150,8 +150,8 @@ export const Quote: React.FC<QuoteProps> = ({ children, author, className = '' }
   return (
     <blockquote
       className={cn(
-        'border-l-4 border-brand-tomato pl-6 py-4 my-6',
-        'bg-brand-oxford-light bg-opacity-30',
+        'border-l-4 border-[var(--color-accent)] pl-6 py-4 my-6',
+        'bg-[var(--color-surface-sunken)] bg-opacity-30',
         className
       )}
     >

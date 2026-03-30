@@ -111,7 +111,7 @@ export const FlashHero: React.FC<HeroTemplateProps> = ({
                   href={articleUrl}
                   className="block transition-all duration-300 hover:opacity-90 focus-brand"
                 >
-                  <span className="block text-white font-heading text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-[1.1] tracking-tight text-crisp">
+                  <span className="block text-white font-sans text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-[1.1] tracking-tight text-crisp">
                     <span className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">
                       {article.title}
                     </span>

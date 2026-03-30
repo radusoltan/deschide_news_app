@@ -61,7 +61,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   return (
     <>
       {/* Category Section - Premium Editorial Design */}
-      <div className="bg-white py-8">
+      <div className="bg-[var(--color-surface-elevated)] py-8">
         <div className="xl:container mx-auto px-4 sm:px-6 xl:px-8">
           <div className="flex flex-row flex-wrap">
             {/* Left - Main Content */}
@@ -70,15 +70,15 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               <div className="w-full mb-8">
                 <div className="relative">
                   {/* Tomato Accent Stripe */}
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-tomato"></div>
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--color-accent)]"></div>
 
                   {/* Category Title - League Spartan Bold, UPPERCASE */}
-                  <h1 className="pl-6 text-4xl md:text-5xl font-heading text-brand-oxford-900 tracking-tight">
+                  <h1 className="pl-6 text-4xl md:text-5xl font-sans text-[var(--color-text-primary)] tracking-tight">
                     {category.title}
                   </h1>
 
                   {/* Subtle bottom border */}
-                  <div className="mt-4 h-px bg-gradient-to-r from-brand-oxford-900/20 via-brand-oxford-900/10 to-transparent"></div>
+                  <div className="mt-4 h-px bg-gradient-to-r from-[var(--color-text-primary)]/20 via-[var(--color-text-primary)]/10 to-transparent"></div>
                 </div>
               </div>
 
@@ -111,12 +111,12 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                 {articles.length === 0 && (
                   <div className="flex-shrink max-w-full w-full px-3 py-16 text-center">
                     <div className="max-w-md mx-auto">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-brand-oxford-50 flex items-center justify-center">
-                        <svg className="w-8 h-8 text-brand-oxford-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--color-surface-sunken)] flex items-center justify-center">
+                        <svg className="w-8 h-8 text-[var(--color-text-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                         </svg>
                       </div>
-                      <p className="text-brand-oxford-900/70 text-lg font-body">
+                      <p className="text-[var(--color-text-primary)]/70 text-lg font-serif">
                         No articles found in this category.
                       </p>
                     </div>
@@ -127,10 +127,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               {/* Premium Pagination with Oxford Blue Buttons */}
               {totalPages > 1 && (
                 <div className="mt-12 px-3">
-                  <div className="flex items-center justify-between border-t border-brand-oxford-900/10 pt-6">
+                  <div className="flex items-center justify-between border-t border-[var(--color-text-primary)]/10 pt-6">
                     <div className="flex-1">
-                      <p className="text-brand-oxford-900/60 font-body text-sm">
-                        Page <span className="font-semibold text-brand-oxford-900">{currentPage}</span> of <span className="font-semibold text-brand-oxford-900">{totalPages}</span>
+                      <p className="text-[var(--color-text-secondary)] font-serif text-sm">
+                        Page <span className="font-semibold text-[var(--color-text-primary)]">{currentPage}</span> of <span className="font-semibold text-[var(--color-text-primary)]">{totalPages}</span>
                       </p>
                     </div>
 
@@ -138,7 +138,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                       {currentPage > 1 && (
                         <a
                           href={`${buildLocalizedUrl(`/category/${slug}`, locale)}?page=${currentPage - 1}`}
-                          className="group inline-flex items-center gap-2 px-6 py-3 bg-brand-oxford-900 text-white font-medium rounded-lg hover:bg-brand-oxford-800 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                          className="group inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-text-primary)] text-white font-medium rounded-lg hover:bg-[var(--color-text-primary)] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
                         >
                           <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -149,7 +149,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                       {currentPage < totalPages && (
                         <a
                           href={`${buildLocalizedUrl(`/category/${slug}`, locale)}?page=${currentPage + 1}`}
-                          className="group inline-flex items-center gap-2 px-6 py-3 bg-brand-oxford-900 text-white font-medium rounded-lg hover:bg-brand-oxford-800 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                          className="group inline-flex items-center gap-2 px-6 py-3 bg-[var(--color-text-primary)] text-white font-medium rounded-lg hover:bg-[var(--color-text-primary)] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
                         >
                           Next
                           <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,9 +171,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                 {/* Advertisement Placeholder - Premium Style */}
                 <div className="mt-8">
                   <div className="text-center">
-                    <span className="text-xs font-medium text-brand-oxford-900/40 uppercase tracking-wider">Advertisement</span>
-                    <div className="mt-3 bg-gradient-to-br from-brand-oxford-50 to-brand-oxford-100/50 rounded-lg h-64 flex items-center justify-center border border-brand-oxford-900/10">
-                      <span className="text-brand-oxford-900/30 font-medium">Ad Space 250x250</span>
+                    <span className="text-xs font-medium text-[var(--color-text-primary)]/40 uppercase tracking-wider">Advertisement</span>
+                    <div className="mt-3 bg-gradient-to-br from-[var(--color-surface-sunken)] to-[var(--color-surface-sunken)]/50 rounded-lg h-64 flex items-center justify-center border border-[var(--color-text-primary)]/10">
+                      <span className="text-[var(--color-text-primary)]/30 font-medium">Ad Space 250x250</span>
                     </div>
                   </div>
                 </div>

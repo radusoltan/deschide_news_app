@@ -163,20 +163,20 @@ export default function ContactPage({ params }: ContactPageProps) {
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Page Header */}
       <div className="mb-12 text-center">
-        <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">{t.title}</h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400">{t.subtitle}</p>
+        <h1 className="text-5xl font-bold text-[var(--color-text-primary)] dark:text-white mb-4">{t.title}</h1>
+        <p className="text-xl text-[var(--color-text-secondary)] dark:text-[var(--color-text-tertiary)]">{t.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Contact Form */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+          <div className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-lg shadow-lg p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name */}
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] mb-2"
                 >
                   {t.form.name} *
                 </label>
@@ -187,7 +187,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:border-transparent dark:bg-gray-700 dark:border-[var(--color-border)] dark:text-white"
                 />
               </div>
 
@@ -195,7 +195,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] mb-2"
                 >
                   {t.form.email} *
                 </label>
@@ -206,7 +206,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:border-transparent dark:bg-gray-700 dark:border-[var(--color-border)] dark:text-white"
                 />
               </div>
 
@@ -214,7 +214,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <div>
                 <label
                   htmlFor="category"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] mb-2"
                 >
                   {t.form.category} *
                 </label>
@@ -224,7 +224,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.category}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:border-transparent dark:bg-gray-700 dark:border-[var(--color-border)] dark:text-white"
                 >
                   <option value="general">{t.form.categories.general}</option>
                   <option value="press">{t.form.categories.press}</option>
@@ -238,7 +238,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <div>
                 <label
                   htmlFor="subject"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] mb-2"
                 >
                   {t.form.subject} *
                 </label>
@@ -249,7 +249,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:border-transparent dark:bg-gray-700 dark:border-[var(--color-border)] dark:text-white"
                 />
               </div>
 
@@ -257,7 +257,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] mb-2"
                 >
                   {t.form.message} *
                 </label>
@@ -268,7 +268,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   onChange={handleChange}
                   required
                   rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                  className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:border-transparent dark:bg-[var(--color-surface-elevated-dark)] dark:border-[var(--color-border)] dark:text-white resize-none"
                 />
               </div>
 
@@ -276,7 +276,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="w-full px-6 py-3 bg-brand-tomato-500 text-white rounded-lg hover:bg-brand-tomato-500-dark disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-lg"
+                className="w-full px-6 py-3 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent)] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium text-lg"
               >
                 {status === 'sending' ? t.form.sending : t.form.submit}
               </button>
@@ -289,7 +289,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               )}
 
               {status === 'error' && (
-                <div className="bg-red-50 border-l-4 border-brand-tomato-500 p-4 rounded">
+                <div className="bg-red-50 border-l-4 border-[var(--color-accent)] p-4 rounded">
                   <p className="text-red-800">{t.error}</p>
                 </div>
               )}
@@ -300,8 +300,8 @@ export default function ContactPage({ params }: ContactPageProps) {
         {/* Contact Information */}
         <div className="space-y-6">
           {/* Info Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <div className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)] dark:text-white mb-6">
               {t.info.title}
             </h2>
 
@@ -309,7 +309,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               {/* Email */}
               <div className="flex items-start gap-3">
                 <svg
-                  className="w-6 h-6 text-brand-tomato-500 mt-1"
+                  className="w-6 h-6 text-[var(--color-accent)] mt-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -322,10 +322,10 @@ export default function ContactPage({ params }: ContactPageProps) {
                   />
                 </svg>
                 <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Email</div>
+                  <div className="text-sm text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary)]">Email</div>
                   <a
                     href={`mailto:${t.info.email}`}
-                    className="text-brand-tomato-500 hover:text-brand-tomato-500-dark font-medium"
+                    className="text-[var(--color-accent)] hover:text-[var(--color-accent)] font-medium"
                   >
                     {t.info.email}
                   </a>
@@ -335,7 +335,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               {/* Address */}
               <div className="flex items-start gap-3">
                 <svg
-                  className="w-6 h-6 text-brand-tomato-500 mt-1"
+                  className="w-6 h-6 text-[var(--color-accent)] mt-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -354,7 +354,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   />
                 </svg>
                 <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="text-sm text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary)]">
                     {locale === 'ro' && 'Adresă'}
                     {locale === 'en' && 'Address'}
                     {locale === 'ru' && 'Адрес'}
@@ -368,7 +368,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               {/* Working Hours */}
               <div className="flex items-start gap-3">
                 <svg
-                  className="w-6 h-6 text-brand-tomato-500 mt-1"
+                  className="w-6 h-6 text-[var(--color-accent)] mt-1"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -390,8 +390,8 @@ export default function ContactPage({ params }: ContactPageProps) {
           </div>
 
           {/* Social Media (Placeholder) */}
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          <div className="bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-elevated-dark)] rounded-lg p-6">
+            <h3 className="text-lg font-bold text-[var(--color-text-primary)] dark:text-white mb-4">
               {locale === 'ro' && 'Urmărește-ne'}
               {locale === 'en' && 'Follow Us'}
               {locale === 'ru' && 'Следите за Нами'}
@@ -400,19 +400,19 @@ export default function ContactPage({ params }: ContactPageProps) {
               {/* Placeholder for social media icons */}
               <a
                 href="#"
-                className="w-10 h-10 bg-brand-tomato-500 rounded-full flex items-center justify-center text-white hover:bg-brand-tomato-500-dark"
+                className="w-10 h-10 bg-[var(--color-accent)] rounded-full flex items-center justify-center text-white hover:bg-[var(--color-accent)]"
               >
                 <span className="sr-only">Facebook</span>F
               </a>
               <a
                 href="#"
-                className="w-10 h-10 bg-brand-tomato-500 rounded-full flex items-center justify-center text-white hover:bg-brand-tomato-500-dark"
+                className="w-10 h-10 bg-[var(--color-accent)] rounded-full flex items-center justify-center text-white hover:bg-[var(--color-accent)]"
               >
                 <span className="sr-only">Twitter</span>T
               </a>
               <a
                 href="#"
-                className="w-10 h-10 bg-brand-tomato-500 rounded-full flex items-center justify-center text-white hover:bg-brand-tomato-500-dark"
+                className="w-10 h-10 bg-[var(--color-accent)] rounded-full flex items-center justify-center text-white hover:bg-[var(--color-accent)]"
               >
                 <span className="sr-only">Instagram</span>I
               </a>

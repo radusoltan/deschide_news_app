@@ -71,7 +71,7 @@ export const StandardHero: React.FC<HeroTemplateProps> = ({
 
   return (
     <article
-      className={`relative w-full overflow-hidden group bg-brand-oxford ${className}`}
+      className={`relative w-full overflow-hidden group bg-[var(--color-surface-dark)] ${className}`}
       data-testid="standard-hero"
     >
       {/* Hero Container - 60-70vh */}
@@ -119,10 +119,10 @@ export const StandardHero: React.FC<HeroTemplateProps> = ({
               </div>
 
               {/* Hero Title - Large dramatic typography */}
-              <h1 className="font-heading text-white mb-4 sm:mb-6 animate-fade-in-up stagger-1">
+              <h1 className="font-sans text-white mb-4 sm:mb-6 animate-fade-in-up stagger-1">
                 <Link
                   href={articleUrl}
-                  className="block transition-colors duration-300 hover:text-brand-mindaro-400 focus-brand-oxford text-crisp"
+                  className="block transition-colors duration-300 hover:text-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] text-crisp"
                 >
                   <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight text-on-photo-strong">
                     {article.title}
@@ -142,7 +142,7 @@ export const StandardHero: React.FC<HeroTemplateProps> = ({
                 {/* Read full story CTA */}
                 <Link
                   href={articleUrl}
-                  className="group/cta inline-flex items-center gap-3 px-6 py-3 bg-brand-tomato hover:bg-brand-tomato-600 text-white font-bold text-sm sm:text-base uppercase tracking-wider rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:translate-x-1 focus-brand w-fit"
+                  className="group/cta inline-flex items-center gap-3 px-6 py-3 bg-[var(--color-accent)] hover:bg-[var(--color-accent)] text-white font-bold text-sm sm:text-base uppercase tracking-wider rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:translate-x-1 focus-brand w-fit"
                 >
                   <span>{ctaText}</span>
                   <svg

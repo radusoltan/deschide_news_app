@@ -194,7 +194,7 @@ function VideoCard({ video, locale }: VideoCardProps) {
 
       {/* Content */}
       <div className="p-5">
-        <h2 className="font-heading font-bold text-white text-lg leading-tight line-clamp-2 mb-3 group-hover:text-red-100 transition-colors">
+        <h2 className="font-sans font-bold text-white text-lg leading-tight line-clamp-2 mb-3 group-hover:text-red-100 transition-colors">
           <Link href={video.youtubeUrl} target="_blank" rel="noopener noreferrer">
             {video.title}
           </Link>
@@ -386,7 +386,7 @@ export default async function EmisiuniPage({ params, searchParams }: EmisiuniPag
               </svg>
             </div>
             <div>
-              <h1 className="text-3xl sm:text-4xl font-heading font-bold text-white">
+              <h1 className="text-3xl sm:text-4xl font-sans font-bold text-white">
                 {t.title}
               </h1>
               <p className="text-slate-400 mt-1">

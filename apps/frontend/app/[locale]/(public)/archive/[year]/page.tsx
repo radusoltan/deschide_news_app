@@ -160,7 +160,7 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
         <div className="mb-6">
           <Link
             href={`/${locale}/archive`}
-            className="text-brand-tomato-500 hover:text-brand-tomato-600 font-medium"
+            className="text-[var(--color-accent)] hover:text-[var(--color-accent)] font-medium"
           >
             {t.backToArchive}
           </Link>
@@ -168,10 +168,10 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
 
         {/* Page Header */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-white mb-4">
             {t.title}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
+          <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] text-lg">
             {articles.length} {t.articlesCount} {t.subtitle.toLowerCase()} {yearNum}
           </p>
         </div>
@@ -183,17 +183,17 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
             {months.map(({ month, articles: monthArticles, count }) => (
               <section key={month} id={`month-${month + 1}`}>
                 {/* Month Header */}
-                <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-[var(--color-border)] dark:border-[var(--color-border)]">
+                  <h2 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-white">
                     {monthNamesLoc[month]} {yearNum}
                   </h2>
                   <div className="flex items-center gap-4">
-                    <span className="text-gray-600 dark:text-gray-400">
+                    <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">
                       {count} {t.articlesCount}
                     </span>
                     <Link
                       href={`/${locale}/archive/${yearNum}/${month + 1}`}
-                      className="text-brand-tomato-500 hover:text-brand-tomato-600 font-medium text-sm"
+                      className="text-[var(--color-accent)] hover:text-[var(--color-accent)] font-medium text-sm"
                     >
                       {t.viewAll} →
                     </Link>
@@ -210,8 +210,8 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
             ))}
 
             {/* Quick Navigation */}
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-elevated-dark)] rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] dark:text-white mb-4">
                 {locale === 'ro' && 'Navigare Rapidă'}
                 {locale === 'en' && 'Quick Navigation'}
                 {locale === 'ru' && 'Быстрая Навигация'}
@@ -221,12 +221,12 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
                   <a
                     key={month}
                     href={`#month-${month + 1}`}
-                    className="px-4 py-2 bg-white dark:bg-gray-700 rounded-lg text-center hover:bg-red-50 dark:hover:bg-gray-600 transition-colors"
+                    className="px-4 py-2 bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-lg text-center hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-border)] transition-colors"
                   >
-                    <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                    <div className="font-semibold text-[var(--color-text-primary)] dark:text-white text-sm">
                       {monthNamesLoc[month].substring(0, 3)}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{count}</div>
+                    <div className="text-xs text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary)]">{count}</div>
                   </a>
                 ))}
               </div>
@@ -234,7 +234,7 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400 text-lg">{t.noArticles}</p>
+            <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] text-lg">{t.noArticles}</p>
           </div>
         )}
       </div>

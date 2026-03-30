@@ -40,9 +40,9 @@ const sizeClasses = {
 };
 
 const colorClasses = {
-  tomato: 'border-brand-tomato-200 border-t-brand-tomato-500',
-  oxford: 'border-brand-oxford-200 border-t-brand-oxford-900',
-  red: 'border-brand-red-200 border-t-brand-red-600',
+  tomato: 'border-[var(--color-accent)]/30 border-t-[var(--color-accent)]',
+  oxford: 'border-[var(--color-surface-sunken)] border-t-[var(--color-text-primary)]',
+  red: 'border-[var(--color-breaking)]/30 border-t-[var(--color-breaking)]',
 };
 
 const textSizeClasses = {
@@ -78,7 +78,7 @@ export function LoadingSpinner({
 
       {/* Loading Text */}
       {text && (
-        <p className={`${textSizeClasses[size]} text-gray-600 font-medium`}>
+        <p className={`${textSizeClasses[size]} text-[var(--color-text-secondary)] font-medium`}>
           {text}
         </p>
       )}
@@ -171,9 +171,9 @@ export function InlineLoader({
   variant = 'tomato'
 }: InlineLoaderProps) {
   const variantColors = {
-    tomato: 'border-brand-tomato-200 border-t-brand-tomato-500',
-    oxford: 'border-brand-oxford-200 border-t-brand-oxford-900',
-    red: 'border-brand-red-200 border-t-brand-red-600',
+    tomato: 'border-[var(--color-accent)]/30 border-t-[var(--color-accent)]',
+    oxford: 'border-[var(--color-surface-sunken)] border-t-[var(--color-text-primary)]',
+    red: 'border-[var(--color-breaking)]/30 border-t-[var(--color-breaking)]',
     white: 'border-white/30 border-t-white',
   };
 
@@ -218,9 +218,9 @@ export function PulseLoader({
   className = ''
 }: PulseLoaderProps) {
   const dotColors = {
-    tomato: 'bg-brand-tomato-500',
-    oxford: 'bg-brand-oxford-900',
-    red: 'bg-brand-red-600',
+    tomato: 'bg-[var(--color-accent)]',
+    oxford: 'bg-[var(--color-text-primary)]',
+    red: 'bg-[var(--color-breaking)]',
   };
 
   return (

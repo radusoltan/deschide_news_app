@@ -141,7 +141,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, locale, onPlay, featured =
         'backdrop-blur-md',
         'border border-slate-700/30',
         'transition-all duration-700 ease-out',
-        'hover:border-brand-tomato-500/50',
+        'hover:border-[var(--color-accent)]/50',
         'hover:shadow-[0_20px_60px_-15px_rgba(240,94,69,0.3)]',
         'hover:-translate-y-2',
         'cursor-pointer',
@@ -192,7 +192,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, locale, onPlay, featured =
             'relative flex items-center justify-center',
             'w-20 h-20 sm:w-24 sm:h-24',
             'rounded-full',
-            'bg-gradient-to-br from-brand-tomato-500 to-brand-tomato-600',
+            'bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-accent)]',
             'shadow-[0_0_40px_rgba(240,94,69,0.4)]',
             'transition-all duration-500 ease-out',
             'group-hover:scale-125 group-hover:shadow-[0_0_60px_rgba(240,94,69,0.6)]',
@@ -228,7 +228,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, locale, onPlay, featured =
             'border border-white/10',
             'shadow-lg',
             'transition-all duration-300',
-            'group-hover:bg-brand-tomato-500/90 group-hover:border-brand-tomato-400/30'
+            'group-hover:bg-[var(--color-accent)]/90 group-hover:border-[var(--color-accent)]/30'
           )}>
             {video.durationFormatted}
           </div>
@@ -239,10 +239,10 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, locale, onPlay, featured =
           <div className={cn(
             'absolute top-3 left-3',
             'px-3 py-1.5',
-            'bg-gradient-to-r from-brand-tomato-500 to-brand-tomato-600',
-            'rounded-md shadow-lg shadow-brand-tomato-500/50',
+            'bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent)]',
+            'rounded-md shadow-lg shadow-[var(--color-accent)]/50',
             'text-[11px] font-bold uppercase tracking-widest text-white',
-            'border border-brand-tomato-400/30',
+            'border border-[var(--color-accent)]/30',
             'animate-pulse'
           )}>
             <div className="flex items-center gap-1.5">
@@ -278,10 +278,10 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, locale, onPlay, featured =
       <div className="p-5 sm:p-6 space-y-3">
         {/* Title with Better Hierarchy */}
         <h3 className={cn(
-          'font-heading font-bold text-white leading-snug',
+          'font-sans font-bold text-white leading-snug',
           'line-clamp-2',
           'transition-all duration-300',
-          'group-hover:text-brand-tomato-100',
+          'group-hover:text-[var(--color-accent)]/80',
           featured ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'
         )}>
           {video.title}
@@ -311,7 +311,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, locale, onPlay, featured =
           </div>
 
           {/* Published Date - Accent Color */}
-          <span className="text-slate-500 transition-colors group-hover:text-brand-tomato-400">
+          <span className="text-slate-500 transition-colors group-hover:text-[var(--color-accent)]">
             {formatPublishedDate(video.publishedAt, locale)}
           </span>
         </div>
@@ -374,7 +374,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ video, onClose, locale }) => {
 
       {/* Ambient Light Effect */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-tomato-500/20 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--color-accent)]/20 rounded-full blur-[120px]" />
       </div>
 
       {/* Modal Content */}
@@ -393,8 +393,8 @@ const VideoModal: React.FC<VideoModalProps> = ({ video, onClose, locale }) => {
             'absolute -top-14 right-0 z-10',
             'w-12 h-12 rounded-full',
             'flex items-center justify-center',
-            'bg-white/5 hover:bg-brand-tomato-500/20',
-            'border border-white/10 hover:border-brand-tomato-500/50',
+            'bg-white/5 hover:bg-[var(--color-accent)]/20',
+            'border border-white/10 hover:border-[var(--color-accent)]/50',
             'text-white/70 hover:text-white',
             'backdrop-blur-md',
             'transition-all duration-300',
@@ -425,7 +425,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ video, onClose, locale }) => {
 
         {/* Video Info - Premium Design */}
         <div className="mt-6 sm:mt-8 text-center space-y-3">
-          <h3 className="text-xl sm:text-2xl lg:text-3xl font-heading font-bold text-white leading-tight px-4">
+          <h3 className="text-xl sm:text-2xl lg:text-3xl font-sans font-bold text-white leading-tight px-4">
             {video.title}
           </h3>
 
@@ -508,8 +508,8 @@ export const VideoShowsSlider: React.FC<VideoShowsSliderProps> = ({
         {/* Premium Background Effects */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Radial Gradient Orbs */}
-          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-brand-tomato-500/10 rounded-full blur-[120px] opacity-40" />
-          <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-brand-oxford-600/10 rounded-full blur-[140px] opacity-30" />
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[var(--color-accent)]/10 rounded-full blur-[120px] opacity-40" />
+          <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-[var(--color-surface-dark)]/10 rounded-full blur-[140px] opacity-30" />
 
           {/* Subtle Noise Texture */}
           <div
@@ -538,18 +538,18 @@ export const VideoShowsSlider: React.FC<VideoShowsSliderProps> = ({
                 'flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16',
                 'flex items-center justify-center',
                 'rounded-2xl',
-                'bg-gradient-to-br from-brand-tomato-500/20 to-brand-tomato-600/20',
-                'border border-brand-tomato-500/30',
+                'bg-gradient-to-br from-[var(--color-accent)]/20 to-[var(--color-accent)]/20',
+                'border border-[var(--color-accent)]/30',
                 'shadow-[0_0_40px_rgba(240,94,69,0.15)]',
                 'backdrop-blur-sm'
               )}>
-                <svg className="w-7 h-7 sm:w-8 sm:h-8 text-brand-tomato-400" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-7 h-7 sm:w-8 sm:h-8 text-[var(--color-accent)]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/>
                 </svg>
               </div>
 
               <div>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-extrabold text-white tracking-tight leading-tight">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-sans font-extrabold text-white tracking-tight leading-tight">
                   {title || t.title}
                 </h2>
                 <p className="text-sm sm:text-base text-slate-400 mt-1.5 font-medium">
@@ -565,12 +565,12 @@ export const VideoShowsSlider: React.FC<VideoShowsSliderProps> = ({
                 'group inline-flex items-center gap-2.5',
                 'px-6 py-3 rounded-full',
                 'bg-gradient-to-r from-white/5 to-white/10',
-                'hover:from-brand-tomato-500/20 hover:to-brand-tomato-600/20',
-                'border border-white/10 hover:border-brand-tomato-500/50',
+                'hover:from-[var(--color-accent)]/20 hover:to-[var(--color-accent)]/20',
+                'border border-white/10 hover:border-[var(--color-accent)]/50',
                 'backdrop-blur-sm',
                 'text-sm font-semibold text-white/90 hover:text-white',
                 'transition-all duration-500',
-                'shadow-lg shadow-black/10 hover:shadow-brand-tomato-500/20',
+                'shadow-lg shadow-black/10 hover:shadow-[var(--color-accent)]/20',
                 'hover:scale-105'
               )}
             >
@@ -587,9 +587,9 @@ export const VideoShowsSlider: React.FC<VideoShowsSliderProps> = ({
               <button
                 className={cn(
                   'px-5 py-2.5 rounded-full text-sm font-semibold',
-                  'bg-gradient-to-r from-brand-tomato-500 to-brand-tomato-600',
-                  'text-white shadow-lg shadow-brand-tomato-500/30',
-                  'border border-brand-tomato-400/30',
+                  'bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent)]',
+                  'text-white shadow-lg shadow-[var(--color-accent)]/30',
+                  'border border-[var(--color-accent)]/30',
                   'transition-all duration-300 hover:scale-105'
                 )}
               >
@@ -679,11 +679,11 @@ export const VideoShowsSlider: React.FC<VideoShowsSliderProps> = ({
                 'w-14 h-14 rounded-full',
                 'items-center justify-center',
                 'bg-gradient-to-br from-slate-800/90 to-slate-900/90',
-                'hover:from-brand-tomato-500/90 hover:to-brand-tomato-600/90',
-                'border border-slate-700/50 hover:border-brand-tomato-500/50',
+                'hover:from-[var(--color-accent)]/90 hover:to-[var(--color-accent)]/90',
+                'border border-slate-700/50 hover:border-[var(--color-accent)]/50',
                 'backdrop-blur-md',
                 'text-white/80 hover:text-white',
-                'shadow-2xl shadow-black/30 hover:shadow-brand-tomato-500/30',
+                'shadow-2xl shadow-black/30 hover:shadow-[var(--color-accent)]/30',
                 'transition-all duration-500 ease-out',
                 'disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:from-slate-800/90',
                 'hover:scale-110 active:scale-95',
@@ -705,11 +705,11 @@ export const VideoShowsSlider: React.FC<VideoShowsSliderProps> = ({
                 'w-14 h-14 rounded-full',
                 'items-center justify-center',
                 'bg-gradient-to-br from-slate-800/90 to-slate-900/90',
-                'hover:from-brand-tomato-500/90 hover:to-brand-tomato-600/90',
-                'border border-slate-700/50 hover:border-brand-tomato-500/50',
+                'hover:from-[var(--color-accent)]/90 hover:to-[var(--color-accent)]/90',
+                'border border-slate-700/50 hover:border-[var(--color-accent)]/50',
                 'backdrop-blur-md',
                 'text-white/80 hover:text-white',
-                'shadow-2xl shadow-black/30 hover:shadow-brand-tomato-500/30',
+                'shadow-2xl shadow-black/30 hover:shadow-[var(--color-accent)]/30',
                 'transition-all duration-500 ease-out',
                 'disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:from-slate-800/90',
                 'hover:scale-110 active:scale-95',
@@ -732,8 +732,8 @@ export const VideoShowsSlider: React.FC<VideoShowsSliderProps> = ({
                 'w-12 h-12 rounded-full',
                 'flex items-center justify-center',
                 'bg-gradient-to-br from-slate-800/90 to-slate-900/90',
-                'hover:from-brand-tomato-500/90 hover:to-brand-tomato-600/90',
-                'border border-slate-700/50 hover:border-brand-tomato-500/50',
+                'hover:from-[var(--color-accent)]/90 hover:to-[var(--color-accent)]/90',
+                'border border-slate-700/50 hover:border-[var(--color-accent)]/50',
                 'text-white/80 hover:text-white',
                 'backdrop-blur-sm',
                 'transition-all duration-300',
@@ -753,8 +753,8 @@ export const VideoShowsSlider: React.FC<VideoShowsSliderProps> = ({
                 'w-12 h-12 rounded-full',
                 'flex items-center justify-center',
                 'bg-gradient-to-br from-slate-800/90 to-slate-900/90',
-                'hover:from-brand-tomato-500/90 hover:to-brand-tomato-600/90',
-                'border border-slate-700/50 hover:border-brand-tomato-500/50',
+                'hover:from-[var(--color-accent)]/90 hover:to-[var(--color-accent)]/90',
+                'border border-slate-700/50 hover:border-[var(--color-accent)]/50',
                 'text-white/80 hover:text-white',
                 'backdrop-blur-sm',
                 'transition-all duration-300',

@@ -106,10 +106,10 @@ export default async function TrendingPage({
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-white mb-4">
             {t.title}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">{t.subtitle}</p>
+          <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">{t.subtitle}</p>
         </div>
 
         {/* Period Filter */}
@@ -119,8 +119,8 @@ export default async function TrendingPage({
               href={`/${locale}/trending?period=today`}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 period === 'today'
-                  ? 'bg-brand-tomato-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  ? 'bg-[var(--color-accent)] text-white'
+                  : 'bg-[var(--color-surface-sunken)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] dark:bg-[var(--color-surface-elevated-dark)] dark:text-[var(--color-text-secondary)] dark:hover:bg-[var(--color-border)]'
               }`}
             >
               {t.today}
@@ -129,8 +129,8 @@ export default async function TrendingPage({
               href={`/${locale}/trending?period=week`}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 period === 'week'
-                  ? 'bg-brand-tomato-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  ? 'bg-[var(--color-accent)] text-white'
+                  : 'bg-[var(--color-surface-sunken)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] dark:bg-[var(--color-surface-elevated-dark)] dark:text-[var(--color-text-secondary)] dark:hover:bg-[var(--color-border)]'
               }`}
             >
               {t.week}
@@ -139,8 +139,8 @@ export default async function TrendingPage({
               href={`/${locale}/trending?period=month`}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 period === 'month'
-                  ? 'bg-brand-tomato-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  ? 'bg-[var(--color-accent)] text-white'
+                  : 'bg-[var(--color-surface-sunken)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] dark:bg-[var(--color-surface-elevated-dark)] dark:text-[var(--color-text-secondary)] dark:hover:bg-[var(--color-border)]'
               }`}
             >
               {t.month}
@@ -175,7 +175,7 @@ export default async function TrendingPage({
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
+            <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] text-lg">
               {t.noArticles}
             </p>
           </div>

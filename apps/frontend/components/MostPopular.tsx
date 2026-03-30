@@ -33,10 +33,10 @@ export default async function MostPopular({
   }
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full bg-[var(--color-surface-elevated)]">
       {/* Simple Header - matches homepage pattern */}
-      <div className="p-4 bg-gray-100">
-        <h2 className="text-lg font-bold text-brand-oxford-900">Most Popular</h2>
+      <div className="p-4 bg-[var(--color-surface-sunken)]">
+        <h2 className="text-lg font-bold text-[var(--color-text-primary)]">Most Popular</h2>
       </div>
 
       {/* Simple Articles List */}
@@ -47,11 +47,11 @@ export default async function MostPopular({
           return (
             <li
               key={article.id}
-              className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+              className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-sunken)] transition-colors"
             >
               <Link
                 href={articleUrl}
-                className="text-base font-bold px-6 py-3 flex flex-row items-center text-brand-oxford-900 hover:text-brand-tomato-500 transition-colors"
+                className="text-base font-bold px-6 py-3 flex flex-row items-center text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
               >
                 {article.title}
               </Link>
