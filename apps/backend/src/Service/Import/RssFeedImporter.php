@@ -10,6 +10,7 @@ use App\Entity\Author;
 use App\Entity\Category;
 use App\Entity\ExternalArticleMapping;
 use App\Entity\Image;
+use App\Enum\ArticleBadge;
 use App\Enum\ArticleStatus;
 use App\Enum\CategoryStatus;
 use App\Message\TranslateArticleMessage;
@@ -17,6 +18,7 @@ use App\Repository\AuthorRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\ExternalArticleMappingRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -24,36 +26,39 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Temporary RSS feed importer for deschide.md content population.
+ * Imports articles from deschide.md via Supabase REST API (paginated).
  *
- * Strategy: RSS feed provides item list + metadata, then Supabase REST API
- * is queried per-article (by slug) to fetch full content_text HTML.
- *
- *  Source               → Symfony Field                    | Transform
+ *  Source (Supabase)       → Symfony Field                    | Transform
  *  ──────────────────────────────────────────────────────────────────────
- *  RSS <title>          → Article.title                    | strip_tags, trim
- *  RSS <guid>           → ExternalArticleMapping.externalId| deduplication key
- *  Supabase content_text→ Article.content                  | full HTML body
- *  Supabase lead_text   → Article.lead                     | strip_tags, truncate 500
- *  RSS <description>    → fallback for lead+content        | if Supabase unavailable
- *  RSS <category>       → Category (findOrCreate)          | default: 'General'
- *  RSS <author>         → Author (findOrCreate)            | default: 'Redacția'
- *  RSS <pubDate>        → Article.publishedAt              | DateTimeImmutable
- *  RSS <enclosure url>  → Image (download + attach)        | download to uploads/images/rss/
- *  RSS <link>           → metadata.original_link           | stored for reference
+ *  id                      → ExternalArticleMapping.externalId| deduplication key
+ *  title                   → Article.title                    | strip_tags, trim
+ *  lead_text               → Article.lead                     | strip_tags, truncate 500
+ *  content_text            → Article.content                  | full HTML body
+ *  category                → Category (via CATEGORY_MAP)      | findOrCreate
+ *  author                  → Author (findOrCreate)            | slug → full name
+ *  published_at            → Article.publishedAt              | DateTimeImmutable
+ *  main_image              → Image (download + attach)        | download to uploads/images/rss/
+ *  is_breaking_news        → Article.badge = BREAKING         | priority: breaking > alert > flash
+ *  is_news_alert           → Article.badge = ALERT            |
+ *  is_flash_news           → Article.badge = FLASH            |
+ *  is_featured             → Article.isFeatured               |
+ *  title_ru                → Gedmo translation (ru)           | if non-empty
+ *  lead_text_ru            → Gedmo translation (ru)           | if non-empty
+ *  content_text_ru         → Gedmo translation (ru)           | if non-empty
  */
 final class RssFeedImporter
 {
-    private const SOURCE_NAME = 'rss_deschide_md';
-    private const FEED_URL = 'https://krjjgzewhghcdzckcjmb.supabase.co/functions/v1/rss';
+    private const SOURCE_NAME = 'supabase_deschide_md';
     private const SUPABASE_URL = 'https://krjjgzewhghcdzckcjmb.supabase.co';
     private const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtyampnemV3aGdoY2R6Y2tjam1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzIwNjMsImV4cCI6MjA3Nzc0ODA2M30.RKs9-zwJCKXGu2Jc45KEUw-oUS9yjZfPbMGKCNzaHAE';
-    private const BATCH_SIZE = 20;
+    private const BATCH_SIZE = 50;
+    private const PAGE_SIZE = 100;
     private const IMAGE_DIR = 'images/rss';
 
+    private const SUPABASE_SELECT = 'id,title,slug,lead_text,content_text,category,author,published_at,main_image,is_breaking_news,is_news_alert,is_flash_news,is_featured,draft,archived,title_ru,lead_text_ru,content_text_ru';
+
     /**
-     * Maps RSS category names (lowercase) → existing DB category titles.
-     * Prevents creation of duplicate categories during import.
+     * Maps Supabase category names (lowercase) → existing DB category titles.
      */
     private const CATEGORY_MAP = [
         'social'       => 'Societate',
@@ -104,38 +109,47 @@ final class RssFeedImporter
     {
         $stats = ['total' => 0, 'imported' => 0, 'skipped' => 0, 'errors' => 0, 'details' => []];
 
-        $xml = $this->fetchFeed();
-        if ($xml === null) {
-            $stats['details'][] = 'EROARE: Nu am putut descărca/parsa feed-ul RSS.';
-            return $stats;
-        }
+        $offset = 0;
 
-        $items = $xml->channel->item ?? [];
-        foreach ($items as $item) {
-            if ($stats['imported'] >= $limit) {
+        while ($stats['imported'] < $limit) {
+            $rows = $this->fetchPage($offset);
+            if ($rows === null || \count($rows) === 0) {
                 break;
             }
-            $stats['total']++;
 
-            try {
-                $result = $this->processItem($item, $dryRun, $dispatchTranslations);
-                $stats[$result['status']]++;
-                if (!empty($result['message'])) {
-                    $stats['details'][] = $result['message'];
+            foreach ($rows as $row) {
+                if ($stats['imported'] >= $limit) {
+                    break 2;
                 }
-            } catch (\Throwable $e) {
-                $stats['errors']++;
-                $stats['details'][] = \sprintf('Eroare la item #%d: %s', $stats['total'], $e->getMessage());
-                $this->logger->error('RSS import error', ['exception' => $e]);
+
+                $stats['total']++;
+
+                try {
+                    $result = $this->processRow($row, $dryRun, $dispatchTranslations);
+                    $stats[$result['status']]++;
+                    if (!empty($result['message'])) {
+                        $stats['details'][] = $result['message'];
+                    }
+                } catch (\Throwable $e) {
+                    $stats['errors']++;
+                    $stats['details'][] = \sprintf('Eroare la #%d: %s', $stats['total'], $e->getMessage());
+                    $this->logger->error('Supabase import error', ['exception' => $e]);
+
+                    if (!$this->em->isOpen()) {
+                        break 2;
+                    }
+                }
+
+                if ($stats['imported'] > 0 && $stats['imported'] % self::BATCH_SIZE === 0 && !$dryRun) {
+                    $this->em->flush();
+                    $this->em->clear();
+                    $this->categoryCache = [];
+                    $this->authorCache = [];
+                    $this->logger->info(\sprintf('Batch flush la %d articole importate', $stats['imported']));
+                }
             }
 
-            if ($stats['imported'] > 0 && $stats['imported'] % self::BATCH_SIZE === 0 && !$dryRun) {
-                $this->em->flush();
-                $this->em->clear();
-                $this->categoryCache = [];
-                $this->authorCache = [];
-                $this->logger->info(\sprintf('Batch flush la %d articole importate', $stats['imported']));
-            }
+            $offset += self::PAGE_SIZE;
         }
 
         if (!$dryRun) {
@@ -145,97 +159,111 @@ final class RssFeedImporter
         return $stats;
     }
 
-    private function fetchFeed(): ?\SimpleXMLElement
+    /**
+     * Fetch a page of articles from Supabase REST API.
+     *
+     * @return list<array<string, mixed>>|null
+     */
+    private function fetchPage(int $offset): ?array
     {
         try {
-            $response = $this->httpClient->request('GET', self::FEED_URL, [
+            $response = $this->httpClient->request('GET', self::SUPABASE_URL . '/rest/v1/articles', [
                 'timeout' => 30,
+                'query' => [
+                    'select' => self::SUPABASE_SELECT,
+                    'draft' => 'eq.false',
+                    'archived' => 'eq.false',
+                    'order' => 'published_at.desc',
+                    'offset' => (string) $offset,
+                    'limit' => (string) self::PAGE_SIZE,
+                ],
                 'headers' => [
-                    'Accept' => 'application/rss+xml, application/xml, text/xml',
-                    'User-Agent' => 'DeschideNewsApp/1.0 RSS Importer',
+                    'apikey' => self::SUPABASE_ANON_KEY,
+                    'Authorization' => 'Bearer ' . self::SUPABASE_ANON_KEY,
                 ],
             ]);
 
-            $content = $response->getContent();
-            $content = ltrim($content, "\xEF\xBB\xBF");
-
-            return new \SimpleXMLElement($content);
+            return $response->toArray();
         } catch (\Throwable $e) {
-            $this->logger->error('RSS feed fetch failed', ['error' => $e->getMessage()]);
+            $this->logger->error('Supabase page fetch failed', [
+                'offset' => $offset,
+                'error' => $e->getMessage(),
+            ]);
+
             return null;
         }
     }
 
     /**
+     * @param array<string, mixed> $row
      * @return array{status: 'imported'|'skipped'|'errors', message: string}
      */
-    private function processItem(\SimpleXMLElement $item, bool $dryRun, bool $dispatchTranslations): array
+    private function processRow(array $row, bool $dryRun, bool $dispatchTranslations): array
     {
-        $guid = (string) ($item->guid ?? $item->link ?? '');
-        if ($guid === '') {
-            return ['status' => 'errors', 'message' => 'Item fără guid/link — skip'];
+        $externalId = (string) ($row['id'] ?? '');
+        if ($externalId === '') {
+            return ['status' => 'errors', 'message' => 'Row fără id — skip'];
         }
 
-        if ($this->mappingRepository->existsByExternalId(self::SOURCE_NAME, $guid)) {
+        if ($this->mappingRepository->existsByExternalId(self::SOURCE_NAME, $externalId)) {
             return ['status' => 'skipped', 'message' => ''];
         }
 
-        $title = trim(strip_tags((string) $item->title));
+        $title = trim(strip_tags((string) ($row['title'] ?? '')));
         if ($title === '') {
-            return ['status' => 'errors', 'message' => 'Item fără titlu — skip'];
+            return ['status' => 'errors', 'message' => 'Row fără titlu — skip'];
         }
 
-        // Extract slug from <link> URL (last path segment)
-        $originalLink = (string) ($item->link ?? '');
-        $slug = $this->extractSlugFromUrl($originalLink);
-
-        // Fetch full content from Supabase REST API
-        $fullArticle = $slug !== '' ? $this->fetchFromSupabase($slug) : null;
-
-        // Content: prefer Supabase content_text, fallback to RSS description
-        $description = trim((string) ($item->description ?? ''));
-        if ($fullArticle !== null && !empty($fullArticle['content_text'])) {
-            $content = $fullArticle['content_text'];
-            $lead = mb_substr(strip_tags($fullArticle['lead_text'] ?? $description), 0, 500);
-        } else {
-            $lead = mb_substr(strip_tags($description), 0, 500);
-            $content = $description !== '' ? '<p>' . nl2br(htmlspecialchars(strip_tags($description), \ENT_QUOTES, 'UTF-8')) . '</p>' : '';
+        $content = (string) ($row['content_text'] ?? '');
+        if ($content === '') {
+            return ['status' => 'errors', 'message' => \sprintf('Skip (fără conținut): %s', $title)];
         }
 
-        $categoryName = trim((string) ($item->category ?? ''));
+        $lead = mb_substr(strip_tags((string) ($row['lead_text'] ?? '')), 0, 500);
+
+        $categoryName = trim((string) ($row['category'] ?? ''));
         if ($categoryName === '') {
-            $categoryName = 'General';
+            $categoryName = 'social';
         }
 
-        $authorName = trim((string) ($item->author ?? ''));
-        if ($authorName === '') {
-            $authorName = 'Redacția';
-        }
+        $authorSlug = trim((string) ($row['author'] ?? ''));
+        $authorName = $this->humanizeAuthorSlug($authorSlug !== '' ? $authorSlug : 'Redacția');
 
-        $pubDate = null;
-        $pubDateStr = (string) ($item->pubDate ?? '');
+        $pubDate = new \DateTimeImmutable();
+        $pubDateStr = (string) ($row['published_at'] ?? '');
         if ($pubDateStr !== '') {
             try {
                 $pubDate = new \DateTimeImmutable($pubDateStr);
             } catch (\Throwable) {
-                $pubDate = new \DateTimeImmutable();
+                // keep default
             }
-        } else {
-            $pubDate = new \DateTimeImmutable();
         }
 
-        $imageUrl = '';
-        if ($item->enclosure) {
-            $enclosureType = (string) $item->enclosure['type'];
-            if (str_starts_with($enclosureType, 'image/')) {
-                $imageUrl = (string) $item->enclosure['url'];
-            }
+        $imageUrl = (string) ($row['main_image'] ?? '');
+
+        // Badge
+        $badge = null;
+        if (!empty($row['is_breaking_news'])) {
+            $badge = ArticleBadge::BREAKING;
+        } elseif (!empty($row['is_news_alert'])) {
+            $badge = ArticleBadge::ALERT;
+        } elseif (!empty($row['is_flash_news'])) {
+            $badge = ArticleBadge::FLASH;
         }
+
+        $isFeatured = !empty($row['is_featured']);
 
         $contentLen = mb_strlen(strip_tags($content));
+
         if ($dryRun) {
-            $source = ($fullArticle !== null && !empty($fullArticle['content_text'])) ? 'supabase' : 'rss-fallback';
-            return ['status' => 'imported', 'message' => \sprintf('[DRY-RUN] %s | cat: %s | %d chars (%s)', $title, $categoryName, $contentLen, $source)];
+            return ['status' => 'imported', 'message' => \sprintf(
+                '[DRY-RUN] %s | cat: %s | autor: %s | %d chars%s',
+                $title,
+                $categoryName,
+                $authorName,
+                $contentLen,
+                $badge ? ' [' . $badge->value . ']' : '',
+            )];
         }
 
         $category = $this->findOrCreateCategory($categoryName);
@@ -250,6 +278,11 @@ final class RssFeedImporter
         $article->setPublishedAt($pubDate);
         $article->setCategory($category);
         $article->addAuthor($author);
+        $article->setIsFeatured($isFeatured);
+
+        if ($badge !== null) {
+            $article->setBadge($badge);
+        }
 
         $this->em->persist($article);
 
@@ -265,27 +298,33 @@ final class RssFeedImporter
             }
         }
 
-        // Flush to get article ID for mapping and translation dispatch
+        // Flush to get article ID
         $this->em->flush();
 
+        // Save RU translations if available from Supabase
+        $this->saveRuTranslations($article, $row);
+
+        // External mapping for deduplication
         $mapping = new ExternalArticleMapping();
         $mapping->setSource(self::SOURCE_NAME);
-        $mapping->setExternalId($guid);
+        $mapping->setExternalId($externalId);
         $mapping->setArticle($article);
         $mapping->setMetadata([
-            'original_link' => $originalLink,
+            'original_slug' => (string) ($row['slug'] ?? ''),
             'original_category' => $categoryName,
-            'original_author' => $authorName,
-            'content_source' => ($fullArticle !== null && !empty($fullArticle['content_text'])) ? 'supabase' : 'rss_description',
+            'original_author' => $authorSlug,
             'content_length' => $contentLen,
+            'has_ru_translation' => !empty($row['title_ru']),
             'imported_at' => (new \DateTimeImmutable())->format('c'),
         ]);
         $this->em->persist($mapping);
 
+        // Dispatch EN translation (RU is handled above from Supabase data)
         if ($dispatchTranslations && $article->getId() !== null) {
+            $locales = !empty($row['title_ru']) ? ['en'] : ['ru', 'en'];
             $this->messageBus->dispatch(new TranslateArticleMessage(
                 articleId: $article->getId(),
-                locales: ['ru', 'en'],
+                locales: $locales,
                 forceRetranslate: false,
             ));
         }
@@ -294,53 +333,45 @@ final class RssFeedImporter
     }
 
     /**
-     * Extract the article slug from a deschide.md URL.
-     * Example: https://deschide.md/articole/my-article-slug → my-article-slug
+     * Convert author slug ("iulian-chifu") to human name ("Iulian Chifu").
      */
-    private function extractSlugFromUrl(string $url): string
+    private function humanizeAuthorSlug(string $slug): string
     {
-        $path = parse_url($url, \PHP_URL_PATH);
-        if ($path === null || $path === false) {
-            return '';
+        if (!str_contains($slug, '-') || str_contains($slug, ' ')) {
+            return $slug;
         }
 
-        $segments = explode('/', rtrim($path, '/'));
-
-        return end($segments) ?: '';
+        return mb_convert_case(str_replace('-', ' ', $slug), \MB_CASE_TITLE, 'UTF-8');
     }
 
     /**
-     * Fetch full article data from Supabase REST API by slug.
+     * Save Russian translations directly from Supabase data via Gedmo.
      *
-     * @return array{content_text: string, lead_text: string|null}|null
+     * @param array<string, mixed> $row
      */
-    private function fetchFromSupabase(string $slug): ?array
+    private function saveRuTranslations(Article $article, array $row): void
     {
-        try {
-            $response = $this->httpClient->request('GET', self::SUPABASE_URL . '/rest/v1/articles', [
-                'timeout' => 10,
-                'query' => [
-                    'slug' => 'eq.' . $slug,
-                    'select' => 'content_text,lead_text',
-                    'limit' => '1',
-                ],
-                'headers' => [
-                    'apikey' => self::SUPABASE_ANON_KEY,
-                    'Authorization' => 'Bearer ' . self::SUPABASE_ANON_KEY,
-                ],
-            ]);
-
-            $data = $response->toArray();
-
-            return !empty($data[0]['content_text']) ? $data[0] : null;
-        } catch (\Throwable $e) {
-            $this->logger->warning('Supabase fetch failed for slug', [
-                'slug' => $slug,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
+        $titleRu = trim((string) ($row['title_ru'] ?? ''));
+        if ($titleRu === '') {
+            return;
         }
+
+        /** @var TranslationRepository $translationRepo */
+        $translationRepo = $this->em->getRepository('Gedmo\Translatable\Entity\Translation');
+
+        $translationRepo->translate($article, 'title', 'ru', $titleRu);
+
+        $leadRu = trim((string) ($row['lead_text_ru'] ?? ''));
+        if ($leadRu !== '') {
+            $translationRepo->translate($article, 'lead', 'ru', mb_substr($leadRu, 0, 500));
+        }
+
+        $contentRu = trim((string) ($row['content_text_ru'] ?? ''));
+        if ($contentRu !== '') {
+            $translationRepo->translate($article, 'content', 'ru', $contentRu);
+        }
+
+        $this->em->flush();
     }
 
     private function findOrCreateCategory(string $name): Category
@@ -350,7 +381,6 @@ final class RssFeedImporter
             return $this->categoryCache[$key];
         }
 
-        // Resolve via static mapping first to avoid duplicates
         $resolvedName = self::CATEGORY_MAP[$key] ?? $name;
 
         $category = $this->categoryRepository->createQueryBuilder('c')
@@ -361,8 +391,7 @@ final class RssFeedImporter
             ->getOneOrNullResult();
 
         if ($category === null) {
-            // Only create if truly unknown — log warning for unmapped categories
-            $this->logger->warning('RSS import: unmapped category, creating new', ['rss_category' => $name]);
+            $this->logger->warning('Import: unmapped category, creating new', ['category' => $name]);
             $category = new Category();
             $category->setTranslatableLocale('ro');
             $category->setTitle(ucfirst(mb_strtolower($name)));
