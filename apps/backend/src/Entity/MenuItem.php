@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
+use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
@@ -19,6 +20,8 @@ use App\Enum\MenuType;
 use App\State\MenuItemProcessor;
 use App\State\MenuItemProvider;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -32,6 +35,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\Table(name: 'menu_items')]
 #[ORM\Index(name: 'idx_menu_item_menu_active', columns: ['menu', 'is_active', 'position'])]
 #[ORM\Index(name: 'idx_menu_item_category', columns: ['category_id'])]
+#[ORM\Index(name: 'idx_menu_item_parent', columns: ['parent_id'])]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -61,9 +65,12 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 )]
 #[ApiFilter(SearchFilter::class, properties: [
     'menu' => 'exact',
+    'type' => 'exact',
+    'parent' => 'exact',
 ])]
 #[ApiFilter(BooleanFilter::class, properties: ['isActive'])]
 #[ApiFilter(OrderFilter::class, properties: ['position'])]
+#[ApiFilter(ExistsFilter::class, properties: ['parent'])]
 class MenuItem implements Translatable
 {
     #[ORM\Id]
@@ -120,6 +127,17 @@ class MenuItem implements Translatable
     #[Groups(['menu-item:read', 'menu-item:write'])]
     private ?string $cssClass = null;
 
+    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'children')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['menu-item:read', 'menu-item:write'])]
+    private ?self $parent = null;
+
+    /** @var Collection<int, self> */
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'parent', cascade: ['remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[Groups(['menu-item:read'])]
+    private Collection $children;
+
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['menu-item:read'])]
@@ -132,6 +150,11 @@ class MenuItem implements Translatable
 
     #[Gedmo\Locale]
     private ?string $locale = null;
+
+    public function __construct()
+    {
+        $this->children = new ArrayCollection();
+    }
 
     // --- Getters and Setters ---
 
@@ -273,6 +296,47 @@ class MenuItem implements Translatable
         return $this->locale;
     }
 
+    public function getParent(): ?self
+    {
+        return $this->parent;
+    }
+
+    public function setParent(?self $parent): self
+    {
+        $this->parent = $parent;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, self>
+     */
+    public function getChildren(): Collection
+    {
+        return $this->children;
+    }
+
+    public function addChild(self $child): self
+    {
+        if (!$this->children->contains($child)) {
+            $this->children->add($child);
+            $child->setParent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChild(self $child): self
+    {
+        if ($this->children->removeElement($child)) {
+            if ($child->getParent() === $this) {
+                $child->setParent(null);
+            }
+        }
+
+        return $this;
+    }
+
     // --- Virtual getters for category details (used by public frontend) ---
 
     #[Groups(['menu-item:read'])]
@@ -302,6 +366,34 @@ class MenuItem implements Translatable
             $context->buildViolation('Category is required when type is "category".')
                 ->atPath('category')
                 ->addViolation();
+        }
+
+        // Dropdown cannot be a sub-item
+        if ($this->type === MenuItemType::DROPDOWN && $this->parent !== null) {
+            $context->buildViolation('A dropdown cannot be a sub-item of another menu item.')
+                ->atPath('parent')
+                ->addViolation();
+        }
+
+        // Max 1 level nesting: parent cannot have a parent
+        if ($this->parent !== null && $this->parent->getParent() !== null) {
+            $context->buildViolation('Maximum nesting depth is 1 level. Cannot nest under a sub-item.')
+                ->atPath('parent')
+                ->addViolation();
+        }
+
+        // Dropdown type should not have url or category
+        if ($this->type === MenuItemType::DROPDOWN) {
+            if ($this->url !== null && $this->url !== '') {
+                $context->buildViolation('Dropdown items should not have a URL.')
+                    ->atPath('url')
+                    ->addViolation();
+            }
+            if ($this->category !== null) {
+                $context->buildViolation('Dropdown items should not have a category.')
+                    ->atPath('category')
+                    ->addViolation();
+            }
         }
     }
 }

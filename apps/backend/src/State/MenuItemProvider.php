@@ -43,6 +43,12 @@ final class MenuItemProvider implements ProviderInterface
             $queryBuilder = $repository->createQueryBuilder('mi')
                 ->leftJoin('mi.category', 'c')
                 ->addSelect('c')
+                ->leftJoin('mi.children', 'ch')
+                ->addSelect('ch')
+                ->leftJoin('ch.category', 'chc')
+                ->addSelect('chc')
+                ->leftJoin('mi.parent', 'p')
+                ->addSelect('p')
                 ->where('mi.id = :id')
                 ->setParameter('id', $uriVariables['id']);
 
@@ -52,6 +58,10 @@ final class MenuItemProvider implements ProviderInterface
                 TranslatableListener::HINT_TRANSLATABLE_LOCALE,
                 $locale
             );
+            $query->setHint(
+                \Doctrine\ORM\Query::HINT_REFRESH,
+                true
+            );
 
             return $query->getOneOrNullResult();
         }
@@ -59,7 +69,11 @@ final class MenuItemProvider implements ProviderInterface
         // Handle collection retrieval
         $queryBuilder = $repository->createQueryBuilder('mi')
             ->leftJoin('mi.category', 'c')
-            ->addSelect('c');
+            ->addSelect('c')
+            ->leftJoin('mi.children', 'ch')
+            ->addSelect('ch')
+            ->leftJoin('ch.category', 'chc')
+            ->addSelect('chc');
 
         // Apply filters from query parameters
         if ($request) {
@@ -83,6 +97,10 @@ final class MenuItemProvider implements ProviderInterface
         $query->setHint(
             TranslatableListener::HINT_TRANSLATABLE_LOCALE,
             $locale
+        );
+        $query->setHint(
+            \Doctrine\ORM\Query::HINT_REFRESH,
+            true
         );
 
         return $query->getResult();

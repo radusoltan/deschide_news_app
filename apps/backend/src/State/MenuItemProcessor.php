@@ -109,6 +109,19 @@ final class MenuItemProcessor implements ProcessorInterface
                     }
                 }
 
+                // Handle parent relation only if explicitly sent
+                if (in_array('parent', $sentFields, true)) {
+                    if ($data->getParent()) {
+                        $parentId = $data->getParent()->getId();
+                        if ($parentId) {
+                            $managedParent = $this->entityManager->getRepository(MenuItem::class)->find($parentId);
+                            $existingEntity->setParent($managedParent);
+                        }
+                    } else {
+                        $existingEntity->setParent(null);
+                    }
+                }
+
                 $data = $existingEntity;
             }
 
@@ -124,6 +137,15 @@ final class MenuItemProcessor implements ProcessorInterface
                     if ($categoryId) {
                         $managedCategory = $this->entityManager->getRepository(Category::class)->find($categoryId);
                         $data->setCategory($managedCategory);
+                    }
+                }
+
+                // Handle parent relation (get managed entity)
+                if ($data->getParent()) {
+                    $parentId = $data->getParent()->getId();
+                    if ($parentId) {
+                        $managedParent = $this->entityManager->getRepository(MenuItem::class)->find($parentId);
+                        $data->setParent($managedParent);
                     }
                 }
 
