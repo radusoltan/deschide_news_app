@@ -10,6 +10,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
 /**
  * Fetch active menu items for a given menu type, sorted by position.
  * Uses Next.js ISR with 5-minute revalidation.
+ * Returns a tree: top-level items with children nested inside.
  * Returns empty array on error (graceful fallback).
  */
 export async function fetchPublicMenuItems(
@@ -37,11 +38,51 @@ export async function fetchPublicMenuItems(
     }
 
     const data = await response.json();
-    return data.member ?? data['hydra:member'] ?? [];
+    const flat: MenuItem[] = data.member ?? data['hydra:member'] ?? [];
+
+    return buildMenuTree(flat);
   } catch (error) {
     console.error(`[public-menu] Error fetching ${menu} menu:`, error);
     return [];
   }
+}
+
+/**
+ * Build a tree from flat menu items.
+ * Returns only top-level items (parent === null) with children nested.
+ */
+function buildMenuTree(items: MenuItem[]): MenuItem[] {
+  const byIri = new Map<string, MenuItem>();
+  for (const item of items) {
+    // Ensure children array exists
+    if (!item.children) item.children = [];
+    byIri.set(item['@id'], item);
+  }
+
+  const topLevel: MenuItem[] = [];
+
+  for (const item of items) {
+    if (item.parent) {
+      // This is a child item - attach to parent
+      const parentIri = typeof item.parent === 'string' ? item.parent : (item.parent as { '@id': string })['@id'];
+      const parentItem = byIri.get(parentIri);
+      if (parentItem) {
+        // Avoid duplicates (API may already include children in parent's children array)
+        if (!parentItem.children.some(c => c.id === item.id)) {
+          parentItem.children.push(item);
+        }
+      }
+    } else {
+      topLevel.push(item);
+    }
+  }
+
+  // Sort children by position
+  for (const item of topLevel) {
+    item.children.sort((a, b) => a.position - b.position);
+  }
+
+  return topLevel;
 }
 
 /**

@@ -97,32 +97,21 @@ export default function Header({ locale, categories = [], menuItems = [] }: Head
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isStiriDropdownOpen, setIsStiriDropdownOpen] = useState(false)
-  const [isMobileStiriOpen, setIsMobileStiriOpen] = useState(false)
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null)
+  const [mobileOpenDropdownId, setMobileOpenDropdownId] = useState<number | null>(null)
   const [isCompact, setIsCompact] = useState(false)
-  const stiriDropdownRef = useRef<HTMLLIElement>(null)
+  const dropdownRef = useRef<HTMLLIElement>(null)
 
-  // Use MenuItem API data if available, otherwise fall back to category inMenu flag
+  // menuItems is now a tree: top-level items with children nested
+  // Fallback to categories if no menu items from API
   const hasMenuItems = menuItems.length > 0
-
-  // Categories that are in the MenuItem API (by category IRI)
-  const menuItemCategoryIris = new Set(
-    menuItems.filter(i => i.type === 'category' && i.category).map(i => i.category)
-  )
-
-  // Fallback: filter categories by inMenu flag (old behavior)
   const menuCategories = hasMenuItems ? [] : categories.filter((cat) => cat.inMenu === true)
-
-  // Categories NOT in the MenuItem API go into the "Știri" dropdown
-  const dropdownCategories = hasMenuItems
-    ? categories.filter((cat) => !menuItemCategoryIris.has(cat['@id']))
-    : categories.filter((cat) => cat.inMenu !== true)
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (stiriDropdownRef.current && !stiriDropdownRef.current.contains(event.target as Node)) {
-        setIsStiriDropdownOpen(false)
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdownId(null)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -175,58 +164,69 @@ export default function Header({ locale, categories = [], menuItems = [] }: Head
                 {/* Center Navigation */}
                 <nav className="flex-1 flex justify-center">
                   <ul className="flex items-center font-sans text-[var(--font-size-sm)] font-medium">
-                    {/* Stiri dropdown for other categories (inMenu=false) */}
-                    {dropdownCategories.length > 0 && (
-                        <li ref={stiriDropdownRef} className="relative">
-                          <button
-                              onClick={() => setIsStiriDropdownOpen(!isStiriDropdownOpen)}
+                    {/* Dynamic menu items from API (tree structure with dropdowns) */}
+                    {hasMenuItems ? menuItems.map((item) => {
+                      const isDropdown = item.type === 'dropdown' || (item.children && item.children.length > 0)
+                      const isOpen = openDropdownId === item.id
+
+                      if (isDropdown) {
+                        return (
+                          <li key={item.id} className="relative" ref={isOpen ? dropdownRef : undefined}>
+                            <button
+                              onClick={() => setOpenDropdownId(isOpen ? null : item.id)}
+                              onMouseEnter={() => setOpenDropdownId(item.id)}
                               className={`flex items-center gap-1 px-4 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors border-b-2 border-transparent hover:border-[var(--color-accent)] ${isCompact ? 'py-2' : 'py-3'} min-h-[44px]`}
-                              aria-expanded={isStiriDropdownOpen}
+                              aria-expanded={isOpen}
                               aria-haspopup="true"
-                          >
-                            {intl.formatMessage({ id: 'nav.stiri', defaultMessage: 'Știri' })}
-                            <svg
-                                className={`w-4 h-4 transition-transform ${isStiriDropdownOpen ? 'rotate-180' : ''}`}
+                            >
+                              {item.label}
+                              <svg
+                                className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </button>
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
 
-                          {isStiriDropdownOpen && (
-                              <div className="absolute top-full left-0 mt-0 w-48 bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded-b-lg shadow-lg z-50 overflow-hidden">
-                                {dropdownCategories.map((category) => (
-                                    <Link
-                                        key={category.id}
-                                        href={buildCategoryUrl(category, locale as Locale)}
-                                        className="block px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-sans text-[var(--font-size-sm)]"
-                                        onClick={() => setIsStiriDropdownOpen(false)}
-                                    >
-                                      {category.title}
-                                    </Link>
+                            {isOpen && item.children && item.children.length > 0 && (
+                              <div
+                                className="absolute top-full left-0 mt-0 w-48 bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] border border-[var(--color-border)] dark:border-[var(--color-border-dark)] rounded-b-lg shadow-lg z-50 overflow-hidden"
+                                onMouseLeave={() => setOpenDropdownId(null)}
+                              >
+                                {item.children.map((child) => (
+                                  <Link
+                                    key={child.id}
+                                    href={getMenuItemHref(child, locale)}
+                                    className="block px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-sans text-[var(--font-size-sm)]"
+                                    onClick={() => setOpenDropdownId(null)}
+                                    {...(child.type === 'external_link' && child.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                                  >
+                                    {child.label}
+                                  </Link>
                                 ))}
                               </div>
-                          )}
-                        </li>
-                    )}
+                            )}
+                          </li>
+                        )
+                      }
 
-                    {/* Dynamic menu items from MenuItem API */}
-                    {hasMenuItems ? menuItems.map((item) => (
-                      <li key={item.id} className="relative">
-                        <Link
-                          className={`block px-4 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors border-b-2 border-transparent hover:border-[var(--color-accent)] ${isCompact ? 'py-2' : 'py-3'} min-h-[44px] flex items-center`}
-                          href={getMenuItemHref(item, locale)}
-                          {...(item.type === 'external_link' && item.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                        >
-                          {item.label}
-                          {item.type === 'external_link' && item.openInNewTab && (
-                            <svg className="w-3 h-3 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                          )}
-                        </Link>
-                      </li>
-                    )) : menuCategories.map((category) => (
+                      return (
+                        <li key={item.id} className="relative">
+                          <Link
+                            className={`block px-4 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors border-b-2 border-transparent hover:border-[var(--color-accent)] ${isCompact ? 'py-2' : 'py-3'} min-h-[44px] flex items-center`}
+                            href={getMenuItemHref(item, locale)}
+                            {...(item.type === 'external_link' && item.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                          >
+                            {item.label}
+                            {item.type === 'external_link' && item.openInNewTab && (
+                              <svg className="w-3 h-3 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                            )}
+                          </Link>
+                        </li>
+                      )
+                    }) : menuCategories.map((category) => (
                       <li key={category.id} className="relative">
                         <Link
                           className={`block px-4 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors border-b-2 border-transparent hover:border-[var(--color-accent)] ${isCompact ? 'py-2' : 'py-3'} min-h-[44px] flex items-center`}
@@ -236,16 +236,6 @@ export default function Header({ locale, categories = [], menuItems = [] }: Head
                         </Link>
                       </li>
                     ))}
-
-                    {/* All Articles */}
-                    <li className="relative">
-                      <Link
-                        className={`block px-4 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors border-b-2 border-transparent hover:border-[var(--color-accent)] ${isCompact ? 'py-2' : 'py-3'} min-h-[44px] flex items-center`}
-                        href={buildLocalizedUrl('/all', locale as Locale)}
-                      >
-                        {intl.formatMessage({ id: 'nav.all', defaultMessage: 'Toate' })}
-                      </Link>
-                    </li>
                   </ul>
                 </nav>
 
@@ -417,22 +407,70 @@ export default function Header({ locale, categories = [], menuItems = [] }: Head
                   </Link>
                 </li>
 
-                {/* Dynamic menu items from MenuItem API */}
-                {hasMenuItems ? menuItems.map((item) => (
-                  <li key={item.id}>
-                    <Link
-                      href={getMenuItemHref(item, locale)}
-                      className="flex items-center px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-medium text-[var(--font-size-base)] min-h-[44px]"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      {...(item.type === 'external_link' && item.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    >
-                      <span className="w-5 h-5 mr-3 flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-[var(--color-section-politics)]" />
-                      </span>
-                      {item.label}
-                    </Link>
-                  </li>
-                )) : menuCategories.map((category) => (
+                {/* Dynamic menu items from API (tree with dropdowns) */}
+                {hasMenuItems ? menuItems.map((item) => {
+                  const isDropdown = item.type === 'dropdown' || (item.children && item.children.length > 0)
+                  const isMobileOpen = mobileOpenDropdownId === item.id
+
+                  if (isDropdown) {
+                    return (
+                      <li key={item.id}>
+                        <button
+                          onClick={() => setMobileOpenDropdownId(isMobileOpen ? null : item.id)}
+                          className="w-full flex items-center justify-between px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-medium text-[var(--font-size-base)] min-h-[44px]"
+                        >
+                          <div className="flex items-center">
+                            <svg className="w-5 h-5 mr-3 text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                            </svg>
+                            <span>{item.label}</span>
+                          </div>
+                          <svg
+                            className={`w-4 h-4 transition-transform ${isMobileOpen ? 'rotate-180' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+
+                        {isMobileOpen && item.children && item.children.length > 0 && (
+                          <ul className="bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-sunken-dark)] space-y-1">
+                            {item.children.map((child) => (
+                              <li key={child.id}>
+                                <Link
+                                  href={getMenuItemHref(child, locale)}
+                                  className="flex items-center pl-12 pr-4 py-3 text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors text-[var(--font-size-sm)] min-h-[44px]"
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  {...(child.type === 'external_link' && child.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                                >
+                                  {child.label}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    )
+                  }
+
+                  return (
+                    <li key={item.id}>
+                      <Link
+                        href={getMenuItemHref(item, locale)}
+                        className="flex items-center px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-medium text-[var(--font-size-base)] min-h-[44px]"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        {...(item.type === 'external_link' && item.openInNewTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                      >
+                        <span className="w-5 h-5 mr-3 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-[var(--color-section-politics)]" />
+                        </span>
+                        {item.label}
+                      </Link>
+                    </li>
+                  )
+                }) : menuCategories.map((category) => (
                   <li key={category.id}>
                     <Link
                       href={buildCategoryUrl(category, locale as Locale)}
@@ -446,61 +484,6 @@ export default function Header({ locale, categories = [], menuItems = [] }: Head
                     </Link>
                   </li>
                 ))}
-
-                {/* Stiri section for dropdown categories */}
-                {dropdownCategories.length > 0 && (
-                  <li>
-                    <button
-                      onClick={() => setIsMobileStiriOpen(!isMobileStiriOpen)}
-                      className="w-full flex items-center justify-between px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-medium text-[var(--font-size-base)] min-h-[44px]"
-                    >
-                      <div className="flex items-center">
-                        <svg className="w-5 h-5 mr-3 text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                        </svg>
-                        <span>{intl.formatMessage({ id: 'nav.stiri', defaultMessage: 'Știri' })}</span>
-                      </div>
-                      <svg
-                        className={`w-4 h-4 transition-transform ${isMobileStiriOpen ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-
-                    {isMobileStiriOpen && (
-                      <ul className="bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-sunken-dark)] space-y-1">
-                        {dropdownCategories.map((category) => (
-                          <li key={category.id}>
-                            <Link
-                              href={buildCategoryUrl(category, locale as Locale)}
-                              className="flex items-center pl-12 pr-4 py-3 text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors text-[var(--font-size-sm)] min-h-[44px]"
-                              onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                              {category.title}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                )}
-
-                {/* All Articles */}
-                <li>
-                  <Link
-                    href={buildLocalizedUrl('/all', locale as Locale)}
-                    className="flex items-center px-4 py-3 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] hover:text-[var(--color-accent)] transition-colors font-medium text-[var(--font-size-base)] min-h-[44px]"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <svg className="w-5 h-5 mr-3 text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    {intl.formatMessage({ id: 'nav.all', defaultMessage: 'Toate' })}
-                  </Link>
-                </li>
               </ul>
 
               {/* Settings Section */}
