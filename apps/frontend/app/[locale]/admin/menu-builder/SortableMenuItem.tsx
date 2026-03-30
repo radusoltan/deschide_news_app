@@ -5,7 +5,6 @@ import { CSS } from '@dnd-kit/utilities';
 import { Badge, Button } from 'flowbite-react';
 import {
   HiOutlineTrash,
-  HiPencil,
   HiChevronDown,
   HiChevronRight,
   HiFolder,
@@ -47,8 +46,6 @@ interface SortableMenuItemProps {
   isExpanded?: boolean;
   hasChildren?: boolean;
   onToggleExpand?: () => void;
-  onToggleActive: (item: MenuItem) => void;
-  onEdit: (item: MenuItem) => void;
   onDelete: (item: MenuItem) => void;
   saving: boolean;
 }
@@ -59,8 +56,6 @@ export default function SortableMenuItem({
   isExpanded,
   hasChildren,
   onToggleExpand,
-  onToggleActive,
-  onEdit,
   onDelete,
   saving,
 }: SortableMenuItemProps) {
@@ -178,34 +173,6 @@ export default function SortableMenuItem({
 
       {/* Type badge */}
       <div className="flex-shrink-0 hidden sm:block">{typeBadge}</div>
-
-      {/* Active toggle */}
-      <button
-        onClick={() => onToggleActive(item)}
-        disabled={saving}
-        className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 flex-shrink-0"
-        style={{
-          backgroundColor: item.isActive ? '#2563eb' : '#d1d5db',
-        }}
-        title={item.isActive ? 'Active - click to deactivate' : 'Inactive - click to activate'}
-      >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-            item.isActive ? 'translate-x-6' : 'translate-x-1'
-          }`}
-        />
-      </button>
-
-      {/* Edit */}
-      <Button
-        size="xs"
-        color="light"
-        onClick={() => onEdit(item)}
-        disabled={saving}
-        title="Edit translations"
-      >
-        <HiPencil className="h-4 w-4" />
-      </Button>
 
       {/* Delete */}
       <Button
