@@ -49,7 +49,7 @@ export const OpinionCard: React.FC<OpinionCardProps> = ({
     <div
       className={cn(
         'aspect-square relative',
-        'bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-accent)]',
+        'bg-gradient-to-br from-brand-tomato-500 to-brand-tomato-600',
         'rounded-lg shadow-2xl overflow-hidden',
         'transition-transform duration-300 hover:scale-[1.02]',
         className
@@ -76,8 +76,8 @@ export const OpinionCard: React.FC<OpinionCardProps> = ({
           <span
             className={cn(
               'inline-block px-4 py-2',
-              'bg-white text-[var(--color-accent)]',
-              'font-sans font-bold uppercase',
+              'bg-white text-brand-tomato-600',
+              'font-heading font-bold uppercase',
               'text-xs md:text-sm tracking-wide',
               'rounded-full shadow-lg'
             )}
@@ -90,7 +90,7 @@ export const OpinionCard: React.FC<OpinionCardProps> = ({
         <div className="flex-1 flex items-center">
           <h2
             className={cn(
-              'font-sans font-bold uppercase text-white',
+              'font-heading font-bold uppercase text-white',
               'text-2xl md:text-3xl lg:text-4xl',
               'leading-tight tracking-tight',
               'drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]',
@@ -122,10 +122,10 @@ export const OpinionCard: React.FC<OpinionCardProps> = ({
 
             {/* Author name and title */}
             <div className="flex flex-col">
-              <p className="font-serif font-semibold text-white text-sm md:text-base leading-tight">
+              <p className="font-body font-semibold text-white text-sm md:text-base leading-tight">
                 {author.name}
               </p>
-              <p className="font-serif font-medium text-white text-xs md:text-sm opacity-90 leading-tight mt-1">
+              <p className="font-body font-medium text-white text-xs md:text-sm opacity-90 leading-tight mt-1">
                 {author.title}
               </p>
             </div>

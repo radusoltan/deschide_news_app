@@ -54,27 +54,27 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
   };
 
   return (
-    <section className="bg-[var(--color-surface-elevated)] py-6">
+    <section className="bg-white py-6">
       <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
         <div className="flex flex-row flex-wrap">
           {/* Sidebar - Most Popular */}
           <div className="flex-shrink max-w-full w-full lg:w-1/3 lg:pr-8 lg:pb-8 order-first">
-            <div className="w-full bg-[var(--color-surface-elevated)]">
+            <div className="w-full bg-white">
               <div className="mb-6">
-                <div className="p-4 bg-[var(--color-surface-dark)]">
-                  <h2 className="text-lg font-sans text-white uppercase">{labels.popular}</h2>
+                <div className="p-4 bg-brand-oxford-900">
+                  <h2 className="text-lg font-heading text-white uppercase">{labels.popular}</h2>
                 </div>
                 <ul>
                   {articles.slice(0, 10).map((article, index) => (
-                    <li key={article.id} className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-sunken)] transition-colors">
+                    <li key={article.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <Link
                         className="flex items-start gap-3 px-4 py-3"
                         href={buildArticleUrl(article, locale as Locale)}
                       >
-                        <span className="flex-shrink-0 text-2xl font-sans text-[var(--color-accent)]/30 leading-none mt-0.5">
+                        <span className="flex-shrink-0 text-2xl font-heading text-brand-tomato-500/30 leading-none mt-0.5">
                           {(index + 1).toString().padStart(2, '0')}
                         </span>
-                        <span className="text-sm font-serif font-medium text-[var(--color-text-primary)] leading-snug line-clamp-2 hover:text-[var(--color-accent)] transition-colors">
+                        <span className="text-sm font-body font-medium text-brand-oxford-900 leading-snug line-clamp-2 hover:text-brand-tomato-500 transition-colors">
                           {article.title}
                         </span>
                       </Link>
@@ -89,13 +89,13 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
           <div className="flex-shrink max-w-full w-full lg:w-2/3 overflow-hidden">
             {/* Section Title */}
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[var(--color-text-primary)] text-2xl font-sans uppercase flex items-center">
-                <span className="inline-block w-1 h-6 bg-[var(--color-accent)] mr-3 rounded-full" />
+              <h2 className="text-brand-oxford-900 text-2xl font-heading uppercase flex items-center">
+                <span className="inline-block w-1 h-6 bg-brand-tomato-500 mr-3 rounded-full" />
                 {labels.latest}
               </h2>
               <Link
                 href={buildLocalizedUrl('/all', locale as Locale)}
-                className="inline-flex items-center gap-1 text-sm font-serif font-medium text-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors group"
+                className="inline-flex items-center gap-1 text-sm font-body font-medium text-brand-tomato-500 hover:text-brand-tomato-600 transition-colors group"
               >
                 {labels.viewAll}
                 <svg className="w-4 h-4 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +132,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                         blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyMCIgaGVpZ2h0PSIxMDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmM2Y0ZjYiLz48L3N2Zz4="
                       />
                     ) : (
-                      <div className="w-full h-96 bg-gradient-to-br from-[var(--color-surface-dark)] via-[var(--color-surface-elevated-dark)] to-[var(--color-surface-dark)] flex items-center justify-center">
+                      <div className="w-full h-96 bg-gradient-to-br from-brand-oxford-900 via-brand-oxford-800 to-brand-oxford-900 flex items-center justify-center">
                         <svg className="w-16 h-16 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                         </svg>
@@ -140,17 +140,17 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                     )}
                   </div>
                   <div className="absolute px-5 pt-8 pb-5 bottom-0 w-full bg-gradient-to-t from-black/90 via-black/50 to-transparent">
-                    <h2 className="text-2xl lg:text-3xl font-sans text-white text-on-photo-strong mb-2 leading-tight line-clamp-3 group-hover:text-[var(--color-accent)] transition-colors duration-300">
+                    <h2 className="text-2xl lg:text-3xl font-heading text-white text-on-photo-strong mb-2 leading-tight line-clamp-3 group-hover:text-brand-mindaro-400 transition-colors duration-300">
                       {featuredArticle.title}
                     </h2>
                     {featuredArticle.lead && (
-                      <p className="text-white/80 hidden sm:block text-sm font-serif line-clamp-2">
+                      <p className="text-white/80 hidden sm:block text-sm font-body line-clamp-2">
                         {featuredArticle.lead}
                       </p>
                     )}
                     {featuredArticle.category && (
                       <div className="pt-2 flex items-center text-white/60 text-sm">
-                        <span className="inline-block w-0.5 h-3 bg-[var(--color-accent)] mr-2" />
+                        <span className="inline-block w-0.5 h-3 bg-brand-tomato-500 mr-2" />
                         {getCategoryTitle(featuredArticle.category)}
                       </div>
                     )}
@@ -171,7 +171,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                     className="group flex flex-col h-full"
                   >
                     {/* Image */}
-                    <Link href={buildArticleUrl(article, locale as Locale)} className="block relative aspect-video overflow-hidden bg-[var(--color-surface-sunken)] mb-3 rounded-sm">
+                    <Link href={buildArticleUrl(article, locale as Locale)} className="block relative aspect-video overflow-hidden bg-gray-100 mb-3 rounded-sm">
                       {thumbnail ? (
                         <Image
                           className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
@@ -195,24 +195,24 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                           blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYwMCIgaGVpZ2h0PSI5MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YzZjRmNiIvPjwvc3ZnPg=="
                         />
                       ) : (
-                        <div className="absolute inset-0 bg-[var(--color-surface-sunken)] flex items-center justify-center">
-                          <span className="text-[var(--color-text-tertiary)] text-xs">No image</span>
+                        <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400 text-xs">No image</span>
                         </div>
                       )}
                     </Link>
 
                     {/* Content */}
                     <div className="flex flex-col flex-grow">
-                      <h3 className="text-lg font-sans text-[var(--color-text-primary)] leading-snug mb-2 tracking-tight">
+                      <h3 className="text-lg font-heading text-brand-oxford-900 leading-snug mb-2 tracking-tight">
                         <Link
                           href={buildArticleUrl(article, locale as Locale)}
-                          className="hover:text-[var(--color-accent)] transition-colors duration-200 block"
+                          className="hover:text-brand-tomato-500 transition-colors duration-200 block"
                         >
                           {article.title}
                         </Link>
                       </h3>
 
-                      <p className="hidden md:block text-[var(--color-text-secondary)] text-sm leading-relaxed mb-3 line-clamp-2 flex-grow font-serif">
+                      <p className="hidden md:block text-gray-500 text-sm leading-relaxed mb-3 line-clamp-2 flex-grow font-body">
                         {article.lead || '\u00A0'}
                       </p>
 
@@ -220,10 +220,10 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                         <div className="flex items-center justify-between">
                           {article.category && getCategorySlug(article.category) && (
                             <Link
-                              className="inline-flex items-center text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors uppercase tracking-wide font-serif"
+                              className="inline-flex items-center text-xs font-medium text-gray-500 hover:text-brand-tomato-500 transition-colors uppercase tracking-wide font-body"
                               href={buildLocalizedUrl(`/${getCategorySlug(article.category)}`, locale as Locale)}
                             >
-                              <span className="w-0.5 h-3 bg-[var(--color-accent)] mr-2" />
+                              <span className="w-0.5 h-3 bg-brand-tomato-500 mr-2" />
                               {getCategoryTitle(article.category)}
                             </Link>
                           )}

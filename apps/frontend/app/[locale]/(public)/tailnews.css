@@ -70,7 +70,7 @@
     font-size: 2rem;
     counter-increment: my-counter;
     content: counter(my-counter);
-    color: var(--color-border);
+    color: #ced4da;
     width: 3rem;
     margin-right: 0.5rem;
     flex-shrink: 0;
@@ -81,7 +81,7 @@
   /* Navbar active state */
   .navbar > li.active > a,
   .navbar > li:hover > a {
-    border-color: var(--color-accent);
+    border-color: #dc2626;
   }
 
   /* Swiper navigation buttons styling */
@@ -118,7 +118,7 @@
     font-weight: 600;
     margin-top: 2rem;
     margin-bottom: 1rem;
-    color: var(--color-text-primary);
+    color: #1f2937;
   }
 
   .article-content h3 {
@@ -126,7 +126,7 @@
     font-weight: 600;
     margin-top: 1.5rem;
     margin-bottom: 0.75rem;
-    color: var(--color-text-primary);
+    color: #1f2937;
   }
 
   .article-content ul,
@@ -146,20 +146,20 @@
   }
 
   .article-content blockquote {
-    border-left: 4px solid var(--color-accent);
-    background-color: var(--color-surface-sunken);
+    border-left: 4px solid #dc2626;
+    background-color: #f3f4f6;
     padding: 1rem;
     margin: 1.5rem 0;
     font-size: 1.125rem;
   }
 
   .article-content a {
-    color: var(--color-accent);
+    color: #dc2626;
     text-decoration: underline;
   }
 
   .article-content a:hover {
-    color: var(--color-accent-hover);
+    color: #991b1b;
   }
 
   .article-content img {

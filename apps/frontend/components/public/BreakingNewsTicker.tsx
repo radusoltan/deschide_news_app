@@ -48,7 +48,7 @@ export function BreakingNewsTicker({ locale, articles = [] }: BreakingNewsTicker
   const articleUrl = buildArticleUrl(currentArticle, locale as Locale);
 
   return (
-    <div className="bg-[var(--color-breaking)] text-white relative overflow-hidden">
+    <div className="bg-brand-red-600 text-white relative overflow-hidden">
       <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
         <div className="flex items-center gap-3 py-2">
           {/* Pulsing indicator */}
@@ -57,7 +57,7 @@ export function BreakingNewsTicker({ locale, articles = [] }: BreakingNewsTicker
               <span className="animate-brand-pulse absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
             </span>
-            <span className="font-sans text-xs tracking-wider hidden sm:inline">
+            <span className="font-heading text-xs tracking-wider hidden sm:inline">
               {intl.formatMessage({ id: 'articles.breakingNews', defaultMessage: 'Breaking news' })}
             </span>
           </div>
@@ -69,7 +69,7 @@ export function BreakingNewsTicker({ locale, articles = [] }: BreakingNewsTicker
           <div className="flex-1 min-w-0 overflow-hidden">
             <Link
               href={articleUrl}
-              className="block truncate text-sm font-serif hover:text-[var(--color-accent)] transition-colors"
+              className="block truncate text-sm font-body hover:text-brand-mindaro-400 transition-colors"
             >
               {currentArticle.title}
             </Link>

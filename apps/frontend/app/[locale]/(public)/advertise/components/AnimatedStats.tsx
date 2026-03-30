@@ -55,20 +55,20 @@ function StatCard({ stat, index }: { stat: StatItem; index: number }) {
       style={{ animationDelay: `${index * 100}ms` }}
     >
       <div className="mb-4 flex justify-center">
-        <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-breaking)] rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+        <div className="w-16 h-16 bg-gradient-to-br from-brand-tomato-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
           <IconComponent icon={stat.icon} />
         </div>
       </div>
 
       <div
-        className={`text-4xl md:text-5xl font-black text-[var(--color-text-primary)] dark:text-white mb-2 transition-all duration-1000 ${
+        className={`text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-2 transition-all duration-1000 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
       >
         {stat.value}
       </div>
 
-      <div className="text-sm md:text-base font-semibold text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">
+      <div className="text-sm md:text-base font-semibold text-gray-600 dark:text-gray-400">
         {stat.label}
       </div>
     </div>

@@ -23,10 +23,10 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden">
       <div className="fixed inset-x-0 top-0 h-full bg-white animate-slide-in-down">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Search</h2>
+          <h2 className="text-xl font-bold text-brand-oxford-900">Search</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-[var(--color-surface-sunken)] rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Close search"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +39,7 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
           <input
             type="search"
             placeholder="Search articles..."
-            className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500"
             autoFocus
           />
         </div>
@@ -68,24 +68,24 @@ function CategoriesSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       >
         {/* Handle bar */}
         <div className="flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1 bg-[var(--color-border)] rounded-full" />
+          <div className="w-12 h-1 bg-gray-300 rounded-full" />
         </div>
 
         <div className="p-4 pb-20">
-          <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4">Categorii</h2>
+          <h2 className="text-xl font-bold text-brand-oxford-900 mb-4">Categorii</h2>
 
           <div className="grid grid-cols-2 gap-3">
             {categories.map((category) => (
               <button
                 key={category.id}
-                className="p-4 rounded-xl border-2 border-[var(--color-border)] hover:border-[var(--color-accent)] transition-all text-left"
+                className="p-4 rounded-xl border-2 border-gray-200 hover:border-brand-tomato-500 transition-all text-left"
                 onClick={onClose}
               >
                 <div
                   className="w-8 h-8 rounded-lg mb-2"
                   style={{ backgroundColor: category.color }}
                 />
-                <span className="font-semibold text-[var(--color-text-primary)]">{category.name}</span>
+                <span className="font-semibold text-brand-oxford-900">{category.name}</span>
               </button>
             ))}
           </div>
@@ -113,10 +113,10 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-bold text-[var(--color-text-primary)]">Meniu</h2>
+          <h2 className="text-xl font-bold text-brand-oxford-900">Meniu</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-[var(--color-surface-sunken)] rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Close menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,11 +129,11 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           {menuItems.map((item) => (
             <button
               key={item.id}
-              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--color-surface-sunken)] transition-colors text-left"
+              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100 transition-colors text-left"
               onClick={onClose}
             >
               <span className="text-2xl">{item.icon}</span>
-              <span className="font-medium text-[var(--color-text-primary)]">{item.label}</span>
+              <span className="font-medium text-brand-oxford-900">{item.label}</span>
             </button>
           ))}
         </div>

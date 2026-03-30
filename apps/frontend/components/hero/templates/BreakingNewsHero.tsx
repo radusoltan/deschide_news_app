@@ -114,7 +114,7 @@ export const BreakingNewsHero: React.FC<HeroTemplateProps> = ({
                   href={articleUrl}
                   className="block transition-all duration-300 hover:opacity-90 focus-brand"
                 >
-                  <span className="block text-white font-sans text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.05] tracking-tight text-crisp">
+                  <span className="block text-white font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.05] tracking-tight text-crisp">
                     <span className="drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
                       {article.title}
                     </span>

@@ -182,7 +182,7 @@ export const SpecialArticleBanner: React.FC<SpecialArticleBannerProps> = ({
         config.borderColor,
         'rounded-r-lg shadow-sm',
         'transition-all duration-200 ease-out',
-        'hover:shadow-md hover:bg-[var(--color-surface-sunken)]',
+        'hover:shadow-md hover:bg-gray-50',
         className
       )}
     >
@@ -203,7 +203,7 @@ export const SpecialArticleBanner: React.FC<SpecialArticleBannerProps> = ({
 
         {/* Badge text */}
         <span className={cn(
-          'font-sans font-bold text-[10px] md:text-xs tracking-wider uppercase',
+          'font-heading font-bold text-[10px] md:text-xs tracking-wider uppercase',
           config.textColor
         )}>
           {getBadgeLabel(config, locale)}
@@ -227,19 +227,19 @@ export const SpecialArticleBanner: React.FC<SpecialArticleBannerProps> = ({
       <div className="flex-1 min-w-0 py-3 pr-3">
         {/* Title */}
         <h3 className={cn(
-          'font-sans font-bold text-sm md:text-base',
-          'text-[var(--color-text-primary)] leading-snug',
+          'font-heading font-bold text-sm md:text-base',
+          'text-brand-oxford-900 leading-snug',
           'line-clamp-1 md:line-clamp-2',
-          'group-hover:text-[var(--color-breaking)]',
+          'group-hover:text-brand-red-600',
           'transition-colors duration-200'
         )}>
           {article.title}
         </h3>
 
         {/* Meta info */}
-        <div className="flex items-center gap-2 mt-1 text-xs text-[var(--color-text-secondary)]">
+        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
           {article.publishedAt && (
-            <span className="font-serif">
+            <span className="font-body">
               {formatRelativeTime(article.publishedAt, locale)}
             </span>
           )}
@@ -249,7 +249,7 @@ export const SpecialArticleBanner: React.FC<SpecialArticleBannerProps> = ({
       {/* Arrow */}
       <div className="hidden md:flex items-center pr-4">
         <svg
-          className="w-4 h-4 text-[var(--color-text-tertiary)] transition-all duration-200 group-hover:text-[var(--color-breaking)] group-hover:translate-x-0.5"
+          className="w-4 h-4 text-gray-400 transition-all duration-200 group-hover:text-brand-red-600 group-hover:translate-x-0.5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

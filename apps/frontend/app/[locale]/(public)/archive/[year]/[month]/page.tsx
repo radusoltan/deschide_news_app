@@ -165,13 +165,13 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         <div className="mb-6 flex items-center gap-2 text-sm">
-          <Link href={`/${locale}/archive`} className="text-[var(--color-accent)] hover:text-[var(--color-accent)]">
+          <Link href={`/${locale}/archive`} className="text-brand-tomato-500 hover:text-brand-tomato-600">
             {t.title}
           </Link>
-          <span className="text-[var(--color-text-tertiary)]">/</span>
+          <span className="text-gray-400">/</span>
           <Link
             href={`/${locale}/archive/${yearNum}`}
-            className="text-[var(--color-accent)] hover:text-[var(--color-accent)] font-medium"
+            className="text-brand-tomato-500 hover:text-brand-tomato-600 font-medium"
           >
             {t.backToYear}
           </Link>
@@ -179,10 +179,10 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
 
         {/* Page Header */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-[var(--color-text-primary)] dark:text-white mb-4">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
             {monthName} {yearNum}
           </h1>
-          <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] text-lg">
+          <p className="text-gray-600 dark:text-gray-400 text-lg">
             {articles.length} {t.articlesCount}
           </p>
         </div>
@@ -195,10 +195,10 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
               <section key={day}>
                 {/* Day Header */}
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-[var(--color-text-primary)] dark:text-white mb-1">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                     {day} {monthName} {yearNum}
                   </h2>
-                  <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] text-sm">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
                     {dayArticles.length} {t.articlesCount}
                   </p>
                 </div>
@@ -213,8 +213,8 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
             ))}
 
             {/* Calendar View */}
-            <div className="bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-elevated-dark)] rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] dark:text-white mb-4">
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 {locale === 'ro' && 'Calendar'}
                 {locale === 'en' && 'Calendar'}
                 {locale === 'ru' && 'Календарь'}
@@ -231,8 +231,8 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
                       key={day}
                       className={`aspect-square flex flex-col items-center justify-center rounded-lg text-sm ${
                         hasArticles
-                          ? 'bg-[var(--color-accent)] text-white cursor-pointer hover:bg-[var(--color-accent)]'
-                          : 'bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-elevated-dark)] text-[var(--color-text-tertiary)]'
+                          ? 'bg-brand-tomato-500 text-white cursor-pointer hover:bg-brand-tomato-600'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
                       }`}
                     >
                       <div className="font-bold">{day}</div>
@@ -245,7 +245,7 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] text-lg">{t.noArticles}</p>
+            <p className="text-gray-600 dark:text-gray-400 text-lg">{t.noArticles}</p>
           </div>
         )}
       </div>

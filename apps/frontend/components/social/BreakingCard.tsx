@@ -54,15 +54,15 @@ export const BreakingCard: React.FC<BreakingCardProps> = ({
         />
 
         {/* Gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[var(--color-surface-dark)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-brand-oxford-900" />
       </div>
 
       {/* Content Section - 40% of height */}
-      <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-[var(--color-surface-dark)] flex flex-col justify-between p-6 md:p-8">
+      <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-brand-oxford-900 flex flex-col justify-between p-6 md:p-8">
         {/* Category badge (if provided) */}
         {category && (
           <div className="flex items-start">
-            <span className="inline-block px-3 py-1 bg-[var(--color-accent)] text-white font-sans text-xs md:text-sm font-bold tracking-wide uppercase rounded">
+            <span className="inline-block px-3 py-1 bg-brand-tomato-500 text-white font-heading text-xs md:text-sm font-bold tracking-wide uppercase rounded">
               {category}
             </span>
           </div>
@@ -71,7 +71,7 @@ export const BreakingCard: React.FC<BreakingCardProps> = ({
         {/* Title with drop shadow */}
         <h2
           className={cn(
-            'font-sans font-bold uppercase text-white',
+            'font-heading font-bold uppercase text-white',
             'text-xl md:text-2xl lg:text-3xl',
             'leading-tight tracking-tight',
             'drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]',
@@ -94,7 +94,7 @@ export const BreakingCard: React.FC<BreakingCardProps> = ({
     return (
       <div
         className={cn(
-          'aspect-square bg-[var(--color-surface-dark)] p-[5%]',
+          'aspect-square bg-brand-oxford-900 p-[5%]',
           'rounded-lg shadow-2xl',
           'transition-transform duration-300 hover:scale-[1.02]',
           className

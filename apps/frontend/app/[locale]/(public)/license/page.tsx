@@ -405,13 +405,13 @@ export default async function LicensePage({ params }: LicensePageProps) {
   const t = content[locale as keyof typeof content] || content.ro;
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-dark)]">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section with Animated Background */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[var(--color-breaking)] via-[var(--color-breaking)] to-[var(--color-surface-dark)] py-16 md:py-24">
+      <div className="relative overflow-hidden bg-gradient-to-br from-brand-tomato-600 via-brand-red-600 to-brand-oxford-900 py-16 md:py-24">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
           <div className="absolute top-10 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-[var(--color-accent)]/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-brand-mindaro-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
         </div>
 
         <div className="container mx-auto px-4 max-w-4xl relative z-10">
@@ -447,23 +447,23 @@ export default async function LicensePage({ params }: LicensePageProps) {
             <div
               key={section.id}
               id={section.id}
-              className="group bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden animate-fade-in"
+              className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Gradient Top Bar */}
-              <div className="h-2 bg-gradient-to-r from-[var(--color-accent)] via-[var(--color-breaking)] to-[var(--color-surface-dark)]"></div>
+              <div className="h-2 bg-gradient-to-r from-brand-tomato-500 via-brand-red-600 to-brand-oxford-900"></div>
 
               <div className="p-8 md:p-10">
                 {/* Header with Icon */}
                 <div className="flex items-start gap-6 mb-6">
-                  <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-breaking)] flex items-center justify-center text-white shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                  <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-tomato-500 to-brand-red-600 flex items-center justify-center text-white shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                     {section.icon}
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-3xl md:text-4xl font-bold text-[var(--color-text-primary)] dark:text-white mb-2 group-hover:text-[var(--color-accent)] dark:group-hover:text-[var(--color-accent)] transition-colors duration-300">
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-brand-tomato-500 dark:group-hover:text-brand-tomato-500 transition-colors duration-300">
                       {section.title}
                     </h2>
-                    <div className="h-1 w-24 bg-gradient-to-r from-[var(--color-accent)] to-transparent rounded-full"></div>
+                    <div className="h-1 w-24 bg-gradient-to-r from-brand-tomato-500 to-transparent rounded-full"></div>
                   </div>
                 </div>
 
@@ -472,7 +472,7 @@ export default async function LicensePage({ params }: LicensePageProps) {
                   {section.content.map((paragraph, pIndex) => (
                     <p
                       key={pIndex}
-                      className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] leading-relaxed text-lg"
+                      className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg"
                     >
                       {paragraph}
                     </p>
@@ -484,7 +484,7 @@ export default async function LicensePage({ params }: LicensePageProps) {
         </div>
 
         {/* Bottom CTA Card */}
-        <div className="mt-16 bg-gradient-to-br from-[var(--color-surface-dark)] via-[var(--color-surface-elevated-dark)] to-[var(--color-accent)] rounded-3xl shadow-2xl p-10 md:p-12 text-center relative overflow-hidden animate-fade-in-up">
+        <div className="mt-16 bg-gradient-to-br from-brand-oxford-900 via-brand-oxford-800 to-brand-tomato-600 rounded-3xl shadow-2xl p-10 md:p-12 text-center relative overflow-hidden animate-fade-in-up">
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
           <div className="relative z-10">
             <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -505,7 +505,7 @@ export default async function LicensePage({ params }: LicensePageProps) {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="mailto:licensing@deschide.md"
-                className="inline-flex items-center justify-center gap-3 bg-white text-[var(--color-text-primary)] font-semibold px-8 py-4 rounded-xl hover:bg-[var(--color-surface-sunken)] transition-all duration-200 shadow-lg hover:shadow-2xl hover:scale-105"
+                className="inline-flex items-center justify-center gap-3 bg-white text-brand-oxford-900 font-semibold px-8 py-4 rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-2xl hover:scale-105"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -514,7 +514,7 @@ export default async function LicensePage({ params }: LicensePageProps) {
               </a>
               <a
                 href="mailto:legal@deschide.md"
-                className="inline-flex items-center justify-center gap-3 bg-[var(--color-accent)] text-white font-semibold px-8 py-4 rounded-xl hover:bg-[var(--color-accent)] transition-all duration-200 shadow-lg hover:shadow-2xl hover:scale-105"
+                className="inline-flex items-center justify-center gap-3 bg-brand-tomato-500 text-white font-semibold px-8 py-4 rounded-xl hover:bg-brand-tomato-600 transition-all duration-200 shadow-lg hover:shadow-2xl hover:scale-105"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

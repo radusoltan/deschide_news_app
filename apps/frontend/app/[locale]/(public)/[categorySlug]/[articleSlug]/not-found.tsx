@@ -10,14 +10,14 @@ import Link from 'next/link';
 export default function ArticleNotFound() {
   return (
     <main id="content">
-      <div className="bg-[var(--color-surface-sunken)] py-12">
+      <div className="bg-gray-50 py-12">
         <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
           <div className="flex flex-col items-center justify-center min-h-[500px]">
             <div className="max-w-md w-full text-center">
               {/* 404 Icon */}
               <div className="mb-6">
                 <svg
-                  className="mx-auto h-24 w-24 text-[var(--color-text-tertiary)]"
+                  className="mx-auto h-24 w-24 text-gray-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -33,22 +33,22 @@ export default function ArticleNotFound() {
               </div>
 
               {/* 404 Title */}
-              <h1 className="text-6xl font-bold text-[var(--color-text-primary)] mb-4">404</h1>
+              <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
 
-              <h2 className="text-2xl font-semibold text-[var(--color-text-primary)] mb-4">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                 Article Not Found
               </h2>
 
-              <p className="text-lg text-[var(--color-text-secondary)] mb-8">
+              <p className="text-lg text-gray-600 mb-8">
                 Sorry, we couldn&apos;t find the article you&apos;re looking for. It may have been moved or deleted.
               </p>
 
               {/* Possible Reasons */}
-              <div className="text-left mb-8 p-4 bg-[var(--color-surface-sunken)] rounded">
-                <p className="text-sm font-semibold text-[var(--color-text-secondary)] mb-2">
+              <div className="text-left mb-8 p-4 bg-gray-100 rounded">
+                <p className="text-sm font-semibold text-gray-700 mb-2">
                   This could be because:
                 </p>
-                <ul className="text-sm text-[var(--color-text-secondary)] space-y-1 list-disc list-inside">
+                <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
                   <li>The article URL has changed</li>
                   <li>The article has been removed</li>
                   <li>The category doesn&apos;t match the article</li>
@@ -60,7 +60,7 @@ export default function ArticleNotFound() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/"
-                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-focus)] transition-colors"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-brand-tomato-500 hover:bg-brand-tomato-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-tomato-500 transition-colors"
                 >
                   <svg
                     className="w-5 h-5 mr-2"
@@ -80,7 +80,7 @@ export default function ArticleNotFound() {
 
                 <button
                   onClick={() => window.history.back()}
-                  className="inline-flex items-center justify-center px-6 py-3 border border-[var(--color-border)] text-base font-medium rounded-md text-[var(--color-text-secondary)] bg-[var(--color-surface-elevated)] hover:bg-[var(--color-surface-sunken)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-focus)] transition-colors"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-tomato-500 transition-colors"
                 >
                   <svg
                     className="w-5 h-5 mr-2"
@@ -100,15 +100,15 @@ export default function ArticleNotFound() {
               </div>
 
               {/* Search Suggestion */}
-              <div className="mt-8 pt-6 border-t border-[var(--color-border)]">
-                <p className="text-sm text-[var(--color-text-tertiary)] mb-3">
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <p className="text-sm text-gray-500 mb-3">
                   Try searching for what you&apos;re looking for:
                 </p>
                 <div className="flex">
                   <input
                     type="text"
                     placeholder="Search articles..."
-                    className="flex-1 px-4 py-2 border border-[var(--color-border)] rounded-l-md focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:border-transparent"
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const value = (e.target as HTMLInputElement).value;
@@ -125,7 +125,7 @@ export default function ArticleNotFound() {
                         window.location.href = `/search?q=${encodeURIComponent(input.value)}`;
                       }
                     }}
-                    className="px-6 py-2 bg-[var(--color-accent)] text-white rounded-r-md hover:bg-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-focus)] transition-colors"
+                    className="px-6 py-2 bg-brand-tomato-500 text-white rounded-r-md hover:bg-brand-tomato-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-tomato-500 transition-colors"
                   >
                     <svg
                       className="w-5 h-5"

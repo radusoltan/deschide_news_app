@@ -110,7 +110,7 @@ export default function HeroArticle({ article, locale }: HeroArticleProps) {
     : 'Read full story';
 
   return (
-    <article className="relative w-full overflow-hidden bg-[var(--color-surface-dark)] group">
+    <article className="relative w-full overflow-hidden bg-brand-oxford group">
       {/* Hero Image Container - 60-70vh on desktop */}
       <div className="relative h-[50vh] sm:h-[60vh] lg:h-[70vh] overflow-hidden">
         {imageToUse ? (
@@ -158,10 +158,10 @@ export default function HeroArticle({ article, locale }: HeroArticleProps) {
               </div>
 
               {/* Hero Title - Large dramatic typography */}
-              <h1 className="font-sans text-white mb-4 sm:mb-6 animate-fade-in-up stagger-1">
+              <h1 className="font-heading text-white mb-4 sm:mb-6 animate-fade-in-up stagger-1">
                 <Link
                   href={articleUrl}
-                  className="block transition-colors duration-300 hover:text-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] text-crisp"
+                  className="block transition-colors duration-300 hover:text-brand-mindaro-400 focus-brand-oxford text-crisp"
                 >
                   <span className="block text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight text-on-photo-strong">
                     {article.title}
@@ -181,7 +181,7 @@ export default function HeroArticle({ article, locale }: HeroArticleProps) {
                 {/* Read full story CTA */}
                 <Link
                   href={articleUrl}
-                  className="group/cta inline-flex items-center gap-3 px-6 py-3 bg-[var(--color-accent)] hover:bg-[var(--color-accent)] text-white font-bold text-sm sm:text-base uppercase tracking-wider rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:translate-x-1 focus-brand w-fit"
+                  className="group/cta inline-flex items-center gap-3 px-6 py-3 bg-brand-tomato hover:bg-brand-tomato-600 text-white font-bold text-sm sm:text-base uppercase tracking-wider rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:translate-x-1 focus-brand w-fit"
                 >
                   <span>{ctaText}</span>
                   <svg

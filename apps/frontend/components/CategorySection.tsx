@@ -43,17 +43,17 @@ export default async function CategorySection({
   const viewAllLabel = viewAllLabels[locale] || viewAllLabels.ro;
 
   return (
-    <section className="bg-[var(--color-surface-elevated)] py-6">
+    <section className="bg-white py-6">
       <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
         {/* Section header */}
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[var(--color-text-primary)] text-2xl font-sans uppercase flex items-center">
-            <span className="inline-block w-1 h-6 bg-[var(--color-accent)] mr-3 rounded-full" />
+          <h2 className="text-brand-oxford-900 text-2xl font-heading uppercase flex items-center">
+            <span className="inline-block w-1 h-6 bg-brand-tomato-500 mr-3 rounded-full" />
             {category.title}
           </h2>
           <Link
             href={categoryUrl}
-            className="inline-flex items-center gap-1 text-sm font-serif font-medium text-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors group"
+            className="inline-flex items-center gap-1 text-sm font-body font-medium text-brand-tomato-500 hover:text-brand-tomato-600 transition-colors group"
           >
             {viewAllLabel}
             <svg

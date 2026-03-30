@@ -39,7 +39,7 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
     <div
       className={cn(
         'aspect-square relative',
-        'bg-gradient-to-br from-[var(--color-surface-dark)] to-[var(--color-surface-elevated-dark)]',
+        'bg-gradient-to-br from-brand-oxford-900 to-brand-oxford-800',
         'rounded-lg shadow-2xl overflow-hidden',
         'transition-transform duration-300 hover:scale-[1.02]',
         className
@@ -66,7 +66,7 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
         <div className="flex items-start">
           <svg
             viewBox="0 0 60 45"
-            className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 text-[var(--color-accent)] opacity-30"
+            className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 text-brand-mindaro-400 opacity-30"
             fill="currentColor"
             aria-hidden="true"
           >
@@ -78,7 +78,7 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
         <div className="flex-1 flex items-center">
           <blockquote
             className={cn(
-              'font-serif text-white',
+              'font-body text-white',
               'text-lg md:text-xl lg:text-2xl',
               'leading-relaxed',
               'italic',
@@ -94,14 +94,14 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
           {/* Author attribution */}
           <div className="flex flex-col flex-1">
             {/* Decorative line */}
-            <div className="w-12 h-0.5 bg-[var(--color-accent)] mb-3 opacity-60" />
+            <div className="w-12 h-0.5 bg-brand-mindaro-400 mb-3 opacity-60" />
 
             <cite className="not-italic">
-              <p className="font-serif font-semibold text-white text-base md:text-lg leading-tight">
+              <p className="font-body font-semibold text-white text-base md:text-lg leading-tight">
                 {author}
               </p>
               {authorTitle && (
-                <p className="font-serif font-medium text-white text-sm md:text-base opacity-75 leading-tight mt-1">
+                <p className="font-body font-medium text-white text-sm md:text-base opacity-75 leading-tight mt-1">
                   {authorTitle}
                 </p>
               )}
@@ -118,7 +118,7 @@ export const QuoteCard: React.FC<QuoteCardProps> = ({
         <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 lg:bottom-8 lg:right-8">
           <svg
             viewBox="0 0 60 45"
-            className="w-8 h-8 md:w-12 md:h-12 text-[var(--color-accent)] opacity-20 rotate-180"
+            className="w-8 h-8 md:w-12 md:h-12 text-brand-mindaro-400 opacity-20 rotate-180"
             fill="currentColor"
             aria-hidden="true"
           >

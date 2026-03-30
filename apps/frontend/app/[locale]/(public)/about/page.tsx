@@ -159,35 +159,35 @@ export default async function AboutPage({ params }: AboutPageProps) {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* Page Header */}
       <div className="mb-12 text-center">
-        <h1 className="text-5xl font-bold text-[var(--color-text-primary)] dark:text-white mb-4">{t.title}</h1>
-        <p className="text-xl text-[var(--color-text-secondary)] dark:text-[var(--color-text-tertiary)]">{t.subtitle}</p>
+        <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">{t.title}</h1>
+        <p className="text-xl text-gray-600 dark:text-gray-400">{t.subtitle}</p>
       </div>
 
       {/* Mission Section */}
       <section className="mb-12">
-        <h2 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-white mb-4">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
           {t.mission.title}
         </h2>
-        <p className="text-lg text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] leading-relaxed">
+        <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
           {t.mission.content}
         </p>
       </section>
 
       {/* Values Section */}
       <section className="mb-12">
-        <h2 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-white mb-6">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
           {t.values.title}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {t.values.items.map((value, index) => (
             <div
               key={index}
-              className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-lg shadow-md p-6 border-l-4 border-[var(--color-accent)]"
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 border-l-4 border-brand-tomato-500"
             >
-              <h3 className="text-xl font-bold text-[var(--color-text-primary)] dark:text-white mb-3">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
                 {value.title}
               </h3>
-              <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">{value.description}</p>
+              <p className="text-gray-700 dark:text-gray-300">{value.description}</p>
             </div>
           ))}
         </div>
@@ -195,26 +195,26 @@ export default async function AboutPage({ params }: AboutPageProps) {
 
       {/* Team Section */}
       <section className="mb-12">
-        <h2 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-white mb-4">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
           {t.team.title}
         </h2>
-        <p className="text-lg text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] leading-relaxed">
+        <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
           {t.team.description}
         </p>
       </section>
 
       {/* Contact Section */}
-      <section className="bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-elevated-dark)] rounded-lg p-8">
-        <h2 className="text-3xl font-bold text-[var(--color-text-primary)] dark:text-white mb-4">
+      <section className="bg-gray-100 dark:bg-gray-800 rounded-lg p-8">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
           {t.contact.title}
         </h2>
-        <p className="text-lg text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] mb-6">
+        <p className="text-lg text-gray-700 dark:text-gray-300 mb-6">
           {t.contact.description}
         </p>
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <svg
-              className="w-6 h-6 text-[var(--color-accent)]"
+              className="w-6 h-6 text-brand-tomato-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -228,14 +228,14 @@ export default async function AboutPage({ params }: AboutPageProps) {
             </svg>
             <a
               href={`mailto:${t.contact.email}`}
-              className="text-lg text-[var(--color-accent)] hover:text-[var(--color-accent)]"
+              className="text-lg text-brand-tomato-500 hover:text-brand-tomato-600"
             >
               {t.contact.email}
             </a>
           </div>
           <div className="flex items-center gap-3">
             <svg
-              className="w-6 h-6 text-[var(--color-accent)]"
+              className="w-6 h-6 text-brand-tomato-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -253,7 +253,7 @@ export default async function AboutPage({ params }: AboutPageProps) {
                 d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
               />
             </svg>
-            <span className="text-lg text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">
+            <span className="text-lg text-gray-700 dark:text-gray-300">
               {t.contact.address}
             </span>
           </div>

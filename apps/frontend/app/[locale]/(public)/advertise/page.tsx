@@ -759,18 +759,18 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Hero Section - Premium Dark Gradient */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-[var(--color-surface-dark)] to-slate-900 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-brand-oxford to-slate-900 text-white">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden opacity-20">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--color-accent)] rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-[var(--color-surface-elevated-dark)] rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-brand-tomato-500 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl animate-pulse delay-1000"></div>
         </div>
 
         <div className="container mx-auto px-4 py-24 md:py-32 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 mb-6 animate-fade-in">
               <svg
-                className="w-4 h-4 text-[var(--color-accent)]"
+                className="w-4 h-4 text-brand-tomato-400"
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >
@@ -790,10 +790,10 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up delay-400">
               <a
                 href="#contact"
-                className="group relative px-8 py-4 bg-[var(--color-accent)] hover:bg-[var(--color-accent)] rounded-lg font-bold text-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[var(--color-accent)]/50"
+                className="group relative px-8 py-4 bg-brand-tomato-500 hover:bg-brand-tomato-600 rounded-lg font-bold text-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-brand-tomato-500/50"
               >
                 <span className="relative z-10">{t.hero.cta}</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-breaking)] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-brand-tomato-600 to-red-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </a>
 
               <a
@@ -821,7 +821,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
       {/* Stats Section - Animated Counters */}
       <section className="py-20 bg-white dark:bg-slate-900">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-black text-center mb-16 text-[var(--color-text-primary)] dark:text-white">
+          <h2 className="text-4xl md:text-5xl font-black text-center mb-16 text-gray-900 dark:text-white">
             {t.stats.title}
           </h2>
 
@@ -834,10 +834,10 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
         <div className="container mx-auto px-4">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-black mb-4 text-[var(--color-text-primary)] dark:text-white">
+              <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900 dark:text-white">
                 {t.audience.title}
               </h2>
-              <p className="text-xl text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">{t.audience.description}</p>
+              <p className="text-xl text-gray-600 dark:text-gray-400">{t.audience.description}</p>
             </div>
 
             {/* Demographics Grid */}
@@ -847,23 +847,23 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                   key={index}
                   className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                 >
-                  <h3 className="text-2xl font-bold mb-6 text-[var(--color-text-primary)] dark:text-white">
+                  <h3 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
                     {demo.title}
                   </h3>
                   <div className="space-y-4">
                     {demo.items.map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center">
-                        <span className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] font-medium">
+                        <span className="text-gray-700 dark:text-gray-300 font-medium">
                           {item.label}
                         </span>
                         <div className="flex items-center gap-3">
                           <div className="w-32 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-breaking)] rounded-full transition-all duration-1000"
+                              className="h-full bg-gradient-to-r from-brand-tomato-500 to-red-600 rounded-full transition-all duration-1000"
                               style={{ width: item.value }}
                             ></div>
                           </div>
-                          <span className="text-xl font-bold text-[var(--color-accent)] w-12">
+                          <span className="text-xl font-bold text-brand-tomato-500 w-12">
                             {item.value}
                           </span>
                         </div>
@@ -879,7 +879,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
               {t.audience.highlights.map((highlight, index) => (
                 <div
                   key={index}
-                  className="bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-breaking)] text-white rounded-xl p-6 shadow-lg"
+                  className="bg-gradient-to-br from-brand-tomato-500 to-red-600 text-white rounded-xl p-6 shadow-lg"
                 >
                   <div className="text-sm font-semibold opacity-90 mb-1">{highlight.label}</div>
                   <div className="text-3xl font-black">{highlight.value}</div>
@@ -892,7 +892,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
               {t.audience.interests.map((interest, index) => (
                 <span
                   key={index}
-                  className="px-6 py-3 bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-full font-semibold text-[var(--color-text-primary)] dark:text-[var(--color-text-secondary)] shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                  className="px-6 py-3 bg-white dark:bg-slate-800 rounded-full font-semibold text-gray-800 dark:text-gray-200 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
                 >
                   {interest}
                 </span>
@@ -909,7 +909,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
             <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900 dark:text-white">
               {t.placements.title}
             </h2>
-            <p className="text-xl text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">{t.placements.subtitle}</p>
+            <p className="text-xl text-gray-600 dark:text-gray-400">{t.placements.subtitle}</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
@@ -919,32 +919,32 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                 className="group relative bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200 dark:border-slate-700 overflow-hidden"
               >
                 {/* Gradient Border Effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-accent)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-tomato-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
 
                 <div className="relative z-10">
                   <div className="flex items-start justify-between mb-4">
-                    <h3 className="text-2xl font-bold text-[var(--color-text-primary)] dark:text-white">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                       {placement.name}
                     </h3>
-                    <span className="px-3 py-1 bg-[var(--color-accent)]/10 dark:bg-[var(--color-accent)]/20 text-[var(--color-accent)] dark:text-[var(--color-accent)] rounded-full text-sm font-bold">
+                    <span className="px-3 py-1 bg-brand-tomato-100 dark:bg-brand-tomato-900/30 text-brand-tomato-700 dark:text-brand-tomato-400 rounded-full text-sm font-bold">
                       {placement.size}
                     </span>
                   </div>
 
-                  <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] mb-6">{placement.description}</p>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">{placement.description}</p>
 
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <div className="text-sm text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary)] mb-1">
+                      <div className="text-sm text-gray-500 dark:text-gray-500 mb-1">
                         Impressions
                       </div>
-                      <div className="text-2xl font-bold text-[var(--color-text-primary)] dark:text-white">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
                         {placement.impressions}
                       </div>
                     </div>
                     <div className="flex-1">
-                      <div className="text-sm text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary)] mb-1">Avg CTR</div>
-                      <div className="text-2xl font-bold text-[var(--color-accent)]">
+                      <div className="text-sm text-gray-500 dark:text-gray-500 mb-1">Avg CTR</div>
+                      <div className="text-2xl font-bold text-brand-tomato-500">
                         {placement.ctr}
                       </div>
                     </div>
@@ -975,7 +975,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
             <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900 dark:text-white">
               {t.packages.title}
             </h2>
-            <p className="text-xl text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">{t.packages.subtitle}</p>
+            <p className="text-xl text-gray-600 dark:text-gray-400">{t.packages.subtitle}</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
@@ -989,7 +989,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                 {/* Most Popular Badge */}
                 {pkg.featured && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
-                    <div className="px-6 py-2 bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-breaking)] text-white rounded-full font-bold text-sm shadow-lg">
+                    <div className="px-6 py-2 bg-gradient-to-r from-brand-tomato-500 to-red-600 text-white rounded-full font-bold text-sm shadow-lg">
                       MOST POPULAR
                     </div>
                   </div>
@@ -998,21 +998,21 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                 <div
                   className={`relative h-full backdrop-blur-sm rounded-3xl p-8 transition-all duration-300 hover:-translate-y-2 ${
                     pkg.featured
-                      ? 'bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-breaking)] text-white shadow-2xl hover:shadow-[var(--color-accent)]/50'
-                      : 'bg-white/60 dark:bg-slate-800/60 border-2 border-slate-200 dark:border-slate-700 hover:border-[var(--color-accent)]/50 dark:hover:border-[var(--color-accent)]/50 shadow-xl hover:shadow-2xl'
+                      ? 'bg-gradient-to-br from-brand-tomato-500 to-red-600 text-white shadow-2xl hover:shadow-brand-tomato-500/50'
+                      : 'bg-white/60 dark:bg-slate-800/60 border-2 border-slate-200 dark:border-slate-700 hover:border-brand-tomato-300 dark:hover:border-brand-tomato-700 shadow-xl hover:shadow-2xl'
                   }`}
                 >
                   <div className="mb-6">
                     <h3
                       className={`text-3xl font-black mb-2 ${
-                        pkg.featured ? 'text-white' : 'text-[var(--color-text-primary)] dark:text-white'
+                        pkg.featured ? 'text-white' : 'text-gray-900 dark:text-white'
                       }`}
                     >
                       {pkg.name}
                     </h3>
                     <p
                       className={`text-sm ${
-                        pkg.featured ? 'text-white/90' : 'text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]'
+                        pkg.featured ? 'text-white/90' : 'text-gray-600 dark:text-gray-400'
                       }`}
                     >
                       {pkg.description}
@@ -1045,7 +1045,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                       <li key={idx} className="flex items-start gap-3">
                         <svg
                           className={`w-6 h-6 flex-shrink-0 mt-0.5 ${
-                            pkg.featured ? 'text-white' : 'text-[var(--color-accent)]'
+                            pkg.featured ? 'text-white' : 'text-brand-tomato-500'
                           }`}
                           fill="none"
                           stroke="currentColor"
@@ -1060,7 +1060,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                         </svg>
                         <span
                           className={`${
-                            pkg.featured ? 'text-white' : 'text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]'
+                            pkg.featured ? 'text-white' : 'text-gray-700 dark:text-gray-300'
                           }`}
                         >
                           {feature}
@@ -1073,8 +1073,8 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                     href="#contact"
                     className={`block w-full py-4 rounded-xl font-bold text-center transition-all duration-300 hover:scale-105 ${
                       pkg.featured
-                        ? 'bg-white text-[var(--color-accent)] hover:bg-slate-100 shadow-lg'
-                        : 'bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)] shadow-md hover:shadow-xl'
+                        ? 'bg-white text-brand-tomato-600 hover:bg-slate-100 shadow-lg'
+                        : 'bg-brand-tomato-500 text-white hover:bg-brand-tomato-600 shadow-md hover:shadow-xl'
                     }`}
                   >
                     {locale === 'ro' ? 'Alege Pachetul' : locale === 'en' ? 'Choose Package' : 'Выбрать Пакет'}
@@ -1089,7 +1089,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
       {/* Benefits Section */}
       <section className="py-20 bg-white dark:bg-slate-900">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-black text-center mb-16 text-[var(--color-text-primary)] dark:text-white">
+          <h2 className="text-4xl md:text-5xl font-black text-center mb-16 text-gray-900 dark:text-white">
             {t.benefits.title}
           </h2>
 
@@ -1100,15 +1100,15 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                 className="group relative bg-gradient-to-br from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border border-slate-200 dark:border-slate-700"
               >
                 <div className="mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-breaking)] rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <div className="w-16 h-16 bg-gradient-to-br from-brand-tomato-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                     <BenefitIcon icon={benefit.icon} />
                   </div>
                 </div>
 
-                <h3 className="text-xl font-bold mb-3 text-[var(--color-text-primary)] dark:text-white">
+                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white">
                   {benefit.title}
                 </h3>
-                <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">{benefit.description}</p>
+                <p className="text-gray-600 dark:text-gray-400">{benefit.description}</p>
               </div>
             ))}
           </div>
@@ -1116,7 +1116,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-[var(--color-surface-dark)] to-slate-900 text-white relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-br from-slate-900 via-brand-oxford to-slate-900 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div
             className="absolute inset-0"
@@ -1137,7 +1137,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
               >
                 <div className="mb-6">
                   <svg
-                    className="w-10 h-10 text-[var(--color-accent)] opacity-50"
+                    className="w-10 h-10 text-brand-tomato-400 opacity-50"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
@@ -1150,7 +1150,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                 <div className="border-t border-white/20 pt-6">
                   <div className="font-bold text-lg">{testimonial.author}</div>
                   <div className="text-sm text-slate-300">{testimonial.role}</div>
-                  <div className="text-sm text-[var(--color-accent)] font-semibold">
+                  <div className="text-sm text-brand-tomato-400 font-semibold">
                     {testimonial.company}
                   </div>
                 </div>
@@ -1165,10 +1165,10 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-black mb-4 text-[var(--color-text-primary)] dark:text-white">
+              <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900 dark:text-white">
                 {t.contact.title}
               </h2>
-              <p className="text-xl text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)]">{t.contact.description}</p>
+              <p className="text-xl text-gray-600 dark:text-gray-400">{t.contact.description}</p>
             </div>
 
             <div className="bg-gradient-to-br from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 rounded-3xl p-12 shadow-2xl border border-slate-200 dark:border-slate-700">
@@ -1177,7 +1177,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                   href={`mailto:${t.contact.email}`}
                   className="group flex items-center gap-4 p-6 bg-white dark:bg-slate-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-slate-200 dark:border-slate-700"
                 >
-                  <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-breaking)] rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 bg-gradient-to-br from-brand-tomato-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                     <svg
                       className="w-7 h-7 text-white"
                       fill="none"
@@ -1193,8 +1193,8 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-sm text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary)] mb-1">Email</div>
-                    <div className="font-bold text-[var(--color-text-primary)] dark:text-white group-hover:text-[var(--color-accent)] transition-colors">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Email</div>
+                    <div className="font-bold text-gray-900 dark:text-white group-hover:text-brand-tomato-500 transition-colors">
                       {t.contact.email}
                     </div>
                   </div>
@@ -1204,7 +1204,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                   href={`tel:${t.contact.phone.replace(/\s/g, '')}`}
                   className="group flex items-center gap-4 p-6 bg-white dark:bg-slate-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-slate-200 dark:border-slate-700"
                 >
-                  <div className="w-14 h-14 bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-breaking)] rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <div className="w-14 h-14 bg-gradient-to-br from-brand-tomato-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                     <svg
                       className="w-7 h-7 text-white"
                       fill="none"
@@ -1220,8 +1220,8 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-sm text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary)] mb-1">Telefon</div>
-                    <div className="font-bold text-[var(--color-text-primary)] dark:text-white group-hover:text-[var(--color-accent)] transition-colors">
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Telefon</div>
+                    <div className="font-bold text-gray-900 dark:text-white group-hover:text-brand-tomato-500 transition-colors">
                       {t.contact.phone}
                     </div>
                   </div>
@@ -1231,14 +1231,14 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
               <div className="flex flex-col sm:flex-row gap-4">
                 <a
                   href={`mailto:${t.contact.email}`}
-                  className="flex-1 py-4 px-6 bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-breaking)] hover:from-[var(--color-accent)] hover:to-[var(--color-breaking)] text-white rounded-xl font-bold text-center transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-2xl hover:shadow-[var(--color-accent)]/50"
+                  className="flex-1 py-4 px-6 bg-gradient-to-r from-brand-tomato-500 to-red-600 hover:from-brand-tomato-600 hover:to-red-700 text-white rounded-xl font-bold text-center transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-2xl hover:shadow-brand-tomato-500/50"
                 >
                   {t.contact.cta}
                 </a>
 
                 <a
                   href="#"
-                  className="flex-1 py-4 px-6 bg-[var(--color-surface-elevated)] dark:bg-slate-800 hover:bg-[var(--color-surface-sunken)] dark:hover:bg-slate-700 border-2 border-[var(--color-border)] dark:border-slate-600 text-[var(--color-text-primary)] dark:text-white rounded-xl font-bold text-center transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
+                  className="flex-1 py-4 px-6 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 text-gray-900 dark:text-white rounded-xl font-bold text-center transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
                 >
                   {t.contact.mediaKit}
                 </a>
@@ -1252,7 +1252,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
       <section className="py-20 bg-gradient-to-br from-slate-100 to-white dark:from-slate-950 dark:to-slate-900">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-black text-center mb-16 text-[var(--color-text-primary)] dark:text-white">
+            <h2 className="text-4xl md:text-5xl font-black text-center mb-16 text-gray-900 dark:text-white">
               {t.faq.title}
             </h2>
 
@@ -1263,11 +1263,11 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                   className="group bg-white dark:bg-slate-800 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700"
                 >
                   <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
-                    <span className="text-lg font-bold text-[var(--color-text-primary)] dark:text-white pr-4">
+                    <span className="text-lg font-bold text-gray-900 dark:text-white pr-4">
                       {item.q}
                     </span>
                     <svg
-                      className="w-6 h-6 text-[var(--color-accent)] flex-shrink-0 transition-transform group-open:rotate-180"
+                      className="w-6 h-6 text-brand-tomato-500 flex-shrink-0 transition-transform group-open:rotate-180"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1281,7 +1281,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
                     </svg>
                   </summary>
                   <div className="px-6 pb-6">
-                    <p className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary)] leading-relaxed">{item.a}</p>
+                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{item.a}</p>
                   </div>
                 </details>
               ))}
@@ -1291,10 +1291,10 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-[var(--color-surface-dark)] to-slate-900 text-white relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-br from-slate-900 via-brand-oxford to-slate-900 text-white relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden opacity-20">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-[var(--color-accent)] rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-[var(--color-surface-elevated-dark)] rounded-full blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-0 left-0 w-96 h-96 bg-brand-tomato-500 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl animate-pulse delay-1000"></div>
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
@@ -1316,7 +1316,7 @@ export default async function AdvertisePage({ params }: AdvertisePageProps) {
 
             <a
               href="#contact"
-              className="inline-block px-10 py-5 bg-[var(--color-accent)] hover:bg-[var(--color-accent)] rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 shadow-2xl hover:shadow-[var(--color-accent)]/50"
+              className="inline-block px-10 py-5 bg-brand-tomato-500 hover:bg-brand-tomato-600 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 shadow-2xl hover:shadow-brand-tomato-500/50"
             >
               {t.contact.cta}
             </a>

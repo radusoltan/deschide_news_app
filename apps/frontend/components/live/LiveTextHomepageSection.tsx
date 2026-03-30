@@ -231,7 +231,7 @@ const LiveTextCard: React.FC<{
 
         {/* Title */}
         <h3 className={cn(
-          'font-sans font-bold text-white leading-tight',
+          'font-heading font-bold text-white leading-tight',
           'group-hover:text-red-100 transition-colors',
           featured ? 'text-base sm:text-lg line-clamp-3' : 'text-sm line-clamp-2'
         )}>
@@ -338,7 +338,7 @@ export const LiveTextHomepageSection: React.FC<LiveTextHomepageSectionProps> = (
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600" />
             </span>
-            <h2 className="text-lg sm:text-xl font-sans font-bold text-white tracking-tight">
+            <h2 className="text-lg sm:text-xl font-heading font-bold text-white tracking-tight">
               {sectionTitles[locale] || sectionTitles.en}
             </h2>
           </div>

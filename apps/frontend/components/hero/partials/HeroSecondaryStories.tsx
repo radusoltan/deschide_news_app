@@ -67,13 +67,13 @@ function getSidebarClass(variant: HeroVariant): string {
 function getBadgeStyle(variant: HeroVariant): string {
   switch (variant) {
     case 'breaking':
-      return 'bg-[var(--color-breaking)]';
+      return 'bg-red-600';
     case 'alert':
       return 'bg-amber-500';
     case 'flash':
       return 'bg-teal-500';
     default:
-      return 'bg-[var(--color-accent)]';
+      return 'bg-brand-tomato';
   }
 }
 

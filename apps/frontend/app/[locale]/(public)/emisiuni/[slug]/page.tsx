@@ -230,7 +230,7 @@ function VideoCard({ video, locale, showColor }: VideoCardProps) {
 
       {/* Content */}
       <div className="p-5">
-        <h2 className="font-sans font-bold text-white text-lg leading-tight line-clamp-2 mb-3 group-hover:text-slate-100 transition-colors">
+        <h2 className="font-heading font-bold text-white text-lg leading-tight line-clamp-2 mb-3 group-hover:text-slate-100 transition-colors">
           <Link href={video.youtubeUrl} target="_blank" rel="noopener noreferrer">
             {video.title}
           </Link>
@@ -439,7 +439,7 @@ export default async function ShowPage({ params, searchParams }: ShowPageProps) 
                 Video Show
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-sans font-bold text-white mb-4">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-white mb-4">
                 {show.name}
               </h1>
 
