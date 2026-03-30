@@ -14,7 +14,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
 
 /**
  * Fetch menu items filtered by menu type
- * GET /api/menu_items?menu=main|footer
+ * GET /api/menu-items?menu=main|footer
  */
 export async function fetchMenuItems(
   menu: 'main' | 'footer',
@@ -30,7 +30,7 @@ export async function fetchMenuItems(
     headers['Accept-Language'] = locale;
   }
 
-  const url = new URL(`${API_BASE_URL}/api/menu_items`);
+  const url = new URL(`${API_BASE_URL}/api/menu-items`);
   url.searchParams.set('menu', menu);
   url.searchParams.set('order[position]', 'asc');
   url.searchParams.set('itemsPerPage', '100');
@@ -53,7 +53,7 @@ export async function fetchMenuItems(
 
 /**
  * Create a new menu item
- * POST /api/menu_items
+ * POST /api/menu-items
  */
 export async function createMenuItem(
   data: CreateMenuItemData,
@@ -69,7 +69,7 @@ export async function createMenuItem(
     headers['Accept-Language'] = locale;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/menu_items`, {
+  const response = await fetch(`${API_BASE_URL}/api/menu-items`, {
     method: 'POST',
     headers,
     body: JSON.stringify(data),
@@ -89,7 +89,7 @@ export async function createMenuItem(
 
 /**
  * Update an existing menu item
- * PATCH /api/menu_items/{id}
+ * PATCH /api/menu-items/{id}
  */
 export async function updateMenuItem(
   id: number,
@@ -106,7 +106,7 @@ export async function updateMenuItem(
     headers['Accept-Language'] = locale;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/menu_items/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/menu-items/${id}`, {
     method: 'PATCH',
     headers,
     body: JSON.stringify(data),
@@ -126,13 +126,13 @@ export async function updateMenuItem(
 
 /**
  * Delete a menu item
- * DELETE /api/menu_items/{id}
+ * DELETE /api/menu-items/{id}
  */
 export async function deleteMenuItem(
   id: number,
   token: string
 ): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/menu_items/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/api/menu-items/${id}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,

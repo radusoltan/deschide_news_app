@@ -99,7 +99,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         return;
       }
 
-      const url = new URL(`${API_BASE_URL}/api/menu_items`);
+      const url = new URL(`${API_BASE_URL}/api/menu-items`);
       url.searchParams.set('menu', activeTab);
       url.searchParams.set('order[position]', 'asc');
       url.searchParams.set('itemsPerPage', '100');
@@ -202,7 +202,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
 
         // Swap positions via two PATCH calls
         await Promise.all([
-          fetch(`${API_BASE_URL}/api/menu_items/${current.id}`, {
+          fetch(`${API_BASE_URL}/api/menu-items/${current.id}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/merge-patch+json',
@@ -210,7 +210,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
             },
             body: JSON.stringify({ position: above.position }),
           }),
-          fetch(`${API_BASE_URL}/api/menu_items/${above.id}`, {
+          fetch(`${API_BASE_URL}/api/menu-items/${above.id}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/merge-patch+json',
@@ -243,7 +243,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         if (!token) throw new Error('Not authenticated');
 
         await Promise.all([
-          fetch(`${API_BASE_URL}/api/menu_items/${current.id}`, {
+          fetch(`${API_BASE_URL}/api/menu-items/${current.id}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/merge-patch+json',
@@ -251,7 +251,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
             },
             body: JSON.stringify({ position: below.position }),
           }),
-          fetch(`${API_BASE_URL}/api/menu_items/${below.id}`, {
+          fetch(`${API_BASE_URL}/api/menu-items/${below.id}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/merge-patch+json',
@@ -282,7 +282,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         const token = await getAuthToken();
         if (!token) throw new Error('Not authenticated');
 
-        const response = await fetch(`${API_BASE_URL}/api/menu_items/${item.id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/menu-items/${item.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/merge-patch+json',
@@ -322,7 +322,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         ? Math.max(...menuItems.map((i) => i.position)) + 1
         : 1;
 
-      const response = await fetch(`${API_BASE_URL}/api/menu_items`, {
+      const response = await fetch(`${API_BASE_URL}/api/menu-items`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/ld+json',
@@ -383,7 +383,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         ? Math.max(...menuItems.map((i) => i.position)) + 1
         : 1;
 
-      const response = await fetch(`${API_BASE_URL}/api/menu_items`, {
+      const response = await fetch(`${API_BASE_URL}/api/menu-items`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/ld+json',
@@ -448,7 +448,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
       for (const loc of LOCALES) {
         try {
           const response = await fetch(
-            `${API_BASE_URL}/api/menu_items/${item.id}`,
+            `${API_BASE_URL}/api/menu-items/${item.id}`,
             {
               headers: {
                 'Accept-Language': loc,
@@ -487,7 +487,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         if (!label) continue;
 
         const response = await fetch(
-          `${API_BASE_URL}/api/menu_items/${editingItem.id}`,
+          `${API_BASE_URL}/api/menu-items/${editingItem.id}`,
           {
             method: 'PATCH',
             headers: {
@@ -528,7 +528,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
       if (!token) throw new Error('Not authenticated');
 
       const response = await fetch(
-        `${API_BASE_URL}/api/menu_items/${deletingItem.id}`,
+        `${API_BASE_URL}/api/menu-items/${deletingItem.id}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
