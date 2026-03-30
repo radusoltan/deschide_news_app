@@ -20,6 +20,8 @@ interface CategoryFormProps {
     slug?: string;
     status?: string;
     onFrontPage?: boolean;
+    inMenu?: boolean;
+    inFooterMenu?: boolean;
     parentId?: number | null;
   };
 }
@@ -33,6 +35,8 @@ export default function CategoryForm({ locale, categories = [], category }: Cate
     slug: category?.slug || '',
     status: category?.status || 'active',
     onFrontPage: category?.onFrontPage || false,
+    inMenu: category?.inMenu || false,
+    inFooterMenu: category?.inFooterMenu || false,
     parent: category?.parentId?.toString() || '',
   });
 
@@ -162,16 +166,39 @@ export default function CategoryForm({ locale, categories = [], category }: Cate
         </Select>
       </div>
 
-      {/* On Front Page */}
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="onFrontPage"
-          name="onFrontPage"
-          checked={formData.onFrontPage}
-          onChange={(e) => setFormData({ ...formData, onFrontPage: e.target.checked })}
-          disabled={loading}
-        />
-        <Label htmlFor="onFrontPage">Display on front page</Label>
+      {/* Visibility Options */}
+      <div className="space-y-3">
+        <Label>Visibility</Label>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="onFrontPage"
+            name="onFrontPage"
+            checked={formData.onFrontPage}
+            onChange={(e) => setFormData({ ...formData, onFrontPage: e.target.checked })}
+            disabled={loading}
+          />
+          <Label htmlFor="onFrontPage">Display on front page</Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="inMenu"
+            name="inMenu"
+            checked={formData.inMenu}
+            onChange={(e) => setFormData({ ...formData, inMenu: e.target.checked })}
+            disabled={loading}
+          />
+          <Label htmlFor="inMenu">Show in main menu</Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="inFooterMenu"
+            name="inFooterMenu"
+            checked={formData.inFooterMenu}
+            onChange={(e) => setFormData({ ...formData, inFooterMenu: e.target.checked })}
+            disabled={loading}
+          />
+          <Label htmlFor="inFooterMenu">Show in footer menu</Label>
+        </div>
       </div>
 
       {/* Form Actions */}

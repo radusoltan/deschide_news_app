@@ -38,6 +38,8 @@ export async function createCategoryAction(
   const slug = formData.get('slug') as string;
   const status = formData.get('status') as string;
   const onFrontPage = formData.get('onFrontPage') === 'on';
+  const inMenu = formData.get('inMenu') === 'on';
+  const inFooterMenu = formData.get('inFooterMenu') === 'on';
   const parentId = formData.get('parent') as string;
 
   // Validate required fields
@@ -61,6 +63,8 @@ export async function createCategoryAction(
       slug: slug.trim(),
       status: status || 'active',
       onFrontPage,
+      inMenu,
+      inFooterMenu,
     };
 
     if (parentId && parentId.trim() !== '') {
@@ -96,6 +100,8 @@ export async function updateCategoryAction(
   const slug = formData.get('slug') as string;
   const status = formData.get('status') as string;
   const onFrontPage = formData.get('onFrontPage') === 'on';
+  const inMenu = formData.get('inMenu') === 'on';
+  const inFooterMenu = formData.get('inFooterMenu') === 'on';
 
   // Validate required fields
   const errors: CategoryFormState['errors'] = {};
@@ -120,6 +126,8 @@ export async function updateCategoryAction(
       slug: slug.trim(),
       status: status || 'active',
       onFrontPage,
+      inMenu,
+      inFooterMenu,
     };
 
     if (parentIdUpdate && parentIdUpdate.trim() !== '') {
