@@ -66,31 +66,47 @@ final class MenuItemProcessor implements ProcessorInterface
                     throw new RuntimeException('Menu item not found');
                 }
 
-                // Update fields from deserialized data
-                if (null !== $data->getLabel()) {
+                // Determine which fields were actually sent in the request
+                $requestContent = $request?->getContent() ?? '{}';
+                $sentFields = array_keys(json_decode($requestContent, true) ?? []);
+
+                // Only update fields that were explicitly sent in the PATCH request
+                if (in_array('label', $sentFields, true) && null !== $data->getLabel()) {
                     $existingEntity->setLabel($data->getLabel());
                 }
-                if (null !== $data->getMenu()) {
+                if (in_array('menu', $sentFields, true) && null !== $data->getMenu()) {
                     $existingEntity->setMenu($data->getMenu());
                 }
-                if (null !== $data->getType()) {
+                if (in_array('type', $sentFields, true) && null !== $data->getType()) {
                     $existingEntity->setType($data->getType());
                 }
-                $existingEntity->setUrl($data->getUrl());
-                $existingEntity->setPosition($data->getPosition());
-                $existingEntity->setIsActive($data->isActive());
-                $existingEntity->setOpenInNewTab($data->isOpenInNewTab());
-                $existingEntity->setCssClass($data->getCssClass());
+                if (in_array('url', $sentFields, true)) {
+                    $existingEntity->setUrl($data->getUrl());
+                }
+                if (in_array('position', $sentFields, true)) {
+                    $existingEntity->setPosition($data->getPosition());
+                }
+                if (in_array('isActive', $sentFields, true)) {
+                    $existingEntity->setIsActive($data->isActive());
+                }
+                if (in_array('openInNewTab', $sentFields, true)) {
+                    $existingEntity->setOpenInNewTab($data->isOpenInNewTab());
+                }
+                if (in_array('cssClass', $sentFields, true)) {
+                    $existingEntity->setCssClass($data->getCssClass());
+                }
 
-                // Handle category relation (get managed entity)
-                if ($data->getCategory()) {
-                    $categoryId = $data->getCategory()->getId();
-                    if ($categoryId) {
-                        $managedCategory = $this->entityManager->getRepository(Category::class)->find($categoryId);
-                        $existingEntity->setCategory($managedCategory);
+                // Handle category relation only if explicitly sent
+                if (in_array('category', $sentFields, true)) {
+                    if ($data->getCategory()) {
+                        $categoryId = $data->getCategory()->getId();
+                        if ($categoryId) {
+                            $managedCategory = $this->entityManager->getRepository(Category::class)->find($categoryId);
+                            $existingEntity->setCategory($managedCategory);
+                        }
+                    } else {
+                        $existingEntity->setCategory(null);
                     }
-                } else {
-                    $existingEntity->setCategory(null);
                 }
 
                 $data = $existingEntity;
