@@ -8,7 +8,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { decrypt, getSession, type SessionPayload } from '@/lib/auth/session';
-import { isTokenExpired, isRefreshTokenExpired } from '@/lib/api-client';
+import { isTokenExpired, isRefreshTokenExpired, refreshToken as apiRefreshToken } from '@/lib/api-client';
 import { refreshSessionToken } from '@/lib/auth/actions';
 import { cache } from 'react';
 
@@ -79,19 +79,15 @@ const getFreshAccessToken = cache(async (): Promise<string | null> => {
     return null;
   }
 
-  // Try to refresh the token using Server Action
-  // This properly updates the session cookie with new tokens
+  // Refresh the token directly during server rendering.
+  // We cannot call cookies().set() during render (only in Server Actions
+  // invoked from client or Route Handlers), so we just fetch a new access
+  // token and return it for the current request without updating the cookie.
   try {
-    console.log('[DAL] Access token expired, refreshing via Server Action...');
-    const result = await refreshSessionToken();
-
-    if (result.success) {
-      console.log('[DAL] Token refreshed and session cookie updated');
-      return result.accessToken;
-    } else {
-      console.error('[DAL] Token refresh failed:', result.error);
-      return null;
-    }
+    console.log('[DAL] Access token expired, refreshing...');
+    const newTokens = await apiRefreshToken(session.tokens.refreshToken);
+    console.log('[DAL] Token refreshed successfully');
+    return newTokens.token;
   } catch (error) {
     console.error('[DAL] Token refresh failed:', error);
     return null;
@@ -338,6 +334,8 @@ export interface Category {
   slug: string;
   status?: string;
   onFrontPage?: boolean;
+  inMenu?: boolean;
+  inFooterMenu?: boolean;
   parent?: any;
   createdAt?: string;
   updatedAt?: string;

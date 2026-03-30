@@ -154,6 +154,28 @@ export default function Sidebar() {
                   </Link>
                 </li>
 
+                {/* Menu Builder */}
+                <li>
+                  <Link
+                    href={`/${locale}/admin/menu-builder`}
+                    className={linkClass(`/${locale}/admin/menu-builder`)}
+                  >
+                    <svg
+                      className={iconClass(`/${locale}/admin/menu-builder`)}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="ml-3">Menu Builder</span>
+                  </Link>
+                </li>
+
                 {/* Images */}
                 <li>
                   <Link
