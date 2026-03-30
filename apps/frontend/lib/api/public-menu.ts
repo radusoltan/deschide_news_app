@@ -59,5 +59,10 @@ export function getMenuItemHref(item: MenuItem, locale: string): string {
     return `/${localePrefix}${item.categorySlug}`;
   }
 
+  // Dropdown items are containers -- no direct link
+  if (item.type === 'dropdown') {
+    return '#';
+  }
+
   return '#';
 }

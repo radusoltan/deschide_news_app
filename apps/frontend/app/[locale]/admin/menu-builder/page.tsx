@@ -19,7 +19,7 @@ export default async function MenuBuilderPage({ params }: MenuBuilderPageProps) 
           Menu Builder
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Manage navigation menus: add categories, external links, reorder items, and toggle visibility
+          Manage navigation menus: add categories, external links, dropdowns with sub-items, reorder via drag-and-drop, and toggle visibility
         </p>
       </div>
 

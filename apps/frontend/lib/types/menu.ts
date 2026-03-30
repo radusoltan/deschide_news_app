@@ -7,7 +7,7 @@ export interface MenuItem {
   '@id': string;
   '@type': string;
   menu: 'main' | 'footer';
-  type: 'category' | 'external_link';
+  type: 'category' | 'external_link' | 'dropdown';
   label: string;
   url: string | null;
   category: string | null; // IRI like /api/categories/32
@@ -17,6 +17,8 @@ export interface MenuItem {
   isActive: boolean;
   openInNewTab: boolean;
   cssClass: string | null;
+  parent: string | null;      // IRI of parent menu item or null
+  children: MenuItem[];        // nested sub-items
   createdAt: string;
   updatedAt: string;
 }
@@ -33,7 +35,7 @@ export interface MenuItemListResponse {
 
 export interface CreateMenuItemData {
   menu: 'main' | 'footer';
-  type: 'category' | 'external_link';
+  type: 'category' | 'external_link' | 'dropdown';
   label: string;
   url?: string | null;
   category?: string | null;
@@ -41,6 +43,7 @@ export interface CreateMenuItemData {
   isActive?: boolean;
   openInNewTab?: boolean;
   cssClass?: string | null;
+  parent?: string | null;
 }
 
 export interface UpdateMenuItemData {
@@ -50,4 +53,5 @@ export interface UpdateMenuItemData {
   isActive?: boolean;
   openInNewTab?: boolean;
   cssClass?: string | null;
+  parent?: string | null;
 }
