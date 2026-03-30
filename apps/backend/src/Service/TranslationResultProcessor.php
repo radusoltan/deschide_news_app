@@ -21,9 +21,12 @@ final class TranslationResultProcessor
     }
 
     /**
-     * @param string[] $locales
+     * Result returned by process() so the caller can decide final status.
+     *
+     * @param string[] $savedLocales  Locales that were successfully persisted
+     * @param bool     $needsReview   True if any quality gate flagged the translation
      */
-    public function process(Article $article, string $rawOutput, array $locales = ['ru', 'en']): void
+    public function process(Article $article, string $rawOutput, array $locales = ['ru', 'en']): ProcessResult
     {
         $data = $this->parseJson($rawOutput);
 
@@ -124,17 +127,30 @@ final class TranslationResultProcessor
             }
         }
 
-        // Set final status based on quality gates
-        $finalStatus = $needsReview ? 'needs_review' : 'completed';
-        $article->setTranslationStatus($finalStatus);
-        $article->setTranslatedAt(new \DateTimeImmutable());
-        $article->setTranslatedBy('gemini-agent');
-
         $this->entityManager->flush();
 
-        // Notify editors
+        return new ProcessResult($translatedLocales, $needsReview);
+    }
+
+    /**
+     * Set final translation status on article and send editor notification.
+     * Called by the handler after all per-language iterations are done.
+     *
+     * @param string[] $allSavedLocales  All locales saved across iterations
+     */
+    public function finalize(Article $article, string $status, array $allSavedLocales, bool $needsReview): void
+    {
+        $article->setTranslationStatus($status);
+        $article->setTranslatedAt(new \DateTimeImmutable());
+        $article->setTranslatedBy('gemini-agent');
+        $this->entityManager->flush();
+
+        if ($allSavedLocales === []) {
+            return;
+        }
+
         $roTitle = $article->getTitle() ?? 'Articol';
-        $localeList = implode(', ', array_map('strtoupper', $translatedLocales));
+        $localeList = implode(', ', array_map('strtoupper', $allSavedLocales));
 
         $importance = $needsReview
             ? NotificationImportance::MEDIUM
@@ -158,6 +174,22 @@ final class TranslationResultProcessor
     }
 
     /**
+     * Replace ASCII control characters (0x00-0x1f, 0x7f) with spaces.
+     * Uses byte-level replacement to avoid PCRE issues with large UTF-8 strings.
+     */
+    private function stripControlChars(string $input): string
+    {
+        // Build translation table: every control char → space
+        $map = [];
+        for ($i = 0; $i <= 0x1F; ++$i) {
+            $map[\chr($i)] = ' ';
+        }
+        $map[\chr(0x7F)] = ' ';
+
+        return strtr($input, $map);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function parseJson(string $rawOutput): array
@@ -165,19 +197,19 @@ final class TranslationResultProcessor
         $cleaned = trim($rawOutput);
 
         // Gemini CLI wraps translation in a JSON envelope where the "response"
-        // field is a string containing the actual JSON. That inner string often
-        // has literal newlines/tabs which are invalid inside JSON string values.
-        // We must sanitize control characters BEFORE the first json_decode.
-        // We only strip \x00-\x08, \x0b, \x0c, \x0e-\x1f (preserve \n=0x0a, \r=0x0d, \t=0x09
-        // which are legal JSON whitespace outside of strings but illegal inside).
-        // The safest approach: replace control chars inside JSON string values only.
-        // Simpler approach that works: replace all control chars with spaces,
-        // then restore structural newlines.
-        $cleaned = preg_replace('/[\x00-\x09\x0b\x0c\x0e-\x1f\x7f]/', ' ', $cleaned) ?? $cleaned;
+        // field contains literal newlines/tabs inside its string value.
+        // Strip ALL ASCII control characters (0x00-0x1f, 0x7f) including \n, \r, \t.
+        $cleaned = $this->stripControlChars($cleaned);
 
         try {
             $decoded = json_decode($cleaned, true, 512, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
+            // Log cleaned version for debugging
+            $this->logger->error('TranslationResultProcessor: json_decode failed on cleaned input', [
+                'cleaned_first_300' => mb_substr($cleaned, 0, 300),
+                'json_error' => $e->getMessage(),
+            ]);
+
             throw new \RuntimeException(
                 'TranslationResultProcessor: invalid JSON: ' . $e->getMessage()
                 . "\nRaw (first 500): " . mb_substr($rawOutput, 0, 500)
@@ -198,9 +230,21 @@ final class TranslationResultProcessor
             $responseStr = preg_replace('/\s*```\s*$/m', '', $responseStr ?? $decoded['response']);
             $responseStr = trim($responseStr ?? $decoded['response']);
 
-            // Fix control characters that break JSON parsing (Gemini sometimes
-            // embeds raw newlines/tabs inside JSON string values)
-            $responseStr = preg_replace('/[\x00-\x1f\x7f]/', ' ', $responseStr) ?? $responseStr;
+            // Gemini sometimes prepends preamble text ("I will translate...")
+            // before the JSON object. Extract from first '{' to last '}'.
+            $jsonStart = strpos($responseStr, '{');
+            $jsonEnd = strrpos($responseStr, '}');
+            if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd > $jsonStart) {
+                if ($jsonStart > 0) {
+                    $this->logger->debug('TranslationResultProcessor: stripped preamble', [
+                        'preamble' => mb_substr($responseStr, 0, min($jsonStart, 120)),
+                    ]);
+                }
+                $responseStr = substr($responseStr, $jsonStart, $jsonEnd - $jsonStart + 1);
+            }
+
+            // Strip control characters that break JSON parsing
+            $responseStr = $this->stripControlChars($responseStr);
 
             try {
                 $inner = json_decode($responseStr, true, 512, \JSON_THROW_ON_ERROR);

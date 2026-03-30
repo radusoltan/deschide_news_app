@@ -56,42 +56,68 @@ final readonly class TranslateArticleHandler
         $article->setTranslationStatus('in_progress');
         $this->em->flush();
 
-        $start = microtime(true);
+        // Translate one language at a time to keep Gemini output well under 64KB
+        $successes = [];
+        $failures = [];
+        $needsReview = false;
 
-        try {
-            $promptJson = $this->buildPrompt($article, $message->locales);
-            $output = $this->runGemini($promptJson);
-            $this->resultProcessor->process($article, $output, $message->locales);
+        foreach ($message->locales as $locale) {
+            $start = microtime(true);
 
-            if ($message->forceRetranslate) {
-                $article->setRequestTranslation(false);
-                $this->em->flush();
+            try {
+                $promptJson = $this->buildPrompt($article, [$locale]);
+                $output = $this->runGemini($promptJson, [$locale]);
+                $result = $this->resultProcessor->process($article, $output, [$locale]);
+
+                $successes = [...$successes, ...$result->savedLocales];
+                $needsReview = $needsReview || $result->needsReview;
+
+                $this->logger->info('TranslateArticleHandler: locale completed', [
+                    'articleId' => $message->articleId,
+                    'locale' => $locale,
+                    'duration' => round(microtime(true) - $start, 2) . 's',
+                ]);
+            } catch (ProcessTimedOutException $e) {
+                $failures[] = $locale;
+                $this->logger->error('TranslateArticleHandler: Gemini timeout', [
+                    'articleId' => $message->articleId,
+                    'locale' => $locale,
+                    'timeout' => self::TIMEOUT,
+                ]);
+            } catch (\Throwable $e) {
+                $failures[] = $locale;
+                $this->logger->error('TranslateArticleHandler: locale failed', [
+                    'articleId' => $message->articleId,
+                    'locale' => $locale,
+                    'error' => $e->getMessage(),
+                ]);
             }
-
-            $this->logger->info('TranslateArticleHandler: completed', [
-                'articleId' => $message->articleId,
-                'locales' => $message->locales,
-                'duration' => round(microtime(true) - $start, 2) . 's',
-            ]);
-        } catch (ProcessTimedOutException $e) {
-            $article->setTranslationStatus('failed');
-            $this->em->flush();
-            $this->logger->error('TranslateArticleHandler: Gemini timeout', [
-                'articleId' => $message->articleId,
-                'timeout' => self::TIMEOUT,
-            ]);
-
-            throw $e;
-        } catch (\Throwable $e) {
-            $article->setTranslationStatus('failed');
-            $this->em->flush();
-            $this->logger->error('TranslateArticleHandler: failed', [
-                'articleId' => $message->articleId,
-                'error' => $e->getMessage(),
-            ]);
-
-            throw $e;
         }
+
+        // Determine final status
+        if ($successes === []) {
+            $this->resultProcessor->finalize($article, 'failed', [], false);
+
+            throw new \RuntimeException(\sprintf(
+                'All translations failed for article %d: %s',
+                $message->articleId,
+                implode(', ', $failures),
+            ));
+        }
+
+        $finalStatus = ($failures !== [] || $needsReview) ? 'needs_review' : 'completed';
+        $this->resultProcessor->finalize($article, $finalStatus, $successes, $needsReview || $failures !== []);
+
+        if ($message->forceRetranslate) {
+            $article->setRequestTranslation(false);
+            $this->em->flush();
+        }
+
+        $this->logger->info('TranslateArticleHandler: completed', [
+            'articleId' => $message->articleId,
+            'successes' => $successes,
+            'failures' => $failures,
+        ]);
     }
 
     /**
@@ -113,7 +139,10 @@ final readonly class TranslateArticleHandler
         return json_encode($data, \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR);
     }
 
-    private function runGemini(string $promptJson): string
+    /**
+     * @param string[] $locales Locales requested in this call (typically one)
+     */
+    private function runGemini(string $promptJson, array $locales = []): string
     {
         // Read agent system prompt
         $agentFile = $this->projectDir . '/' . self::AGENT_FILE;
@@ -133,7 +162,7 @@ final readonly class TranslateArticleHandler
         $process = new Process(
             command: [
                 $this->geminiCliPath,
-                '-p', 'Translate the article from the input below. Return JSON with translations key containing ru and en.',
+                '-p', 'Translate the article from the input below. Return JSON with translations key containing ' . implode(' and ', $locales) . '.',
                 '-o', 'json',
             ],
             cwd: $this->projectDir,
