@@ -273,6 +273,20 @@ class MenuItem implements Translatable
         return $this->locale;
     }
 
+    // --- Virtual getters for category details (used by public frontend) ---
+
+    #[Groups(['menu-item:read'])]
+    public function getCategorySlug(): ?string
+    {
+        return $this->category?->getSlug();
+    }
+
+    #[Groups(['menu-item:read'])]
+    public function getCategoryTitle(): ?string
+    {
+        return $this->category?->getTitle();
+    }
+
     // --- Validation ---
 
     #[Assert\Callback]
