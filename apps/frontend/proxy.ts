@@ -170,9 +170,9 @@ export async function proxy(request: NextRequest) {
     else if (path.startsWith('/api/') && !path.includes('/web-vitals') && !path.includes('/auth/')) {
       response.headers.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=60');
     }
-    // HTML pages - cache for 1 minute with stale-while-revalidate
+    // HTML pages - no browser cache so Mercure-driven router.refresh() always fetches fresh content
     else if (!path.startsWith('/api/') && !path.startsWith('/_next/')) {
-      response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     }
 
     // ========================================================================

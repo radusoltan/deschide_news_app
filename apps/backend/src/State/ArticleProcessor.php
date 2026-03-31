@@ -21,9 +21,15 @@ use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Lcobucci\JWT\Configuration;
+use Lcobucci\JWT\Signer\Hmac\Sha256;
+use Lcobucci\JWT\Signer\Key\InMemory;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * @implements ProcessorInterface<Article>
@@ -37,6 +43,12 @@ final class ArticleProcessor implements ProcessorInterface
         private readonly PerformanceService $performanceService,
         private readonly CacheItemPoolInterface $doctrineResultCachePool,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly HttpClientInterface $httpClient,
+        private readonly LoggerInterface $logger,
+        #[Autowire('%env(MERCURE_URL)%')]
+        private readonly string $mercureUrl = '',
+        #[Autowire('%env(MERCURE_JWT_SECRET)%')]
+        private readonly string $mercureJwtSecret = '',
     ) {
     }
 
@@ -269,6 +281,9 @@ final class ArticleProcessor implements ProcessorInterface
                     $this->addTranslation($data, $locale);
                 }
 
+                // Notify public frontends via Mercure SSE
+                $this->publishArticleUpdateEvent($data, 'created');
+
                 // Dispatch notification for new published articles
                 if ($data->getStatus() === ArticleStatus::PUBLISHED) {
                     $this->eventDispatcher->dispatch(new ArticlePublishedEvent($data));
@@ -319,6 +334,9 @@ final class ArticleProcessor implements ProcessorInterface
                 if ($data->getId()) {
                     $this->invalidateArticleCache($data->getId());
                 }
+
+                // Notify public frontends via Mercure SSE
+                $this->publishArticleUpdateEvent($data, 'updated');
 
                 // Dispatch notification events after successful update
                 $newStatus = $data->getStatus();
@@ -437,5 +455,58 @@ final class ArticleProcessor implements ProcessorInterface
         }
 
         return $this->entityManager->getRepository(Tag::class)->find($tag->getId());
+    }
+
+    /**
+     * Publish a Mercure event to notify public frontends that article data changed.
+     * Uses topic "deschide_news/articles" with anonymous subscription (no auth required).
+     */
+    private function publishArticleUpdateEvent(Article $article, string $action): void
+    {
+        if ($this->mercureUrl === '' || $this->mercureJwtSecret === '') {
+            return;
+        }
+
+        try {
+            $data = json_encode([
+                'type' => 'article.' . $action,
+                'articleId' => $article->getId(),
+                'badge' => $article->getBadge()?->value,
+                'isFeatured' => $article->isFeatured(),
+                'status' => $article->getStatus()->value,
+                'timestamp' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+            ]);
+
+            $jwt = $this->createMercurePublisherJwt();
+
+            $this->httpClient->request('POST', $this->mercureUrl, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $jwt,
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+                'body' => [
+                    'topic' => 'deschide_news/articles',
+                    'data' => $data,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            $this->logger->warning('Failed to publish article Mercure event', [
+                'articleId' => $article->getId(),
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function createMercurePublisherJwt(): string
+    {
+        $config = Configuration::forSymmetricSigner(
+            new Sha256(),
+            InMemory::plainText($this->mercureJwtSecret),
+        );
+
+        return $config->builder()
+            ->withClaim('mercure', ['publish' => ['*']])
+            ->getToken($config->signer(), $config->signingKey())
+            ->toString();
     }
 }

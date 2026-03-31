@@ -67,8 +67,13 @@ final class CategoryProvider implements ProviderInterface
             }
         }
 
-        // Default ordering
-        $queryBuilder->orderBy('c.title', 'ASC');
+        // Order by frontPagePosition first (for front page queries), then by title
+        if ($request && $request->query->has('onFrontPage')) {
+            $queryBuilder->orderBy('c.frontPagePosition', 'ASC')
+                ->addOrderBy('c.title', 'ASC');
+        } else {
+            $queryBuilder->orderBy('c.title', 'ASC');
+        }
 
         $query = $queryBuilder->getQuery();
 

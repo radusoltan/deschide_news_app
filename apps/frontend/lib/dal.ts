@@ -293,15 +293,16 @@ export async function updateArticle(
   },
   locale: string = 'ro'
 ): Promise<Article> {
+  const jsonBody = JSON.stringify(data);
   const response = await authenticatedFetch(`/api/articles/${id}`, {
     method: 'PUT',
     locale,
-    body: JSON.stringify(data),
+    body: jsonBody,
   });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || `Failed to update article: ${response.status}`);
+    throw new Error(error.detail || error.message || `Failed to update article: ${response.status}`);
   }
 
   return response.json();
@@ -468,6 +469,26 @@ export async function updateCategory(
   }
 
   return response.json();
+}
+
+/**
+ * Update front page positions for multiple categories
+ */
+export async function updateCategoryPositions(
+  positions: Array<{ id: number; frontPagePosition: number }>,
+  locale: string = 'ro'
+): Promise<void> {
+  for (const { id, frontPagePosition } of positions) {
+    const response = await authenticatedFetch(`/api/categories/${id}`, {
+      method: 'PUT',
+      locale,
+      body: JSON.stringify({ frontPagePosition }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update position for category ${id}`);
+    }
+  }
 }
 
 /**

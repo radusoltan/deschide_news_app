@@ -1,7 +1,7 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import { createCategory, updateCategory, deleteCategory } from '@/lib/dal';
+import { revalidatePath, revalidateTag } from 'next/cache';
+import { createCategory, updateCategory, deleteCategory, updateCategoryPositions } from '@/lib/dal';
 
 // ============================================================================
 // Types
@@ -15,6 +15,12 @@ export interface CategoryFormState {
     status?: string[];
     _form?: string[];
   };
+}
+
+export interface ReorderCategoriesState {
+  message?: string;
+  success?: boolean;
+  errors?: { _form?: string[] };
 }
 
 export interface DeleteCategoryState {
@@ -173,6 +179,34 @@ export async function deleteCategoryAction(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete category',
+    };
+  }
+}
+
+/**
+ * Reorder front page categories
+ */
+export async function reorderFrontPageCategoriesAction(
+  locale: string,
+  positions: Array<{ id: number; frontPagePosition: number }>
+): Promise<ReorderCategoriesState> {
+  try {
+    await updateCategoryPositions(positions, locale);
+
+    revalidateTag('articles', 'max');
+    revalidatePath('/ro', 'page');
+    revalidatePath('/en', 'page');
+    revalidatePath('/ru', 'page');
+    revalidatePath(`/[locale]/admin/categories`, 'page');
+
+    return { message: 'Ordinea a fost salvata', success: true };
+  } catch (error) {
+    console.error('Failed to reorder categories:', error);
+    return {
+      success: false,
+      errors: {
+        _form: [error instanceof Error ? error.message : 'Failed to save order'],
+      },
     };
   }
 }
