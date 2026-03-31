@@ -29,7 +29,7 @@ export async function fetchPublicMenuItems(
         'Accept-Language': locale,
         Accept: 'application/ld+json',
       },
-      next: { revalidate: 300 }, // 5 minutes ISR cache
+      next: { tags: ['menu'] },
     });
 
     if (!response.ok) {
