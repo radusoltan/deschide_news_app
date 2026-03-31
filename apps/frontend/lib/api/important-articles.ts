@@ -28,9 +28,7 @@ export async function fetchImportantArticles(
   const response = await fetch(`${API_BASE_URL}/api/important_articles`, {
     method: 'GET',
     headers,
-    next: {
-      revalidate: 60, // Revalidate every 60 seconds (ISR)
-    },
+    next: { tags: ['articles'] },
   });
 
   if (!response.ok) {

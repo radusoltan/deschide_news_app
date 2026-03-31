@@ -37,9 +37,7 @@ export async function fetchArticlesByCategory(
   const response = await fetch(url.toString(), {
     method: 'GET',
     headers,
-    next: {
-      revalidate: 120, // Revalidate every 2 minutes
-    },
+    next: { tags: ['articles'] },
   });
 
   if (!response.ok) {
@@ -79,9 +77,7 @@ export async function fetchLatestArticles(
   const response = await fetch(url.toString(), {
     method: 'GET',
     headers,
-    next: {
-      revalidate: 60, // Revalidate every 60 seconds
-    },
+    next: { tags: ['articles'] },
   });
 
   if (!response.ok) {
