@@ -396,6 +396,9 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
   const showSuccessMessage = useCallback((msg: string) => {
     setSuccess(msg);
     setTimeout(() => setSuccess(null), 3000);
+
+    // Invalidate public menu cache so changes appear immediately
+    fetch('/api/revalidate-menu', { method: 'POST' }).catch(() => {});
   }, []);
 
   const showErrorMessage = useCallback((msg: string) => {
