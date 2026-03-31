@@ -59,8 +59,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return generateHomepageMetadata(validLocale);
 }
 
-// ISR revalidation
-export const revalidate = 60;
+// Tag-based revalidation — homepage refreshes on-demand via /api/revalidate-articles
+export const revalidate = false;
 
 interface PageProps {
   params: Promise<{ locale: string }>
