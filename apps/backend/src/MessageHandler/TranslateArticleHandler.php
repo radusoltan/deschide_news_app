@@ -56,6 +56,12 @@ final readonly class TranslateArticleHandler
         $article->setTranslationStatus('in_progress');
         $this->em->flush();
 
+        $this->logger->info('TranslateArticleHandler: starting translation', [
+            'articleId' => $message->articleId,
+            'priority' => $message->priority->label(),
+            'locales' => $message->locales,
+        ]);
+
         // Translate one language at a time to keep Gemini output well under 64KB
         $successes = [];
         $failures = [];
