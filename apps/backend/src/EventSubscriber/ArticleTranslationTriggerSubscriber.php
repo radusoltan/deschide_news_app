@@ -6,18 +6,19 @@ namespace App\EventSubscriber;
 
 use App\Entity\Article;
 use App\Enum\ArticleStatus;
-use App\Message\TranslateArticleMessage;
+use App\Service\TranslationPriorityDispatcher;
+use App\Service\TranslationPriorityResolver;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsDoctrineListener(event: Events::preUpdate)]
 final class ArticleTranslationTriggerSubscriber
 {
     public function __construct(
-        private readonly MessageBusInterface $messageBus,
+        private readonly TranslationPriorityDispatcher $dispatcher,
+        private readonly TranslationPriorityResolver $priorityResolver,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -38,8 +39,20 @@ final class ArticleTranslationTriggerSubscriber
                 $locales = $this->resolveLocales($entity, force: false);
 
                 if (!empty($locales)) {
-                    $entity->setTranslationStatus('pending');
-                    $this->dispatch($entity, $locales, forceRetranslate: false);
+                    $priority = $this->priorityResolver->resolve($entity);
+
+                    if ($priority->isInstant()) {
+                        // P0/P1: dispatch immediately to priority queue
+                        $entity->setTranslationStatus('pending');
+                        $this->dispatcher->dispatch($entity, $locales);
+                    } else {
+                        // P2/P3: mark as pending for batch processing
+                        $entity->setTranslationStatus('pending');
+                        $this->logger->info('Article marked pending for batch translation', [
+                            'articleId' => $entity->getId(),
+                            'priority' => $priority->label(),
+                        ]);
+                    }
                 }
             }
         }
@@ -51,7 +64,8 @@ final class ArticleTranslationTriggerSubscriber
             if ($newValue === true) {
                 $locales = $this->resolveLocales($entity, force: true);
                 $entity->setTranslationStatus('pending');
-                $this->dispatch($entity, $locales, forceRetranslate: true);
+                // Manual requests always dispatch immediately
+                $this->dispatcher->dispatch($entity, $locales, forceRetranslate: true);
             }
         }
     }
@@ -65,39 +79,10 @@ final class ArticleTranslationTriggerSubscriber
             return ['ru', 'en'];
         }
 
-        // Check which translations are missing (no title = not translated)
-        // Since Gedmo stores translations in ext_translations, we check translationStatus
-        // If article has never been translated, translate both locales
         if ($entity->getTranslationStatus() === null || $entity->getTranslationStatus() === 'failed') {
             return ['ru', 'en'];
         }
 
         return [];
-    }
-
-    /**
-     * @param string[] $locales
-     */
-    private function dispatch(Article $entity, array $locales, bool $forceRetranslate): void
-    {
-        $articleId = $entity->getId();
-
-        if ($articleId === null) {
-            return;
-        }
-
-        $this->logger->info('Dispatching translation for article', [
-            'articleId' => $articleId,
-            'locales' => $locales,
-            'force' => $forceRetranslate,
-        ]);
-
-        $this->messageBus->dispatch(
-            new TranslateArticleMessage(
-                articleId: $articleId,
-                locales: $locales,
-                forceRetranslate: $forceRetranslate,
-            )
-        );
     }
 }
