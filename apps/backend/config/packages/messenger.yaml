@@ -14,7 +14,39 @@ framework:
             # Statistics operations transport (medium priority)
             stats_async: '%env(MESSENGER_TRANSPORT_DSN)%'
 
-            # Translation operations transport (long-running, separate queue)
+            # Translation queues — ordered by priority.
+            # Run worker: messenger:consume translations_critical translations_urgent translations_high translations -vv
+            # Symfony consumes queues left-to-right: critical first, then urgent, etc.
+            translations_critical:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: translations_critical
+                retry_strategy:
+                    max_retries: 3
+                    delay: 2000
+                    multiplier: 2
+                    max_delay: 30000
+
+            translations_urgent:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: translations_urgent
+                retry_strategy:
+                    max_retries: 3
+                    delay: 3000
+                    multiplier: 2
+                    max_delay: 45000
+
+            translations_high:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: translations_high
+                retry_strategy:
+                    max_retries: 3
+                    delay: 5000
+                    multiplier: 3
+                    max_delay: 60000
+
             translations:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
@@ -42,7 +74,8 @@ framework:
             # Short link analytics (async for fast redirects)
             'App\Message\ShortLinkClickMessage': async
 
-            # Translation workflow (long-running Gemini CLI calls)
+            # Translation: default route is 'translations' (normal priority).
+            # Priority routing is handled by TranslationPriorityDispatcher.
             'App\Message\TranslateArticleMessage': translations
 
 # when@test:
