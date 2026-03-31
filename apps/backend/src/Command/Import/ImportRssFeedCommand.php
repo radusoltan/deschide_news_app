@@ -11,6 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[AsCommand(
     name: 'app:import:rss-feed',
@@ -20,6 +21,7 @@ final class ImportRssFeedCommand extends Command
 {
     public function __construct(
         private readonly RssFeedImporter $importer,
+        private readonly HttpClientInterface $httpClient,
     ) {
         parent::__construct();
     }
@@ -70,6 +72,18 @@ final class ImportRssFeedCommand extends Command
             $io->warning(\sprintf('Import finalizat cu %d erori.', $stats['errors']));
 
             return Command::FAILURE;
+        }
+
+        // Invalidate frontend article cache
+        if ($stats['imported'] > 0) {
+            try {
+                $this->httpClient->request('POST', 'http://localhost:3005/api/revalidate-articles', [
+                    'timeout' => 5,
+                ]);
+                $io->info('Frontend cache invalidated.');
+            } catch (\Throwable) {
+                $io->note('Frontend cache invalidation skipped (frontend not reachable).');
+            }
         }
 
         $io->success(\sprintf('Import finalizat: %d articole noi.', $stats['imported']));

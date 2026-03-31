@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { createArticle, updateArticle, deleteArticle } from '@/lib/dal';
 
 // ============================================================================
@@ -115,8 +115,9 @@ export async function createArticleAction(
 
     const newArticle = await createArticle(articleData, locale);
 
-    // Revalidate articles list page
+    // Revalidate admin list and public homepage
     revalidatePath(`/[locale]/admin/articles`, 'page');
+    revalidateTag('articles', 'max');
 
     return {
       message: 'Article created successfully',
@@ -216,9 +217,10 @@ export async function updateArticleAction(
 
     await updateArticle(id, articleData, locale);
 
-    // Revalidate articles list page and single article page
+    // Revalidate admin pages and public homepage
     revalidatePath(`/[locale]/admin/articles`, 'page');
     revalidatePath(`/[locale]/admin/articles/[id]`, 'page');
+    revalidateTag('articles', 'max');
 
     return { message: 'Article updated successfully' };
   } catch (error) {
@@ -242,8 +244,9 @@ export async function deleteArticleAction(
   try {
     await deleteArticle(id, locale);
 
-    // Revalidate articles list page
+    // Revalidate admin list and public homepage
     revalidatePath(`/[locale]/admin/articles`, 'page');
+    revalidateTag('articles', 'max');
 
     return {
       message: 'Article deleted successfully',
