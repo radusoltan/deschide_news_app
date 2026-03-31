@@ -50,6 +50,8 @@ export async function createArticleAction(
   const category = formData.get('category') as string;
   const authorsJson = formData.get('authors') as string;
   const publishAt = formData.get('publishAt') as string;
+  const badge = formData.get('badge') as string;
+  const isFeatured = formData.get('isFeatured') as string;
 
   // Validate required fields
   const errors: ArticleFormState['errors'] = {};
@@ -98,6 +100,8 @@ export async function createArticleAction(
       content: content.trim(),
       excerpt: excerpt?.trim() || undefined,
       status: status || 'new',
+      badge: badge && badge.trim() !== '' ? badge.trim() : null,
+      isFeatured: isFeatured === '1',
     };
 
     // Add category IRI if selected
@@ -108,8 +112,8 @@ export async function createArticleAction(
     // Add authors (array of IRIs)
     articleData.authors = authors;
 
-    // Add publishAt if provided
-    if (publishAt && publishAt.trim() !== '') {
+    // Add publishAt only when scheduling (status=submitted)
+    if (status === 'submitted' && publishAt && publishAt.trim() !== '') {
       articleData.publishAt = publishAt.trim();
     }
 
@@ -118,6 +122,9 @@ export async function createArticleAction(
     // Revalidate admin list and public homepage
     revalidatePath(`/[locale]/admin/articles`, 'page');
     revalidateTag('articles', 'max');
+    revalidatePath('/ro', 'page');
+    revalidatePath('/en', 'page');
+    revalidatePath('/ru', 'page');
 
     return {
       message: 'Article created successfully',
@@ -152,6 +159,8 @@ export async function updateArticleAction(
   const category = formData.get('category') as string;
   const authorsJson = formData.get('authors') as string;
   const publishAt = formData.get('publishAt') as string;
+  const badge = formData.get('badge') as string;
+  const isFeatured = formData.get('isFeatured') as string;
 
   // Validate required fields
   const errors: ArticleFormState['errors'] = {};
@@ -200,6 +209,8 @@ export async function updateArticleAction(
       content: content.trim(),
       excerpt: excerpt?.trim() || undefined,
       status: status || 'new',
+      badge: badge && badge.trim() !== '' ? badge.trim() : null,
+      isFeatured: isFeatured === '1',
     };
 
     // Add category IRI if selected
@@ -210,8 +221,8 @@ export async function updateArticleAction(
     // Add authors (array of IRIs)
     articleData.authors = authors;
 
-    // Add publishAt if provided
-    if (publishAt && publishAt.trim() !== '') {
+    // Add publishAt only when scheduling (status=submitted)
+    if (status === 'submitted' && publishAt && publishAt.trim() !== '') {
       articleData.publishAt = publishAt.trim();
     }
 
@@ -221,6 +232,9 @@ export async function updateArticleAction(
     revalidatePath(`/[locale]/admin/articles`, 'page');
     revalidatePath(`/[locale]/admin/articles/[id]`, 'page');
     revalidateTag('articles', 'max');
+    revalidatePath('/ro', 'page');
+    revalidatePath('/en', 'page');
+    revalidatePath('/ru', 'page');
 
     return { message: 'Article updated successfully' };
   } catch (error) {
@@ -247,6 +261,9 @@ export async function deleteArticleAction(
     // Revalidate admin list and public homepage
     revalidatePath(`/[locale]/admin/articles`, 'page');
     revalidateTag('articles', 'max');
+    revalidatePath('/ro', 'page');
+    revalidatePath('/en', 'page');
+    revalidatePath('/ru', 'page');
 
     return {
       message: 'Article deleted successfully',

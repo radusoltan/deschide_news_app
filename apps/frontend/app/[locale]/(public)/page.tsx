@@ -24,6 +24,8 @@ import OpinionSection from './components/home/OpinionSection';
 import LatestNewsSection from './components/home/LatestNewsSection';
 import NewsletterCTA from './components/home/NewsletterCTA';
 import TelegramCTA from './components/home/TelegramCTA';
+import DRRMBanner from '@/components/banners/DRRMBanner';
+import LiveRefresh from './components/home/LiveRefresh';
 
 // ============================================================
 // TEMPORAR DEZACTIVAT: Secțiunea Transmisiuni Live
@@ -91,7 +93,7 @@ export default async function HomePage({ params }: PageProps) {
     fetchVideoShows(locale),
     fetchLatestArticles(locale, 18),
     fetchImportantArticles(locale),
-    getTrendingArticles(5, locale),
+    getTrendingArticles(10, locale),
   ]);
 
   if (categoriesResult.status === 'fulfilled') {
@@ -130,14 +132,25 @@ export default async function HomePage({ params }: PageProps) {
   );
 
   // Deduplicate: compute IDs used by HeroSection (important articles + backfill)
+  // Must mirror HeroSection logic: badged first, then rest, backfill from latest only if < 7
   const heroUsedIds = new Set<number>();
-  importantArticles.slice(0, 7).forEach((item) => {
-    if (item.article?.id) heroUsedIds.add(item.article.id);
-  });
-  // Hero also uses first ~4 latest articles for backfill into small cards
-  latestArticles.slice(0, 4).forEach((a) => {
+  const extracted = importantArticles.map((item) => item.article).filter(Boolean);
+  const badged = extracted.filter((a: Article) => a.badge);
+  const rest = extracted.filter((a: Article) => !a.badge);
+  const heroArticles = [...badged, ...rest].slice(0, 7);
+  heroArticles.forEach((a) => {
     if (a.id) heroUsedIds.add(a.id);
   });
+  // Only add latest articles if hero needs backfill (< 7 important)
+  if (heroArticles.length < 7) {
+    const backfillNeeded = 7 - heroArticles.length;
+    latestArticles
+      .filter((a) => !heroUsedIds.has(a.id))
+      .slice(0, backfillNeeded)
+      .forEach((a) => {
+        if (a.id) heroUsedIds.add(a.id);
+      });
+  }
 
   // Filter latest articles excluding hero IDs, take first 8
   const latestForSection = latestArticles
@@ -156,6 +169,9 @@ export default async function HomePage({ params }: PageProps) {
       {/* SEO H1 - visually hidden */}
       <h1 className="sr-only">{h1Titles[locale] || h1Titles.ro}</h1>
 
+      {/* Live refresh: listens for Mercure SSE events, auto-refreshes on new published articles */}
+      <LiveRefresh />
+
       {/* Breaking News Ticker */}
       <BreakingNewsTicker locale={locale} articles={[]} />
 
@@ -172,6 +188,11 @@ export default async function HomePage({ params }: PageProps) {
           {/* ── Hero Zone (full-width) ── */}
           <section className="pt-6 pb-10">
             <HeroSection locale={locale} />
+          </section>
+
+          {/* ── DRRM Partnership Banner ── */}
+          <section className="pb-10">
+            <DRRMBanner />
           </section>
 
           {/* ── Latest News Section (Featured + Grid + Sidebar) ── */}

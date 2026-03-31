@@ -9,7 +9,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { fetchCategories } from '@/lib/api/categories';
-import { getTrendingArticles } from '@/lib/api/statistics';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { getSectionColor, getCategorySlugFromArticle } from '@/components/cards/utils';
@@ -24,9 +23,9 @@ export const revalidate = 300;
 /* ================================================================== */
 
 const labels = {
-  ro: { title: 'Toate articolele', subtitle: 'articole publicate', mostRead: 'Cele mai citite', inTrend: 'In trend', ad: 'Publicitate', noArticles: 'Niciun articol gasit', noArticlesDesc: 'Nu exista articole publicate momentan.', prev: 'Inapoi', next: 'Urmatoarea', all: 'Toate' },
-  en: { title: 'All articles', subtitle: 'published articles', mostRead: 'Most Read', inTrend: 'Trending', ad: 'Advertisement', noArticles: 'No articles found', noArticlesDesc: 'There are no published articles yet.', prev: 'Previous', next: 'Next', all: 'All' },
-  ru: { title: 'Vse stati', subtitle: 'opublikovannyh statej', mostRead: 'Samye chitaemye', inTrend: 'V trende', ad: 'Reklama', noArticles: 'Statji ne najdeny', noArticlesDesc: 'Opublikovannyh statej poka net.', prev: 'Nazad', next: 'Dalee', all: 'Vse' },
+  ro: { title: 'Toate articolele', subtitle: 'articole publicate', inTrend: 'In trend', ad: 'Publicitate', noArticles: 'Niciun articol gasit', noArticlesDesc: 'Nu exista articole publicate momentan.', prev: 'Inapoi', next: 'Urmatoarea', all: 'Toate' },
+  en: { title: 'All articles', subtitle: 'published articles', inTrend: 'Trending', ad: 'Advertisement', noArticles: 'No articles found', noArticlesDesc: 'There are no published articles yet.', prev: 'Previous', next: 'Next', all: 'All' },
+  ru: { title: 'Vse stati', subtitle: 'opublikovannyh statej', inTrend: 'V trende', ad: 'Reklama', noArticles: 'Statji ne najdeny', noArticlesDesc: 'Opublikovannyh statej poka net.', prev: 'Nazad', next: 'Dalee', all: 'Vse' },
 } as const;
 
 /* Static placeholder articles for "In Trend" */
@@ -98,8 +97,6 @@ export default async function AllArticlesPage({ params, searchParams }: AllArtic
   let articles: Article[] = [];
   let totalItems = 0;
   let categories: Category[] = [];
-  let trendingArticles: any[] = [];
-
   const queryParams = new URLSearchParams({
     page: currentPage.toString(),
     itemsPerPage: itemsPerPage.toString(),
@@ -109,13 +106,12 @@ export default async function AllArticlesPage({ params, searchParams }: AllArtic
     queryParams.set('categoryId', categoryFilter);
   }
 
-  const [articlesResult, categoriesResult, trendingResult] = await Promise.allSettled([
+  const [articlesResult, categoriesResult] = await Promise.allSettled([
     fetch(`${API_BASE_URL}/api/articles?${queryParams.toString()}`, {
       headers: { 'Content-Type': 'application/json', 'Accept-Language': locale },
       next: { revalidate: 300 },
     }).then(r => r.ok ? r.json() : null),
     fetchCategories(locale),
-    getTrendingArticles(5, locale),
   ]);
 
   if (articlesResult.status === 'fulfilled' && articlesResult.value) {
@@ -124,9 +120,6 @@ export default async function AllArticlesPage({ params, searchParams }: AllArtic
   }
   if (categoriesResult.status === 'fulfilled') {
     categories = categoriesResult.value.member || [];
-  }
-  if (trendingResult.status === 'fulfilled') {
-    trendingArticles = trendingResult.value || [];
   }
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -140,9 +133,6 @@ export default async function AllArticlesPage({ params, searchParams }: AllArtic
           {/* Sidebar (LEFT on desktop, BELOW on mobile) */}
           <aside className="w-full lg:w-1/3 lg:pr-8 lg:pt-14">
             <div className="sticky top-24 space-y-8">
-              {trendingArticles.length > 0 && (
-                <MostPopularWidget articles={trendingArticles} locale={locale} label={l.mostRead} />
-              )}
               <InTrendWidget locale={locale} label={l.inTrend} />
               <AdPlaceholder label={l.ad} />
             </div>
@@ -275,54 +265,6 @@ function GridArticleCard({ article, locale }: { article: Article; locale: Locale
         </span>
       )}
     </article>
-  );
-}
-
-/* ================================================================== */
-/*  Most Popular Widget                                                */
-/* ================================================================== */
-
-function MostPopularWidget({
-  articles,
-  locale,
-  label,
-}: {
-  articles: Array<{ id: number; title: string | null; slug: string | null; category: { slug: string } | null }>;
-  locale: string;
-  label: string;
-}) {
-  return (
-    <div className="bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)]">
-      <div className="p-4 bg-[var(--color-surface-sunken)] dark:bg-[var(--color-surface-sunken-dark)]">
-        <h2 className="font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)]" style={{ fontSize: 'var(--font-size-lg)' }}>
-          {label}
-        </h2>
-      </div>
-      <ul>
-        {articles.slice(0, 5).map((article, index) => {
-          const catSlug = article.category?.slug || 'news';
-          const artSlug = article.slug || '';
-          const articleUrl = `/${locale === 'ro' ? '' : locale + '/'}${catSlug}/${artSlug}`;
-          return (
-            <li
-              key={article.id}
-              className="border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] last:border-b-0 hover:bg-[var(--color-surface-sunken)] dark:hover:bg-[var(--color-surface-sunken-dark)] transition-colors"
-            >
-              <Link
-                href={articleUrl}
-                className="flex items-center gap-3 px-4 py-3 font-sans font-bold text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors"
-                style={{ fontSize: 'var(--font-size-base)' }}
-              >
-                <span className="flex-shrink-0 text-3xl font-bold leading-none font-sans text-[var(--color-border)] dark:text-[var(--color-border-dark)] select-none min-w-[1.5rem]">
-                  {index + 1}
-                </span>
-                <span className="line-clamp-2">{article.title}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
   );
 }
 
