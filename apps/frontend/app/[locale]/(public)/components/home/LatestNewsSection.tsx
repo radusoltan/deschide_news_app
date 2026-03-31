@@ -37,6 +37,7 @@ import {
   getSectionColor,
   getCategorySlugFromArticle,
   getCategoryTitle,
+  formatRelativeTime,
 } from '@/components/cards/utils';
 import type { Article } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
@@ -138,13 +139,23 @@ function FeaturedArticleCard({ article, locale }: { article: Article; locale: st
               {article.lead}
             </p>
           )}
-          {categoryTitle && (
-            <span
-              className="inline-block mt-2 text-xs font-semibold tracking-wider uppercase font-sans text-gray-100"
-            >
-              {categoryTitle}
-            </span>
-          )}
+          <div className="flex items-center gap-2 mt-2">
+            {categoryTitle && (
+              <span
+                className="text-xs font-semibold tracking-wider uppercase font-sans text-gray-100"
+              >
+                {categoryTitle}
+              </span>
+            )}
+            {article.publishedAt && (
+              <>
+                {categoryTitle && <span className="text-gray-300 text-xs">·</span>}
+                <time className="text-xs font-sans text-gray-300" dateTime={article.publishedAt}>
+                  {formatRelativeTime(article.publishedAt, locale)}
+                </time>
+              </>
+            )}
+          </div>
         </div>
       </Link>
     </article>
@@ -192,15 +203,25 @@ function GridArticleCard({ article, locale }: { article: Article; locale: string
         )}
       </Link>
 
-      {/* Category badge */}
-      {categoryTitle && (
-        <span
-          className="inline-block mt-2 text-xs font-semibold tracking-wider uppercase font-sans"
-          style={{ color: sectionColor }}
-        >
-          {categoryTitle}
-        </span>
-      )}
+      {/* Category + Date */}
+      <div className="flex items-center gap-2 mt-2">
+        {categoryTitle && (
+          <span
+            className="text-xs font-semibold tracking-wider uppercase font-sans"
+            style={{ color: sectionColor }}
+          >
+            {categoryTitle}
+          </span>
+        )}
+        {article.publishedAt && (
+          <time
+            className="text-xs font-sans text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)]"
+            dateTime={article.publishedAt}
+          >
+            {formatRelativeTime(article.publishedAt, locale)}
+          </time>
+        )}
+      </div>
     </article>
   );
 }
