@@ -19,6 +19,7 @@ export interface Category {
   description?: string;
   status?: string;
   onFrontPage?: boolean;
+  frontPagePosition?: number;
   inMenu?: boolean;
   inFooterMenu?: boolean;
   articleCount?: number;
@@ -53,6 +54,7 @@ export interface Article {
   tags?: (Tag | string)[]; // Full Tag objects or IRIs
   status: ArticleStatus;
   badge?: ArticleBadge | null; // Special article badge (breaking, alert, flash)
+  isFeatured?: boolean; // Featured article flag
   viewCount: number;
   createdAt: string;
   updatedAt: string;

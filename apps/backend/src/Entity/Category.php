@@ -114,6 +114,10 @@ class Category implements Translatable
     #[Groups(['category:read', 'category:write'])]
     private bool $onFrontPage = false;
 
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    #[Groups(['category:read', 'category:write'])]
+    private int $frontPagePosition = 0;
+
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     #[Groups(['category:read', 'category:write'])]
     private bool $inMenu = false;
@@ -230,6 +234,18 @@ class Category implements Translatable
     public function setOnFrontPage(bool $onFrontPage): self
     {
         $this->onFrontPage = $onFrontPage;
+
+        return $this;
+    }
+
+    public function getFrontPagePosition(): int
+    {
+        return $this->frontPagePosition;
+    }
+
+    public function setFrontPagePosition(int $frontPagePosition): self
+    {
+        $this->frontPagePosition = $frontPagePosition;
 
         return $this;
     }

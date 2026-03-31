@@ -31,11 +31,11 @@ final class ArticleTranslationTriggerSubscriber
             return;
         }
 
-        // Path 1: Auto-trigger when status changes to SUBMITTED
+        // Path 1: Auto-trigger when status changes to PUBLISHED
         if ($args->hasChangedField('status')) {
             $newStatus = $args->getNewValue('status');
 
-            if ($newStatus === ArticleStatus::SUBMITTED) {
+            if ($newStatus === ArticleStatus::PUBLISHED) {
                 $locales = $this->resolveLocales($entity, force: false);
 
                 if (!empty($locales)) {

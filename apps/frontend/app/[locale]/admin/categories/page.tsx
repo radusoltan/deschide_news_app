@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Spinner } from 'flowbite-react';
 import CategoriesTable from './CategoriesTable';
 import { CategoriesPagination } from './components/CategoriesPagination';
+import FrontPageOrder from './components/FrontPageOrder';
 import { getCategories } from '@/lib/dal';
 
 interface CategoriesPageProps {
@@ -84,6 +85,26 @@ export default async function CategoriesPage({ params, searchParams }: Categorie
           />
         </div>
       )}
+
+      {/* Front Page Order Section */}
+      {(() => {
+        const frontPageCategories = categoriesData
+          .filter((cat: any) => cat.onFrontPage)
+          .map((cat: any) => ({
+            id: cat.id,
+            title: cat.title,
+            slug: cat.slug,
+            frontPagePosition: cat.frontPagePosition ?? 0,
+          }));
+
+        if (frontPageCategories.length === 0) return null;
+
+        return (
+          <div className="mt-8 bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
+            <FrontPageOrder categories={frontPageCategories} locale={locale} />
+          </div>
+        );
+      })()}
     </div>
   );
 }

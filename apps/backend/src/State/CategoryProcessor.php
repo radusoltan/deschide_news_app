@@ -83,6 +83,7 @@ final class CategoryProcessor implements ProcessorInterface
                 $existingEntity->setTitle($data->getTitle());
                 $existingEntity->setStatus($data->getStatus());
                 $existingEntity->setOnFrontPage($data->isOnFrontPage());
+                $existingEntity->setFrontPagePosition($data->getFrontPagePosition());
                 $existingEntity->setInMenu($data->isInMenu());
                 $existingEntity->setInFooterMenu($data->isInFooterMenu());
 
