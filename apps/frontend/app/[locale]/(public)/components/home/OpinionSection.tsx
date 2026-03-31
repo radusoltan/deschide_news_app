@@ -34,7 +34,7 @@ import {
 } from '@/lib/api/important-articles';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { formatRelativeTime } from '@/components/cards/utils';
-import type { Article } from '@/lib/types/article';
+import type { Article, Author } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 
 /* ================================================================== */
@@ -47,22 +47,13 @@ const labels = {
   ru: { opinions: 'Мнения', seeAll: 'Смотреть все', opinionLabel: 'Мнение', by: '' },
 } as const;
 
-/* ================================================================== */
-/*  Placeholder author names                                           */
-/*  TODO: Replace with real author data when API includes              */
-/*  expanded author objects in article responses                       */
-/* ================================================================== */
-
-const PLACEHOLDER_AUTHORS = [
-  'Valentina Ursu',
-  'Igor Munteanu',
-  'Cristina Mogîldea',
-  'Andrei Curăraru',
-  'Nicu Popescu',
-  'Natalia Morari',
-  'Vitalie Călugăreanu',
-  'Mariana Rață',
-];
+/** Extract the first author's full name from an article */
+function getAuthorName(article: Article): string {
+  const first = article.authors?.[0];
+  if (!first) return 'Redacția';
+  if (typeof first === 'string') return 'Redacția';
+  return (first as Author).fullName || `${(first as Author).firstName} ${(first as Author).lastName}`.trim() || 'Redacția';
+}
 
 /* ================================================================== */
 /*  Sub-components                                                     */
@@ -252,15 +243,12 @@ async function OpinionSectionContent({ locale, categoryId }: OpinionSectionProps
   // Bottom row: next 5 articles (small cards)
   const bottomArticles = articles.slice(3, 8);
 
-  // Assign labels: alternate between "GUEST ESSAY"-style and author-name-style
-  // like NYT does (some cards show "GUEST ESSAY", others show author name as label)
-  const getLabel = (index: number) => {
-    // Even indices: opinion label ("GUEST ESSAY" / "OPINIE")
-    // Odd indices: author name as label
+  // Assign labels: alternate between "OPINIE" and author name as label (NYT style)
+  const getLabel = (article: Article, index: number) => {
     if (index % 2 === 0) {
       return { text: l.opinionLabel, isAuthor: false };
     }
-    return { text: PLACEHOLDER_AUTHORS[index % PLACEHOLDER_AUTHORS.length], isAuthor: true };
+    return { text: getAuthorName(article), isAuthor: true };
   };
 
   return (
@@ -288,12 +276,12 @@ async function OpinionSectionContent({ locale, categoryId }: OpinionSectionProps
       {/* ═══ Top row: 3 large cards ═══ */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-5">
         {topArticles.map((article, index) => {
-          const label = getLabel(index);
+          const label = getLabel(article, index);
           return (
             <OpinionLargeCard
               key={article.id}
               article={article}
-              authorName={PLACEHOLDER_AUTHORS[index % PLACEHOLDER_AUTHORS.length]}
+              authorName={getAuthorName(article)}
               locale={locale}
               labelText={label.text}
               isAuthorLabel={label.isAuthor}
@@ -309,13 +297,13 @@ async function OpinionSectionContent({ locale, categoryId }: OpinionSectionProps
       {bottomArticles.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
           {bottomArticles.map((article, index) => {
-            const absIndex = index + 3; // offset for label alternation
-            const label = getLabel(absIndex);
+            const absIndex = index + 3;
+            const label = getLabel(article, absIndex);
             return (
               <OpinionSmallCard
                 key={article.id}
                 article={article}
-                authorName={PLACEHOLDER_AUTHORS[absIndex % PLACEHOLDER_AUTHORS.length]}
+                authorName={getAuthorName(article)}
                 locale={locale}
                 labelText={label.text}
                 isAuthorLabel={label.isAuthor}
