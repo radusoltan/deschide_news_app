@@ -78,6 +78,9 @@ framework:
             # Priority routing is handled by TranslationPriorityDispatcher.
             'App\Message\TranslateArticleMessage': translations
 
+            # Batch translation scheduling (processed by TranslatePendingBatchHandler)
+            'App\Message\TranslatePendingBatch': async
+
 # when@test:
 #    framework:
 #        messenger:
