@@ -1,0 +1,69 @@
+# =============================================================================
+# Deschide News — Translation Scheduler
+# =============================================================================
+# Long-running process that dispatches batch translation jobs:
+#   - Every 5 min: P2 HIGH (editoriale) — up to 3 articles
+#   - Every 15 min: P3 NORMAL (all other) — up to 5 articles
+#
+# P0 CRITICAL and P1 URGENT are dispatched instantly by
+# ArticleTranslationTriggerSubscriber (no scheduler needed).
+#
+# Install:
+#   sudo cp deschide-translation-scheduler.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now deschide-translation-scheduler
+#
+# Monitor:
+#   journalctl -u deschide-translation-scheduler -f
+#   systemctl status deschide-translation-scheduler
+# =============================================================================
+
+[Unit]
+Description=Deschide News Translation Scheduler (Batch Dispatch)
+Documentation=https://symfony.com/doc/current/scheduler.html
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+
+WorkingDirectory=/var/www/deschide_news_app/apps/backend
+ExecStart=/usr/bin/php bin/console messenger:consume \
+    scheduler_translation \
+    --time-limit=3600 \
+    --memory-limit=256M \
+    --no-interaction
+ExecReload=/bin/kill -USR1 $MAINPID
+
+# Restart policy
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadOnlyPaths=/
+ReadWritePaths=/var/www/deschide_news_app/apps/backend/var
+
+# Environment
+Environment=APP_ENV=prod
+Environment=MESSENGER_CONSUMER_NAME=translation-scheduler
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=deschide-translation-scheduler
+
+# Resource limits
+LimitNOFILE=4096
+MemoryMax=256M
+CPUQuota=20%
+
+[Install]
+WantedBy=multi-user.target

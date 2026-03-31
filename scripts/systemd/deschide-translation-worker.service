@@ -1,0 +1,78 @@
+# =============================================================================
+# Deschide News — Translation Worker (Priority Queues)
+# =============================================================================
+# Long-running worker that processes translation jobs in priority order:
+#   critical → urgent → high → normal
+#
+# Symfony Messenger consumes queues left-to-right, so critical messages
+# are always processed before normal ones.
+#
+# Install:
+#   sudo cp deschide-translation-worker.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now deschide-translation-worker
+#
+# Monitor:
+#   journalctl -u deschide-translation-worker -f
+#   systemctl status deschide-translation-worker
+# =============================================================================
+
+[Unit]
+Description=Deschide News Translation Worker (Priority Queues)
+Documentation=https://symfony.com/doc/current/messenger.html
+After=network.target postgresql.service redis.service rabbitmq-server.service
+Wants=postgresql.service redis.service rabbitmq-server.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+
+WorkingDirectory=/var/www/deschide_news_app/apps/backend
+ExecStart=/usr/bin/php bin/console messenger:consume \
+    translations_critical \
+    translations_urgent \
+    translations_high \
+    translations \
+    --time-limit=3600 \
+    --memory-limit=512M \
+    --no-interaction
+ExecReload=/bin/kill -USR1 $MAINPID
+
+# Restart policy — always restart after time-limit or crash
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ReadOnlyPaths=/
+
+# Allow write access to required directories
+ReadWritePaths=/var/www/deschide_news_app/apps/backend/var
+ReadWritePaths=/var/www/deschide_news_app/apps/backend/public/uploads
+ReadWritePaths=/tmp
+
+# Environment
+Environment=APP_ENV=prod
+Environment=MESSENGER_CONSUMER_NAME=translation-worker
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=deschide-translation
+
+# Resource limits — translations are CPU-heavy (Gemini CLI subprocess)
+LimitNOFILE=8192
+MemoryMax=1G
+CPUQuota=80%
+
+# Translation jobs can take up to 5 minutes each
+TimeoutStopSec=330
+
+[Install]
+WantedBy=multi-user.target
