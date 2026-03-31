@@ -18,6 +18,7 @@ use App\Repository\AuthorRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\ExternalArticleMappingRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -91,7 +92,8 @@ final class RssFeedImporter
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly EntityManagerInterface $em,
+        private EntityManagerInterface $em,
+        private readonly ManagerRegistry $managerRegistry,
         private readonly ExternalArticleMappingRepository $mappingRepository,
         private readonly CategoryRepository $categoryRepository,
         private readonly AuthorRepository $authorRepository,
@@ -136,7 +138,9 @@ final class RssFeedImporter
                     $this->logger->error('Supabase import error', ['exception' => $e]);
 
                     if (!$this->em->isOpen()) {
-                        break 2;
+                        $this->em = $this->managerRegistry->resetManager();
+                        $this->categoryCache = [];
+                        $this->authorCache = [];
                     }
                 }
 
@@ -209,7 +213,7 @@ final class RssFeedImporter
             return ['status' => 'skipped', 'message' => ''];
         }
 
-        $title = trim(strip_tags((string) ($row['title'] ?? '')));
+        $title = mb_substr(trim(strip_tags((string) ($row['title'] ?? ''))), 0, 255);
         if ($title === '') {
             return ['status' => 'errors', 'message' => 'Row fără titlu — skip'];
         }
@@ -219,7 +223,7 @@ final class RssFeedImporter
             return ['status' => 'errors', 'message' => \sprintf('Skip (fără conținut): %s', $title)];
         }
 
-        $lead = mb_substr(strip_tags((string) ($row['lead_text'] ?? '')), 0, 500);
+        $lead = mb_substr(strip_tags((string) ($row['lead_text'] ?? '')), 0, 2000);
 
         $categoryName = trim((string) ($row['category'] ?? ''));
         if ($categoryName === '') {
@@ -359,11 +363,11 @@ final class RssFeedImporter
         /** @var TranslationRepository $translationRepo */
         $translationRepo = $this->em->getRepository('Gedmo\Translatable\Entity\Translation');
 
-        $translationRepo->translate($article, 'title', 'ru', $titleRu);
+        $translationRepo->translate($article, 'title', 'ru', mb_substr($titleRu, 0, 255));
 
         $leadRu = trim((string) ($row['lead_text_ru'] ?? ''));
         if ($leadRu !== '') {
-            $translationRepo->translate($article, 'lead', 'ru', mb_substr($leadRu, 0, 500));
+            $translationRepo->translate($article, 'lead', 'ru', mb_substr($leadRu, 0, 2000));
         }
 
         $contentRu = trim((string) ($row['content_text_ru'] ?? ''));
