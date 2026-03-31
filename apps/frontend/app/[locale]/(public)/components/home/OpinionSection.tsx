@@ -111,43 +111,35 @@ function OpinionLargeCard({
           </div>
         )}
 
-        {/* Label — small uppercase red for "GUEST ESSAY" or uppercase for author name */}
+        {/* Label — small uppercase red for "OPINIE" or uppercase for author name */}
         <p
-          className="font-sans font-bold uppercase tracking-wider mb-1.5"
-          style={{
-            fontSize: '11px',
-            color: isAuthorLabel
-              ? 'var(--color-text-primary)'
-              : 'var(--color-section-opinion)',
-          }}
+          className={`font-sans font-bold uppercase tracking-wider mb-1.5 text-[11px] ${
+            isAuthorLabel
+              ? 'text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)]'
+              : 'text-[var(--color-section-opinion)]'
+          }`}
         >
           {labelText}
         </p>
 
-        {/* Title — bold serif (not italic, matching NYT) */}
+        {/* Title — bold serif */}
         <h3
-          className="font-serif font-bold leading-tight text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] group-hover:text-[var(--color-text-secondary)] dark:group-hover:text-[var(--color-text-secondary-dark)] transition-colors mb-2"
-          style={{ fontSize: 'var(--font-size-xl)' }}
+          className="font-serif font-bold leading-tight text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] group-hover:text-[var(--color-text-secondary)] dark:group-hover:text-[var(--color-text-secondary-dark)] transition-colors mb-2 text-[length:var(--font-size-xl)]"
         >
           {article.title}
         </h3>
 
         {/* Excerpt */}
         {article.lead && (
-          <p
-            className="font-serif text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] leading-relaxed line-clamp-2 mb-2"
-            style={{ fontSize: 'var(--font-size-sm)' }}
-          >
+          <p className="font-serif text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] leading-relaxed line-clamp-2 mb-2 text-sm">
             {article.lead}
           </p>
         )}
       </Link>
 
       {/* Byline: "2h ago · By AUTHOR" */}
-      <p
-        className="font-sans text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)] mt-auto"
-        style={{ fontSize: '12px' }}
-      >
+      <p className="font-sans text-[var(--color-text-tertiary)] dark:text-[var(--color-text-tertiary-dark)] mt-auto text-xs">
+
         {relativeTime && <>{relativeTime} · </>}
         {l.by && <>{l.by} </>}
         <span className="uppercase tracking-wide">{authorName}</span>
@@ -182,13 +174,11 @@ function OpinionSmallCard({
       <Link href={articleUrl} className="block">
         {/* Label — above image */}
         <p
-          className="font-sans font-bold uppercase tracking-wider mb-2"
-          style={{
-            fontSize: '11px',
-            color: isAuthorLabel
-              ? 'var(--color-text-primary)'
-              : 'var(--color-section-opinion)',
-          }}
+          className={`font-sans font-bold uppercase tracking-wider mb-2 text-[11px] ${
+            isAuthorLabel
+              ? 'text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)]'
+              : 'text-[var(--color-section-opinion)]'
+          }`}
         >
           {labelText}
         </p>
@@ -209,10 +199,7 @@ function OpinionSmallCard({
         )}
 
         {/* Title — bold serif */}
-        <h3
-          className="font-serif font-bold leading-snug text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] group-hover:text-[var(--color-text-secondary)] dark:group-hover:text-[var(--color-text-secondary-dark)] transition-colors line-clamp-3"
-          style={{ fontSize: 'var(--font-size-sm)' }}
-        >
+        <h3 className="font-serif font-bold leading-snug text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] group-hover:text-[var(--color-text-secondary)] dark:group-hover:text-[var(--color-text-secondary-dark)] transition-colors line-clamp-3 text-sm">
           {article.title}
         </h3>
       </Link>
@@ -258,16 +245,12 @@ async function OpinionSectionContent({ locale, categoryId }: OpinionSectionProps
 
       {/* Header */}
       <div className="flex items-center justify-between pt-4 pb-3 mb-6 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)]">
-        <h2
-          className="font-sans font-bold uppercase tracking-widest text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)]"
-          style={{ fontSize: 'var(--font-size-sm)' }}
-        >
+        <h2 className="font-sans font-bold uppercase tracking-widest text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] text-sm">
           {l.opinions}
         </h2>
         <Link
           href={`/${locale === 'ro' ? '' : locale + '/'}opinii`}
-          className="font-sans font-medium text-[var(--color-section-opinion)] hover:underline"
-          style={{ fontSize: 'var(--font-size-sm)' }}
+          className="font-sans font-medium text-[var(--color-section-opinion)] hover:underline text-sm"
         >
           {l.seeAll} &rarr;
         </Link>
