@@ -56,9 +56,16 @@ final readonly class TranslateArticleHandler
         $article->setTranslationStatus('in_progress');
         $this->em->flush();
 
+        // Safe priority access: old messages in queue may lack the property
+        try {
+            $priorityLabel = $message->priority->label();
+        } catch (\Error) {
+            $priorityLabel = 'normal (legacy)';
+        }
+
         $this->logger->info('TranslateArticleHandler: starting translation', [
             'articleId' => $message->articleId,
-            'priority' => $message->priority->label(),
+            'priority' => $priorityLabel,
             'locales' => $message->locales,
         ]);
 
