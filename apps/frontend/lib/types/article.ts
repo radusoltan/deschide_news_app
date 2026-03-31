@@ -24,6 +24,20 @@ export interface Category {
   articleCount?: number;
 }
 
+export interface Author {
+  '@id': string;
+  '@type': string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  slug: string;
+  initials?: string;
+  email?: string;
+  type?: string;
+  status?: string;
+}
+
 export interface Article {
   '@id': string;
   '@type': string;
@@ -33,7 +47,7 @@ export interface Article {
   lead: string | null;
   content?: string;
   category: Category | string; // Full Category object or IRI
-  authors: string[]; // IRIs to Authors
+  authors: (Author | string)[]; // Full Author objects or IRIs
   articleImages: ArticleImage[];
   relatedArticles?: (Article | string)[]; // Full Article objects or IRIs
   tags?: (Tag | string)[]; // Full Tag objects or IRIs
