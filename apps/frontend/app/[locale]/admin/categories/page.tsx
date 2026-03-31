@@ -89,7 +89,7 @@ export default async function CategoriesPage({ params, searchParams }: Categorie
       {/* Front Page Order Section */}
       {(() => {
         const frontPageCategories = categoriesData
-          .filter((cat: any) => cat.onFrontPage)
+          .filter((cat: any) => cat.onFrontPage && cat.slug !== 'opinii')
           .map((cat: any) => ({
             id: cat.id,
             title: cat.title,

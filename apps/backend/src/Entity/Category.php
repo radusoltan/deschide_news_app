@@ -32,7 +32,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 #[ORM\Cache(usage: 'NONSTRICT_READ_WRITE', region: 'long_lived')]  // L2 cache: categories rarely change
-#[UniqueEntity('slug', message: 'This slug is already in use. Please choose a different slug.')]
+#[UniqueEntity('slug', message: 'This slug is already in use. Please choose a different slug.', groups: ['create'])]
 #[ORM\Table(name: 'categories')]
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Index(name: 'idx_category_status', columns: ['status'])]
@@ -50,11 +50,18 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Post(
             uriTemplate: '/categories',
-            denormalizationContext: ['groups' => ['category:write']]
+            denormalizationContext: ['groups' => ['category:write']],
+            validationContext: ['groups' => ['Default', 'create']],
         ),
         new Put(
             uriTemplate: '/categories/{id}',
             denormalizationContext: ['groups' => ['category:write']]
+        ),
+        new \ApiPlatform\Metadata\Patch(
+            uriTemplate: '/categories/{id}',
+            denormalizationContext: ['groups' => ['category:write']],
+            inputFormats: ['json' => ['application/merge-patch+json']],
+            validationContext: ['groups' => ['patch']],
         ),
         new Delete(
             uriTemplate: '/categories/{id}'
@@ -80,7 +87,7 @@ class Category implements Translatable
     // Translatable fields
     #[Gedmo\Translatable]
     #[ORM\Column(type: Types::STRING, length: 255)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(groups: ['Default'])]
     #[Assert\Length(max: 255)]
     #[Groups(['category:read', 'category:write', 'article:read'])]
     private ?string $title = null;
@@ -117,6 +124,10 @@ class Category implements Translatable
     #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
     #[Groups(['category:read', 'category:write'])]
     private int $frontPagePosition = 0;
+
+    #[ORM\Column(type: Types::STRING, length: 20, nullable: true)]
+    #[Groups(['category:read', 'category:write'])]
+    private ?string $frontPageLayout = null;
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     #[Groups(['category:read', 'category:write'])]
@@ -246,6 +257,18 @@ class Category implements Translatable
     public function setFrontPagePosition(int $frontPagePosition): self
     {
         $this->frontPagePosition = $frontPagePosition;
+
+        return $this;
+    }
+
+    public function getFrontPageLayout(): ?string
+    {
+        return $this->frontPageLayout;
+    }
+
+    public function setFrontPageLayout(?string $frontPageLayout): self
+    {
+        $this->frontPageLayout = $frontPageLayout;
 
         return $this;
     }

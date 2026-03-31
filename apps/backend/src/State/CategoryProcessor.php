@@ -79,23 +79,44 @@ final class CategoryProcessor implements ProcessorInterface
                     throw new RuntimeException('Category not found');
                 }
 
-                // Update fields from deserialized data
-                $existingEntity->setTitle($data->getTitle());
-                $existingEntity->setStatus($data->getStatus());
-                $existingEntity->setOnFrontPage($data->isOnFrontPage());
-                $existingEntity->setFrontPagePosition($data->getFrontPagePosition());
-                $existingEntity->setInMenu($data->isInMenu());
-                $existingEntity->setInFooterMenu($data->isInFooterMenu());
+                // Detect which fields were actually sent in the request
+                $content = $request?->getContent() ?: '{}';
+                $submittedFields = array_keys(json_decode($content, true) ?: []);
 
-                // Handle parent (get managed entity)
-                if ($data->getParent()) {
-                    $parentId = $data->getParent()->getId();
-                    if ($parentId && $parentId !== $existingEntity->getId()) {
-                        $managedParent = $this->entityManager->getRepository(Category::class)->find($parentId);
-                        $existingEntity->setParent($managedParent);
+                // Update only submitted fields (supports both PUT and PATCH)
+                if (in_array('title', $submittedFields, true) && $data->getTitle() !== null) {
+                    $existingEntity->setTitle($data->getTitle());
+                }
+                if (in_array('status', $submittedFields, true)) {
+                    $existingEntity->setStatus($data->getStatus());
+                }
+                if (in_array('onFrontPage', $submittedFields, true)) {
+                    $existingEntity->setOnFrontPage($data->isOnFrontPage());
+                }
+                if (in_array('frontPagePosition', $submittedFields, true)) {
+                    $existingEntity->setFrontPagePosition($data->getFrontPagePosition());
+                }
+                if (in_array('inMenu', $submittedFields, true)) {
+                    $existingEntity->setInMenu($data->isInMenu());
+                }
+                if (in_array('inFooterMenu', $submittedFields, true)) {
+                    $existingEntity->setInFooterMenu($data->isInFooterMenu());
+                }
+                if (in_array('frontPageLayout', $submittedFields, true)) {
+                    $existingEntity->setFrontPageLayout($data->getFrontPageLayout());
+                }
+
+                // Handle parent (only if explicitly submitted)
+                if (in_array('parent', $submittedFields, true)) {
+                    if ($data->getParent()) {
+                        $parentId = $data->getParent()->getId();
+                        if ($parentId && $parentId !== $existingEntity->getId()) {
+                            $managedParent = $this->entityManager->getRepository(Category::class)->find($parentId);
+                            $existingEntity->setParent($managedParent);
+                        }
+                    } else {
+                        $existingEntity->setParent(null);
                     }
-                } else {
-                    $existingEntity->setParent(null);
                 }
 
                 // Use existing entity instead of deserialized one

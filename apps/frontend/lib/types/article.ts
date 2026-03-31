@@ -20,6 +20,7 @@ export interface Category {
   status?: string;
   onFrontPage?: boolean;
   frontPagePosition?: number;
+  frontPageLayout?: string | null;
   inMenu?: boolean;
   inFooterMenu?: boolean;
   articleCount?: number;

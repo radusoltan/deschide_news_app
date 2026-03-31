@@ -47,6 +47,7 @@ export async function createCategoryAction(
   const inMenu = formData.get('inMenu') === 'on';
   const inFooterMenu = formData.get('inFooterMenu') === 'on';
   const parentId = formData.get('parent') as string;
+  const frontPageLayout = formData.get('frontPageLayout') as string | null;
 
   // Validate required fields
   const errors: CategoryFormState['errors'] = {};
@@ -71,6 +72,7 @@ export async function createCategoryAction(
       onFrontPage,
       inMenu,
       inFooterMenu,
+      frontPageLayout: onFrontPage && frontPageLayout ? frontPageLayout : null,
     };
 
     if (parentId && parentId.trim() !== '') {
@@ -82,6 +84,10 @@ export async function createCategoryAction(
     await createCategory(categoryData, locale);
 
     revalidatePath(`/[locale]/admin/categories`, 'page');
+    revalidateTag('articles', 'max');
+    revalidatePath('/ro', 'page');
+    revalidatePath('/en', 'page');
+    revalidatePath('/ru', 'page');
 
     return { message: 'Category created successfully' };
   } catch (error) {
@@ -108,6 +114,7 @@ export async function updateCategoryAction(
   const onFrontPage = formData.get('onFrontPage') === 'on';
   const inMenu = formData.get('inMenu') === 'on';
   const inFooterMenu = formData.get('inFooterMenu') === 'on';
+  const frontPageLayout = formData.get('frontPageLayout') as string | null;
 
   // Validate required fields
   const errors: CategoryFormState['errors'] = {};
@@ -134,6 +141,7 @@ export async function updateCategoryAction(
       onFrontPage,
       inMenu,
       inFooterMenu,
+      frontPageLayout: onFrontPage && frontPageLayout ? frontPageLayout : null,
     };
 
     if (parentIdUpdate && parentIdUpdate.trim() !== '') {
@@ -146,6 +154,11 @@ export async function updateCategoryAction(
 
     revalidatePath(`/[locale]/admin/categories`, 'page');
     revalidatePath(`/[locale]/admin/categories/[id]`, 'page');
+    // Revalidate homepage when front page settings change
+    revalidateTag('articles', 'max');
+    revalidatePath('/ro', 'page');
+    revalidatePath('/en', 'page');
+    revalidatePath('/ru', 'page');
 
     return { message: 'Category updated successfully' };
   } catch (error) {

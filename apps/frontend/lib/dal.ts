@@ -335,6 +335,7 @@ export interface Category {
   slug: string;
   status?: string;
   onFrontPage?: boolean;
+  frontPageLayout?: string | null;
   inMenu?: boolean;
   inFooterMenu?: boolean;
   parent?: any;
@@ -407,6 +408,9 @@ export async function createCategory(
     slug: string;
     status?: string;
     onFrontPage?: boolean;
+    frontPageLayout?: string | null;
+    inMenu?: boolean;
+    inFooterMenu?: boolean;
     parent?: string | null;
   },
   locale: string = 'ro'
@@ -444,6 +448,9 @@ export async function updateCategory(
     slug?: string;
     status?: string;
     onFrontPage?: boolean;
+    frontPageLayout?: string | null;
+    inMenu?: boolean;
+    inFooterMenu?: boolean;
     parent?: string | null;
   },
   locale: string = 'ro'
@@ -480,8 +487,9 @@ export async function updateCategoryPositions(
 ): Promise<void> {
   for (const { id, frontPagePosition } of positions) {
     const response = await authenticatedFetch(`/api/categories/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       locale,
+      headers: { 'Content-Type': 'application/merge-patch+json' },
       body: JSON.stringify({ frontPagePosition }),
     });
 
