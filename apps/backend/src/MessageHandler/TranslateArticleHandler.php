@@ -143,6 +143,7 @@ final readonly class TranslateArticleHandler
             'sourceLocale' => 'ro',
             'locales' => $locales,
             'title' => $article->getTitle(),
+            'slug' => $article->getSlug(),
             'lead' => $article->getLead() ?? '',
             'content' => $article->getContent(),
             'category' => $article->getCategory()?->getTitle() ?? '',
