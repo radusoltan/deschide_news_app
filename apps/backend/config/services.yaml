@@ -215,6 +215,12 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
+    # Entity Translation Handler (Gemini CLI subprocess — categories, authors)
+    App\MessageHandler\TranslateEntityHandler:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $projectDir: '%kernel.project_dir%'
+
     # SEO Optimization Handler (Gemini CLI subprocess)
     App\MessageHandler\OptimizeSeoHandler:
         arguments:
