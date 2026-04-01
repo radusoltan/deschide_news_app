@@ -197,7 +197,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div className="bg-surface dark:bg-surface-dark rounded-lg shadow">
       {/* Search and Filter */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -210,7 +210,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+              className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark dark:placeholder-gray-400"
               placeholder="Search by filename, description, alt..."
             />
             {isSearching && (
@@ -227,7 +227,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 filterType === 'all'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-100 text-primary hover:bg-gray-200 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
               }`}
             >
               All
@@ -237,7 +237,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 filterType === 'jpeg'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-100 text-primary hover:bg-gray-200 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
               }`}
             >
               JPEG
@@ -247,7 +247,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 filterType === 'png'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-100 text-primary hover:bg-gray-200 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
               }`}
             >
               PNG
@@ -257,7 +257,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 filterType === 'webp'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-100 text-primary hover:bg-gray-200 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
               }`}
             >
               WebP
@@ -267,7 +267,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 filterType === 'gif'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-100 text-primary hover:bg-gray-200 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
               }`}
             >
               GIF
@@ -279,7 +279,7 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
       {/* Gallery Grid */}
       {filteredImages.length === 0 ? (
         <div className="p-12 text-center">
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-secondary dark:text-gray-400">
             {searchQuery || filterType !== 'all'
               ? 'No images found matching your filters.'
               : 'No images yet. Upload some to get started!'}
@@ -306,14 +306,14 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
             return (
               <div
                 key={image.id}
-                className="group relative bg-gray-50 dark:bg-gray-900 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
+                className="group relative bg-surface-sunken dark:bg-surface-dark rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-colors"
               >
                 {/* Image Preview - Clickable to edit */}
                 <div
                   onClick={() => handleImageClick(image.id)}
                   className="cursor-pointer"
                 >
-                  <div className="aspect-[4/3] relative bg-gray-100 dark:bg-gray-800">
+                  <div className="aspect-[4/3] relative bg-gray-100 dark:bg-surface-dark">
                     {imageUrl ? (
                       <Image
                         src={imageUrl}
@@ -359,14 +359,14 @@ export function ImageGallery({ images: initialImages, locale, onImageDeleted }: 
 
                 {/* Info */}
                 <div className="p-3 space-y-2">
-                  <p className="text-xs text-gray-900 dark:text-gray-100 truncate font-medium">
+                  <p className="text-xs text-primary dark:text-gray-100 truncate font-medium">
                     {image.originalFilename}
                   </p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-xs text-secondary dark:text-gray-400">
                       {formatFileSize(image.size)}
                     </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                    <span className="text-xs text-secondary dark:text-gray-400">
                       {image.width}×{image.height}
                     </span>
                   </div>

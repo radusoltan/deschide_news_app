@@ -18,7 +18,7 @@ export default async function ArticlesTable({ locale }: ArticlesTableProps) {
 
   if (error) {
     return (
-      <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
+      <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-surface-dark dark:text-red-400">
         <span className="font-medium">Error:</span> {error}
       </div>
     );
@@ -26,7 +26,7 @@ export default async function ArticlesTable({ locale }: ArticlesTableProps) {
 
   if (!data || data.member.length === 0) {
     return (
-      <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+      <div className="p-8 text-center text-secondary dark:text-gray-400">
         <p className="text-lg mb-2">No articles found</p>
         <p className="text-sm">Create your first article to get started.</p>
       </div>
@@ -62,8 +62,8 @@ export default async function ArticlesTable({ locale }: ArticlesTableProps) {
   return (
     <div className="overflow-x-auto">
       <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <table className="w-full text-sm text-left text-secondary dark:text-gray-400">
+          <thead className="text-xs text-primary uppercase bg-surface-sunken dark:bg-gray-700 dark:text-gray-400">
             <tr>
               <th scope="col" className="p-4">
                 <Checkbox />
@@ -92,12 +92,12 @@ export default async function ArticlesTable({ locale }: ArticlesTableProps) {
             {articles.map((article) => (
               <tr
                 key={article.id}
-                className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                className="bg-surface border-b dark:bg-surface-dark dark:border-gray-700 hover:bg-surface-sunken dark:hover:bg-gray-600"
               >
                 <td className="w-4 p-4">
                   <Checkbox />
                 </td>
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                <td className="px-6 py-4 font-medium text-primary whitespace-nowrap dark:text-primary-dark">
                   {article.title}
                 </td>
                 <td className="px-6 py-4">{getStatusBadge(article.status)}</td>

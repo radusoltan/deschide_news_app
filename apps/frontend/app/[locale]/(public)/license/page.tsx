@@ -405,18 +405,18 @@ export default async function LicensePage({ params }: LicensePageProps) {
   const t = content[locale as keyof typeof content] || content.ro;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-surface-sunken dark:bg-surface-dark">
       {/* Hero Section with Animated Background */}
       <div className="relative overflow-hidden bg-gradient-to-br from-brand-tomato-600 via-brand-red-600 to-brand-oxford-900 py-16 md:py-24">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-          <div className="absolute top-10 left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-10 left-10 w-72 h-72 bg-surface/10 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-brand-mindaro-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
         </div>
 
         <div className="container mx-auto px-4 max-w-4xl relative z-10">
           <div className="text-center animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6 shadow-lg">
+            <div className="inline-flex items-center gap-2 bg-surface/20 backdrop-blur-sm px-6 py-3 rounded-full mb-6 shadow-lg">
               <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
@@ -447,7 +447,7 @@ export default async function LicensePage({ params }: LicensePageProps) {
             <div
               key={section.id}
               id={section.id}
-              className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden animate-fade-in"
+              className="group bg-surface dark:bg-surface-dark rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Gradient Top Bar */}
@@ -460,7 +460,7 @@ export default async function LicensePage({ params }: LicensePageProps) {
                     {section.icon}
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-brand-tomato-500 dark:group-hover:text-brand-tomato-500 transition-colors duration-300">
+                    <h2 className="text-3xl md:text-4xl font-bold text-primary dark:text-primary-dark mb-2 group-hover:text-brand-tomato-500 dark:group-hover:text-brand-tomato-500 transition-colors duration-300">
                       {section.title}
                     </h2>
                     <div className="h-1 w-24 bg-gradient-to-r from-brand-tomato-500 to-transparent rounded-full"></div>
@@ -472,7 +472,7 @@ export default async function LicensePage({ params }: LicensePageProps) {
                   {section.content.map((paragraph, pIndex) => (
                     <p
                       key={pIndex}
-                      className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg"
+                      className="text-primary dark:text-primary-dark leading-relaxed text-lg"
                     >
                       {paragraph}
                     </p>
@@ -487,7 +487,7 @@ export default async function LicensePage({ params }: LicensePageProps) {
         <div className="mt-16 bg-gradient-to-br from-brand-oxford-900 via-brand-oxford-800 to-brand-tomato-600 rounded-3xl shadow-2xl p-10 md:p-12 text-center relative overflow-hidden animate-fade-in-up">
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
           <div className="relative z-10">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-surface/20 backdrop-blur-sm flex items-center justify-center">
               <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
@@ -505,7 +505,7 @@ export default async function LicensePage({ params }: LicensePageProps) {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href="mailto:licensing@deschide.md"
-                className="inline-flex items-center justify-center gap-3 bg-white text-brand-oxford-900 font-semibold px-8 py-4 rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-2xl hover:scale-105"
+                className="inline-flex items-center justify-center gap-3 bg-surface text-brand-oxford-900 font-semibold px-8 py-4 rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-2xl hover:scale-105"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />

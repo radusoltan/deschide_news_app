@@ -253,7 +253,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
       {/* Stats */}
       <div className="mb-6 flex items-center justify-between">
         <div className="text-sm text-gray-600 dark:text-gray-400">
-          <span className="font-semibold text-gray-900 dark:text-white">{importantArticles.length}</span> / 25 articles
+          <span className="font-semibold text-primary dark:text-primary-dark">{importantArticles.length}</span> / 25 articles
           {importantArticles.length < 5 && (
             <span className="ml-2 text-red-600 font-semibold">
               (Minimum 5 required)
@@ -273,8 +273,8 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
 
       {/* Important Articles List */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <table className="w-full text-sm text-left text-secondary dark:text-gray-400">
+          <thead className="text-xs text-primary uppercase bg-surface-sunken dark:bg-gray-700 dark:text-gray-400">
             <tr>
               <th scope="col" className="px-6 py-3 w-20">Position</th>
               <th scope="col" className="px-6 py-3">Article Title</th>
@@ -285,9 +285,9 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
             {importantArticles.map((item, index) => (
               <tr
                 key={item.id}
-                className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                className="bg-surface border-b dark:bg-surface-dark dark:border-gray-700 hover:bg-surface-sunken dark:hover:bg-gray-600"
               >
-                <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                <td className="px-6 py-4 font-medium text-primary dark:text-primary-dark">
                   {item.position}
                 </td>
                 <td className="px-6 py-4">
@@ -298,7 +298,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
                     <button
                       onClick={() => handleMoveUp(index)}
                       disabled={index === 0}
-                      className="px-2 py-1 text-sm font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded disabled:text-gray-300 disabled:cursor-not-allowed dark:text-blue-400 dark:hover:bg-blue-900"
+                      className="px-2 py-1 text-sm font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded disabled:text-primary-dark disabled:cursor-not-allowed dark:text-blue-400 dark:hover:bg-blue-900"
                       title="Move up"
                     >
                       ↑
@@ -306,7 +306,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
                     <button
                       onClick={() => handleMoveDown(index)}
                       disabled={index === importantArticles.length - 1}
-                      className="px-2 py-1 text-sm font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded disabled:text-gray-300 disabled:cursor-not-allowed dark:text-blue-400 dark:hover:bg-blue-900"
+                      className="px-2 py-1 text-sm font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded disabled:text-primary-dark disabled:cursor-not-allowed dark:text-blue-400 dark:hover:bg-blue-900"
                       title="Move down"
                     >
                       ↓
@@ -334,7 +334,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
         <ModalBody>
           <div className="space-y-4">
             <div>
-              <label htmlFor="search" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+              <label htmlFor="search" className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark">
                 Search Articles
               </label>
               <input
@@ -343,7 +343,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by title..."
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-primary-dark"
               />
             </div>
 
@@ -359,18 +359,18 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
                         : 'border-gray-200 hover:border-gray-300 dark:border-gray-600'
                     }`}
                   >
-                    <div className="font-medium text-gray-900 dark:text-white">
+                    <div className="font-medium text-primary dark:text-primary-dark">
                       {article.title}
                     </div>
                     {article.category && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      <div className="text-sm text-secondary dark:text-gray-400 mt-1">
                         {article.category.name}
                       </div>
                     )}
                   </div>
                 ))}
                 {availableArticles.length === 0 && (
-                  <div className="text-center text-gray-500 py-8">
+                  <div className="text-center text-secondary py-8">
                     No available articles found
                   </div>
                 )}

@@ -38,14 +38,14 @@ export function KeyboardShortcutsHelp({ shortcuts }: KeyboardShortcutsHelpProps)
           aria-labelledby="shortcuts-title"
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            className="bg-surface dark:bg-surface-dark rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
                 <Keyboard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                <h2 id="shortcuts-title" className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                <h2 id="shortcuts-title" className="text-xl font-bold text-primary dark:text-gray-100">
                   Keyboard Shortcuts
                 </h2>
               </div>
@@ -66,7 +66,7 @@ export function KeyboardShortcutsHelp({ shortcuts }: KeyboardShortcutsHelpProps)
                     key={index}
                     className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-0"
                   >
-                    <span className="text-gray-700 dark:text-gray-300">
+                    <span className="text-primary dark:text-primary-dark">
                       {shortcut.description}
                     </span>
                     <kbd className="px-3 py-1.5 text-sm font-semibold text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded">
@@ -78,7 +78,7 @@ export function KeyboardShortcutsHelp({ shortcuts }: KeyboardShortcutsHelpProps)
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-surface-sunken dark:bg-surface-dark/50">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Press <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded">?</kbd> anytime to view these shortcuts
               </p>

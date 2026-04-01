@@ -10,10 +10,10 @@ interface DeviceTypesChartProps {
 }
 
 const COLORS = {
-  mobile: '#3b82f6', // blue
+  mobile: 'var(--color-accent)', // blue
   desktop: '#10b981', // green
   tablet: '#f59e0b', // amber
-  other: '#6b7280', // gray
+  other: 'var(--color-text-secondary)', // gray
 };
 
 const DEVICE_LABELS: Record<string, string> = {
@@ -26,12 +26,12 @@ const DEVICE_LABELS: Record<string, string> = {
 export default function DeviceTypesChart({ data }: DeviceTypesChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
           Tipuri de Dispozitive
         </h3>
-        <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-          <p className="text-gray-500 dark:text-gray-400">
+        <div className="h-64 flex items-center justify-center bg-surface-sunken dark:bg-gray-700/50 rounded-lg">
+          <p className="text-secondary dark:text-gray-400">
             Nu există date disponibile
           </p>
         </div>
@@ -50,8 +50,8 @@ export default function DeviceTypesChart({ data }: DeviceTypesChartProps) {
   const total = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
+      <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
         Tipuri de Dispozitive
       </h3>
 
@@ -75,8 +75,8 @@ export default function DeviceTypesChart({ data }: DeviceTypesChartProps) {
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
               borderRadius: '0.5rem',
               padding: '0.75rem',
             }}
@@ -100,15 +100,15 @@ export default function DeviceTypesChart({ data }: DeviceTypesChartProps) {
                     COLORS.other,
                 }}
               ></div>
-              <span className="text-gray-700 dark:text-gray-300">
+              <span className="text-primary dark:text-primary-dark">
                 {DEVICE_LABELS[item.deviceType] || item.deviceType}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900 dark:text-white">
+              <span className="font-semibold text-primary dark:text-primary-dark">
                 {item.count.toLocaleString('ro-RO')}
               </span>
-              <span className="text-gray-500 dark:text-gray-400">
+              <span className="text-secondary dark:text-gray-400">
                 ({((item.count / total) * 100).toFixed(1)}%)
               </span>
             </div>

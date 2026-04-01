@@ -127,8 +127,8 @@ export default function BulkArchiveForm({ token, onComplete, locale = 'ro' }: Bu
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-primary dark:text-primary-dark">
           <svg
             className="w-5 h-5 text-amber-600"
             fill="none"
@@ -150,7 +150,7 @@ export default function BulkArchiveForm({ token, onComplete, locale = 'ro' }: Bu
           <div>
             <label
               htmlFor="years-old"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               {t.ageLabel}
             </label>
@@ -161,7 +161,7 @@ export default function BulkArchiveForm({ token, onComplete, locale = 'ro' }: Bu
               max={10}
               value={yearsOld}
               onChange={(e) => setYearsOld(Number(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent dark:bg-gray-700 dark:text-primary-dark"
               disabled={isLoading}
             />
           </div>
@@ -229,7 +229,7 @@ export default function BulkArchiveForm({ token, onComplete, locale = 'ro' }: Bu
       {/* Confirmation Modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <svg
                 className="w-8 h-8 text-amber-600"
@@ -244,12 +244,12 @@ export default function BulkArchiveForm({ token, onComplete, locale = 'ro' }: Bu
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                 />
               </svg>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h3 className="text-xl font-bold text-primary dark:text-primary-dark">
                 {t.confirmTitle}
               </h3>
             </div>
 
-            <p className="text-gray-700 dark:text-gray-300 mb-6">
+            <p className="text-primary dark:text-primary-dark mb-6">
               {t.confirmMessage}
             </p>
 

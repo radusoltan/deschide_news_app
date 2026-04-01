@@ -135,7 +135,7 @@ export function EmbedLiveTextViewer({ liveText: initialLiveText, theme }: Props)
             alignItems: 'center',
             gap: '6px',
             padding: '4px 12px',
-            backgroundColor: '#dc2626',
+            backgroundColor: 'var(--color-breaking)',
             color: 'white',
             borderRadius: '9999px',
             fontSize: '12px',
@@ -225,7 +225,7 @@ export function EmbedLiveTextViewer({ liveText: initialLiveText, theme }: Props)
       {liveText.sportMatch && (
         <div style={{
           padding: '20px',
-          backgroundColor: theme === 'dark' ? '#1e3a5f' : '#dbeafe',
+          backgroundColor: theme === 'dark' ? 'var(--color-surface-sunken-dark)' : 'var(--color-surface-sunken)',
           borderBottom: '1px solid var(--border-color)',
         }}>
           <div style={{
@@ -280,7 +280,7 @@ export function EmbedLiveTextViewer({ liveText: initialLiveText, theme }: Props)
                 style={{
                   padding: '16px',
                   backgroundColor: post.isKeyPoint
-                    ? (theme === 'dark' ? '#1e40af' : '#dbeafe')
+                    ? (theme === 'dark' ? 'var(--color-surface-elevated-dark)' : 'var(--color-surface-elevated)')
                     : 'var(--bg-secondary)',
                   borderRadius: '8px',
                   borderLeft: post.isKeyPoint

@@ -41,7 +41,7 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
           <span>/</span>
           <span>Edit User</span>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
           Edit User
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -50,7 +50,7 @@ export default async function EditUserPage({ params }: EditUserPageProps) {
       </div>
 
       {/* User Form */}
-      <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-6">
+      <div className="bg-surface dark:bg-surface-dark shadow-md sm:rounded-lg p-6">
         <UserForm
           locale={locale}
           user={{

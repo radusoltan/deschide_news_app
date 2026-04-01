@@ -130,7 +130,7 @@ export default async function TagPage({
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-3 text-gray-900 dark:text-gray-100">
+        <h1 className="text-4xl font-bold mb-3 text-primary dark:text-gray-100">
           {headings[locale as keyof typeof headings] || headings.ro}{' '}
           <span className="text-blue-600 dark:text-blue-400">#{tag.name}</span>
         </h1>
@@ -141,7 +141,7 @@ export default async function TagPage({
           </p>
         )}
 
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-secondary dark:text-gray-400">
           {locale === 'ro' && `${totalItems} articole`}
           {locale === 'en' && `${totalItems} articles`}
           {locale === 'ru' && `${totalItems} статей`}
@@ -162,7 +162,7 @@ export default async function TagPage({
               ))}
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center text-gray-500 dark:text-gray-400">
+            <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-md p-8 text-center text-secondary dark:text-gray-400">
               {emptyMessages[locale as keyof typeof emptyMessages] ||
                 emptyMessages.ro}
             </div>
@@ -174,8 +174,8 @@ export default async function TagPage({
         {/* Sidebar - Related Tags */}
         <div className="lg:col-span-1">
           {relatedTags.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sticky top-4">
-              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+            <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-md p-6 sticky top-4">
+              <h2 className="text-xl font-bold mb-4 text-primary dark:text-gray-100">
                 {relatedHeadings[locale as keyof typeof relatedHeadings] ||
                   relatedHeadings.ro}
               </h2>

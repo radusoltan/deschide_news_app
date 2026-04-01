@@ -23,6 +23,8 @@
   --color-accent: oklch(45% 0.15 165);
   --color-accent-hover: oklch(40% 0.17 165);
   --color-breaking: oklch(55% 0.22 25);
+  --color-alert: oklch(70% 0.18 85);
+  --color-flash: oklch(55% 0.20 280);
 
   /* Section Colors (Guardian-inspired) */
   --color-section-politics: oklch(55% 0.18 25);

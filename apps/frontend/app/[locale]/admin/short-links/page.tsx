@@ -63,7 +63,7 @@ export default async function ShortLinksPage({
       {/* Page Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
             Linkuri Scurte
           </h1>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -82,13 +82,13 @@ export default async function ShortLinksPage({
 
       {/* Statistics Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Total Linkuri
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+              <p className="text-2xl font-bold text-primary dark:text-primary-dark mt-1">
                 {totalItems}
               </p>
             </div>
@@ -110,13 +110,13 @@ export default async function ShortLinksPage({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Total Clicuri
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+              <p className="text-2xl font-bold text-primary dark:text-primary-dark mt-1">
                 {shortLinksData
                   .reduce((sum, link) => sum + link.clickCount, 0)
                   .toLocaleString('ro-RO')}
@@ -140,13 +140,13 @@ export default async function ShortLinksPage({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Media pe Link
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+              <p className="text-2xl font-bold text-primary dark:text-primary-dark mt-1">
                 {totalItems > 0
                   ? Math.round(
                       shortLinksData.reduce(
@@ -186,7 +186,7 @@ export default async function ShortLinksPage({
       )}
 
       {/* Short Links Table */}
-      <div className="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
+      <div className="bg-surface dark:bg-surface-dark relative shadow-md sm:rounded-lg overflow-hidden">
         <ShortLinksTable
           shortLinks={shortLinksData}
           totalItems={totalItems}
@@ -202,20 +202,20 @@ export default async function ShortLinksPage({
             {currentPage > 1 && (
               <Link
                 href={`/${locale}/admin/short-links?page=${currentPage - 1}`}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700"
+                className="px-3 py-2 text-sm font-medium text-primary bg-surface border border-gray-300 rounded-lg hover:bg-gray-100 dark:bg-surface-dark dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700"
               >
                 Anterior
               </Link>
             )}
 
-            <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-400">
+            <span className="px-4 py-2 text-sm text-primary dark:text-gray-400">
               Pagina {currentPage} din {totalPages}
             </span>
 
             {currentPage < totalPages && (
               <Link
                 href={`/${locale}/admin/short-links?page=${currentPage + 1}`}
-                className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700"
+                className="px-3 py-2 text-sm font-medium text-primary bg-surface border border-gray-300 rounded-lg hover:bg-gray-100 dark:bg-surface-dark dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700"
               >
                 Următor
               </Link>

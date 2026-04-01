@@ -109,7 +109,7 @@ export default async function LivePage({
       case 'ended':
         return {
           label: t.statusEnded,
-          classes: 'bg-gray-500 text-white',
+          classes: 'bg-surface-sunken0 text-white',
         };
       default:
         return {
@@ -136,7 +136,7 @@ export default async function LivePage({
     <div className="container mx-auto px-4 py-8">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+        <h1 className="text-4xl font-bold text-primary dark:text-primary-dark mb-4">
           {t.title}
         </h1>
         <p className="text-gray-600 dark:text-gray-400">{t.subtitle}</p>
@@ -150,7 +150,7 @@ export default async function LivePage({
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               !status
                 ? 'bg-red-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
             }`}
           >
             {t.active}
@@ -160,7 +160,7 @@ export default async function LivePage({
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               status === 'live'
                 ? 'bg-red-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
             }`}
           >
             {t.live}
@@ -170,7 +170,7 @@ export default async function LivePage({
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               status === 'paused'
                 ? 'bg-red-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
             }`}
           >
             {t.paused}
@@ -180,7 +180,7 @@ export default async function LivePage({
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               status === 'ended'
                 ? 'bg-red-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
             }`}
           >
             {t.ended}
@@ -198,7 +198,7 @@ export default async function LivePage({
               <Link
                 key={liveText.id}
                 href={`/${locale}/live/${liveText.slug}`}
-                className="block bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden border border-gray-200 dark:border-gray-700"
+                className="block bg-surface dark:bg-surface-dark rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden border border-gray-200 dark:border-gray-700"
               >
                 {/* Status Badge */}
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -209,7 +209,7 @@ export default async function LivePage({
                       {statusBadge.label}
                     </span>
                     {liveText.category && (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-secondary dark:text-gray-400">
                         {liveText.category.title}
                       </span>
                     )}
@@ -218,7 +218,7 @@ export default async function LivePage({
 
                 {/* Content */}
                 <div className="p-6">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2">
+                  <h2 className="text-xl font-bold text-primary dark:text-primary-dark mb-3 line-clamp-2">
                     {liveText.title}
                   </h2>
 
@@ -229,7 +229,7 @@ export default async function LivePage({
                   )}
 
                   {/* Metadata */}
-                  <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="space-y-2 text-sm text-secondary dark:text-gray-400">
                     {liveText.startTime && (
                       <div className="flex items-center gap-2">
                         <svg

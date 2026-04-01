@@ -210,7 +210,7 @@ export function ReactionButtons({ postId, initialCounts, locale }: ReactionButto
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
               isActive
                 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 ring-2 ring-red-500'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                : 'bg-gray-100 dark:bg-surface-dark text-primary dark:text-primary-dark hover:bg-gray-200 dark:hover:bg-gray-700'
             } disabled:opacity-50`}
             title={labels[reactionType as keyof typeof labels]}
           >

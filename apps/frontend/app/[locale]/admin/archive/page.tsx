@@ -97,7 +97,7 @@ async function ArchiveContent({
 
       {/* Archive Statistics Section */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+        <h2 className="text-xl font-semibold text-primary dark:text-primary-dark mb-4">
           {t.stats}
         </h2>
         <Suspense fallback={<StatsLoadingSkeleton />}>
@@ -107,7 +107,7 @@ async function ArchiveContent({
 
       {/* Bulk Archive Section */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+        <h2 className="text-xl font-semibold text-primary dark:text-primary-dark mb-4">
           {t.bulkArchive}
         </h2>
         <BulkArchiveForm token={token} locale={locale} />
@@ -115,7 +115,7 @@ async function ArchiveContent({
 
       {/* Archived Articles List Section */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+        <h2 className="text-xl font-semibold text-primary dark:text-primary-dark mb-4">
           {t.archivedArticles}
         </h2>
         <Suspense fallback={<TableLoadingSkeleton />}>
@@ -154,7 +154,7 @@ function StatsLoadingSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="stat-card bg-gray-50 animate-pulse">
+        <div key={i} className="stat-card bg-surface-sunken animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
           <div className="h-10 bg-gray-200 rounded w-3/4 mb-2"></div>
           <div className="h-4 bg-gray-200 rounded w-1/3"></div>

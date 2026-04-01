@@ -216,7 +216,7 @@ export default function HeroArticle({ article, locale }: HeroArticleProps) {
         {/* Subtle parallax scroll indicator (desktop only) */}
         <div className="hidden lg:block absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
           <div className="w-6 h-10 rounded-full border-2 border-white/40 flex items-start justify-center p-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-white/60 animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-surface/60 animate-pulse" />
           </div>
         </div>
       </div>

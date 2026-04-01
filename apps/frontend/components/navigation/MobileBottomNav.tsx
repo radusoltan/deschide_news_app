@@ -144,7 +144,7 @@ export default function MobileBottomNav({
     const Icon = item.icon;
     const active = isActive(item);
 
-    const commonClasses = `flex flex-col items-center justify-center gap-1 min-h-[44px] min-w-[44px] px-2 transition-all duration-200 ease-out touch-target ${active ? 'text-brand-tomato-500' : 'text-gray-500 hover:text-gray-700 active:scale-95'}`;
+    const commonClasses = `flex flex-col items-center justify-center gap-1 min-h-[44px] min-w-[44px] px-2 transition-all duration-200 ease-out touch-target ${active ? 'text-brand-tomato-500' : 'text-secondary hover:text-primary active:scale-95'}`;
 
     const content = (
       <>
@@ -213,7 +213,7 @@ export default function MobileBottomNav({
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
           {/* Navigation content */}
-          <div className="bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-2px_16px_rgba(17,34,64,0.08)]">
+          <div className="bg-surface/95 backdrop-blur-md border-t border-gray-100 shadow-[0_-2px_16px_rgba(17,34,64,0.08)]">
             {/* Safe area padding */}
             <div className="h-16 flex items-center justify-around px-2">
               {navItems.map(renderNavItem)}

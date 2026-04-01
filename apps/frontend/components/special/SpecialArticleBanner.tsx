@@ -70,7 +70,7 @@ const BADGE_CONFIG: Record<BadgeType, {
     bgColor: 'bg-red-600',
     textColor: 'text-white',
     borderColor: 'border-red-600',
-    dotColor: 'bg-white',
+    dotColor: 'bg-surface',
     hoverBg: 'hover:bg-red-700',
     animation: 'animate-brand-pulse',
   },
@@ -178,11 +178,11 @@ export const SpecialArticleBanner: React.FC<SpecialArticleBannerProps> = ({
       href={articleUrl}
       className={cn(
         'group flex items-center gap-3 md:gap-4',
-        'bg-white border-l-4',
+        'bg-surface border-l-4',
         config.borderColor,
         'rounded-r-lg shadow-sm',
         'transition-all duration-200 ease-out',
-        'hover:shadow-md hover:bg-gray-50',
+        'hover:shadow-md hover:bg-surface-sunken',
         className
       )}
     >
@@ -237,7 +237,7 @@ export const SpecialArticleBanner: React.FC<SpecialArticleBannerProps> = ({
         </h3>
 
         {/* Meta info */}
-        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+        <div className="flex items-center gap-2 mt-1 text-xs text-secondary">
           {article.publishedAt && (
             <span className="font-body">
               {formatRelativeTime(article.publishedAt, locale)}

@@ -88,8 +88,8 @@ describe('ArticleLoading Component', () => {
     it('should render sidebar widget skeleton', () => {
       const { container } = render(<ArticleLoading />);
 
-      // Sidebar should have bg-white element
-      const sidebar = container.querySelector('.bg-white');
+      // Sidebar should have bg-surface element
+      const sidebar = container.querySelector('.bg-surface');
       expect(sidebar).toBeInTheDocument();
     });
 
@@ -155,8 +155,8 @@ describe('ArticleLoading Component', () => {
       const skeletons = container.querySelectorAll('.bg-gray-300');
       expect(skeletons.length).toBeGreaterThan(0);
 
-      // Check for bg-gray-50 (background color)
-      const background = container.querySelector('.bg-gray-50');
+      // Check for bg-surface-sunken (background color)
+      const background = container.querySelector('.bg-surface-sunken');
       expect(background).toBeInTheDocument();
     });
 

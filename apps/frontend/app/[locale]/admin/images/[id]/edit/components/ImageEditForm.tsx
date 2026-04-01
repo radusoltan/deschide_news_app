@@ -82,10 +82,10 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Image Preview */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
             Image Preview
           </h2>
-          <div className="aspect-video relative bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden">
+          <div className="aspect-video relative bg-gray-100 dark:bg-surface-dark rounded-lg overflow-hidden">
             <Image
               src={imageUrl}
               alt={image.alt || image.originalFilename || 'Image'}
@@ -98,37 +98,37 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
 
         {/* Image Information */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
             Image Information
           </h2>
           <dl className="space-y-3 text-sm">
             <div>
-              <dt className="font-medium text-gray-700 dark:text-gray-300">Filename</dt>
-              <dd className="mt-1 text-gray-900 dark:text-white break-all">
+              <dt className="font-medium text-primary dark:text-primary-dark">Filename</dt>
+              <dd className="mt-1 text-primary dark:text-primary-dark break-all">
                 {image.originalFilename}
               </dd>
             </div>
             <div>
-              <dt className="font-medium text-gray-700 dark:text-gray-300">File Size</dt>
-              <dd className="mt-1 text-gray-900 dark:text-white">
+              <dt className="font-medium text-primary dark:text-primary-dark">File Size</dt>
+              <dd className="mt-1 text-primary dark:text-primary-dark">
                 {formatFileSize(image.size)}
               </dd>
             </div>
             <div>
-              <dt className="font-medium text-gray-700 dark:text-gray-300">Dimensions</dt>
-              <dd className="mt-1 text-gray-900 dark:text-white">
+              <dt className="font-medium text-primary dark:text-primary-dark">Dimensions</dt>
+              <dd className="mt-1 text-primary dark:text-primary-dark">
                 {image.width} × {image.height} pixels
               </dd>
             </div>
             <div>
-              <dt className="font-medium text-gray-700 dark:text-gray-300">MIME Type</dt>
-              <dd className="mt-1 text-gray-900 dark:text-white">
+              <dt className="font-medium text-primary dark:text-primary-dark">MIME Type</dt>
+              <dd className="mt-1 text-primary dark:text-primary-dark">
                 {image.mimeType}
               </dd>
             </div>
             <div>
-              <dt className="font-medium text-gray-700 dark:text-gray-300">Uploaded</dt>
-              <dd className="mt-1 text-gray-900 dark:text-white">
+              <dt className="font-medium text-primary dark:text-primary-dark">Uploaded</dt>
+              <dd className="mt-1 text-primary dark:text-primary-dark">
                 {formatDate(image.uploadedAt)}
               </dd>
             </div>
@@ -138,7 +138,7 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
 
       {/* Metadata Fields */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <h2 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
           Image Metadata
         </h2>
 
@@ -147,7 +147,7 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
           <div>
             <label
               htmlFor="alt"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               Alt Text <span className="text-red-500">*</span>
             </label>
@@ -158,10 +158,10 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
               onChange={(e) => setFormData((prev) => ({ ...prev, alt: e.target.value }))}
               required
               disabled={isSubmitting}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Describe the image for accessibility"
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-secondary dark:text-gray-400">
               Required for accessibility. Describe what&apos;s in the image.
             </p>
           </div>
@@ -170,7 +170,7 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
           <div>
             <label
               htmlFor="caption"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               Caption
             </label>
@@ -180,7 +180,7 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
               value={formData.caption}
               onChange={(e) => setFormData((prev) => ({ ...prev, caption: e.target.value }))}
               disabled={isSubmitting}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Optional caption to display with the image"
             />
           </div>
@@ -189,7 +189,7 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               Description
             </label>
@@ -199,7 +199,7 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               disabled={isSubmitting}
               rows={4}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Detailed description for search and organization"
             />
           </div>
@@ -212,7 +212,7 @@ export default function ImageEditForm({ locale, image }: ImageEditFormProps) {
           type="button"
           onClick={handleCancel}
           disabled={isSubmitting}
-          className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
+          className="px-4 py-2 text-primary dark:text-primary-dark bg-surface dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2"
         >
           <FiX className="w-5 h-5" />
           Cancel

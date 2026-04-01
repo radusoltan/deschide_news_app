@@ -12,7 +12,7 @@ export function LiveTextAnalyticsSkeleton() {
         {[...Array(8)].map((_, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
+            className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 space-y-3">
@@ -27,14 +27,14 @@ export function LiveTextAnalyticsSkeleton() {
       </div>
 
       {/* Chart skeleton */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
         <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
       </div>
 
       {/* Two column charts skeleton */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
@@ -43,7 +43,7 @@ export function LiveTextAnalyticsSkeleton() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
           <div className="space-y-3">
             {[...Array(4)].map((_, i) => (

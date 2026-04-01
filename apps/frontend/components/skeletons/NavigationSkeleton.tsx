@@ -7,7 +7,7 @@ import React from 'react';
 
 export function NavigationSkeleton() {
   return (
-    <nav className="bg-white border-b animate-pulse">
+    <nav className="bg-surface border-b animate-pulse">
       <div className="container-deschide">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}

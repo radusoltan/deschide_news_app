@@ -78,12 +78,12 @@
 
 /* Card styles */
 .admin-card {
-  @apply bg-white dark:bg-gray-800 rounded-lg shadow p-6;
+  @apply bg-surface dark:bg-surface-dark rounded-lg shadow p-6;
 }
 
 /* Stat card */
 .stat-card {
-  @apply bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700;
+  @apply bg-surface dark:bg-surface-dark rounded-lg shadow p-6 border border-border dark:border-border-dark;
 }
 
 /* Table styles */
@@ -92,11 +92,11 @@
 }
 
 .admin-table thead {
-  @apply text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400;
+  @apply text-xs text-gray-700 uppercase bg-surface-sunken dark:bg-surface-sunken-dark dark:text-gray-400;
 }
 
 .admin-table tbody tr {
-  @apply bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600;
+  @apply bg-surface border-b dark:bg-surface-dark dark:border-border-dark hover:bg-surface-sunken dark:hover:bg-surface-elevated-dark;
 }
 
 /* Ensure table containers have proper stacking context on mobile */
@@ -126,7 +126,7 @@
 }
 
 .btn-secondary {
-  @apply text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700;
+  @apply text-primary bg-surface border border-border focus:outline-none hover:bg-surface-elevated focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-surface-dark dark:text-primary-dark dark:border-border-dark dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700;
 }
 
 .btn-danger {
@@ -164,23 +164,23 @@
 
 /* Form styles */
 .form-label {
-  @apply block mb-2 text-sm font-medium text-gray-900 dark:text-white;
+  @apply block mb-2 text-sm font-medium text-primary dark:text-primary-dark;
 }
 
 .form-input {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500;
+  @apply bg-surface-sunken border border-border text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-surface-sunken-dark dark:border-border-dark dark:placeholder-gray-400 dark:text-primary-dark dark:focus:ring-blue-500 dark:focus:border-blue-500;
 }
 
 .form-textarea {
-  @apply block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500;
+  @apply block p-2.5 w-full text-sm text-primary bg-surface-sunken rounded-lg border border-border focus:ring-blue-500 focus:border-blue-500 dark:bg-surface-sunken-dark dark:border-border-dark dark:placeholder-gray-400 dark:text-primary-dark dark:focus:ring-blue-500 dark:focus:border-blue-500;
 }
 
 .form-select {
-  @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500;
+  @apply bg-surface-sunken border border-border text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-surface-sunken-dark dark:border-border-dark dark:placeholder-gray-400 dark:text-primary-dark dark:focus:ring-blue-500 dark:focus:border-blue-500;
 }
 
 .form-checkbox {
-  @apply w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600;
+  @apply w-4 h-4 text-blue-600 bg-surface-elevated border-border rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-surface-sunken-dark dark:border-border-dark;
 }
 
 /* Alert styles */
@@ -189,19 +189,19 @@
 }
 
 .alert-info {
-  @apply text-blue-800 bg-blue-50 dark:bg-gray-800 dark:text-blue-400;
+  @apply text-blue-800 bg-blue-50 dark:bg-surface-dark dark:text-blue-400;
 }
 
 .alert-success {
-  @apply text-green-800 bg-green-50 dark:bg-gray-800 dark:text-green-400;
+  @apply text-green-800 bg-green-50 dark:bg-surface-dark dark:text-green-400;
 }
 
 .alert-warning {
-  @apply text-yellow-800 bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300;
+  @apply text-yellow-800 bg-yellow-50 dark:bg-surface-dark dark:text-yellow-300;
 }
 
 .alert-danger {
-  @apply text-red-800 bg-red-50 dark:bg-gray-800 dark:text-red-400;
+  @apply text-red-800 bg-red-50 dark:bg-surface-dark dark:text-red-400;
 }
 
 /* Loading spinner */

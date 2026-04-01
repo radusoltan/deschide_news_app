@@ -61,7 +61,7 @@ function SortableImageCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="relative group bg-white dark:bg-gray-800 rounded-lg border-2 border-gray-200 dark:border-gray-700 overflow-hidden hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+      className="relative group bg-surface dark:bg-surface-dark rounded-lg border-2 border-gray-200 dark:border-gray-700 overflow-hidden hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
     >
       {/* Drag Handle (invisible, covers whole card) */}
       <div
@@ -97,7 +97,7 @@ function SortableImageCard({
 
       {/* Image Info */}
       <div className="p-3 space-y-2">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+        <p className="text-sm font-medium text-primary dark:text-primary-dark truncate">
           {attachedImage.image.originalFilename || 'Untitled'}
         </p>
         {attachedImage.image.alt && (
@@ -105,7 +105,7 @@ function SortableImageCard({
             Alt: {attachedImage.image.alt}
           </p>
         )}
-        <div className="text-xs text-gray-500 dark:text-gray-500">
+        <div className="text-xs text-secondary dark:text-secondary">
           {attachedImage.image.width} × {attachedImage.image.height} •{' '}
           {attachedImage.image.formattedSize}
         </div>
@@ -337,7 +337,7 @@ export default function AttachedImagesSection({
       <div className="flex items-center justify-between">
         <div className="text-sm space-y-1">
           <div className="text-gray-600 dark:text-gray-400">
-            <span className="font-semibold text-gray-900 dark:text-white">
+            <span className="font-semibold text-primary dark:text-primary-dark">
               {attachedImages.length}
             </span>{' '}
             / {maxImages} images attached
@@ -390,7 +390,7 @@ export default function AttachedImagesSection({
         <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-12">
           <div className="text-center">
             <FiImage className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 mb-6">
+            <p className="text-secondary dark:text-gray-400 mb-6">
               No images attached to this article.
             </p>
             <div className="flex items-center justify-center gap-3">
@@ -443,7 +443,7 @@ export default function AttachedImagesSection({
 
       {/* Help Text */}
       {attachedImages.length > 0 && (
-        <div className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-4">
+        <div className="text-xs text-secondary dark:text-secondary flex items-center gap-4">
           <span>Drag to reorder</span>
           <span>•</span>
           <span>Hover to see actions</span>

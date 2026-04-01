@@ -66,9 +66,9 @@ export function RichTextEditor({
   }
 
   return (
-    <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
+    <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden bg-surface dark:bg-surface-dark">
       {editable && (
-        <div className="border-b border-gray-300 dark:border-gray-600 p-2 flex flex-wrap gap-1 bg-gray-50 dark:bg-gray-800">
+        <div className="border-b border-gray-300 dark:border-gray-600 p-2 flex flex-wrap gap-1 bg-surface-sunken dark:bg-surface-dark">
           {/* Bold */}
           <button
             type="button"

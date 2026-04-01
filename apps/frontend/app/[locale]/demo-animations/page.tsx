@@ -42,14 +42,14 @@ export default function AnimationsDemoPage() {
   }, [showOverlay]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-sunken">
       {/* Header */}
       <header className="bg-brand-oxford-900 text-white py-8">
         <div className="container-deschide">
           <h1 className="text-4xl font-bold animate-fade-in-up">
             Premium Animations & UI Components
           </h1>
-          <p className="mt-2 text-gray-300 animate-fade-in-up stagger-1">
+          <p className="mt-2 text-primary-dark animate-fade-in-up stagger-1">
             Brand-aligned design system with sophisticated interactions
           </p>
         </div>
@@ -63,7 +63,7 @@ export default function AnimationsDemoPage() {
             Loading Spinners
           </h2>
 
-          <div className="bg-white rounded-xl shadow-lg p-8 space-y-8">
+          <div className="bg-surface rounded-xl shadow-lg p-8 space-y-8">
             {/* Size Variants */}
             <div>
               <h3 className="text-xl font-semibold mb-4">Size Variants</h3>
@@ -200,7 +200,7 @@ export default function AnimationsDemoPage() {
             {/* List Item Skeleton */}
             <div>
               <h3 className="text-xl font-semibold mb-4">List Item Skeleton</h3>
-              <div className="bg-white rounded-lg p-6">
+              <div className="bg-surface rounded-lg p-6">
                 <ListItemSkeleton />
                 <ListItemSkeleton />
                 <ListItemSkeleton />
@@ -223,7 +223,7 @@ export default function AnimationsDemoPage() {
 
           <div className="space-y-8">
             {/* Fade Animations */}
-            <div className="bg-white rounded-xl shadow-lg p-8">
+            <div className="bg-surface rounded-xl shadow-lg p-8">
               <h3 className="text-xl font-semibold mb-4">Fade Animations</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="border-2 border-gray-200 rounded-lg p-6 animate-fade-in">
@@ -251,7 +251,7 @@ export default function AnimationsDemoPage() {
             </div>
 
             {/* Hover Effects */}
-            <div className="bg-white rounded-xl shadow-lg p-8">
+            <div className="bg-surface rounded-xl shadow-lg p-8">
               <h3 className="text-xl font-semibold mb-4">Hover Effects</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="border-2 border-gray-200 rounded-lg p-6 hover-lift cursor-pointer">
@@ -279,7 +279,7 @@ export default function AnimationsDemoPage() {
             </div>
 
             {/* Breaking News Badge */}
-            <div className="bg-white rounded-xl shadow-lg p-8">
+            <div className="bg-surface rounded-xl shadow-lg p-8">
               <h3 className="text-xl font-semibold mb-4">Breaking News Badge</h3>
               <div className="breaking-news-badge">
                 Breaking News
@@ -287,7 +287,7 @@ export default function AnimationsDemoPage() {
             </div>
 
             {/* Underline Animation */}
-            <div className="bg-white rounded-xl shadow-lg p-8">
+            <div className="bg-surface rounded-xl shadow-lg p-8">
               <h3 className="text-xl font-semibold mb-4">Underline Animation</h3>
               <a href="#" className="underline-animate text-2xl font-bold text-brand-oxford-900">
                 Hover me to see animated underline
@@ -295,7 +295,7 @@ export default function AnimationsDemoPage() {
             </div>
 
             {/* Staggered Animation */}
-            <div className="bg-white rounded-xl shadow-lg p-8">
+            <div className="bg-surface rounded-xl shadow-lg p-8">
               <h3 className="text-xl font-semibold mb-4">Staggered Animation (List)</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -319,7 +319,7 @@ export default function AnimationsDemoPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Card with hover lift and image zoom */}
-            <article className="bg-white rounded-lg overflow-hidden shadow-sm hover-lift">
+            <article className="bg-surface rounded-lg overflow-hidden shadow-sm hover-lift">
               <div className="hover-image-zoom">
                 <div className="w-full h-48 bg-gradient-oxford-tomato" />
               </div>
@@ -337,7 +337,7 @@ export default function AnimationsDemoPage() {
             </article>
 
             {/* Card with gradient overlay */}
-            <article className="bg-white rounded-lg overflow-hidden shadow-sm hover-lift">
+            <article className="bg-surface rounded-lg overflow-hidden shadow-sm hover-lift">
               <div className="relative">
                 <div className="w-full h-48 bg-gradient-tomato-red" />
                 <div className="absolute inset-0 card-overlay-gradient" />
@@ -355,7 +355,7 @@ export default function AnimationsDemoPage() {
             </article>
 
             {/* Card with all animations */}
-            <article className="bg-white rounded-lg overflow-hidden shadow-sm hover-lift">
+            <article className="bg-surface rounded-lg overflow-hidden shadow-sm hover-lift">
               <div className="hover-image-zoom">
                 <div className="w-full h-48 gradient-oxford-soft" />
               </div>

@@ -11,7 +11,7 @@ import type { Author } from '@/lib/api/authors';
 const TinyEditor = dynamic(() => import('@/components/editor/TinyEditor'), {
   ssr: false,
   loading: () => (
-    <div className="w-full px-4 py-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-center text-gray-500 dark:text-gray-400">
+    <div className="w-full px-4 py-12 border border-gray-300 dark:border-gray-600 rounded-lg bg-surface-sunken dark:bg-gray-700 text-center text-secondary dark:text-gray-400">
       Loading editor...
     </div>
   ),
@@ -59,6 +59,8 @@ interface ArticleFormProps {
     category?: string | number;
     authors?: string[]; // Array of author IRIs
     publishAt?: string;
+    badge?: string | null;
+    isFeatured?: boolean;
   };
 }
 
@@ -77,6 +79,8 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
     category: article?.category || '',
     authors: article?.authors || [], // Array of author IRIs
     publishAt: article?.publishAt || '',
+    badge: article?.badge || '',
+    isFeatured: article?.isFeatured || false,
   });
 
   // Image management state
@@ -137,6 +141,10 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
 
       // Add authors to FormData (as JSON string of IRIs)
       formDataObj.set('authors', JSON.stringify(formData.authors));
+
+      // Add badge and isFeatured
+      formDataObj.set('badge', formData.badge);
+      formDataObj.set('isFeatured', formData.isFeatured ? '1' : '0');
 
       // Convert publishAt to ISO format if provided
       if (formData.publishAt) {
@@ -410,8 +418,8 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
       )}
 
       {/* Basic Information */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6 space-y-6">
+        <h2 className="text-xl font-semibold text-primary dark:text-primary-dark">
           Basic Information
         </h2>
 
@@ -419,7 +427,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
         <div>
           <label
             htmlFor="title"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
           >
             Title <span className="text-red-500">*</span>
           </label>
@@ -432,7 +440,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             placeholder="Enter article title"
             required
             disabled={isSubmitting}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark ${
               formErrors.title ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
             }`}
           />
@@ -445,7 +453,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
         <div>
           <label
             htmlFor="slug"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
           >
             Slug <span className="text-red-500">*</span>
           </label>
@@ -458,7 +466,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             placeholder="article-slug"
             required
             disabled={isSubmitting}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm ${
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark font-mono text-sm ${
               formErrors.slug ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
             }`}
           />
@@ -471,7 +479,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
         <div>
           <label
             htmlFor="lead"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
           >
             Lead / Chapeau
           </label>
@@ -481,10 +489,10 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             height={400}
             imageList={attachedImages.map((img) => ({
               title: img.image.originalFilename || `Image ${img.image.id}`,
-              value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${img.image.filename}`
+              value: `${process.env.NEXT_PUBLIC_CDN_URL ?? ''}/uploads/images/${img.image.filename}`
             }))}
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-secondary dark:text-gray-400">
             Introductory paragraph that appears at the beginning of the article (max 500 characters)
           </p>
         </div>
@@ -493,7 +501,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
         <div>
           <label
             htmlFor="content"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
           >
             Content <span className="text-red-500">*</span>
           </label>
@@ -504,7 +512,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
               height={900}
               imageList={attachedImages.map((img) => ({
                 title: img.image.originalFilename || `Image ${img.image.id}`,
-                value: `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/images/${img.image.filename}`
+                value: `${process.env.NEXT_PUBLIC_CDN_URL ?? ''}/uploads/images/${img.image.filename}`
               }))}
             />
           </div>
@@ -515,8 +523,8 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
       </div>
 
       {/* Category & Publishing */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6 space-y-6">
+        <h2 className="text-xl font-semibold text-primary dark:text-primary-dark">
           Category & Publishing
         </h2>
 
@@ -525,7 +533,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
           <div>
             <label
               htmlFor="category"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               Category
             </label>
@@ -535,7 +543,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
               value={formData.category}
               onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
               disabled={isSubmitting}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">-- Select Category --</option>
               {categories.map((category) => (
@@ -544,7 +552,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-secondary dark:text-gray-400">
               Choose a category for this article
             </p>
           </div>
@@ -553,7 +561,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
           <div>
             <label
               htmlFor="status"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               Status <span className="text-red-500">*</span>
             </label>
@@ -564,7 +572,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
               onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
               required
               disabled={isSubmitting}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="new">New</option>
               <option value="submitted">Submitted</option>
@@ -577,7 +585,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             <div>
               <label
                 htmlFor="publishAt"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
               >
                 Scheduled Publish Date & Time
               </label>
@@ -588,18 +596,67 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
                 value={formData.publishAt}
                 onChange={(e) => setFormData((prev) => ({ ...prev, publishAt: e.target.value }))}
                 disabled={isSubmitting}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-sm text-secondary dark:text-gray-400">
                 Leave empty to publish immediately. Set a future date/time to schedule publication.
               </p>
             </div>
           )}
+
+          {/* Badge (Breaking / Alert / Flash) */}
+          <div>
+            <label
+              htmlFor="badge"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
+            >
+              Badge
+            </label>
+            <select
+              id="badge"
+              name="badge"
+              value={formData.badge}
+              onChange={(e) => setFormData((prev) => ({ ...prev, badge: e.target.value }))}
+              disabled={isSubmitting}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">-- No Badge --</option>
+              <option value="breaking">Breaking News</option>
+              <option value="alert">Alert</option>
+              <option value="flash">Flash</option>
+            </select>
+            <p className="mt-1 text-xs text-secondary dark:text-gray-400">
+              Special badge displayed on the article card
+            </p>
+          </div>
+
+          {/* Featured Toggle */}
+          <div className="flex items-center gap-3 pt-6">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={formData.isFeatured}
+              onClick={() => setFormData((prev) => ({ ...prev, isFeatured: !prev.isFeatured }))}
+              disabled={isSubmitting}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
+                formData.isFeatured ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
+                  formData.isFeatured ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <label className="text-sm font-medium text-primary dark:text-primary-dark">
+              Featured Article
+            </label>
+          </div>
         </div>
 
         {/* Authors Section */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-primary dark:text-primary-dark mb-2">
             Authors <span className="text-red-500">*</span> (max 5)
           </label>
 
@@ -619,7 +676,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
                       setFormData((prev) => ({ ...prev, authors: newAuthors }));
                     }}
                     disabled={isSubmitting}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">-- Select Author --</option>
                     {authors.map((a) => (
@@ -674,11 +731,11 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
             </p>
           )}
           {formData.authors.length >= 5 && (
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-2 text-xs text-secondary dark:text-gray-400">
               Maximum of 5 authors reached
             </p>
           )}
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-secondary dark:text-gray-400">
             Select authors for this article (minimum 1, maximum 5)
           </p>
         </div>
@@ -706,7 +763,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
           type="button"
           onClick={handleClose}
           disabled={isSubmitting}
-          className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2 text-sm font-medium text-primary dark:text-primary-dark bg-surface dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Close
         </button>

@@ -98,16 +98,16 @@ export default function CreateArticleModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-lg">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-semibold text-primary dark:text-primary-dark">
             Create New Article
           </h2>
           <button
             onClick={handleClose}
             disabled={isSubmitting}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-primary-dark transition-colors disabled:opacity-50"
           >
             <FiX className="w-6 h-6" />
           </button>
@@ -126,7 +126,7 @@ export default function CreateArticleModal({
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               Article Title <span className="text-red-500">*</span>
             </label>
@@ -138,7 +138,7 @@ export default function CreateArticleModal({
               placeholder="Enter article title"
               required
               disabled={isSubmitting}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark disabled:opacity-50"
             />
           </div>
 
@@ -146,7 +146,7 @@ export default function CreateArticleModal({
           <div>
             <label
               htmlFor="category"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               Category
             </label>
@@ -155,7 +155,7 @@ export default function CreateArticleModal({
               value={formData.categoryId}
               onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
               disabled={isSubmitting}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark disabled:opacity-50"
             >
               <option value="">Select a category</option>
               {categories.map((category) => (
@@ -170,7 +170,7 @@ export default function CreateArticleModal({
           <div>
             <label
               htmlFor="articleLocale"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               Article Language <span className="text-red-500">*</span>
             </label>
@@ -180,7 +180,7 @@ export default function CreateArticleModal({
               onChange={(e) => setFormData({ ...formData, articleLocale: e.target.value })}
               required
               disabled={isSubmitting}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark disabled:opacity-50"
             >
               {AVAILABLE_LOCALES.map((loc) => (
                 <option key={loc.code} value={loc.code}>
@@ -196,7 +196,7 @@ export default function CreateArticleModal({
               type="button"
               onClick={handleClose}
               disabled={isSubmitting}
-              className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 text-sm font-medium text-primary dark:text-primary-dark bg-surface dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

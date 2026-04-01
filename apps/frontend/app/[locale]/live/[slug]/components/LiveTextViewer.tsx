@@ -384,7 +384,7 @@ function KeyPointsSidebar({ keyPoints, locale, colors, onJumpToPost }: KeyPoints
   };
 
   return (
-    <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-900">
+    <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700/60 bg-surface dark:bg-surface-dark">
       <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700/60 flex items-center gap-2">
         <span
           className="w-2 h-2 rounded-full inline-block"
@@ -514,16 +514,16 @@ function PostCard({ post, colors, isNew, locale, keyPointLabel, authorLabel, pos
           ${
             post.isKeyPoint
               ? 'border-l-4 shadow-sm'
-              : 'border-slate-200 dark:border-slate-700/60 bg-white dark:bg-slate-800/60'
+              : 'border-slate-200 dark:border-slate-700/60 bg-surface dark:bg-surface-dark/60'
           }
         `}
         style={
           post.isKeyPoint
             ? {
                 borderLeftColor: colors.primary,
-                borderTopColor: '#e2e8f0',
-                borderRightColor: '#e2e8f0',
-                borderBottomColor: '#e2e8f0',
+                borderTopColor: 'var(--color-border)',
+                borderRightColor: 'var(--color-border)',
+                borderBottomColor: 'var(--color-border)',
                 backgroundColor: `${colors.background}`,
               }
             : {}
@@ -589,7 +589,7 @@ export function LiveTextViewer({ liveText: initialLiveText, keyPoints: initialKe
   const template = initialLiveText.template;
   const colors = template?.config?.colors || {
     primary: '#ef4444',
-    secondary: '#dc2626',
+    secondary: 'var(--color-breaking)',
     accent: '#b91c1c',
     background: '#fef2f2',
     text: '#7f1d1d',
@@ -680,8 +680,8 @@ export function LiveTextViewer({ liveText: initialLiveText, keyPoints: initialKe
         <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full text-white"
           style={{ backgroundColor: colors.primary }}>
           <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-surface opacity-75" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-surface" />
           </span>
           {text}
         </span>
@@ -750,7 +750,7 @@ export function LiveTextViewer({ liveText: initialLiveText, keyPoints: initialKe
                 </span>
               )}
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white leading-tight tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-primary-dark leading-tight tracking-tight">
               {initialLiveText.title}
             </h1>
             {initialLiveText.description && (
@@ -772,7 +772,7 @@ export function LiveTextViewer({ liveText: initialLiveText, keyPoints: initialKe
                 </span>
               )}
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-snug">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-primary-dark leading-snug">
               {initialLiveText.title}
             </h1>
             {initialLiveText.description && (
@@ -804,12 +804,12 @@ export function LiveTextViewer({ liveText: initialLiveText, keyPoints: initialKe
             </span>
           </div>
 
-          <div className="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/80 p-0.5 gap-0.5">
+          <div className="inline-flex items-center rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-surface-dark/80 p-0.5 gap-0.5">
             <button
               onClick={() => setShowKeyPointsOnly(false)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                 !showKeyPointsOnly
-                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                  ? 'bg-surface dark:bg-slate-700 text-slate-900 dark:text-primary-dark shadow-sm'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
@@ -819,7 +819,7 @@ export function LiveTextViewer({ liveText: initialLiveText, keyPoints: initialKe
               onClick={() => setShowKeyPointsOnly(true)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                 showKeyPointsOnly
-                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                  ? 'bg-surface dark:bg-slate-700 text-slate-900 dark:text-primary-dark shadow-sm'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
@@ -834,7 +834,7 @@ export function LiveTextViewer({ liveText: initialLiveText, keyPoints: initialKe
           {/* Feed — 2/3 */}
           <div className="lg:col-span-2">
             {filteredPosts.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 p-12 text-center">
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-surface-dark/30 p-12 text-center">
                 <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4">
                   <svg className="w-6 h-6 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}

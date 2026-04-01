@@ -964,7 +964,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               activeTab === 'main'
                 ? 'bg-blue-700 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                : 'bg-gray-100 text-primary hover:bg-gray-200 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
             }`}
           >
             Main Menu
@@ -974,7 +974,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               activeTab === 'footer'
                 ? 'bg-blue-700 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                : 'bg-gray-100 text-primary hover:bg-gray-200 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
             }`}
           >
             Footer Menu
@@ -1013,11 +1013,11 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
 
       {/* Item count */}
       <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-        <span className="font-semibold text-gray-900 dark:text-white">
+        <span className="font-semibold text-primary dark:text-primary-dark">
           {totalItemCount}
         </span>{' '}
         items in{' '}
-        <span className="font-semibold text-gray-900 dark:text-white">
+        <span className="font-semibold text-primary dark:text-primary-dark">
           {activeTab === 'main' ? 'Main' : 'Footer'}
         </span>{' '}
         menu
@@ -1030,7 +1030,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
 
       {/* Empty state */}
       {tree.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 text-secondary dark:text-gray-400">
           No items in this menu yet. Add a category, external link, or dropdown to get started.
         </div>
       ) : activeTab === 'main' ? (
@@ -1039,7 +1039,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         /* ================================================================ */
         <div className="border rounded-lg dark:border-gray-700 overflow-hidden">
           {/* Legend */}
-          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b dark:border-gray-600 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+          <div className="px-4 py-2 bg-surface-sunken dark:bg-gray-700 border-b dark:border-gray-600 flex items-center gap-4 text-xs text-secondary dark:text-gray-400">
             <span>Drag items to reorder. Drop under a dropdown to nest.</span>
           </div>
 
@@ -1081,8 +1081,8 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         /* Footer Menu: Simple Table with ▲/▼ buttons (no nesting)         */
         /* ================================================================ */
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+          <table className="w-full text-sm text-left text-secondary dark:text-gray-400">
+            <thead className="text-xs text-primary uppercase bg-surface-sunken dark:bg-gray-700 dark:text-gray-400">
               <tr>
                 <th scope="col" className="px-4 py-3 w-28">
                   Position
@@ -1102,23 +1102,23 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
               {tree.map((item, index) => (
                 <tr
                   key={item.id}
-                  className={`border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 ${
+                  className={`border-b dark:border-gray-700 hover:bg-surface-sunken dark:hover:bg-gray-600 ${
                     item.isActive
-                      ? 'bg-white dark:bg-gray-800'
-                      : 'bg-gray-50/50 dark:bg-gray-800/50'
+                      ? 'bg-surface dark:bg-surface-dark'
+                      : 'bg-surface-sunken/50 dark:bg-surface-dark/50'
                   }`}
                 >
                   {/* Position with reorder buttons */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
-                      <span className="font-medium text-gray-900 dark:text-white w-6 text-center">
+                      <span className="font-medium text-primary dark:text-primary-dark w-6 text-center">
                         {item.position}
                       </span>
                       <div className="flex flex-col">
                         <button
                           onClick={() => handleMoveUp(index)}
                           disabled={index === 0 || saving}
-                          className="px-1 py-0.5 text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded disabled:text-gray-300 disabled:cursor-not-allowed dark:text-blue-400 dark:hover:bg-blue-900 dark:disabled:text-gray-600"
+                          className="px-1 py-0.5 text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded disabled:text-primary-dark disabled:cursor-not-allowed dark:text-blue-400 dark:hover:bg-blue-900 dark:disabled:text-gray-600"
                           title="Move up"
                         >
                           &#9650;
@@ -1126,7 +1126,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                         <button
                           onClick={() => handleMoveDown(index)}
                           disabled={index === tree.length - 1 || saving}
-                          className="px-1 py-0.5 text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded disabled:text-gray-300 disabled:cursor-not-allowed dark:text-blue-400 dark:hover:bg-blue-900 dark:disabled:text-gray-600"
+                          className="px-1 py-0.5 text-xs font-bold text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded disabled:text-primary-dark disabled:cursor-not-allowed dark:text-blue-400 dark:hover:bg-blue-900 dark:disabled:text-gray-600"
                           title="Move down"
                         >
                           &#9660;
@@ -1140,14 +1140,14 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                     <span
                       className={`font-medium ${
                         item.isActive
-                          ? 'text-gray-900 dark:text-white'
-                          : 'text-gray-400 dark:text-gray-500 line-through'
+                          ? 'text-primary dark:text-primary-dark'
+                          : 'text-gray-400 dark:text-secondary line-through'
                       }`}
                     >
                       {item.label}
                     </span>
                     {item.url && (
-                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate max-w-xs">
+                      <div className="text-xs text-gray-400 dark:text-secondary mt-0.5 truncate max-w-xs">
                         {item.url}
                       </div>
                     )}
@@ -1207,7 +1207,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
             <div>
               <label
                 htmlFor="category-select"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
               >
                 Select Category
               </label>
@@ -1215,7 +1215,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                 id="category-select"
                 value={selectedCategoryId}
                 onChange={(e) => setSelectedCategoryId(e.target.value)}
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark"
               >
                 <option value="">-- Select a category --</option>
                 {availableCategories.map((cat) => (
@@ -1225,7 +1225,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                 ))}
               </select>
               {availableCategories.length === 0 && (
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm text-secondary">
                   All categories are already in this menu.
                 </p>
               )}
@@ -1236,7 +1236,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
               <div>
                 <label
                   htmlFor="category-parent-select"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
                 >
                   Parent (optional)
                 </label>
@@ -1244,7 +1244,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                   id="category-parent-select"
                   value={addCategoryParent}
                   onChange={(e) => setAddCategoryParent(e.target.value)}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark"
                 >
                   <option value="">-- Top level (no parent) --</option>
                   {dropdownItems.map((dd) => (
@@ -1253,7 +1253,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-secondary dark:text-gray-400">
                   Nest this category under a dropdown menu item.
                 </p>
               </div>
@@ -1297,7 +1297,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
             <div>
               <label
                 htmlFor="link-label"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
               >
                 Label
               </label>
@@ -1307,13 +1307,13 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                 value={linkLabel}
                 onChange={(e) => setLinkLabel(e.target.value)}
                 placeholder="e.g. Partner Site"
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-primary-dark"
               />
             </div>
             <div>
               <label
                 htmlFor="link-url"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
               >
                 URL
               </label>
@@ -1323,7 +1323,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
                 placeholder="https://example.com"
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-primary-dark"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -1336,7 +1336,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
               />
               <label
                 htmlFor="link-new-tab"
-                className="text-sm font-medium text-gray-900 dark:text-white"
+                className="text-sm font-medium text-primary dark:text-primary-dark"
               >
                 Open in new tab
               </label>
@@ -1347,7 +1347,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
               <div>
                 <label
                   htmlFor="link-parent-select"
-                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                  className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
                 >
                   Parent (optional)
                 </label>
@@ -1355,7 +1355,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                   id="link-parent-select"
                   value={addLinkParent}
                   onChange={(e) => setAddLinkParent(e.target.value)}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark"
                 >
                   <option value="">-- Top level (no parent) --</option>
                   {dropdownItems.map((dd) => (
@@ -1411,7 +1411,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
             <div>
               <label
                 htmlFor="dropdown-label"
-                className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
               >
                 Label
               </label>
@@ -1421,7 +1421,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
                 value={dropdownLabel}
                 onChange={(e) => setDropdownLabel(e.target.value)}
                 placeholder='e.g. "More" or "Topics"'
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-primary-dark"
               />
             </div>
           </div>
@@ -1463,9 +1463,9 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         <ModalBody>
           <div className="text-center">
             <HiOutlineExclamationCircle className="mx-auto mb-4 h-14 w-14 text-gray-400 dark:text-gray-200" />
-            <h3 className="mb-2 text-lg font-normal text-gray-500 dark:text-gray-400">
+            <h3 className="mb-2 text-lg font-normal text-secondary dark:text-gray-400">
               Are you sure you want to delete{' '}
-              <span className="font-semibold text-gray-900 dark:text-white">
+              <span className="font-semibold text-primary dark:text-primary-dark">
                 {deletingItem?.label}
               </span>
               ?

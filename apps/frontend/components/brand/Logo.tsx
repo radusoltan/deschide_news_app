@@ -168,7 +168,7 @@ export const LogoIcon: React.FC<LogoIconProps> = ({
   const colorVariants = {
     blue: 'bg-brand-oxford text-white',
     red: 'bg-brand-tomato text-white',
-    white: 'bg-white text-brand-oxford',
+    white: 'bg-surface text-brand-oxford',
   };
 
   return (

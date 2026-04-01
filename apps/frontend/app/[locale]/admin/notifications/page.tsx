@@ -73,10 +73,10 @@ export default function NotificationsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
           Notificari
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-sm text-secondary dark:text-gray-400 mt-1">
           {totalItems} notificari in total
         </p>
       </div>
@@ -89,7 +89,7 @@ export default function NotificationsPage() {
             setTypeFilter(e.target.value);
             setPage(1);
           }}
-          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark"
         >
           {Object.entries(TYPE_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
@@ -104,7 +104,7 @@ export default function NotificationsPage() {
             setReadFilter(e.target.value);
             setPage(1);
           }}
-          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark"
         >
           {READ_FILTER_OPTIONS.map(({ value, label }) => (
             <option key={value} value={value}>
@@ -115,7 +115,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* List */}
-      <div className="bg-white rounded-lg shadow dark:bg-gray-800 overflow-hidden">
+      <div className="bg-surface rounded-lg shadow dark:bg-surface-dark overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
@@ -132,8 +132,8 @@ export default function NotificationsPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12">
-            <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">
+            <Bell className="w-12 h-12 text-primary-dark dark:text-gray-600 mb-3" />
+            <p className="text-secondary dark:text-gray-400">
               Nu exista notificari
             </p>
           </div>
@@ -143,14 +143,14 @@ export default function NotificationsPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-secondary dark:text-gray-400">
             Pagina {page} din {totalPages}
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-primary bg-surface border border-gray-300 rounded-lg hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed dark:bg-surface-dark dark:text-primary-dark dark:border-gray-600 dark:hover:bg-gray-700"
             >
               <ChevronLeft className="w-4 h-4" />
               Inapoi
@@ -158,7 +158,7 @@ export default function NotificationsPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-primary bg-surface border border-gray-300 rounded-lg hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed dark:bg-surface-dark dark:text-primary-dark dark:border-gray-600 dark:hover:bg-gray-700"
             >
               Inainte
               <ChevronRight className="w-4 h-4" />

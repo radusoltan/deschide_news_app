@@ -21,7 +21,7 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden">
-      <div className="fixed inset-x-0 top-0 h-full bg-white animate-slide-in-down">
+      <div className="fixed inset-x-0 top-0 h-full bg-surface animate-slide-in-down">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-bold text-brand-oxford-900">Search</h2>
           <button
@@ -52,10 +52,10 @@ function CategoriesSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   if (!isOpen) return null;
 
   const categories = [
-    { id: 1, name: 'Politică', color: '#1d4ed8' },
+    { id: 1, name: 'Politică', color: 'var(--color-accent)' },
     { id: 2, name: 'Economie', color: '#047857' },
     { id: 3, name: 'Societate', color: '#7c3aed' },
-    { id: 4, name: 'Sport', color: '#dc2626' },
+    { id: 4, name: 'Sport', color: 'var(--color-breaking)' },
     { id: 5, name: 'Cultură', color: '#b45309' },
     { id: 6, name: 'Externe', color: '#0891b2' },
   ];
@@ -63,7 +63,7 @@ function CategoriesSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden" onClick={onClose}>
       <div
-        className="fixed inset-x-0 bottom-0 bg-white rounded-t-3xl shadow-2xl max-h-[80vh] overflow-auto animate-slide-up"
+        className="fixed inset-x-0 bottom-0 bg-surface rounded-t-3xl shadow-2xl max-h-[80vh] overflow-auto animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle bar */}
@@ -109,7 +109,7 @@ function MobileMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm md:hidden" onClick={onClose}>
       <div
-        className="fixed inset-y-0 right-0 w-80 max-w-[85vw] bg-white shadow-2xl animate-slide-in-right"
+        className="fixed inset-y-0 right-0 w-80 max-w-[85vw] bg-surface shadow-2xl animate-slide-in-right"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b">

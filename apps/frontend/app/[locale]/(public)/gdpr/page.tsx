@@ -581,7 +581,7 @@ export default async function GDPRPage({ params }: GDPRPageProps) {
 
         <div className="container mx-auto px-4 max-w-5xl relative z-10">
           <div className="text-center animate-fade-in-up">
-            <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full mb-8 shadow-lg">
+            <div className="inline-flex items-center gap-3 bg-surface/20 backdrop-blur-sm px-6 py-3 rounded-full mb-8 shadow-lg">
               <svg className="w-6 h-6 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -642,8 +642,8 @@ export default async function GDPRPage({ params }: GDPRPageProps) {
         </div>
 
         {/* Table of Contents */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-12 border-t-4 border-blue-600 animate-fade-in stagger-3">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+        <div className="bg-surface dark:bg-surface-dark rounded-2xl shadow-xl p-8 mb-12 border-t-4 border-blue-600 animate-fade-in stagger-3">
+          <h2 className="text-3xl font-bold text-primary dark:text-primary-dark mb-6 flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
               <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
@@ -661,7 +661,7 @@ export default async function GDPRPage({ params }: GDPRPageProps) {
                 <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm font-bold group-hover:scale-110 transition-transform duration-200">
                   {index + 1}
                 </span>
-                <span className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 font-medium transition-colors duration-200">
+                <span className="text-primary dark:text-primary-dark group-hover:text-blue-600 dark:group-hover:text-blue-400 font-medium transition-colors duration-200">
                   {item}
                 </span>
               </a>
@@ -675,7 +675,7 @@ export default async function GDPRPage({ params }: GDPRPageProps) {
             <section
               key={section.id}
               id={section.id}
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden animate-fade-in"
+              className="bg-surface dark:bg-surface-dark rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden animate-fade-in"
               style={{ animationDelay: `${(index + 4) * 100}ms` }}
             >
               {/* Gradient Header */}
@@ -688,7 +688,7 @@ export default async function GDPRPage({ params }: GDPRPageProps) {
                     {section.icon}
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h2 className="text-3xl md:text-4xl font-bold text-primary dark:text-primary-dark mb-2">
                       {section.title}
                     </h2>
                     <div className="h-1 w-32 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"></div>
@@ -700,7 +700,7 @@ export default async function GDPRPage({ params }: GDPRPageProps) {
                   {section.content.map((paragraph, pIndex) => (
                     <p
                       key={pIndex}
-                      className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg"
+                      className="text-primary dark:text-primary-dark leading-relaxed text-lg"
                     >
                       {paragraph}
                     </p>
@@ -714,10 +714,10 @@ export default async function GDPRPage({ params }: GDPRPageProps) {
                           key={sIndex}
                           className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-750 dark:to-gray-750 rounded-xl p-6 border-l-4 border-blue-600"
                         >
-                          <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                          <h4 className="text-xl font-bold text-primary dark:text-primary-dark mb-3">
                             {subsection.title}
                           </h4>
-                          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                          <p className="text-primary dark:text-primary-dark leading-relaxed">
                             {subsection.content}
                           </p>
                         </div>
@@ -734,7 +734,7 @@ export default async function GDPRPage({ params }: GDPRPageProps) {
         <div className="mt-16 bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800 rounded-3xl shadow-2xl p-10 md:p-14 text-center relative overflow-hidden animate-fade-in-up">
           <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
           <div className="relative z-10">
-            <div className="w-24 h-24 mx-auto mb-8 rounded-3xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="w-24 h-24 mx-auto mb-8 rounded-3xl bg-surface/20 backdrop-blur-sm flex items-center justify-center">
               <svg className="w-14 h-14 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -751,7 +751,7 @@ export default async function GDPRPage({ params }: GDPRPageProps) {
             </p>
             <a
               href="mailto:dpo@deschide.md"
-              className="inline-flex items-center gap-4 bg-white text-blue-900 font-bold px-10 py-5 rounded-2xl hover:bg-gray-100 transition-all duration-200 shadow-2xl hover:shadow-3xl hover:scale-105"
+              className="inline-flex items-center gap-4 bg-surface text-blue-900 font-bold px-10 py-5 rounded-2xl hover:bg-gray-100 transition-all duration-200 shadow-2xl hover:shadow-3xl hover:scale-105"
             >
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

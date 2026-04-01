@@ -55,13 +55,13 @@ export function LiveTextTimeline({ liveTextId, keyPoints, locale, onJumpToPost }
 
   if (keyPoints.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
           {t.title}
         </h3>
         <div className="text-center py-8">
           <svg
-            className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3"
+            className="w-12 h-12 mx-auto text-primary-dark dark:text-gray-600 mb-3"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -73,15 +73,15 @@ export function LiveTextTimeline({ liveTextId, keyPoints, locale, onJumpToPost }
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t.empty}</p>
+          <p className="text-sm text-secondary dark:text-gray-400">{t.empty}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+    <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-6">
         {t.title}
       </h3>
 
@@ -95,7 +95,7 @@ export function LiveTextTimeline({ liveTextId, keyPoints, locale, onJumpToPost }
           {keyPoints.map((post, index) => (
             <div
               key={post.id}
-              className="relative pl-8 cursor-pointer group hover:bg-gray-50 dark:hover:bg-gray-700/50 -ml-2 p-2 rounded-lg transition-colors"
+              className="relative pl-8 cursor-pointer group hover:bg-surface-sunken dark:hover:bg-gray-700/50 -ml-2 p-2 rounded-lg transition-colors"
               onClick={() => onJumpToPost && onJumpToPost(post.id)}
             >
               {/* Dot */}
@@ -108,13 +108,13 @@ export function LiveTextTimeline({ liveTextId, keyPoints, locale, onJumpToPost }
                   <span className="text-xs font-medium text-red-600 dark:text-red-400">
                     {formatTime(post.publishedAt)}
                   </span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                  <span className="text-xs text-gray-400 dark:text-secondary">
                     {formatDate(post.publishedAt)}
                   </span>
                 </div>
 
                 {/* Preview text */}
-                <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
+                <p className="text-sm text-primary dark:text-primary-dark line-clamp-2">
                   {stripHtml(post.contentHtml || post.content)}
                 </p>
               </div>

@@ -185,7 +185,7 @@ function VideoCard({ video, locale }: VideoCardProps) {
         {video.videoShow && (
           <div
             className="absolute top-3 left-3 px-2 py-1 bg-slate-900/80 backdrop-blur-sm rounded text-[10px] font-semibold uppercase tracking-wider border border-slate-600/50"
-            style={{ color: video.videoShow.color || '#fff' }}
+            style={{ color: video.videoShow.color || 'var(--color-surface)' }}
           >
             {video.videoShow.name}
           </div>
@@ -372,8 +372,8 @@ export default async function EmisiuniPage({ params, searchParams }: EmisiuniPag
           className="absolute inset-0 opacity-[0.02]"
           style={{
             backgroundImage: `
-              radial-gradient(circle at 20% 30%, #dc2626 0%, transparent 40%),
-              radial-gradient(circle at 80% 70%, #7f1d1d 0%, transparent 40%)
+              radial-gradient(circle at 20% 30%, var(--color-breaking) 0%, transparent 40%),
+              radial-gradient(circle at 80% 70%, oklch(35% 0.12 25) 0%, transparent 40%)
             `,
           }}
         />

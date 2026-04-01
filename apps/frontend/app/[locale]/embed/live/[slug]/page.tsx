@@ -99,20 +99,20 @@ export default async function EmbedLiveTextPage({ params, searchParams }: PagePr
             -moz-osx-font-smoothing: grayscale;
           }
           .light {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f3f4f6;
-            --text-primary: #111827;
-            --text-secondary: #6b7280;
-            --border-color: #e5e7eb;
-            --accent-color: #3b82f6;
+            --bg-primary: var(--color-surface);
+            --bg-secondary: var(--color-surface-sunken);
+            --text-primary: var(--color-text-primary);
+            --text-secondary: var(--color-text-secondary);
+            --border-color: var(--color-border);
+            --accent-color: var(--color-accent);
           }
           .dark {
-            --bg-primary: #1f2937;
-            --bg-secondary: #111827;
-            --text-primary: #f9fafb;
-            --text-secondary: #9ca3af;
-            --border-color: #374151;
-            --accent-color: #60a5fa;
+            --bg-primary: var(--color-surface-dark);
+            --bg-secondary: var(--color-surface-sunken-dark);
+            --text-primary: var(--color-text-primary-dark);
+            --text-secondary: var(--color-text-secondary-dark);
+            --border-color: var(--color-border-dark);
+            --accent-color: var(--color-accent);
           }
           body {
             background-color: var(--bg-primary);

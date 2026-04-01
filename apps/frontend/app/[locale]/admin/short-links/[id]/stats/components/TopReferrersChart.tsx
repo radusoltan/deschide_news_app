@@ -18,17 +18,17 @@ interface TopReferrersChartProps {
   }>;
 }
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ['var(--color-accent)', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function TopReferrersChart({ data }: TopReferrersChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
           Top Surse de Trafic
         </h3>
-        <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-          <p className="text-gray-500 dark:text-gray-400">
+        <div className="h-64 flex items-center justify-center bg-surface-sunken dark:bg-gray-700/50 rounded-lg">
+          <p className="text-secondary dark:text-gray-400">
             Nu există date disponibile
           </p>
         </div>
@@ -53,8 +53,8 @@ export default function TopReferrersChart({ data }: TopReferrersChartProps) {
   const total = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
+      <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
         Top Surse de Trafic
       </h3>
 
@@ -63,20 +63,20 @@ export default function TopReferrersChart({ data }: TopReferrersChartProps) {
           data={chartData}
           margin={{ top: 10, right: 10, left: 10, bottom: 40 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis
             dataKey="displayName"
-            stroke="#6b7280"
+            stroke="var(--color-text-secondary)"
             style={{ fontSize: '11px' }}
             angle={-45}
             textAnchor="end"
             height={80}
           />
-          <YAxis stroke="#6b7280" style={{ fontSize: '12px' }} />
+          <YAxis stroke="var(--color-text-secondary)" style={{ fontSize: '12px' }} />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
               borderRadius: '0.5rem',
               padding: '0.75rem',
             }}
@@ -97,7 +97,7 @@ export default function TopReferrersChart({ data }: TopReferrersChartProps) {
 
       {/* Top referrers list */}
       <div className="mt-4 space-y-2">
-        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <h4 className="text-sm font-medium text-primary dark:text-primary-dark">
           Top 5 Surse:
         </h4>
         {topReferrers.slice(0, 5).map((item, index) => (
@@ -111,17 +111,17 @@ export default function TopReferrersChart({ data }: TopReferrersChartProps) {
                 style={{ backgroundColor: COLORS[index % COLORS.length] }}
               ></div>
               <span
-                className="text-gray-700 dark:text-gray-300 truncate"
+                className="text-primary dark:text-primary-dark truncate"
                 title={item.referrer}
               >
                 {item.referrer === 'direct' ? 'Direct' : item.referrer}
               </span>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="font-semibold text-gray-900 dark:text-white">
+              <span className="font-semibold text-primary dark:text-primary-dark">
                 {item.count.toLocaleString('ro-RO')}
               </span>
-              <span className="text-gray-500 dark:text-gray-400">
+              <span className="text-secondary dark:text-gray-400">
                 ({((item.count / total) * 100).toFixed(1)}%)
               </span>
             </div>

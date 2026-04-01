@@ -32,7 +32,7 @@ interface ArticlesTableClientProps {
 }
 
 const statusStyles = {
-  new: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+  new: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-primary-dark',
   submitted: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   published: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
 };
@@ -209,13 +209,13 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
   return (
     <>
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow mb-4 p-4">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow mb-4 p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search Input */}
           <div className="relative md:col-span-2">
             <label
               htmlFor="search"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-1"
             >
               Search by title
             </label>
@@ -236,7 +236,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search articles..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {searchQuery && (
                 <button
@@ -247,7 +247,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                   }}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
-                  <HiX className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                  <HiX className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-primary-dark" />
                 </button>
               )}
             </div>
@@ -257,7 +257,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
           <div>
             <label
               htmlFor="status-filter"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-1"
             >
               Filter by status
             </label>
@@ -268,7 +268,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                 setStatusFilter(e.target.value);
                 applyServerFilter('status', e.target.value);
               }}
-              className="block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Status</option>
               <option value="new">New</option>
@@ -281,7 +281,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
           <div>
             <label
               htmlFor="category-filter"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-1"
             >
               Filter by category
             </label>
@@ -292,7 +292,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                 setCategoryFilter(e.target.value);
                 applyServerFilter('category', e.target.value);
               }}
-              className="block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Categories</option>
               <option value="none">No Category</option>
@@ -314,7 +314,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
             >
               Clear all filters
             </button>
-            <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+            <span className="ml-2 text-sm text-secondary dark:text-gray-400">
               {isUsingServerSearch ? (
                 <>({displayArticles.length} results from server search)</>
               ) : (
@@ -326,10 +326,10 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
       </div>
 
       {/* Articles Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+          <table className="w-full text-sm text-left text-secondary dark:text-gray-400">
+            <thead className="text-xs text-primary uppercase bg-surface-sunken dark:bg-gray-700 dark:text-gray-400">
               <tr>
                 <th scope="col" className="px-6 py-3">
                   Title
@@ -358,7 +358,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
               {displayArticles.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center">
-                    <div className="text-gray-500 dark:text-gray-400">
+                    <div className="text-secondary dark:text-gray-400">
                       <p className="text-lg mb-2">No articles found</p>
                       <p className="text-sm">
                         {hasActiveFilters
@@ -376,9 +376,9 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                   return (
                     <tr
                       key={article.id}
-                      className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                      className="bg-surface border-b dark:bg-surface-dark dark:border-gray-700 hover:bg-surface-sunken dark:hover:bg-gray-600"
                     >
-                      <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                      <td className="px-6 py-4 font-medium text-primary dark:text-primary-dark">
                         <div className="flex items-start gap-2">
                           <div className="flex-1">
                             <div>{article.title}</div>
@@ -438,19 +438,19 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
 
         {/* Results Summary */}
         {displayArticles.length > 0 && (
-          <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+          <div className="px-6 py-4 bg-surface-sunken dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {isUsingServerSearch ? (
                 <>
-                  Found <span className="font-medium text-gray-900 dark:text-white">{displayArticles.length}</span> articles
+                  Found <span className="font-medium text-primary dark:text-primary-dark">{displayArticles.length}</span> articles
                   {searchTotalItems > displayArticles.length && (
                     <> (showing first {displayArticles.length} of {searchTotalItems})</>
                   )}
                 </>
               ) : (
                 <>
-                  Showing <span className="font-medium text-gray-900 dark:text-white">{displayArticles.length}</span> of{' '}
-                  <span className="font-medium text-gray-900 dark:text-white">{totalItems ?? articles.length}</span> articles
+                  Showing <span className="font-medium text-primary dark:text-primary-dark">{displayArticles.length}</span> of{' '}
+                  <span className="font-medium text-primary dark:text-primary-dark">{totalItems ?? articles.length}</span> articles
                 </>
               )}
             </p>

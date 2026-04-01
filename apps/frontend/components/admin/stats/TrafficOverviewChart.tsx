@@ -35,10 +35,10 @@ export function TrafficOverviewChart({
 }: Props) {
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-        <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No traffic data available</p>
+      <div className="bg-surface p-6 rounded-lg shadow">
+        <h3 className="text-lg font-semibold text-primary mb-4">{title}</h3>
+        <div className="h-64 flex items-center justify-center bg-surface-sunken rounded-lg">
+          <p className="text-secondary">No traffic data available</p>
         </div>
       </div>
     );
@@ -61,9 +61,9 @@ export function TrafficOverviewChart({
   const totalNewVisitors = data.reduce((sum, item) => sum + item.new_visitors, 0);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
+    <div className="bg-surface p-6 rounded-lg shadow">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-lg font-semibold text-primary">{title}</h3>
 
         {/* Quick Stats */}
         <div className="flex items-center gap-6">
@@ -71,19 +71,19 @@ export function TrafficOverviewChart({
             <p className="text-2xl font-bold text-blue-600">
               {totalVisits.toLocaleString()}
             </p>
-            <p className="text-xs text-gray-500">Total Visits</p>
+            <p className="text-xs text-secondary">Total Visits</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-green-600">
               {avgUniqueVisitors.toLocaleString()}
             </p>
-            <p className="text-xs text-gray-500">Avg Unique/Day</p>
+            <p className="text-xs text-secondary">Avg Unique/Day</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-purple-600">
               {totalNewVisitors.toLocaleString()}
             </p>
-            <p className="text-xs text-gray-500">New Visitors</p>
+            <p className="text-xs text-secondary">New Visitors</p>
           </div>
         </div>
       </div>
@@ -93,30 +93,30 @@ export function TrafficOverviewChart({
           data={formattedData}
           margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis
             dataKey="displayDate"
-            stroke="#6b7280"
+            stroke="var(--color-text-secondary)"
             style={{ fontSize: '12px' }}
           />
           <YAxis
-            stroke="#6b7280"
+            stroke="var(--color-text-secondary)"
             style={{ fontSize: '12px' }}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
               borderRadius: '0.5rem',
               padding: '0.75rem',
             }}
-            labelStyle={{ color: '#111827', fontWeight: 600 }}
+            labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
             cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
           />
           <Legend />
           <Bar
             dataKey="total_visits"
-            fill="#3b82f6"
+            fill="var(--color-accent)"
             name="Total Visits"
             radius={[8, 8, 0, 0]}
           />

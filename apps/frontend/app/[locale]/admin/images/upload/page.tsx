@@ -199,18 +199,18 @@ export default function UploadImagesPage() {
       <div className="mb-8">
         <Link
           href={`/${locale}/admin/images`}
-          className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mb-4"
+          className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-gray-200 mb-4"
         >
           <FiArrowLeft className="w-4 h-4 mr-2" />
           Back to Images
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Upload Images</h1>
+        <h1 className="text-3xl font-bold text-primary dark:text-primary-dark">Upload Images</h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           Upload images from your computer or from a URL
         </p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl mx-auto">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-xl max-w-4xl mx-auto">
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Mode Tabs */}
@@ -221,7 +221,7 @@ export default function UploadImagesPage() {
               className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
                 uploadMode === 'file'
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-gray-200'
               }`}
             >
               <FiUpload className="inline-block w-4 h-4 mr-2" />
@@ -233,7 +233,7 @@ export default function UploadImagesPage() {
               className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
                 uploadMode === 'url'
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-gray-200'
               }`}
             >
               <FiLink className="inline-block w-4 h-4 mr-2" />
@@ -245,7 +245,7 @@ export default function UploadImagesPage() {
           <div>
             <label
               htmlFor="altText"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               Alt Text (optional)
             </label>
@@ -256,9 +256,9 @@ export default function UploadImagesPage() {
               onChange={(e) => setAltText(e.target.value)}
               placeholder="Describe the image for accessibility"
               disabled={isProcessing}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark disabled:opacity-50"
             />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-xs text-secondary dark:text-gray-400">
               This text will be applied to all images uploaded in this batch
             </p>
           </div>
@@ -284,7 +284,7 @@ export default function UploadImagesPage() {
                 </p>
               ) : (
                 <>
-                  <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  <p className="text-lg font-medium text-primary dark:text-primary-dark mb-2">
                     Drag & drop images here, or click to browse
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -301,7 +301,7 @@ export default function UploadImagesPage() {
               <div>
                 <label
                   htmlFor="imageUrl"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
                 >
                   Image URL
                 </label>
@@ -313,7 +313,7 @@ export default function UploadImagesPage() {
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://example.com/image.jpg"
                     disabled={isProcessing}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark disabled:opacity-50"
                   />
                   <button
                     type="button"
@@ -324,7 +324,7 @@ export default function UploadImagesPage() {
                     {isProcessing ? 'Uploading...' : 'Upload'}
                   </button>
                 </div>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-2 text-xs text-secondary dark:text-gray-400">
                   Enter a direct URL to an image (JPEG, PNG, GIF, WebP)
                 </p>
               </div>
@@ -334,13 +334,13 @@ export default function UploadImagesPage() {
           {/* Upload Progress List */}
           {hasUploads && (
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <h3 className="text-sm font-medium text-primary dark:text-primary-dark">
                 Uploads ({uploadsList.length})
               </h3>
               {uploadsList.map((upload, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  className="flex items-center gap-3 p-3 bg-surface-sunken dark:bg-gray-700 rounded-lg"
                 >
                   {/* Status Icon */}
                   <div className="flex-shrink-0">
@@ -380,7 +380,7 @@ export default function UploadImagesPage() {
 
                   {/* File Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-primary dark:text-primary-dark truncate">
                       {upload.filename}
                     </p>
                     {upload.status === 'error' && upload.error && (
@@ -410,7 +410,7 @@ export default function UploadImagesPage() {
           <div className="flex gap-3">
             <Link
               href={`/${locale}/admin/images`}
-              className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700"
+              className="px-6 py-2 text-sm font-medium text-primary dark:text-primary-dark bg-surface dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700"
             >
               Cancel
             </Link>

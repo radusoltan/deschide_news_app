@@ -79,7 +79,7 @@ export default async function TagsPage({
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Page Header */}
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold mb-3 text-gray-900 dark:text-gray-100">
+        <h1 className="text-4xl font-bold mb-3 text-primary dark:text-gray-100">
           {headings[locale as keyof typeof headings] || headings.ro}
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-400">
@@ -89,11 +89,11 @@ export default async function TagsPage({
 
       {/* Tag Cloud */}
       {tags.length > 0 ? (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-md p-8">
           <TagCloud tags={tags} locale={locale as 'ro' | 'en' | 'ru'} />
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center text-gray-500 dark:text-gray-400">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-md p-8 text-center text-secondary dark:text-gray-400">
           {emptyMessages[locale as keyof typeof emptyMessages] ||
             emptyMessages.ro}
         </div>
@@ -101,7 +101,7 @@ export default async function TagsPage({
 
       {/* Statistics */}
       {tags.length > 0 && (
-        <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+        <div className="mt-6 text-center text-sm text-secondary dark:text-gray-400">
           {locale === 'ro' && `${tags.length} tag-uri disponibile`}
           {locale === 'en' && `${tags.length} tags available`}
           {locale === 'ru' && `${tags.length} тегов доступно`}

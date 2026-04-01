@@ -25,13 +25,13 @@ function RelatedArticles({ articles, locale }: { articles: Article[]; locale: Lo
   }
 
   return (
-    <div className="w-full bg-white mb-6">
+    <div className="w-full bg-surface mb-6">
       <div className="p-4 bg-gray-100">
         <h2 className="text-lg font-bold">Related Articles</h2>
       </div>
       <ul className="divide-y divide-gray-100">
         {articles.map((article) => (
-          <li key={article.id} className="hover:bg-gray-50 transition-colors">
+          <li key={article.id} className="hover:bg-surface-sunken transition-colors">
             <Link
               href={buildArticleUrl(article, locale)}
               className="block px-4 py-3"
@@ -40,7 +40,7 @@ function RelatedArticles({ articles, locale }: { articles: Article[]; locale: Lo
                 {article.title}
               </h3>
               {article.publishedAt && (
-                <time className="text-xs text-gray-500 mt-1 block" dateTime={article.publishedAt}>
+                <time className="text-xs text-secondary mt-1 block" dateTime={article.publishedAt}>
                   {new Date(article.publishedAt).toLocaleDateString()}
                 </time>
               )}
@@ -61,7 +61,7 @@ function PopularArticles({ articles, locale }: { articles: Article[]; locale: Lo
   }
 
   return (
-    <div className="w-full bg-white mb-6">
+    <div className="w-full bg-surface mb-6">
       <div className="p-4 bg-gray-100">
         <h2 className="text-lg font-bold">Most Popular</h2>
       </div>
@@ -69,7 +69,7 @@ function PopularArticles({ articles, locale }: { articles: Article[]; locale: Lo
         {articles.map((article, index) => (
           <li
             key={article.id}
-            className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+            className="border-b border-gray-100 hover:bg-surface-sunken transition-colors"
           >
             <Link
               href={buildArticleUrl(article, locale)}
@@ -96,7 +96,7 @@ function AdWidget({ position = 1 }: { position?: number }) {
   return (
     <div className="w-full mb-6 sticky top-4">
       <div className="text-center">
-        <a className="uppercase text-gray-500 text-xs" href="#">
+        <a className="uppercase text-secondary text-xs" href="#">
           Advertisement
         </a>
         <div className="mt-2 bg-gray-200 h-64 flex items-center justify-center">

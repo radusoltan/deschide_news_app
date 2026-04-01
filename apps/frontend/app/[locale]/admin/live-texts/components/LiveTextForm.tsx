@@ -153,7 +153,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
       <form onSubmit={handleSubmit}>
         {/* Error Message */}
         {error && (
@@ -169,7 +169,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
           <div>
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               {t.title} <span className="text-red-500">*</span>
             </label>
@@ -180,7 +180,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder={t.titlePlaceholder}
               required
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-surface dark:bg-surface-dark text-primary dark:text-primary-dark"
             />
           </div>
 
@@ -188,7 +188,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               {t.description}
             </label>
@@ -198,7 +198,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder={t.descriptionPlaceholder}
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-surface dark:bg-surface-dark text-primary dark:text-primary-dark"
             />
           </div>
 
@@ -206,7 +206,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
           <div>
             <label
               htmlFor="category"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               {t.category}
             </label>
@@ -214,7 +214,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
               id="category"
               value={formData.categoryId}
               onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-surface dark:bg-surface-dark text-primary dark:text-primary-dark"
             >
               <option value="">{t.selectCategory}</option>
               {categories.map((cat) => (
@@ -229,7 +229,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
           <div>
             <label
               htmlFor="status"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
             >
               {t.status} <span className="text-red-500">*</span>
             </label>
@@ -238,7 +238,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as LiveTextStatus })}
               required
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-surface dark:bg-surface-dark text-primary dark:text-primary-dark"
             >
               <option value="draft">{t.statusDraft}</option>
               <option value="live">{t.statusLive}</option>
@@ -253,7 +253,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
             <div>
               <label
                 htmlFor="startTime"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
               >
                 {t.startTime}
               </label>
@@ -262,7 +262,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
                 id="startTime"
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-surface dark:bg-surface-dark text-primary dark:text-primary-dark"
               />
             </div>
 
@@ -270,7 +270,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
             <div>
               <label
                 htmlFor="endTime"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
               >
                 {t.endTime}
               </label>
@@ -279,7 +279,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
                 id="endTime"
                 value={formData.endTime}
                 onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-surface dark:bg-surface-dark text-primary dark:text-primary-dark"
               />
             </div>
           </div>
@@ -291,7 +291,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
             type="button"
             onClick={handleCancel}
             disabled={isSubmitting}
-            className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-primary dark:text-primary-dark rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
             {t.cancel}
           </button>

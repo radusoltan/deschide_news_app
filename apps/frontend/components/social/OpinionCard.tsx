@@ -64,7 +64,7 @@ export const OpinionCard: React.FC<OpinionCardProps> = ({
         {/* Medium circle - bottom left */}
         <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full border-8 border-white" />
         {/* Small circle - top left */}
-        <div className="absolute top-12 left-12 w-24 h-24 rounded-full bg-white" />
+        <div className="absolute top-12 left-12 w-24 h-24 rounded-full bg-surface" />
         {/* Abstract shape - center */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 rounded-full border-4 border-white opacity-50" />
       </div>
@@ -76,7 +76,7 @@ export const OpinionCard: React.FC<OpinionCardProps> = ({
           <span
             className={cn(
               'inline-block px-4 py-2',
-              'bg-white text-brand-tomato-600',
+              'bg-surface text-brand-tomato-600',
               'font-heading font-bold uppercase',
               'text-xs md:text-sm tracking-wide',
               'rounded-full shadow-lg'
@@ -107,7 +107,7 @@ export const OpinionCard: React.FC<OpinionCardProps> = ({
           <div className="flex items-center gap-3 flex-1">
             {/* Circular author photo with white border */}
             <div className="relative w-14 h-14 md:w-16 md:h-16 flex-shrink-0">
-              <div className="absolute inset-0 rounded-full bg-white p-0.5">
+              <div className="absolute inset-0 rounded-full bg-surface p-0.5">
                 <div className="relative w-full h-full rounded-full overflow-hidden">
                   <Image
                     src={author.photo}
