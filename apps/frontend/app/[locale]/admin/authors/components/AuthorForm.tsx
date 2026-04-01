@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Label, TextInput, Textarea, Select, Button, Spinner, Checkbox } from 'flowbite-react';
 import { createAuthorAction, updateAuthorAction } from '@/app/actions/authors';
+import TranslateButton from '@/components/admin/TranslateButton';
 
 interface AuthorFormProps {
   locale: string;
@@ -20,6 +21,7 @@ interface AuthorFormProps {
     facebook?: string;
     linkedin?: string;
     website?: string;
+    translationStatus?: string | null;
   };
 }
 
@@ -217,6 +219,15 @@ export default function AuthorForm({ locale, author }: AuthorFormProps) {
             rows={4}
             disabled={loading}
           />
+          {author?.id && formData.bio && (
+            <div className="mt-2">
+              <TranslateButton
+                entityType="author"
+                entityId={author.id}
+                currentStatus={author.translationStatus}
+              />
+            </div>
+          )}
         </div>
       </div>
 

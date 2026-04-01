@@ -153,6 +153,29 @@ async function authenticatedFetch(
 }
 
 // ============================================================================
+// Translation Trigger (server-side only)
+// ============================================================================
+
+export async function triggerTranslation(
+  entityType: 'article' | 'category' | 'author',
+  entityId: number
+): Promise<{ message: string }> {
+  const endpoint = `/api/${entityType === 'article' ? 'articles' : entityType === 'category' ? 'categories' : 'authors'}/${entityId}/translate`;
+
+  const response = await authenticatedFetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+    throw new Error(errorData.error || errorData.message || `Translation request failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// ============================================================================
 // Articles Data Access
 // ============================================================================
 

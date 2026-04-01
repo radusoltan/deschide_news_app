@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { createArticleAction, updateArticleAction, type ArticleFormState } from '@/app/actions/articles';
+import TranslateButton from '@/components/admin/TranslateButton';
 import type { AttachedImage, Image } from '@/lib/types/image';
 import type { Author } from '@/lib/api/authors';
 import type { Tag } from '@/lib/types/tag';
@@ -70,6 +71,7 @@ interface ArticleFormProps {
     isFeatured?: boolean;
     metaTitle?: string | null;
     metaDescription?: string | null;
+    translationStatus?: string | null;
   };
 }
 
@@ -1042,6 +1044,15 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
         >
           Close
         </button>
+
+        {/* Translate Button (Center) */}
+        {article?.id && (
+          <TranslateButton
+            entityType="article"
+            entityId={article.id}
+            currentStatus={article.translationStatus}
+          />
+        )}
 
         {/* Save Buttons (Right) */}
         <div className="flex gap-3">

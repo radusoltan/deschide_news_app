@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Label, TextInput, Select, Button, Spinner } from 'flowbite-react';
 import { createCategoryAction, updateCategoryAction } from '@/app/actions/categories';
 import { generateSlug } from '@/lib/utils/slug';
+import TranslateButton from '@/components/admin/TranslateButton';
 
 interface ParentCategory {
   id: number;
@@ -62,6 +63,7 @@ interface CategoryFormProps {
     inMenu?: boolean;
     inFooterMenu?: boolean;
     parentId?: number | null;
+    translationStatus?: string | null;
   };
 }
 
@@ -453,6 +455,16 @@ export default function CategoryForm({ locale, categories = [], category }: Cate
         <Button type="button" color="gray" onClick={handleCancel} disabled={loading}>
           Cancel
         </Button>
+
+        {category?.id && (
+          <div className="ml-auto">
+            <TranslateButton
+              entityType="category"
+              entityId={category.id}
+              currentStatus={category.translationStatus}
+            />
+          </div>
+        )}
       </div>
     </form>
   );
