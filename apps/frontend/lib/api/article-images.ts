@@ -7,7 +7,7 @@ import 'server-only';
 import { getAccessToken } from '@/lib/dal';
 import type { ArticleImage, ArticleImageListResponse } from '@/lib/types/image';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 /**
  * Fetch all images attached to an article

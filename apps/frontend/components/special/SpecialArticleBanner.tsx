@@ -128,7 +128,7 @@ function getFeaturedImageUrl(articleImages?: ArticleImage[]): string | null {
   const featured = articleImages.find(ai => ai.isFeatured) || articleImages[0];
   if (!featured?.image?.path) return null;
 
-  const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
+  const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL ?? '';
 
   // Handle path - VichUploader stores in images/originals/ but API returns images/
   let imagePath = featured.image.path;

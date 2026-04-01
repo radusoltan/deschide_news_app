@@ -77,13 +77,20 @@ function formatViewCount(count: number, locale: string): string {
   return count.toString();
 }
 
+function getCalendarDayDiff(dateString: string): number {
+  const date = new Date(dateString);
+  const now = new Date();
+  const startOfToday = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfTargetDay = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+
+  return Math.floor((startOfToday - startOfTargetDay) / (1000 * 60 * 60 * 24));
+}
+
 function formatPublishedDate(dateString: string | undefined, locale: string): string {
   if (!dateString) return '';
 
   const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = getCalendarDayDiff(dateString);
 
   if (diffDays === 0) {
     return locale === 'ro' ? 'Azi' : locale === 'ru' ? 'Сегодня' : 'Today';
@@ -111,10 +118,7 @@ function formatPublishedDate(dateString: string | undefined, locale: string): st
 
 function isNewVideo(dateString: string | undefined): boolean {
   if (!dateString) return false;
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = getCalendarDayDiff(dateString);
   return diffDays <= 3;
 }
 

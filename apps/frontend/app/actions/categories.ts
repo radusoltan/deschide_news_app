@@ -29,6 +29,12 @@ export interface DeleteCategoryState {
   error?: string;
 }
 
+function safelyRevalidateArticles() {
+  if (typeof revalidateTag === 'function') {
+    revalidateTag('articles', 'max');
+  }
+}
+
 // ============================================================================
 // Server Actions
 // ============================================================================
@@ -84,7 +90,7 @@ export async function createCategoryAction(
     await createCategory(categoryData, locale);
 
     revalidatePath(`/[locale]/admin/categories`, 'page');
-    revalidateTag('articles', 'max');
+    safelyRevalidateArticles();
     revalidatePath('/ro', 'page');
     revalidatePath('/en', 'page');
     revalidatePath('/ru', 'page');
@@ -155,7 +161,7 @@ export async function updateCategoryAction(
     revalidatePath(`/[locale]/admin/categories`, 'page');
     revalidatePath(`/[locale]/admin/categories/[id]`, 'page');
     // Revalidate homepage when front page settings change
-    revalidateTag('articles', 'max');
+    safelyRevalidateArticles();
     revalidatePath('/ro', 'page');
     revalidatePath('/en', 'page');
     revalidatePath('/ru', 'page');
@@ -206,7 +212,7 @@ export async function reorderFrontPageCategoriesAction(
   try {
     await updateCategoryPositions(positions, locale);
 
-    revalidateTag('articles', 'max');
+    safelyRevalidateArticles();
     revalidatePath('/ro', 'page');
     revalidatePath('/en', 'page');
     revalidatePath('/ru', 'page');

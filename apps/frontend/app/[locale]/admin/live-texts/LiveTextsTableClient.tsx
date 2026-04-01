@@ -87,7 +87,7 @@ export function LiveTextsTableClient({ liveTexts, locale }: LiveTextsTableClient
     setDeletingId(id);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
       const response = await fetch(`${apiUrl}/api/live_texts/${id}`, {
         method: 'DELETE',
         credentials: 'include',

@@ -180,7 +180,7 @@ export default function ArchivedArticlesList({
   const t = translations[locale as keyof typeof translations] || translations.ro;
   const reasons = reasonLabels[locale as keyof typeof reasonLabels] || reasonLabels.ro;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
 
   const showNotification = useCallback((message: string, type: 'success' | 'error') => {
     setNotification({ show: true, message, type });

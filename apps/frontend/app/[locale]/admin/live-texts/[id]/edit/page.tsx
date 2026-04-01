@@ -28,7 +28,7 @@ export default async function EditLiveTextPage({ params }: EditLiveTextPageProps
   // Fetch categories for selection
   let categories: any[] = [];
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
     const response = await fetch(`${apiUrl}/api/categories?itemsPerPage=100&status=active`, {
       headers: {
         'Accept': 'application/ld+json',

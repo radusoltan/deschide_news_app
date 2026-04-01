@@ -33,7 +33,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
 
   const author = authorResult.entity;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
   const currentPage = parseInt(page, 10);
   const itemsPerPage = 24;
 

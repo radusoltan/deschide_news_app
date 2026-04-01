@@ -28,6 +28,12 @@ export interface DeleteArticleState {
   };
 }
 
+function safelyRevalidateArticles() {
+  if (typeof revalidateTag === 'function') {
+    revalidateTag('articles', 'max');
+  }
+}
+
 // ============================================================================
 // Server Actions
 // ============================================================================
@@ -121,7 +127,7 @@ export async function createArticleAction(
 
     // Revalidate admin list and public homepage
     revalidatePath(`/[locale]/admin/articles`, 'page');
-    revalidateTag('articles', 'max');
+    safelyRevalidateArticles();
     revalidatePath('/ro', 'page');
     revalidatePath('/en', 'page');
     revalidatePath('/ru', 'page');
@@ -231,7 +237,7 @@ export async function updateArticleAction(
     // Revalidate admin pages and public homepage
     revalidatePath(`/[locale]/admin/articles`, 'page');
     revalidatePath(`/[locale]/admin/articles/[id]`, 'page');
-    revalidateTag('articles', 'max');
+    safelyRevalidateArticles();
     revalidatePath('/ro', 'page');
     revalidatePath('/en', 'page');
     revalidatePath('/ru', 'page');
@@ -260,7 +266,7 @@ export async function deleteArticleAction(
 
     // Revalidate admin list and public homepage
     revalidatePath(`/[locale]/admin/articles`, 'page');
-    revalidateTag('articles', 'max');
+    safelyRevalidateArticles();
     revalidatePath('/ro', 'page');
     revalidatePath('/en', 'page');
     revalidatePath('/ru', 'page');

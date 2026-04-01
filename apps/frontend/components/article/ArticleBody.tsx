@@ -125,7 +125,8 @@ export default function ArticleBody({
       {/* Article Content */}
       <div
         className={`
-          leading-relaxed prose prose-lg max-w-none
+          article-body
+          font-serif leading-relaxed prose prose-lg max-w-none
           prose-headings:font-bold prose-headings:text-gray-800
           prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
           prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
@@ -144,6 +145,7 @@ export default function ArticleBody({
           prose-td:border prose-td:border-gray-200 prose-td:p-3
           ${className}
         `}
+        style={{ fontSize: '1.125rem' }}
         dangerouslySetInnerHTML={createSafeHtml(processedContent)}
       />
     </div>

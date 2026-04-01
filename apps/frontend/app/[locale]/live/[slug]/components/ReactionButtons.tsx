@@ -77,7 +77,7 @@ export function ReactionButtons({ postId, initialCounts, locale }: ReactionButto
 
   const fetchCounts = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
       const response = await fetch(`${apiUrl}/api/live_text_posts/${postId}/reactions/count`, {
         credentials: 'include',
       });
@@ -112,7 +112,7 @@ export function ReactionButtons({ postId, initialCounts, locale }: ReactionButto
   const handleReaction = async (reactionType: string) => {
     if (isSubmitting) return;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
 
     // If clicking same reaction, remove it
     if (userReaction === reactionType) {

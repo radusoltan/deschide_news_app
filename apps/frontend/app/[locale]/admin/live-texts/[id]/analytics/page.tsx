@@ -17,7 +17,7 @@ export default async function LiveTextAnalyticsPage({ params }: PageProps) {
   const liveTextId = parseInt(params.id);
 
   if (isNaN(liveTextId)) {
-    notFound();
+    return notFound();
   }
 
   // Fetch LiveText details
@@ -25,7 +25,11 @@ export default async function LiveTextAnalyticsPage({ params }: PageProps) {
   try {
     liveText = await getLiveTextById(liveTextId, { locale: params.locale });
   } catch (error) {
-    notFound();
+    return notFound();
+  }
+
+  if (!liveText) {
+    return notFound();
   }
 
   return (

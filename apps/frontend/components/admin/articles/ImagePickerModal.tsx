@@ -189,7 +189,7 @@ export default function ImagePickerModal({
                 const isAttached = attachedImageIds.includes(image.id);
                 // Use CDN for image URLs
                 const imagePath = image.path || `images/${image.filename}`;
-                const imageUrl = `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/${imagePath}`;
+                const imageUrl = `${process.env.NEXT_PUBLIC_CDN_URL ?? ''}/uploads/${imagePath}`;
 
                 return (
                   <div

@@ -31,7 +31,7 @@ export async function GET(
 
   try {
     // Use internal backend URL (not public)
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
     const shortLinkUrl = `${backendUrl}/s/${code}`;
 
     // Fetch with redirect: 'manual' to handle redirects ourselves

@@ -3,7 +3,7 @@
  * Provides base functionality with error handling, retry logic, and timeout support
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 const DEFAULT_TIMEOUT = 5000; // 5 seconds
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second

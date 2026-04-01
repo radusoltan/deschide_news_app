@@ -99,7 +99,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
     setIsSubmitting(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
       const url = isEdit
         ? `${apiUrl}/api/live_texts/${initialData?.id}`
         : `${apiUrl}/api/live_texts`;

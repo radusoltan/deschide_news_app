@@ -95,7 +95,11 @@ export default function MobileBottomNav({
       const activePath = currentPath || pathname;
       if (item.id === 'home') {
         // Home is active only on exact homepage
-        return activePath === `/${locale}` || activePath === `/${locale}/`;
+        return (
+          activePath === `/${locale}` ||
+          activePath === `/${locale}/` ||
+          (locale === 'ro' && (activePath === '/' || activePath === ''))
+        );
       }
       return activePath?.startsWith(item.href);
     },

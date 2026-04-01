@@ -25,42 +25,65 @@ interface DarkModeToggleProps {
 function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
 
-  useEffect(() => {
-    // Read theme preference on mount
-    const stored = localStorage.getItem('theme-preference') as 'light' | 'dark' | 'system' || 'system'
-    setTheme(stored)
+  const applyTheme = useCallback((nextTheme: 'light' | 'dark' | 'system') => {
+    if (typeof document === 'undefined') {
+      return
+    }
 
-    if (stored === 'dark') {
+    if (nextTheme === 'dark') {
       document.documentElement.setAttribute('data-theme', 'dark')
-    } else if (stored === 'light') {
+      return
+    }
+
+    if (nextTheme === 'light') {
       document.documentElement.setAttribute('data-theme', 'light')
-    } else {
-      // System preference
-      document.documentElement.removeAttribute('data-theme')
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.setAttribute('data-theme', 'dark')
-      }
+      return
+    }
+
+    document.documentElement.removeAttribute('data-theme')
+
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches
+    ) {
+      document.documentElement.setAttribute('data-theme', 'dark')
     }
   }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    let stored: 'light' | 'dark' | 'system' = 'system'
+
+    try {
+      const savedTheme = window.localStorage.getItem('theme-preference')
+      if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
+        stored = savedTheme
+      }
+    } catch {
+      stored = 'system'
+    }
+
+    setTheme(stored)
+    applyTheme(stored)
+  }, [applyTheme])
 
   const cycleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
     setTheme(nextTheme)
-    localStorage.setItem('theme-preference', nextTheme)
 
-    if (nextTheme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark')
-    } else if (nextTheme === 'light') {
-      document.documentElement.setAttribute('data-theme', 'light')
-    } else {
-      // System preference
-      document.documentElement.removeAttribute('data-theme')
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.setAttribute('data-theme', 'dark')
-      } else {
-        document.documentElement.removeAttribute('data-theme')
+    try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('theme-preference', nextTheme)
       }
+    } catch {
+      // Ignore storage errors and keep in-memory theme state.
     }
+
+    applyTheme(nextTheme)
   }
 
   const iconClass = compact ? 'w-4 h-4' : 'w-5 h-5'

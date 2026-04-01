@@ -18,11 +18,11 @@ export default async function LiveTextPostsPage({ params }: LiveTextPostsPagePro
     liveText = await getLiveTextById(parseInt(id, 10), { locale, cache: 'no-store' });
   } catch (err) {
     console.error('Failed to fetch live text:', err);
-    notFound();
+    return notFound();
   }
 
   if (!liveText) {
-    notFound();
+    return notFound();
   }
 
   return <PostsEditorClient liveText={liveText} locale={locale} />;

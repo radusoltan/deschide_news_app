@@ -90,7 +90,7 @@ export default function BulkArchiveForm({ token, onComplete, locale = 'ro' }: Bu
     setError(null);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
       const response = await fetch(`${apiUrl}/api/admin/articles/archive-bulk`, {
         method: 'POST',
         headers: {

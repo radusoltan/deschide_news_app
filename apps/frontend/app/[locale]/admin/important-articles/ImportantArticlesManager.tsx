@@ -44,6 +44,8 @@ interface ImportantArticlesManagerProps {
   locale: string;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+
 export default function ImportantArticlesManager({ locale }: ImportantArticlesManagerProps) {
   const [importantArticles, setImportantArticles] = useState<ImportantArticle[]>([]);
   const [allArticles, setAllArticles] = useState<Article[]>([]);
@@ -63,7 +65,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
         return;
       }
 
-      const response = await fetch('http://127.0.0.1:8081/api/important_articles', {
+      const response = await fetch(`${API_BASE_URL}/api/important_articles`, {
         headers: {
           'Accept-Language': locale,
           'Authorization': `Bearer ${token}`,
@@ -87,7 +89,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
       const token = await getAuthToken();
       if (!token) return;
 
-      const response = await fetch('http://127.0.0.1:8081/api/articles?itemsPerPage=100', {
+      const response = await fetch(`${API_BASE_URL}/api/articles?itemsPerPage=100`, {
         headers: {
           'Accept-Language': locale,
           'Authorization': `Bearer ${token}`,
@@ -120,7 +122,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
 
       const nextPosition = importantArticles.length + 1;
 
-      const response = await fetch('http://127.0.0.1:8081/api/important_articles', {
+      const response = await fetch(`${API_BASE_URL}/api/important_articles`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/ld+json',
@@ -168,7 +170,7 @@ export default function ImportantArticlesManager({ locale }: ImportantArticlesMa
         return;
       }
 
-      const response = await fetch(`http://127.0.0.1:8081/api/important_articles/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/important_articles/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

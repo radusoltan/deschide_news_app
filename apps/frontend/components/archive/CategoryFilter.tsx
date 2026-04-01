@@ -54,7 +54,7 @@ export default function CategoryFilter({
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
         const response = await fetch(`${apiUrl}/api/archive/categories?locale=${locale}`, {
           headers: {
             'Accept': 'application/json',

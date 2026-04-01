@@ -54,7 +54,7 @@ function SortableImageCard({
   // Construct image URL from CDN — use path (includes subdirectory) with filename fallback
   const imagePath = attachedImage.image.path || `images/${attachedImage.image.filename}`;
   const imageUrl = (attachedImage.image.path || attachedImage.image.filename)
-    ? `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/${imagePath}`
+    ? `${process.env.NEXT_PUBLIC_CDN_URL ?? ''}/uploads/${imagePath}`
     : '';
 
   return (

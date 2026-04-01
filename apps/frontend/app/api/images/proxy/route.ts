@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const CDN_BASE = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
+const CDN_BASE = process.env.NEXT_PUBLIC_CDN_URL ?? '';
 
 /**
  * GET /api/images/proxy?path=images/originals/filename.png

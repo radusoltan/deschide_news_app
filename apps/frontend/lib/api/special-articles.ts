@@ -5,7 +5,7 @@
 
 import { Article, ArticleListResponse, ArticleBadge } from '../types/article';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 /**
  * Fetch articles with a specific badge type

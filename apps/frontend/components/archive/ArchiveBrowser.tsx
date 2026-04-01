@@ -134,7 +134,7 @@ function ArchiveBrowserContent({ locale, initialStats }: ArchiveBrowserProps) {
 
     const fetchYears = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
         const response = await fetch(`${apiUrl}/api/archive/years?locale=${locale}`, {
           headers: {
             'Accept': 'application/json',
@@ -162,7 +162,7 @@ function ArchiveBrowserContent({ locale, initialStats }: ArchiveBrowserProps) {
       setIsLoading(true);
 
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
         const params = new URLSearchParams({
           page: currentPage.toString(),
           itemsPerPage: itemsPerPage.toString(),

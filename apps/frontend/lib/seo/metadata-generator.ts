@@ -8,7 +8,7 @@ import type { Article } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
 /**
  * Truncate text to specified length with ellipsis

@@ -111,7 +111,7 @@ export function PostEditorForm({
     setIsSubmitting(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
       const url = editingPost
         ? `${apiUrl}/api/live_text_posts/${editingPost.id}`
         : `${apiUrl}/api/live_text_posts`;

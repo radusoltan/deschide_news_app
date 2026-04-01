@@ -60,7 +60,7 @@ export function TemplateSelector({
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
         const response = await fetch(`${apiUrl}/api/live_text_templates`);
 
         if (!response.ok) {

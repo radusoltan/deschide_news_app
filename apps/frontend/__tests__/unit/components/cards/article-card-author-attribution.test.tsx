@@ -25,7 +25,7 @@ jest.mock('next/link', () => ({
 jest.mock('@/lib/api/important-articles', () => ({
   getFeaturedImage: jest.fn(() => null),
   getThumbnailByProfile: jest.fn(() => null),
-  buildImageUrl: jest.fn((path: string) => `http://localhost:8082/uploads/${path}`),
+  buildImageUrl: jest.fn((path: string) => `https://cdn.test/uploads/${path}`),
 }));
 
 // Mock url-builder

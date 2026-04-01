@@ -137,7 +137,7 @@ export function useMercureSubscription(
     }
 
     // Build topic URL
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
     const topic = `${apiUrl}/api/live_texts/${liveTextId}`;
     const url = `${mercureUrl}?topic=${encodeURIComponent(topic)}`;
 

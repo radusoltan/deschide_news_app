@@ -15,7 +15,7 @@ import { buildArticleUrl, parseDate } from '@/lib/seo/sitemap-utils';
 import { SITEMAP_CONFIG, Locale } from '@/lib/seo/sitemap-config';
 
 export default async function newsSitemap(): Promise<MetadataRoute.Sitemap> {
-  const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL || 'http://localhost:8082';
+  const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
 
   const entries: MetadataRoute.Sitemap = [];
 
