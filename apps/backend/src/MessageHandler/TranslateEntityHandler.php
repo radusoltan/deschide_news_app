@@ -19,7 +19,7 @@ use Symfony\Component\Process\Process;
 #[AsMessageHandler]
 final readonly class TranslateEntityHandler
 {
-    private const TIMEOUT = 60;
+    private const TIMEOUT = 120;
     private const AGENT_FILE = '.gemini/agents/entity-translator.md';
 
     public function __construct(
