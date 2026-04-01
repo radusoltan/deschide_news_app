@@ -42,7 +42,7 @@ function ImageLightbox({
     >
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+        className="absolute top-4 right-4 text-white hover:text-primary-dark transition-colors"
         aria-label="Close"
       >
         <svg
@@ -87,7 +87,7 @@ export default function ArticleImage({
   if (imageError) {
     return (
       <div className="w-full h-64 bg-gray-200 flex items-center justify-center rounded-lg">
-        <div className="text-center text-gray-500">
+        <div className="text-center text-secondary">
           <svg
             className="w-12 h-12 mx-auto mb-2"
             fill="none"
@@ -153,7 +153,7 @@ export default function ArticleImage({
           <figcaption className="text-sm text-gray-600 mt-2 px-2">
             {alt && <span className="block">{alt}</span>}
             {image.credit && (
-              <span className="block text-xs text-gray-500 mt-1">
+              <span className="block text-xs text-secondary mt-1">
                 Photo credit: {image.credit}
               </span>
             )}

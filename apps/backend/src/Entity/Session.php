@@ -46,7 +46,7 @@ class Session
 
     public function __construct()
     {
-        $this->id = \Ramsey\Uuid\Uuid::uuid4()->toString();
+        $this->id = \Symfony\Component\Uid\Uuid::v4()->toRfc4122();
         $this->startedAt = new DateTime();
     }
 

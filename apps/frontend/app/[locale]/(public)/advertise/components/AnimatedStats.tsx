@@ -61,7 +61,7 @@ function StatCard({ stat, index }: { stat: StatItem; index: number }) {
       </div>
 
       <div
-        className={`text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-2 transition-all duration-1000 ${
+        className={`text-4xl md:text-5xl font-black text-primary dark:text-primary-dark mb-2 transition-all duration-1000 ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
       >

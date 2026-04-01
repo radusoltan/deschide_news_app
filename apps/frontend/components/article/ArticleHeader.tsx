@@ -94,7 +94,7 @@ export default function ArticleHeader({
 
       {/* Article Lead/Summary - Premium Typography */}
       {article.lead && (
-        <p className="text-xl text-gray-700 mb-4 font-body font-medium leading-relaxed">
+        <p className="text-xl text-primary mb-4 font-body font-medium leading-relaxed">
           {article.lead}
         </p>
       )}

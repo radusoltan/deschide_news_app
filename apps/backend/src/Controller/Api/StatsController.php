@@ -105,17 +105,15 @@ class StatsController extends AbstractController
         $qb->leftJoin('a.category', 'c')
             ->addSelect('c')
             ->where($qb->expr()->in('a.id', ':ids'))
-            ->setParameter('ids', $articleIds)
-            ->setHint(
-                \Gedmo\Translatable\Query\TreeWalker\TranslationWalker::HINT_TRANSLATABLE_LOCALE,
-                $locale
-            )
-            ->setHint(
-                \Gedmo\Translatable\Query\TreeWalker\TranslationWalker::HINT_INNER_JOIN,
-                false
-            );
+            ->setParameter('ids', $articleIds);
 
-        $articlesResult = $qb->getQuery()->getResult();
+        $query = $qb->getQuery();
+        $query->setHint(
+            \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
+            $locale
+        );
+
+        $articlesResult = $query->getResult();
 
         // Create a map for quick lookup
         $articlesMap = [];
@@ -249,17 +247,15 @@ class StatsController extends AbstractController
             $categoryIds = array_keys($countsMap);
             $qb = $this->categoryRepository->createQueryBuilder('c');
             $qb->where($qb->expr()->in('c.id', ':ids'))
-                ->setParameter('ids', $categoryIds)
-                ->setHint(
-                    \Gedmo\Translatable\Query\TreeWalker\TranslationWalker::HINT_TRANSLATABLE_LOCALE,
-                    $locale
-                )
-                ->setHint(
-                    \Gedmo\Translatable\Query\TreeWalker\TranslationWalker::HINT_INNER_JOIN,
-                    false
-                );
+                ->setParameter('ids', $categoryIds);
 
-            $categories = $qb->getQuery()->getResult();
+            $catQuery = $qb->getQuery();
+            $catQuery->setHint(
+                \Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE,
+                $locale
+            );
+
+            $categories = $catQuery->getResult();
 
             $distribution = [];
             foreach ($categories as $category) {

@@ -29,7 +29,7 @@ function StatBar({ label, homeValue, awayValue, homeTeam, awayTeam, isPercentage
         <span className="font-semibold text-blue-600 dark:text-blue-400">
           {homeValue}{isPercentage ? '%' : ''}
         </span>
-        <span className="text-gray-700 dark:text-gray-300 font-medium">
+        <span className="text-primary dark:text-primary-dark font-medium">
           {label}
         </span>
         <span className="font-semibold text-red-600 dark:text-red-400">
@@ -64,7 +64,7 @@ function StatBar({ label, homeValue, awayValue, homeTeam, awayTeam, isPercentage
 export function MatchStatistics({ statistics, homeTeam, awayTeam }: MatchStatisticsProps) {
   if (!statistics || Object.keys(statistics).length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+      <div className="text-center py-8 text-secondary dark:text-gray-400">
         No statistics available
       </div>
     );
@@ -72,7 +72,7 @@ export function MatchStatistics({ statistics, homeTeam, awayTeam }: MatchStatist
 
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+      <h3 className="text-xl font-bold text-primary dark:text-gray-100 mb-4">
         Match Statistics
       </h3>
 

@@ -38,7 +38,7 @@ export default async function LiveTextAnalyticsPage({ params }: PageProps) {
       <div className="mb-8">
         <Link
           href={`/${params.locale}/admin/live-texts`}
-          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 mb-4"
+          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-gray-100 mb-4"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to LiveTexts
@@ -46,13 +46,13 @@ export default async function LiveTextAnalyticsPage({ params }: PageProps) {
 
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-3xl font-bold text-primary dark:text-gray-100">
               Analytics
             </h1>
             <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
               {liveText.title}
             </p>
-            <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
+            <div className="mt-1 flex items-center gap-4 text-sm text-secondary">
               <span>ID: {liveText.id}</span>
               <span>•</span>
               <span>Status: {liveText.status.toUpperCase()}</span>

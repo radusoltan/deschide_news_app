@@ -50,7 +50,7 @@ export default async function NewLiveTextPage({ params }: NewLiveTextPageProps) 
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold text-primary dark:text-primary-dark">
           {t.title}
         </h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">

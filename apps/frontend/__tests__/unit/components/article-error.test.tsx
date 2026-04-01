@@ -177,7 +177,7 @@ describe('ArticleError Component', () => {
 
       const homeLink = screen.getByText('Back to Home');
       expect(homeLink).toHaveClass('bg-gray-200');
-      expect(homeLink).toHaveClass('text-gray-700');
+      expect(homeLink).toHaveClass('text-primary');
     });
   });
 

@@ -112,7 +112,7 @@ export default function ArticleCard({
               {article.title}
             </h3>
             {authorAttribution && (
-              <p className="text-xs text-gray-500 font-body mt-1">{authorAttribution}</p>
+              <p className="text-xs text-secondary font-body mt-1">{authorAttribution}</p>
             )}
             <span className="text-xs text-gray-400 font-body mt-1 block">
               {getCategoryTitle(article.category)}
@@ -206,11 +206,11 @@ export default function ArticleCard({
         </h3>
 
         {/* Excerpt */}
-        <p className="hidden md:block text-gray-500 text-sm leading-relaxed mb-3 line-clamp-2 flex-grow font-body">
+        <p className="hidden md:block text-secondary text-sm leading-relaxed mb-3 line-clamp-2 flex-grow font-body">
           {excerpt || '\u00A0'}
         </p>
         {authorAttribution && (
-          <p className="text-xs text-gray-500 font-body mb-3">{authorAttribution}</p>
+          <p className="text-xs text-secondary font-body mb-3">{authorAttribution}</p>
         )}
 
         {/* Footer with category and view count */}
@@ -218,7 +218,7 @@ export default function ArticleCard({
           <div className="flex items-center justify-between">
             <Link
               href={categoryUrl}
-              className="inline-flex items-center text-xs font-medium text-gray-500 hover:text-brand-tomato-500 transition-colors uppercase tracking-wide font-body"
+              className="inline-flex items-center text-xs font-medium text-secondary hover:text-brand-tomato-500 transition-colors uppercase tracking-wide font-body"
             >
               <span className="w-0.5 h-3 bg-brand-tomato-500 mr-2" />
               {getCategoryTitle(article.category)}

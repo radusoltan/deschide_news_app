@@ -26,10 +26,10 @@ export default async function NewShortLinkPage({
             Linkuri Scurte
           </Link>
           <span>/</span>
-          <span className="text-gray-900 dark:text-white">Creează Nou</span>
+          <span className="text-primary dark:text-primary-dark">Creează Nou</span>
         </div>
 
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
           Creează Link Scurt
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
