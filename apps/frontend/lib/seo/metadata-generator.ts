@@ -31,7 +31,7 @@ function stripHtml(html: string): string {
  * Best practices: 50-60 characters, front-load keywords
  */
 export function generateTitle(article: Article, locale: Locale): string {
-  const baseTitle = truncate(article.title, 55);
+  const baseTitle = article.metaTitle || truncate(article.title, 55);
   return `${baseTitle} | ${SITE_NAME}`;
 }
 
@@ -40,6 +40,10 @@ export function generateTitle(article: Article, locale: Locale): string {
  * Best practices: 150-160 characters, include keywords, call-to-action
  */
 export function generateDescription(article: Article): string {
+  if (article.metaDescription) {
+    return truncate(article.metaDescription, 160);
+  }
+
   if (article.lead) {
     return truncate(article.lead, 155);
   }

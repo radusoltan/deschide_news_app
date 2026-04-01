@@ -150,6 +150,13 @@ final readonly class TranslateArticleHandler
             'authorName' => $article->getAuthors()->first()?->getFullName() ?? '',
         ];
 
+        if ($article->getMetaTitle() !== null) {
+            $data['metaTitle'] = $article->getMetaTitle();
+        }
+        if ($article->getMetaDescription() !== null) {
+            $data['metaDescription'] = $article->getMetaDescription();
+        }
+
         return json_encode($data, \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR);
     }
 

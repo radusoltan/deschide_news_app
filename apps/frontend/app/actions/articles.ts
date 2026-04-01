@@ -58,6 +58,8 @@ export async function createArticleAction(
   const publishAt = formData.get('publishAt') as string;
   const badge = formData.get('badge') as string;
   const isFeatured = formData.get('isFeatured') as string;
+  const metaTitle = formData.get('metaTitle') as string;
+  const metaDescription = formData.get('metaDescription') as string;
 
   // Validate required fields
   const errors: ArticleFormState['errors'] = {};
@@ -108,6 +110,8 @@ export async function createArticleAction(
       status: status || 'new',
       badge: badge && badge.trim() !== '' ? badge.trim() : null,
       isFeatured: isFeatured === '1',
+      metaTitle: metaTitle?.trim() || null,
+      metaDescription: metaDescription?.trim() || null,
     };
 
     // Add category IRI if selected
@@ -167,6 +171,8 @@ export async function updateArticleAction(
   const publishAt = formData.get('publishAt') as string;
   const badge = formData.get('badge') as string;
   const isFeatured = formData.get('isFeatured') as string;
+  const metaTitle = formData.get('metaTitle') as string;
+  const metaDescription = formData.get('metaDescription') as string;
 
   // Validate required fields
   const errors: ArticleFormState['errors'] = {};
@@ -217,6 +223,8 @@ export async function updateArticleAction(
       status: status || 'new',
       badge: badge && badge.trim() !== '' ? badge.trim() : null,
       isFeatured: isFeatured === '1',
+      metaTitle: metaTitle?.trim() || null,
+      metaDescription: metaDescription?.trim() || null,
     };
 
     // Add category IRI if selected

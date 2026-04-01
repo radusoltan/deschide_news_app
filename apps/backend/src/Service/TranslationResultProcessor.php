@@ -118,6 +118,17 @@ final class TranslationResultProcessor
                 $translationRepo->translate($article, 'slug', $locale, $slug);
             }
 
+            // SEO fields
+            if (!empty($tData['metaTitle'])) {
+                $metaTitle = mb_substr($tData['metaTitle'], 0, 60);
+                $translationRepo->translate($article, 'metaTitle', $locale, $metaTitle);
+            }
+
+            if (!empty($tData['metaDescription'])) {
+                $metaDesc = mb_substr($tData['metaDescription'], 0, 160);
+                $translationRepo->translate($article, 'metaDescription', $locale, $metaDesc);
+            }
+
             $translatedLocales[] = $locale;
 
             $this->logger->info('Translation saved', [

@@ -168,6 +168,19 @@ class Article implements Translatable
     #[Groups(['article:detail', 'article:write'])] // Content only in detail view
     private ?string $content = null;
 
+    // SEO fields
+    #[Gedmo\Translatable]
+    #[ORM\Column(type: Types::STRING, length: 60, nullable: true)]
+    #[Assert\Length(max: 60, maxMessage: 'Meta title nu poate depăși {{ limit }} caractere.')]
+    #[Groups(['article:read', 'article:write'])]
+    private ?string $metaTitle = null;
+
+    #[Gedmo\Translatable]
+    #[ORM\Column(type: Types::STRING, length: 160, nullable: true)]
+    #[Assert\Length(max: 160, maxMessage: 'Meta description nu poate depăși {{ limit }} caractere.')]
+    #[Groups(['article:read', 'article:write'])]
+    private ?string $metaDescription = null;
+
     // Relationships
     #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'articles')]
     #[ORM\JoinColumn(name: 'category_id', referencedColumnName: 'id', nullable: true)]
@@ -336,6 +349,30 @@ class Article implements Translatable
     public function setContent(string $content): self
     {
         $this->content = $content;
+
+        return $this;
+    }
+
+    public function getMetaTitle(): ?string
+    {
+        return $this->metaTitle;
+    }
+
+    public function setMetaTitle(?string $metaTitle): self
+    {
+        $this->metaTitle = $metaTitle;
+
+        return $this;
+    }
+
+    public function getMetaDescription(): ?string
+    {
+        return $this->metaDescription;
+    }
+
+    public function setMetaDescription(?string $metaDescription): self
+    {
+        $this->metaDescription = $metaDescription;
 
         return $this;
     }

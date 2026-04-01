@@ -64,6 +64,8 @@ export interface Article {
   archiveReason?: string; // Reason for archival (e.g., 'outdated', 'inaccurate', 'manual')
   locale?: string;
   translatableLocale?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
 }
 
 export interface ArticleListResponse {
