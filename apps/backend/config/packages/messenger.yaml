@@ -81,6 +81,9 @@ framework:
             # Batch translation scheduling (processed by TranslatePendingBatchHandler)
             'App\Message\TranslatePendingBatch': async
 
+            # SEO optimization (Gemini AI generates metaTitle, metaDescription, tags)
+            'App\Message\OptimizeSeoMessage': async
+
 # when@test:
 #    framework:
 #        messenger:

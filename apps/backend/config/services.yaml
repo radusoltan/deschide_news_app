@@ -215,6 +215,18 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
+    # SEO Optimization Handler (Gemini CLI subprocess)
+    App\MessageHandler\OptimizeSeoHandler:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $projectDir: '%kernel.project_dir%'
+
+    # SEO Backfill Command (Gemini CLI batch subprocess)
+    App\Command\SeoBackfillCommand:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $projectDir: '%kernel.project_dir%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:
