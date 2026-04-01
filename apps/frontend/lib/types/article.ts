@@ -24,6 +24,7 @@ export interface Category {
   inMenu?: boolean;
   inFooterMenu?: boolean;
   articleCount?: number;
+  translatedSlugs?: { ro?: string; en?: string; ru?: string };
 }
 
 export interface Author {
@@ -66,6 +67,7 @@ export interface Article {
   translatableLocale?: string | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
+  translatedSlugs?: { ro?: string; en?: string; ru?: string };
 }
 
 export interface ArticleListResponse {

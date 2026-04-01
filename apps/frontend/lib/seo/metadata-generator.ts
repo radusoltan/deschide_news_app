@@ -215,7 +215,27 @@ export function generateArticleMetadata(
   const description = generateDescription(article);
   const keywords = generateKeywords(article);
   const canonicalUrl = buildCanonicalUrl(article, locale);
-  const alternateUrls = buildAlternateUrls(article);
+
+  // Build translations for hreflang alternate URLs using translatedSlugs
+  const articleSlugs = article.translatedSlugs;
+  const categorySlugs = typeof article.category === 'object' ? article.category?.translatedSlugs : undefined;
+  const translations = (articleSlugs || categorySlugs)
+    ? {
+        ro: {
+          slug: articleSlugs?.ro || article.slug,
+          category: { slug: categorySlugs?.ro || getCategorySlug(article.category) },
+        },
+        en: {
+          slug: articleSlugs?.en || article.slug,
+          category: { slug: categorySlugs?.en || getCategorySlug(article.category) },
+        },
+        ru: {
+          slug: articleSlugs?.ru || article.slug,
+          category: { slug: categorySlugs?.ru || getCategorySlug(article.category) },
+        },
+      }
+    : undefined;
+  const alternateUrls = buildAlternateUrls(article, translations);
   const authorNames = getAuthorNames(article);
   const categoryTitle = getCategoryTitle(article.category);
   const publishedTime = getPublicationDate(article);

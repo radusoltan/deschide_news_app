@@ -82,8 +82,9 @@ final class ArticleProvider implements ProviderInterface
 
             $result = $query->getOneOrNullResult();
 
-            // Translation loading is handled by HINT_TRANSLATABLE_LOCALE set above
-            // No need to manually refresh entities
+            if ($result instanceof Article) {
+                $this->populateTranslatedSlugs([$result]);
+            }
 
             return $result;
         }
@@ -223,12 +224,116 @@ final class ArticleProvider implements ProviderInterface
         // fetchJoinCollection=true because we're joining collections (authors, tags)
         $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: true);
 
-        // NOTE: We cannot iterate the paginator here and then return it,
-        // because the iterator will be exhausted. API Platform needs to iterate it itself.
-        // Translation loading is handled by the HINT_TRANSLATABLE_LOCALE set above.
-        // If we need to refresh entities for translations, we should use an EventSubscriber instead.
+        // Enrich articles with translated slugs (article + category).
+        // Iterating the paginator is safe — Doctrine's identity map ensures
+        // the same entity objects are returned on subsequent iterations by API Platform.
+        $articles = [];
+        foreach ($doctrinePaginator as $article) {
+            if ($article instanceof Article) {
+                $articles[] = $article;
+            }
+        }
+        if (!empty($articles)) {
+            $this->populateTranslatedSlugs($articles);
+        }
 
-        // Return the paginator (API Platform handles the iteration)
         return $doctrinePaginator;
+    }
+
+    /**
+     * Batch-populate translatedSlugs on Article entities (and their categories)
+     * by querying the base table (for default locale RO) and ext_translations (for EN, RU).
+     *
+     * @param Article[] $articles
+     */
+    private function populateTranslatedSlugs(array $articles): void
+    {
+        if (empty($articles)) {
+            return;
+        }
+
+        $conn = $this->entityManager->getConnection();
+
+        // Collect article IDs and category IDs
+        $articleIds = [];
+        $categoryIds = [];
+        $articleMap = [];
+        $categoryMap = [];
+
+        foreach ($articles as $article) {
+            $articleIds[] = (string) $article->getId();
+            $articleMap[$article->getId()] = $article;
+
+            $category = $article->getCategory();
+            if ($category && $category->getId()) {
+                $catId = (string) $category->getId();
+                $categoryIds[$catId] = $catId;
+                $categoryMap[$category->getId()] = $category;
+            }
+        }
+
+        // --- Article slugs ---
+        $articlePlaceholders = implode(',', array_map(fn ($id) => $conn->quote($id), $articleIds));
+
+        // Base table slugs (= default locale RO)
+        $baseSlugs = $conn->executeQuery(
+            "SELECT id, slug FROM articles WHERE id IN ({$articlePlaceholders})"
+        )->fetchAllAssociative();
+
+        foreach ($baseSlugs as $row) {
+            $id = (int) $row['id'];
+            if (isset($articleMap[$id])) {
+                $articleMap[$id]->setTranslatedSlugs(['ro' => $row['slug']]);
+            }
+        }
+
+        // ext_translations slugs for EN and RU
+        $translationRows = $conn->executeQuery(
+            "SELECT foreign_key, locale, content FROM ext_translations "
+            . "WHERE object_class = 'App\\Entity\\Article' AND field = 'slug' "
+            . "AND foreign_key IN ({$articlePlaceholders})"
+        )->fetchAllAssociative();
+
+        foreach ($translationRows as $row) {
+            $id = (int) $row['foreign_key'];
+            if (isset($articleMap[$id])) {
+                $slugs = $articleMap[$id]->getTranslatedSlugs() ?? [];
+                $slugs[$row['locale']] = $row['content'];
+                $articleMap[$id]->setTranslatedSlugs($slugs);
+            }
+        }
+
+        // --- Category slugs ---
+        if (!empty($categoryIds)) {
+            $catPlaceholders = implode(',', array_map(fn ($id) => $conn->quote($id), $categoryIds));
+
+            // Base table slugs (= default locale RO)
+            $catBaseSlugs = $conn->executeQuery(
+                "SELECT id, slug FROM categories WHERE id IN ({$catPlaceholders})"
+            )->fetchAllAssociative();
+
+            foreach ($catBaseSlugs as $row) {
+                $id = (int) $row['id'];
+                if (isset($categoryMap[$id])) {
+                    $categoryMap[$id]->setTranslatedSlugs(['ro' => $row['slug']]);
+                }
+            }
+
+            // ext_translations slugs for EN and RU
+            $catTranslationRows = $conn->executeQuery(
+                "SELECT foreign_key, locale, content FROM ext_translations "
+                . "WHERE object_class = 'App\\Entity\\Category' AND field = 'slug' "
+                . "AND foreign_key IN ({$catPlaceholders})"
+            )->fetchAllAssociative();
+
+            foreach ($catTranslationRows as $row) {
+                $id = (int) $row['foreign_key'];
+                if (isset($categoryMap[$id])) {
+                    $slugs = $categoryMap[$id]->getTranslatedSlugs() ?? [];
+                    $slugs[$row['locale']] = $row['content'];
+                    $categoryMap[$id]->setTranslatedSlugs($slugs);
+                }
+            }
+        }
     }
 }

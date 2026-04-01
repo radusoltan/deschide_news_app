@@ -153,6 +153,15 @@ class Category implements Translatable
     #[Groups(['category:read'])]
     private ?string $locale = null;
 
+    /**
+     * Non-persisted field populated by providers.
+     * Contains slug translations for all locales: {"ro": "politica", "en": "politics", "ru": "politika"}
+     *
+     * @var array<string, string>|null
+     */
+    #[Groups(['category:read', 'article:read'])]
+    private ?array $translatedSlugs = null;
+
     public function __construct()
     {
         $this->articles = new ArrayCollection();
@@ -345,6 +354,24 @@ class Category implements Translatable
     public function getLocale(): ?string
     {
         return $this->locale;
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    public function getTranslatedSlugs(): ?array
+    {
+        return $this->translatedSlugs;
+    }
+
+    /**
+     * @param array<string, string>|null $translatedSlugs
+     */
+    public function setTranslatedSlugs(?array $translatedSlugs): self
+    {
+        $this->translatedSlugs = $translatedSlugs;
+
+        return $this;
     }
 
     /**

@@ -9,8 +9,8 @@
  * These slugs are reserved for system pages and cannot be used for categories.
  * This list is fetched from the backend validation in src/Validator/ReservedSlugValidator.php
  *
- * Generated: 2026-04-01T04:07:24.896Z
- * Source: backend reserved slug API
+ * Generated: 2026-04-01T11:08:27.112Z
+ * Source: http://127.0.0.1:8081/api/slug/reserved
  *
  * These routes have their own pages in app/[locale]/(public)/ directory:
  * - /all - All articles page

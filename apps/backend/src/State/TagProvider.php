@@ -56,9 +56,9 @@ final class TagProvider implements ProviderInterface
 
             $result = $query->getOneOrNullResult();
 
-            // NOTE: Translation loading is handled by HINT_TRANSLATABLE_LOCALE
-            // Do NOT use refresh() as it causes N+1 queries
-            // The hint ensures Gedmo loads translated values directly
+            if ($result instanceof Tag) {
+                $this->populateTranslatedSlugs([$result]);
+            }
 
             return $result;
         }
@@ -123,10 +123,70 @@ final class TagProvider implements ProviderInterface
 
         $doctrinePaginator = new DoctrinePaginator($query, fetchJoinCollection: false);
 
-        // NOTE: Translation loading is handled by HINT_TRANSLATABLE_LOCALE
-        // Do NOT iterate and refresh() as it causes N+1 queries and exhausts the iterator
-        // The hint ensures Gedmo loads translated values directly
+        // Enrich tags with translated slugs.
+        // Iterating the paginator is safe here — Doctrine's identity map ensures
+        // the same entity objects are returned on subsequent iterations by API Platform.
+        // We only set a non-persisted property; no DB writes or refresh() calls.
+        $tags = [];
+        foreach ($doctrinePaginator as $tag) {
+            if ($tag instanceof Tag) {
+                $tags[] = $tag;
+            }
+        }
+        if (!empty($tags)) {
+            $this->populateTranslatedSlugs($tags);
+        }
 
         return $doctrinePaginator;
+    }
+
+    /**
+     * Batch-populate translatedSlugs on Tag entities by querying the base table
+     * (for default locale RO) and ext_translations (for EN, RU).
+     *
+     * @param Tag[] $tags
+     */
+    private function populateTranslatedSlugs(array $tags): void
+    {
+        if (empty($tags)) {
+            return;
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $tagIds = array_map(fn (Tag $t) => (string) $t->getId(), $tags);
+        $tagMap = [];
+        foreach ($tags as $tag) {
+            $tagMap[$tag->getId()] = $tag;
+        }
+
+        $placeholders = implode(',', array_map(fn ($id) => $conn->quote($id), $tagIds));
+
+        // 1. Get base table slugs (= default locale RO values)
+        $baseSlugs = $conn->executeQuery(
+            "SELECT id, slug FROM tags WHERE id IN ($placeholders)"
+        )->fetchAllAssociative();
+
+        foreach ($baseSlugs as $row) {
+            $id = (int) $row['id'];
+            if (isset($tagMap[$id])) {
+                $tagMap[$id]->setTranslatedSlugs(['ro' => $row['slug']]);
+            }
+        }
+
+        // 2. Get ext_translations slugs for EN and RU
+        $translationRows = $conn->executeQuery(
+            "SELECT foreign_key, locale, content FROM ext_translations "
+            . "WHERE object_class = 'App\\Entity\\Tag' AND field = 'slug' "
+            . "AND foreign_key IN ($placeholders)"
+        )->fetchAllAssociative();
+
+        foreach ($translationRows as $row) {
+            $id = (int) $row['foreign_key'];
+            if (isset($tagMap[$id])) {
+                $slugs = $tagMap[$id]->getTranslatedSlugs() ?? [];
+                $slugs[$row['locale']] = $row['content'];
+                $tagMap[$id]->setTranslatedSlugs($slugs);
+            }
+        }
     }
 }

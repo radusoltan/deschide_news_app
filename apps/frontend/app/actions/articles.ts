@@ -60,6 +60,7 @@ export async function createArticleAction(
   const isFeatured = formData.get('isFeatured') as string;
   const metaTitle = formData.get('metaTitle') as string;
   const metaDescription = formData.get('metaDescription') as string;
+  const tagsJson = formData.get('tags') as string;
 
   // Validate required fields
   const errors: ArticleFormState['errors'] = {};
@@ -95,6 +96,19 @@ export async function createArticleAction(
     errors._form = ['At least one author is required'];
   }
 
+  // Parse tags (optional)
+  let tags: string[] = [];
+  if (tagsJson) {
+    try {
+      tags = JSON.parse(tagsJson);
+      if (!Array.isArray(tags)) {
+        tags = [];
+      }
+    } catch {
+      tags = [];
+    }
+  }
+
   if (Object.keys(errors).length > 0) {
     return { errors };
   }
@@ -121,6 +135,9 @@ export async function createArticleAction(
 
     // Add authors (array of IRIs)
     articleData.authors = authors;
+
+    // Add tags (array of IRIs)
+    articleData.tags = tags;
 
     // Add publishAt only when scheduling (status=submitted)
     if (status === 'submitted' && publishAt && publishAt.trim() !== '') {
@@ -173,6 +190,7 @@ export async function updateArticleAction(
   const isFeatured = formData.get('isFeatured') as string;
   const metaTitle = formData.get('metaTitle') as string;
   const metaDescription = formData.get('metaDescription') as string;
+  const tagsJson = formData.get('tags') as string;
 
   // Validate required fields
   const errors: ArticleFormState['errors'] = {};
@@ -208,6 +226,19 @@ export async function updateArticleAction(
     errors._form = ['At least one author is required'];
   }
 
+  // Parse tags (optional)
+  let tags: string[] = [];
+  if (tagsJson) {
+    try {
+      tags = JSON.parse(tagsJson);
+      if (!Array.isArray(tags)) {
+        tags = [];
+      }
+    } catch {
+      tags = [];
+    }
+  }
+
   if (Object.keys(errors).length > 0) {
     return { errors };
   }
@@ -234,6 +265,9 @@ export async function updateArticleAction(
 
     // Add authors (array of IRIs)
     articleData.authors = authors;
+
+    // Add tags (array of IRIs)
+    articleData.tags = tags;
 
     // Add publishAt only when scheduling (status=submitted)
     if (status === 'submitted' && publishAt && publishAt.trim() !== '') {

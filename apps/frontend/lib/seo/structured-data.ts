@@ -114,10 +114,14 @@ export function generateNewsArticleSchema(
     wordCount = plainText.split(/\s+/).length;
   }
 
-  // Get keywords
+  // Get keywords (category + authors + tags)
+  const tagNames = (article.tags || [])
+    .map((tag: any) => (typeof tag === 'object' && tag?.name ? tag.name : null))
+    .filter(Boolean);
   const keywords = [
     getCategoryTitle(article.category),
     ...getAuthorNames(article),
+    ...tagNames,
   ].filter(Boolean).join(', ');
 
   // Determine dateModified based on archive status

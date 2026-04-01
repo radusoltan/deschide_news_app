@@ -174,7 +174,10 @@ export interface Article {
   category?: string | object;
   author?: string | object;
   authors?: Array<string | object>; // Array of author IRIs or objects
+  tags?: Array<string | object>; // Array of tag IRIs or objects
   relatedArticles?: Array<string | object>; // Array of related article IRIs or objects
+  metaTitle?: string | null;
+  metaDescription?: string | null;
 }
 
 export interface ArticlesCollection {
@@ -257,8 +260,11 @@ export async function createArticle(
     status?: string;
     category?: string;
     authors?: string[]; // Array of author IRIs
+    tags?: string[]; // Array of tag IRIs
     badge?: string | null;
     isFeatured?: boolean;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
   },
   locale: string = 'ro'
 ): Promise<Article> {
@@ -298,8 +304,11 @@ export async function updateArticle(
     status?: string;
     category?: string;
     authors?: string[]; // Array of author IRIs
+    tags?: string[]; // Array of tag IRIs
     badge?: string | null;
     isFeatured?: boolean;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
   },
   locale: string = 'ro'
 ): Promise<Article> {

@@ -11,13 +11,13 @@ import { TagList } from '@/components/tags';
 import type { Locale } from '@/lib/types';
 
 interface TagPageProps {
-  params: {
+  params: Promise<{
     locale: string;
     slug: string;
-  };
-  searchParams?: {
+  }>;
+  searchParams?: Promise<{
     page?: string;
-  };
+  }>;
 }
 
 /**
@@ -26,7 +26,7 @@ interface TagPageProps {
 export async function generateMetadata({
   params,
 }: TagPageProps): Promise<Metadata> {
-  const { locale, slug } = params;
+  const { locale, slug } = await params;
 
   try {
     // Fetch tag by slug
@@ -44,6 +44,13 @@ export async function generateMetadata({
       tag.description ||
       `Articles tagged with ${tag.name} - ${tag.usageCount} articles`;
 
+    const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+
+    // Use translated slugs for proper hreflang alternates
+    const slugRo = tag.translatedSlugs?.ro || slug;
+    const slugEn = tag.translatedSlugs?.en || slug;
+    const slugRu = tag.translatedSlugs?.ru || slug;
+
     return {
       title,
       description,
@@ -54,7 +61,12 @@ export async function generateMetadata({
         type: 'website',
       },
       alternates: {
-        canonical: `/${locale}/tags/${slug}`,
+        canonical: `${SITE_URL}/${locale}/tags/${slug}`,
+        languages: {
+          ro: `${SITE_URL}/ro/tags/${slugRo}`,
+          en: `${SITE_URL}/en/tags/${slugEn}`,
+          ru: `${SITE_URL}/ru/tags/${slugRu}`,
+        },
       },
     };
   } catch (error) {
@@ -71,9 +83,10 @@ export default async function TagPage({
   params,
   searchParams,
 }: TagPageProps) {
-  const { locale: localeParam, slug } = params;
+  const { locale: localeParam, slug } = await params;
+  const resolvedSearch = searchParams ? await searchParams : {};
   const locale = localeParam as Locale;
-  const page = parseInt(searchParams?.page || '1', 10);
+  const page = parseInt(resolvedSearch?.page || '1', 10);
 
   // Fetch tag information
   let tag = null;
@@ -167,8 +180,6 @@ export default async function TagPage({
                 emptyMessages.ro}
             </div>
           )}
-
-          {/* Pagination would go here if needed */}
         </div>
 
         {/* Sidebar - Related Tags */}

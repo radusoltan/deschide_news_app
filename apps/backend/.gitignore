@@ -25,6 +25,12 @@
 /dev-tools/
 ###< development tools ###
 
+###> node (not a node project) ###
+/node_modules/
+/package.json
+/pnpm-lock.yaml
+###< node (not a node project) ###
+
 ###> friendsofphp/php-cs-fixer ###
 /.php-cs-fixer.php
 /.php-cs-fixer.cache

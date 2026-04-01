@@ -290,6 +290,15 @@ class Article implements Translatable
     #[Groups(['article:read'])]
     private ?string $translatedBy = null;
 
+    /**
+     * Non-persisted field populated by ArticleProvider / SlugController.
+     * Contains slug translations for all locales: {"ro": "slug-ro", "en": "slug-en", "ru": "slug-ru"}
+     *
+     * @var array<string, string>|null
+     */
+    #[Groups(['article:read'])]
+    private ?array $translatedSlugs = null;
+
     public function __construct()
     {
         $this->authors = new ArrayCollection();
@@ -728,6 +737,24 @@ class Article implements Translatable
     public function setTranslatedBy(?string $translatedBy): static
     {
         $this->translatedBy = $translatedBy;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    public function getTranslatedSlugs(): ?array
+    {
+        return $this->translatedSlugs;
+    }
+
+    /**
+     * @param array<string, string>|null $translatedSlugs
+     */
+    public function setTranslatedSlugs(?array $translatedSlugs): self
+    {
+        $this->translatedSlugs = $translatedSlugs;
 
         return $this;
     }

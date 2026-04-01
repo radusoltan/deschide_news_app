@@ -8,11 +8,15 @@ import { fetchPopularTags } from '@/lib/api/tags';
 import { TagCloud } from '@/components/tags';
 import type { Locale } from '@/lib/types';
 
+interface TagsPageProps {
+  params: Promise<{ locale: string }>;
+}
+
 export async function generateMetadata({
   params,
-}: {
-  params: { locale: string };
-}): Promise<Metadata> {
+}: TagsPageProps): Promise<Metadata> {
+  const { locale } = await params;
+
   const titles = {
     ro: 'Tag-uri Populare',
     en: 'Popular Tags',
@@ -25,9 +29,9 @@ export async function generateMetadata({
     ru: 'Изучите все теги и темы из наших статей',
   };
 
-  const title = titles[params.locale as keyof typeof titles] || titles.ro;
+  const title = titles[locale as keyof typeof titles] || titles.ro;
   const description =
-    descriptions[params.locale as keyof typeof descriptions] || descriptions.ro;
+    descriptions[locale as keyof typeof descriptions] || descriptions.ro;
 
   return {
     title,
@@ -40,12 +44,8 @@ export async function generateMetadata({
   };
 }
 
-export default async function TagsPage({
-  params,
-}: {
-  params: { locale: string };
-}) {
-  const localeParam = params.locale;
+export default async function TagsPage({ params }: TagsPageProps) {
+  const { locale: localeParam } = await params;
   const locale = localeParam as Locale;
 
   // Fetch popular tags
