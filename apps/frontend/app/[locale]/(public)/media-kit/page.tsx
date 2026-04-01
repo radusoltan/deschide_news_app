@@ -63,10 +63,10 @@ const content = {
       geography: {
         title: 'Distributie Geografica',
         items: [
-          { label: 'Moldova', value: GA4_DATA.geography.moldova, color: '#1d4ed8' },
+          { label: 'Moldova', value: GA4_DATA.geography.moldova, color: 'var(--color-accent)' },
           { label: 'Romania', value: GA4_DATA.geography.romania, color: '#047857' },
           { label: 'Europa de Vest', value: GA4_DATA.geography.westernEurope, color: '#7c3aed' },
-          { label: 'SUA & Altele', value: GA4_DATA.geography.usaOther, color: '#dc2626' },
+          { label: 'SUA & Altele', value: GA4_DATA.geography.usaOther, color: 'var(--color-breaking)' },
         ],
       },
       cities: {
@@ -168,10 +168,10 @@ const content = {
       geography: {
         title: 'Geographic Distribution',
         items: [
-          { label: 'Moldova', value: GA4_DATA.geography.moldova, color: '#1d4ed8' },
+          { label: 'Moldova', value: GA4_DATA.geography.moldova, color: 'var(--color-accent)' },
           { label: 'Romania', value: GA4_DATA.geography.romania, color: '#047857' },
           { label: 'Western Europe', value: GA4_DATA.geography.westernEurope, color: '#7c3aed' },
-          { label: 'USA & Other', value: GA4_DATA.geography.usaOther, color: '#dc2626' },
+          { label: 'USA & Other', value: GA4_DATA.geography.usaOther, color: 'var(--color-breaking)' },
         ],
       },
       cities: {
@@ -273,10 +273,10 @@ const content = {
       geography: {
         title: 'Географическое распределение',
         items: [
-          { label: 'Молдова', value: GA4_DATA.geography.moldova, color: '#1d4ed8' },
+          { label: 'Молдова', value: GA4_DATA.geography.moldova, color: 'var(--color-accent)' },
           { label: 'Румыния', value: GA4_DATA.geography.romania, color: '#047857' },
           { label: 'Западная Европа', value: GA4_DATA.geography.westernEurope, color: '#7c3aed' },
-          { label: 'США и другие', value: GA4_DATA.geography.usaOther, color: '#dc2626' },
+          { label: 'США и другие', value: GA4_DATA.geography.usaOther, color: 'var(--color-breaking)' },
         ],
       },
       cities: {
@@ -424,7 +424,7 @@ export default async function MediaKitPage({ params }: Props) {
   const t = content[locale as keyof typeof content] || content.ro;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-surface">
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
         {/* Background Pattern */}
@@ -437,7 +437,7 @@ export default async function MediaKitPage({ params }: Props) {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
           <div className="text-center">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium mb-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface/10 backdrop-blur-sm rounded-full text-sm font-medium mb-8">
               <Icons.verified />
               <span>{t.hero.badge}</span>
             </div>
@@ -470,7 +470,7 @@ export default async function MediaKitPage({ params }: Props) {
               </Link>
               <Link
                 href="#contact"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold rounded-xl transition-all border border-white/20"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-surface/10 hover:bg-surface/20 backdrop-blur-sm text-white font-semibold rounded-xl transition-all border border-white/20"
               >
                 <Icons.mail />
                 {t.hero.contactUs}
@@ -503,7 +503,7 @@ export default async function MediaKitPage({ params }: Props) {
             {t.stats.items.map((stat, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow border border-slate-100"
+                className="bg-surface rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow border border-slate-100"
               >
                 <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 mb-4">
                   {getIcon(stat.icon)}
@@ -526,7 +526,7 @@ export default async function MediaKitPage({ params }: Props) {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Geographic Distribution */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
+            <div className="bg-surface rounded-2xl p-8 shadow-lg">
               <h3 className="text-xl font-bold text-slate-900 mb-6">{t.demographics.geography.title}</h3>
               <div className="space-y-4">
                 {t.demographics.geography.items.map((item, index) => (
@@ -550,7 +550,7 @@ export default async function MediaKitPage({ params }: Props) {
             </div>
 
             {/* Top Cities */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
+            <div className="bg-surface rounded-2xl p-8 shadow-lg">
               <h3 className="text-xl font-bold text-slate-900 mb-6">{t.demographics.cities.title}</h3>
               <div className="space-y-4">
                 {t.demographics.cities.items.map((item, index) => (
@@ -568,19 +568,19 @@ export default async function MediaKitPage({ params }: Props) {
             </div>
 
             {/* Devices */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
+            <div className="bg-surface rounded-2xl p-8 shadow-lg">
               <h3 className="text-xl font-bold text-slate-900 mb-6">{t.demographics.devices.title}</h3>
               <div className="space-y-8">
                 {/* Mobile */}
                 <div className="text-center">
                   <div className="w-24 h-24 mx-auto mb-4 relative">
                     <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="48" cy="48" r="40" stroke="#e2e8f0" strokeWidth="8" fill="none" />
+                      <circle cx="48" cy="48" r="40" stroke="var(--color-border)" strokeWidth="8" fill="none" />
                       <circle
                         cx="48"
                         cy="48"
                         r="40"
-                        stroke="#3b82f6"
+                        stroke="var(--color-accent)"
                         strokeWidth="8"
                         fill="none"
                         strokeDasharray={`${parseFloat(t.demographics.devices.mobile.value) * 2.51} 251`}
@@ -598,7 +598,7 @@ export default async function MediaKitPage({ params }: Props) {
                 <div className="text-center">
                   <div className="w-24 h-24 mx-auto mb-4 relative">
                     <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="48" cy="48" r="40" stroke="#e2e8f0" strokeWidth="8" fill="none" />
+                      <circle cx="48" cy="48" r="40" stroke="var(--color-border)" strokeWidth="8" fill="none" />
                       <circle
                         cx="48"
                         cy="48"
@@ -633,7 +633,7 @@ export default async function MediaKitPage({ params }: Props) {
           <div className="grid md:grid-cols-3 gap-8">
             {t.screenshots.items.map((item, index) => (
               <div key={index} className="group">
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-100 hover:shadow-xl transition-shadow">
+                <div className="bg-surface rounded-2xl shadow-lg overflow-hidden border border-slate-100 hover:shadow-xl transition-shadow">
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <Image
                       src={item.src}
@@ -664,7 +664,7 @@ export default async function MediaKitPage({ params }: Props) {
             {t.adFormats.items.map((format, index) => (
               <div
                 key={index}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-slate-100 hover:border-blue-200"
+                className="bg-surface rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all border border-slate-100 hover:border-blue-200"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-slate-900">{format.name}</h3>
@@ -697,14 +697,14 @@ export default async function MediaKitPage({ params }: Props) {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <a
                 href={`mailto:${t.contact.email}`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-surface/10 hover:bg-surface/20 rounded-xl transition-colors"
               >
                 <Icons.mail />
                 <span>{t.contact.email}</span>
               </a>
               <a
                 href={`tel:${t.contact.phone.replace(/\s/g, '')}`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-surface/10 hover:bg-surface/20 rounded-xl transition-colors"
               >
                 <Icons.phone />
                 <span>{t.contact.phone}</span>

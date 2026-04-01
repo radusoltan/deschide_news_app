@@ -54,8 +54,8 @@ export function BreakingNewsTicker({ locale, articles = [] }: BreakingNewsTicker
           {/* Pulsing indicator */}
           <div className="flex-shrink-0 flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-brand-pulse absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
+              <span className="animate-brand-pulse absolute inline-flex h-full w-full rounded-full bg-surface opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-surface" />
             </span>
             <span className="font-heading text-xs tracking-wider hidden sm:inline">
               {intl.formatMessage({ id: 'articles.breakingNews', defaultMessage: 'Breaking news' })}
@@ -63,7 +63,7 @@ export function BreakingNewsTicker({ locale, articles = [] }: BreakingNewsTicker
           </div>
 
           {/* Divider */}
-          <div className="w-px h-4 bg-white/30 flex-shrink-0" />
+          <div className="w-px h-4 bg-surface/30 flex-shrink-0" />
 
           {/* Scrolling text */}
           <div className="flex-1 min-w-0 overflow-hidden">
@@ -78,7 +78,7 @@ export function BreakingNewsTicker({ locale, articles = [] }: BreakingNewsTicker
           {/* Close button */}
           <button
             onClick={handleDismiss}
-            className="flex-shrink-0 p-1 hover:bg-white/20 rounded transition-colors"
+            className="flex-shrink-0 p-1 hover:bg-surface/20 rounded transition-colors"
             aria-label={intl.formatMessage({ id: 'common.close', defaultMessage: 'Close' })}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -55,7 +55,7 @@ export default function Breadcrumb({ items, locale, className = '' }: Breadcrumb
                   </svg>
                 </>
               ) : (
-                <span className={isLast ? 'text-gray-900 font-medium' : 'text-gray-600'}>
+                <span className={isLast ? 'text-primary font-medium' : 'text-gray-600'}>
                   {item.label}
                 </span>
               )}

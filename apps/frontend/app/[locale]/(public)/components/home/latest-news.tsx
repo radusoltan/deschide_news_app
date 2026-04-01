@@ -54,19 +54,19 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
   };
 
   return (
-    <section className="bg-white py-6">
+    <section className="bg-surface py-6">
       <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
         <div className="flex flex-row flex-wrap">
           {/* Sidebar - Most Popular */}
           <div className="flex-shrink max-w-full w-full lg:w-1/3 lg:pr-8 lg:pb-8 order-first">
-            <div className="w-full bg-white">
+            <div className="w-full bg-surface">
               <div className="mb-6">
                 <div className="p-4 bg-brand-oxford-900">
                   <h2 className="text-lg font-heading text-white uppercase">{labels.popular}</h2>
                 </div>
                 <ul>
                   {articles.slice(0, 10).map((article, index) => (
-                    <li key={article.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <li key={article.id} className="border-b border-gray-100 hover:bg-surface-sunken transition-colors">
                       <Link
                         className="flex items-start gap-3 px-4 py-3"
                         href={buildArticleUrl(article, locale as Locale)}
@@ -212,7 +212,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                         </Link>
                       </h3>
 
-                      <p className="hidden md:block text-gray-500 text-sm leading-relaxed mb-3 line-clamp-2 flex-grow font-body">
+                      <p className="hidden md:block text-secondary text-sm leading-relaxed mb-3 line-clamp-2 flex-grow font-body">
                         {article.lead || '\u00A0'}
                       </p>
 
@@ -220,7 +220,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                         <div className="flex items-center justify-between">
                           {article.category && getCategorySlug(article.category) && (
                             <Link
-                              className="inline-flex items-center text-xs font-medium text-gray-500 hover:text-brand-tomato-500 transition-colors uppercase tracking-wide font-body"
+                              className="inline-flex items-center text-xs font-medium text-secondary hover:text-brand-tomato-500 transition-colors uppercase tracking-wide font-body"
                               href={buildLocalizedUrl(`/${getCategorySlug(article.category)}`, locale as Locale)}
                             >
                               <span className="w-0.5 h-3 bg-brand-tomato-500 mr-2" />

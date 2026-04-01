@@ -41,11 +41,11 @@ export default function NotificationDropdown({
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-lg shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600 z-50 overflow-hidden"
+      className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-surface rounded-lg shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600 z-50 overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-600">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-sm font-semibold text-primary dark:text-primary-dark">
           Notificari
         </h3>
         {hasUnread && (
@@ -72,8 +72,8 @@ export default function NotificationDropdown({
           ))
         ) : (
           <div className="flex flex-col items-center justify-center py-8 px-4">
-            <Bell className="w-8 h-8 text-gray-300 dark:text-gray-500 mb-2" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <Bell className="w-8 h-8 text-primary-dark dark:text-secondary mb-2" />
+            <p className="text-sm text-secondary dark:text-gray-400">
               Nicio notificare noua
             </p>
           </div>
@@ -85,7 +85,7 @@ export default function NotificationDropdown({
         <Link
           href={`/${locale}/admin/notifications`}
           onClick={onClose}
-          className="block text-center py-2.5 text-sm text-blue-600 hover:bg-gray-50 dark:text-blue-400 dark:hover:bg-gray-600"
+          className="block text-center py-2.5 text-sm text-blue-600 hover:bg-surface-sunken dark:text-blue-400 dark:hover:bg-gray-600"
         >
           Vezi toate notificarile
         </Link>

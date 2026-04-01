@@ -127,7 +127,7 @@ export function MatchTimeline({ events, homeTeam, awayTeam }: MatchTimelineProps
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+      <div className="text-center py-8 text-secondary dark:text-gray-400">
         No events yet
       </div>
     );
@@ -135,7 +135,7 @@ export function MatchTimeline({ events, homeTeam, awayTeam }: MatchTimelineProps
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+      <h3 className="text-xl font-bold text-primary dark:text-gray-100 mb-4">
         Match Timeline
       </h3>
 
@@ -153,7 +153,7 @@ export function MatchTimeline({ events, homeTeam, awayTeam }: MatchTimelineProps
               <div key={event.id} className="relative flex items-start gap-4">
                 {/* Minute */}
                 <div className="w-12 flex-shrink-0 text-right">
-                  <span className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                  <span className="text-sm font-bold text-primary dark:text-gray-100">
                     {event.formattedMinute}&apos;
                   </span>
                 </div>
@@ -167,17 +167,17 @@ export function MatchTimeline({ events, homeTeam, awayTeam }: MatchTimelineProps
                 <div className="flex-1 pb-4">
                   <div className={`p-4 rounded-lg ${isHome ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-gray-900 dark:text-gray-100">
+                      <span className="font-semibold text-primary dark:text-gray-100">
                         {getEventLabel(event)}
                       </span>
                       {event.scoreAfterEvent && (
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300 px-2 py-1 bg-white dark:bg-gray-800 rounded">
+                        <span className="text-sm font-bold text-primary dark:text-primary-dark px-2 py-1 bg-surface dark:bg-surface-dark rounded">
                           {event.scoreAfterEvent}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">
+                    <p className="text-sm text-primary dark:text-primary-dark mb-1">
                       <span className="font-medium">{teamName}</span>
                       {event.playerName && (
                         <> - <span className="font-semibold">{event.playerName}</span></>

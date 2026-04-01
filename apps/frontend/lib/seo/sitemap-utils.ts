@@ -114,7 +114,7 @@ export function isRecentArticle(publishedAt: string | Date): boolean {
  * Extract image URL from CDN path
  */
 export function getCdnImageUrl(imagePath: string): string {
-  const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
+  const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL ?? '';
   // imagePath already includes 'images/' prefix from API
   return `${cdnUrl}/uploads/${imagePath}`;
 }

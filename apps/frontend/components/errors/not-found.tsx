@@ -84,7 +84,7 @@ export default function NotFound({ locale, resourceType = 'page' }: NotFoundProp
         </div>
 
         {/* Error Message */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">
+        <h1 className="text-2xl font-bold text-primary mb-3">
           {t.title[resourceType]}
         </h1>
         <p className="text-gray-600 mb-6">
@@ -92,8 +92,8 @@ export default function NotFound({ locale, resourceType = 'page' }: NotFoundProp
         </p>
 
         {/* Suggestions */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg text-left">
-          <p className="text-sm font-semibold text-gray-700 mb-3">{t.suggestions}</p>
+        <div className="mb-6 p-4 bg-surface-sunken rounded-lg text-left">
+          <p className="text-sm font-semibold text-primary mb-3">{t.suggestions}</p>
           <ul className="space-y-2 text-sm text-gray-600">
             <li className="flex items-start gap-2">
               <span className="text-red-600 mt-0.5">•</span>
@@ -121,7 +121,7 @@ export default function NotFound({ locale, resourceType = 'page' }: NotFoundProp
           {/* TODO: Implement search functionality */}
           {/* <Link
             href={`/${locale}/search`}
-            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+            className="px-6 py-3 bg-gray-200 text-primary rounded-lg font-medium hover:bg-gray-300 transition-colors"
           >
             {t.search}
           </Link> */}

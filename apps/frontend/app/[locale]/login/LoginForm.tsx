@@ -47,7 +47,7 @@ export default function LoginForm() {
       {/* Form-level error — fixed min-height to prevent CLS */}
       <div className="min-h-[1rem]">
         {state.errors?._form && (
-          <div className="p-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
+          <div className="p-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-surface-dark dark:text-red-400">
             {state.errors._form.join(', ')}
           </div>
         )}
@@ -57,7 +57,7 @@ export default function LoginForm() {
       <div>
         <label
           htmlFor="username"
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+          className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
         >
           Username
         </label>
@@ -66,7 +66,7 @@ export default function LoginForm() {
           name="username"
           id="username"
           defaultValue={state.username ?? ''}
-          className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          className="bg-surface-sunken border border-gray-300 text-primary rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-primary-dark dark:focus:ring-blue-500 dark:focus:border-blue-500"
           placeholder="admin"
           required
           autoComplete="username"
@@ -82,7 +82,7 @@ export default function LoginForm() {
       <div>
         <label
           htmlFor="password"
-          className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+          className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
         >
           Password
         </label>
@@ -91,7 +91,7 @@ export default function LoginForm() {
           name="password"
           id="password"
           placeholder="••••••••"
-          className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          className="bg-surface-sunken border border-gray-300 text-primary rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-primary-dark dark:focus:ring-blue-500 dark:focus:border-blue-500"
           required
           autoComplete="new-password"
         />
@@ -110,11 +110,11 @@ export default function LoginForm() {
               id="remember"
               aria-describedby="remember"
               type="checkbox"
-              className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800"
+              className="w-4 h-4 border border-gray-300 rounded bg-surface-sunken focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800"
             />
           </div>
           <div className="ml-3 text-sm">
-            <label htmlFor="remember" className="text-gray-500 dark:text-gray-300">
+            <label htmlFor="remember" className="text-secondary dark:text-primary-dark">
               Remember me
             </label>
           </div>
@@ -131,7 +131,7 @@ export default function LoginForm() {
       <SubmitButton />
 
       {/* Sign up link */}
-      <p className="text-sm font-light text-gray-500 dark:text-gray-400">
+      <p className="text-sm font-light text-secondary dark:text-gray-400">
         Don&apos;t have an account yet?{' '}
         <a
           href="#"

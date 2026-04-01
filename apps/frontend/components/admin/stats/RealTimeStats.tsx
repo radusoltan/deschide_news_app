@@ -51,7 +51,7 @@ export function RealTimeStats({ token, pollInterval = 5000 }: Props) {
 
   if (error) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-surface p-6 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-4 text-red-600">Real-Time Stats</h2>
         <p className="text-red-500">{error}</p>
         <button
@@ -66,7 +66,7 @@ export function RealTimeStats({ token, pollInterval = 5000 }: Props) {
 
   if (!data) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-surface p-6 rounded-lg shadow">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
           <div className="h-24 bg-gray-200 rounded mb-4"></div>
@@ -77,7 +77,7 @@ export function RealTimeStats({ token, pollInterval = 5000 }: Props) {
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
+    <div className="bg-surface p-6 rounded-lg shadow">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
@@ -134,7 +134,7 @@ export function RealTimeStats({ token, pollInterval = 5000 }: Props) {
               {data.trending_now.slice(0, 3).map((item, index) => (
                 <div
                   key={item.article_id}
-                  className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                  className="flex items-center justify-between p-2 bg-surface-sunken rounded"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{index === 0 ? '🔥' : '📈'}</span>
@@ -142,7 +142,7 @@ export function RealTimeStats({ token, pollInterval = 5000 }: Props) {
                       Article #{item.article_id}
                     </span>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">
+                  <span className="text-sm font-semibold text-primary">
                     {item.views} views
                   </span>
                 </div>
@@ -166,7 +166,7 @@ export function RealTimeStats({ token, pollInterval = 5000 }: Props) {
           onClick={() => setIsLive(!isLive)}
           className={`w-full py-2.5 px-4 rounded-lg text-sm font-medium transition-colors ${
             isLive
-              ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              ? 'bg-gray-100 hover:bg-gray-200 text-primary'
               : 'bg-green-100 hover:bg-green-200 text-green-700'
           }`}
         >

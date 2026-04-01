@@ -30,7 +30,7 @@ export default function UsersTable({ users, totalItems, locale }: UsersTableProp
 
   if (!users || users.length === 0) {
     return (
-      <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+      <div className="p-8 text-center text-secondary dark:text-gray-400">
         <p className="text-lg mb-2">No users found</p>
         <p className="text-sm">Create your first user to get started.</p>
       </div>
@@ -50,8 +50,8 @@ export default function UsersTable({ users, totalItems, locale }: UsersTableProp
   return (
     <div className="overflow-x-auto">
       <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <table className="w-full text-sm text-left text-secondary dark:text-gray-400">
+          <thead className="text-xs text-primary uppercase bg-surface-sunken dark:bg-gray-700 dark:text-gray-400">
             <tr>
               <th scope="col" className="px-6 py-3">Username</th>
               <th scope="col" className="px-6 py-3">Email</th>
@@ -67,17 +67,17 @@ export default function UsersTable({ users, totalItems, locale }: UsersTableProp
             {users.map((user) => (
               <tr
                 key={user.id}
-                className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                className="bg-surface border-b dark:bg-surface-dark dark:border-gray-700 hover:bg-surface-sunken dark:hover:bg-gray-600"
               >
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                <td className="px-6 py-4 font-medium text-primary whitespace-nowrap dark:text-primary-dark">
                   {user.username}
                 </td>
-                <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
+                <td className="px-6 py-4 text-secondary dark:text-gray-400">
                   {user.email}
                 </td>
-                <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
+                <td className="px-6 py-4 text-secondary dark:text-gray-400">
                   {[user.firstName, user.lastName].filter(Boolean).join(' ') || (
-                    <span className="text-gray-300 dark:text-gray-600">-</span>
+                    <span className="text-primary-dark dark:text-gray-600">-</span>
                   )}
                 </td>
                 <td className="px-6 py-4">

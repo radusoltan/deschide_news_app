@@ -33,7 +33,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
 
   const author = authorResult.entity;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
   const currentPage = parseInt(page, 10);
   const itemsPerPage = 24;
 
@@ -102,7 +102,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
     return (
       <div className="container mx-auto px-4 py-8">
         {/* Author Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mb-8">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-lg p-8 mb-8">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Author Avatar */}
             <div className="flex-shrink-0">
@@ -114,7 +114,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
 
             {/* Author Info */}
             <div className="flex-1">
-              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-4xl font-bold text-primary dark:text-primary-dark mb-2">
                 {author.fullName || `${author.firstName} ${author.lastName}`}
               </h1>
               {author.title && (
@@ -122,17 +122,17 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                   {author.title}
                 </p>
               )}
-              <p className="text-gray-700 dark:text-gray-300 mb-4">
+              <p className="text-primary dark:text-primary-dark mb-4">
                 {totalItems} {t.articleCount}
               </p>
 
               {/* Bio */}
               {author.bio && (
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-2">
                     {t.bio}
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <p className="text-primary dark:text-primary-dark leading-relaxed">
                     {author.bio}
                   </p>
                 </div>
@@ -168,7 +168,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
 
         {/* Articles Section */}
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+          <h2 className="text-3xl font-bold text-primary dark:text-primary-dark mb-6">
             {t.articles}
           </h2>
 
@@ -188,7 +188,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                   {currentPage > 1 && (
                     <a
                       href={`/${locale}/author/${slug}?page=${currentPage - 1}`}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                      className="px-4 py-2 bg-gray-200 text-primary rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600"
                     >
                       {t.previous}
                     </a>
@@ -215,7 +215,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                           className={`px-4 py-2 rounded ${
                             currentPage === pageNum
                               ? 'bg-brand-tomato-500 text-white'
-                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                              : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
                           }`}
                         >
                           {pageNum}
@@ -228,7 +228,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                   {currentPage < totalPages && (
                     <a
                       href={`/${locale}/author/${slug}?page=${currentPage + 1}`}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                      className="px-4 py-2 bg-gray-200 text-primary rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600"
                     >
                       {t.next}
                     </a>

@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-surface-sunken px-4">
       <div className="max-w-lg w-full text-center">
         {/* 404 Illustration */}
         <div className="mb-8">
@@ -17,7 +17,7 @@ export default function NotFound() {
         </div>
 
         {/* Title */}
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
+        <h2 className="text-3xl font-bold text-primary mb-4">
           Pagina nu a fost găsită
         </h2>
 
@@ -27,8 +27,8 @@ export default function NotFound() {
         </p>
 
         {/* Suggestions */}
-        <div className="text-left bg-white rounded-xl p-6 mb-8 shadow-sm border">
-          <h3 className="font-semibold text-gray-900 mb-3">
+        <div className="text-left bg-surface rounded-xl p-6 mb-8 shadow-sm border">
+          <h3 className="font-semibold text-primary mb-3">
             Iată ce puteți face:
           </h3>
           <ul className="space-y-2 text-gray-600">
@@ -65,7 +65,7 @@ export default function NotFound() {
 
         {/* Popular categories */}
         <div className="mt-12 pt-8 border-t">
-          <h3 className="text-sm font-medium text-gray-500 mb-4">
+          <h3 className="text-sm font-medium text-secondary mb-4">
             Categorii populare
           </h3>
           <div className="flex flex-wrap justify-center gap-2">
@@ -74,7 +74,7 @@ export default function NotFound() {
                 <Link
                   key={category}
                   href={`/category/${category.toLowerCase()}`}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 bg-gray-100 text-primary rounded-full text-sm hover:bg-gray-200 transition-colors"
                 >
                   {category}
                 </Link>

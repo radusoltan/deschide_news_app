@@ -111,7 +111,7 @@ export function PostEditorForm({
     setIsSubmitting(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
       const url = editingPost
         ? `${apiUrl}/api/live_text_posts/${editingPost.id}`
         : `${apiUrl}/api/live_text_posts`;
@@ -161,11 +161,11 @@ export function PostEditorForm({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6">
       <form onSubmit={handleSubmit}>
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-bold text-primary dark:text-primary-dark">
             {editingPost ? t.editPost : t.newPost}
           </h2>
         </div>
@@ -181,7 +181,7 @@ export function PostEditorForm({
 
         {/* Content Editor */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-primary dark:text-primary-dark mb-2">
             {t.content} <span className="text-red-500">*</span>
           </label>
           <RichTextEditor
@@ -201,10 +201,10 @@ export function PostEditorForm({
               className="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500"
             />
             <div>
-              <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="text-sm font-medium text-primary dark:text-primary-dark">
                 {t.keyPoint}
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">
+              <div className="text-xs text-secondary dark:text-gray-400">
                 {t.keyPointDesc}
               </div>
             </div>
@@ -217,7 +217,7 @@ export function PostEditorForm({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-primary dark:text-primary-dark rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
             {t.cancel}
           </button>

@@ -120,7 +120,7 @@ export function LoadingOverlay({
   fullScreen = false,
   className = '',
 }: LoadingOverlayProps) {
-  const opacityClass = `bg-white/${opacity}`;
+  const opacityClass = `bg-surface/${opacity}`;
   const positionClass = fullScreen ? 'fixed' : 'absolute';
 
   return (
@@ -140,7 +140,7 @@ export function LoadingOverlay({
       role="status"
       aria-live="assertive"
     >
-      <div className="bg-white rounded-2xl shadow-2xl p-8 animate-scale-in">
+      <div className="bg-surface rounded-2xl shadow-2xl p-8 animate-scale-in">
         <LoadingSpinner size={size} text={text} variant={variant} />
       </div>
     </div>

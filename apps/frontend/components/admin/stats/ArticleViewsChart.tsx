@@ -37,10 +37,10 @@ export function ArticleViewsChart({
 }: Props) {
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-        <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No data available</p>
+      <div className="bg-surface p-6 rounded-lg shadow">
+        <h3 className="text-lg font-semibold text-primary mb-4">{title}</h3>
+        <div className="h-64 flex items-center justify-center bg-surface-sunken rounded-lg">
+          <p className="text-secondary">No data available</p>
         </div>
       </div>
     );
@@ -56,9 +56,9 @@ export function ArticleViewsChart({
   }));
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
+    <div className="bg-surface p-6 rounded-lg shadow">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-lg font-semibold text-primary">{title}</h3>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-blue-500"></div>
@@ -78,38 +78,38 @@ export function ArticleViewsChart({
         >
           <defs>
             <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
               <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis
             dataKey="displayDate"
-            stroke="#6b7280"
+            stroke="var(--color-text-secondary)"
             style={{ fontSize: '12px' }}
           />
           <YAxis
-            stroke="#6b7280"
+            stroke="var(--color-text-secondary)"
             style={{ fontSize: '12px' }}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              backgroundColor: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
               borderRadius: '0.5rem',
               padding: '0.75rem',
             }}
-            labelStyle={{ color: '#111827', fontWeight: 600 }}
+            labelStyle={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
           />
           {showLegend && <Legend />}
           <Area
             type="monotone"
             dataKey="views"
-            stroke="#3b82f6"
+            stroke="var(--color-accent)"
             fillOpacity={1}
             fill="url(#colorViews)"
             name="Total Views"

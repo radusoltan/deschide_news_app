@@ -96,7 +96,7 @@ describe('Breadcrumb Component', () => {
       render(<Breadcrumb items={items} locale="ro" />);
 
       const lastItem = screen.getByText('Article Title');
-      expect(lastItem).toHaveClass('text-gray-900');
+      expect(lastItem).toHaveClass('text-primary');
       expect(lastItem).toHaveClass('font-medium');
     });
 

@@ -28,7 +28,7 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
     notFound();
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
 
   try {
     // Fetch articles for the year
@@ -168,7 +168,7 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
 
         {/* Page Header */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl font-bold text-primary dark:text-primary-dark mb-4">
             {t.title}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">
@@ -184,7 +184,7 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
               <section key={month} id={`month-${month + 1}`}>
                 {/* Month Header */}
                 <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-gray-200 dark:border-gray-700">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <h2 className="text-3xl font-bold text-primary dark:text-primary-dark">
                     {monthNamesLoc[month]} {yearNum}
                   </h2>
                   <div className="flex items-center gap-4">
@@ -210,8 +210,8 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
             ))}
 
             {/* Quick Navigation */}
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-gray-100 dark:bg-surface-dark rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
                 {locale === 'ro' && 'Navigare Rapidă'}
                 {locale === 'en' && 'Quick Navigation'}
                 {locale === 'ru' && 'Быстрая Навигация'}
@@ -221,12 +221,12 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
                   <a
                     key={month}
                     href={`#month-${month + 1}`}
-                    className="px-4 py-2 bg-white dark:bg-gray-700 rounded-lg text-center hover:bg-red-50 dark:hover:bg-gray-600 transition-colors"
+                    className="px-4 py-2 bg-surface dark:bg-gray-700 rounded-lg text-center hover:bg-red-50 dark:hover:bg-gray-600 transition-colors"
                   >
-                    <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                    <div className="font-semibold text-primary dark:text-primary-dark text-sm">
                       {monthNamesLoc[month].substring(0, 3)}
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{count}</div>
+                    <div className="text-xs text-secondary dark:text-gray-400">{count}</div>
                   </a>
                 ))}
               </div>

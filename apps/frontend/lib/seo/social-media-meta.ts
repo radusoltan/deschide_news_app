@@ -8,8 +8,8 @@
 import type { Article } from '@/lib/types/article';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
-const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
 const TWITTER_HANDLE = '@deschidenews'; // Update with actual handle
 
 /**
@@ -71,7 +71,7 @@ export function getOGImageFromArticle(
 
   return {
     url: imageUrl,
-    secureUrl: imageUrl.replace('http://', 'https://'),
+    secureUrl: imageUrl.replace(/^http:\/\//, 'https://'),
     type: featuredImage.mimeType || 'image/jpeg',
     width: preferredSize === 'large' ? 1200 : 800,
     height: preferredSize === 'large' ? 630 : 600,
@@ -85,7 +85,7 @@ export function getOGImageFromArticle(
 export function getFallbackOGImage(): OGImage {
   return {
     url: `${SITE_URL}/og-default.png`,
-    secureUrl: `${SITE_URL}/og-default.png`.replace('http://', 'https://'),
+    secureUrl: `${SITE_URL}/og-default.png`.replace(/^http:\/\//, 'https://'),
     type: 'image/png',
     width: 1200,
     height: 630,

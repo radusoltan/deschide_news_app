@@ -55,7 +55,7 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
             href={buildArticleUrl(article as any, locale)}
             className="group"
           >
-            <article className="relative border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-brand-tomato-500 bg-white hover-lift">
+            <article className="relative border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-all duration-200 hover:border-brand-tomato-500 bg-surface hover-lift">
               {/* Trending badge for #1 */}
               {index === 0 && (
                 <span className="absolute -top-3 -right-3 bg-brand-tomato text-white text-xs font-heading px-3 py-1 rounded-full shadow-lg">
@@ -90,7 +90,7 @@ export async function TrendingArticles({ locale = 'ro', limit = 5 }: Props) {
                 </h3>
 
                 {/* Views count */}
-                <div className="flex items-center justify-between text-sm text-gray-500 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between text-sm text-secondary pt-3 border-t border-gray-100">
                   <div className="flex items-center gap-2">
                     <svg
                       className="w-5 h-5"

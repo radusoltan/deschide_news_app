@@ -97,7 +97,7 @@ export default function ArticleCard({
             </h3>
             {showDate && article.publishedAt && (
               <time
-                className="text-xs text-gray-500 mt-1 block"
+                className="text-xs text-secondary mt-1 block"
                 dateTime={article.publishedAt}
               >
                 {formatDate(article.publishedAt, locale)}
@@ -118,7 +118,7 @@ export default function ArticleCard({
           </h3>
           {showDate && article.publishedAt && (
             <time
-              className="text-xs text-gray-500"
+              className="text-xs text-secondary"
               dateTime={article.publishedAt}
             >
               {formatDate(article.publishedAt, locale)}
@@ -131,7 +131,7 @@ export default function ArticleCard({
 
   // Default variant - Premium Editorial Card Design
   return (
-    <article className={`group bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 border border-brand-oxford-900/10 hover:border-brand-tomato/30 hover:-translate-y-1 ${className}`}>
+    <article className={`group bg-surface rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 border border-brand-oxford-900/10 hover:border-brand-tomato/30 hover:-translate-y-1 ${className}`}>
       <Link href={articleUrl} className="block">
         {/* Premium Thumbnail with Gradient Overlay */}
         {imageUrl && (

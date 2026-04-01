@@ -73,17 +73,17 @@ export default function NotificationItem({
           className={`text-sm ${
             notification.isRead
               ? 'text-gray-600 dark:text-gray-400'
-              : 'text-gray-900 dark:text-white font-medium'
+              : 'text-primary dark:text-primary-dark font-medium'
           } ${compact ? 'text-xs' : ''} truncate`}
         >
           {notification.title}
         </p>
         {notification.message && !compact && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+          <p className="text-xs text-secondary dark:text-gray-400 mt-0.5 truncate">
             {notification.message}
           </p>
         )}
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{timeAgo}</p>
+        <p className="text-xs text-gray-400 dark:text-secondary mt-1">{timeAgo}</p>
       </div>
       {!notification.isRead && (
         <span className="w-2 h-2 mt-2 bg-blue-500 rounded-full flex-shrink-0" />

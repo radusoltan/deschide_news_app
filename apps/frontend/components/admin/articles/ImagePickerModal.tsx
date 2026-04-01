@@ -141,16 +141,16 @@ export default function ImagePickerModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-semibold text-primary dark:text-primary-dark">
             Select Images from Library
           </h2>
           <button
             onClick={handleClose}
             disabled={isSubmitting}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-primary-dark transition-colors disabled:opacity-50"
           >
             <FiX className="w-6 h-6" />
           </button>
@@ -165,7 +165,7 @@ export default function ImagePickerModal({
               value={searchQuery}
               onChange={handleSearchChange}
               placeholder="Search images by filename..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark"
             />
           </div>
         </div>
@@ -189,7 +189,7 @@ export default function ImagePickerModal({
                 const isAttached = attachedImageIds.includes(image.id);
                 // Use CDN for image URLs
                 const imagePath = image.path || `images/${image.filename}`;
-                const imageUrl = `${process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082'}/uploads/${imagePath}`;
+                const imageUrl = `${process.env.NEXT_PUBLIC_CDN_URL ?? ''}/uploads/${imagePath}`;
 
                 return (
                   <div
@@ -214,11 +214,11 @@ export default function ImagePickerModal({
                     </div>
 
                     {/* Image Info */}
-                    <div className="p-3 bg-white dark:bg-gray-800">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <div className="p-3 bg-surface dark:bg-surface-dark">
+                      <p className="text-sm font-medium text-primary dark:text-primary-dark truncate">
                         {image.originalFilename || 'Untitled'}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-xs text-secondary dark:text-gray-400 mt-1">
                         {image.width} × {image.height} • {image.formattedSize}
                       </p>
                     </div>
@@ -253,14 +253,14 @@ export default function ImagePickerModal({
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1 || isLoading}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <FiChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages || isLoading}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <FiChevronRight className="w-5 h-5" />
               </button>
@@ -277,7 +277,7 @@ export default function ImagePickerModal({
             <button
               onClick={handleClose}
               disabled={isSubmitting}
-              className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 text-sm font-medium text-primary dark:text-primary-dark bg-surface dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

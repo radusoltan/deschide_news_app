@@ -165,7 +165,7 @@ function VideoCard({ video, locale, showColor }: VideoCardProps) {
       'hover:-translate-y-1'
     )}
     style={{
-      '--hover-color': showColor || '#dc2626',
+      '--hover-color': showColor || 'var(--color-breaking)',
     } as React.CSSProperties}
     >
       {/* Thumbnail */}
@@ -200,8 +200,8 @@ function VideoCard({ video, locale, showColor }: VideoCardProps) {
               'group-hover:scale-110'
             )}
             style={{
-              backgroundColor: showColor ? `${showColor}e6` : '#dc2626e6',
-              boxShadow: `0 10px 40px ${showColor || '#dc2626'}4d`,
+              backgroundColor: showColor ? `${showColor}e6` : 'var(--color-breaking)e6',
+              boxShadow: `0 10px 40px ${showColor || 'var(--color-breaking)'}4d`,
             }}
           >
             <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
@@ -221,7 +221,7 @@ function VideoCard({ video, locale, showColor }: VideoCardProps) {
         {video.isFeatured && (
           <div
             className="absolute top-3 left-3 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider text-white"
-            style={{ backgroundColor: showColor || '#dc2626' }}
+            style={{ backgroundColor: showColor || 'var(--color-breaking)' }}
           >
             Featured
           </div>
@@ -310,7 +310,7 @@ function Pagination({ currentPage, totalPages, locale, baseUrl, accentColor }: P
                   ? 'text-white'
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               )}
-              style={page === currentPage ? { backgroundColor: accentColor || '#dc2626' } : undefined}
+              style={page === currentPage ? { backgroundColor: accentColor || 'var(--color-breaking)' } : undefined}
             >
               {page}
             </Link>
@@ -383,7 +383,7 @@ export default async function ShowPage({ params, searchParams }: ShowPageProps) 
           className="absolute inset-0 opacity-20"
           style={{
             backgroundImage: `
-              radial-gradient(circle at 30% 30%, ${show.color || '#dc2626'} 0%, transparent 50%),
+              radial-gradient(circle at 30% 30%, ${show.color || 'var(--color-breaking)'} 0%, transparent 50%),
               radial-gradient(circle at 70% 70%, ${show.color || '#7f1d1d'} 0%, transparent 50%)
             `,
           }}
@@ -431,9 +431,9 @@ export default async function ShowPage({ params, searchParams }: ShowPageProps) 
               <div
                 className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4"
                 style={{
-                  backgroundColor: `${show.color || '#dc2626'}20`,
-                  color: show.color || '#dc2626',
-                  border: `1px solid ${show.color || '#dc2626'}40`,
+                  backgroundColor: `${show.color || 'var(--color-breaking)'}20`,
+                  color: show.color || 'var(--color-breaking)',
+                  border: `1px solid ${show.color || 'var(--color-breaking)'}40`,
                 }}
               >
                 Video Show
@@ -465,7 +465,7 @@ export default async function ShowPage({ params, searchParams }: ShowPageProps) 
                       'text-sm font-medium text-white',
                       'transition-all duration-200 hover:opacity-80'
                     )}
-                    style={{ backgroundColor: show.color || '#dc2626' }}
+                    style={{ backgroundColor: show.color || 'var(--color-breaking)' }}
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/>

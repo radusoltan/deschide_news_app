@@ -266,8 +266,8 @@ async function DashboardContent({ locale }: { locale: string }) {
           ) : siteStats?.stats && siteStats.stats.length > 0 ? (
             <TrafficOverviewChart data={siteStats.stats} />
           ) : (
-            <div className="bg-white p-6 rounded-lg shadow">
-              <p className="text-gray-500">Nu există date de trafic disponibile</p>
+            <div className="bg-surface p-6 rounded-lg shadow">
+              <p className="text-secondary">Nu există date de trafic disponibile</p>
             </div>
           )}
         </div>
@@ -312,7 +312,7 @@ async function DashboardContent({ locale }: { locale: string }) {
         {/* Trending Articles */}
         <div className="admin-card">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-primary dark:text-primary-dark flex items-center gap-2">
               <span className="text-2xl">🔥</span>
               Trending (Ultimele 24h)
             </h2>
@@ -328,16 +328,16 @@ async function DashboardContent({ locale }: { locale: string }) {
               trendingArticles.map((article, idx) => (
                 <div
                   key={article.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                  className="flex items-center justify-between p-3 bg-surface-sunken dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1">
-                    <span className="text-2xl font-bold text-gray-300">
+                    <span className="text-2xl font-bold text-primary-dark">
                       #{idx + 1}
                     </span>
                     <div className="flex-1">
                       <Link
                         href={`/${locale}/admin/articles/${article.id}/edit`}
-                        className="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 block"
+                        className="text-sm font-medium text-primary dark:text-primary-dark hover:text-blue-600 block"
                       >
                         {article.title || 'Fără titlu'}
                       </Link>
@@ -349,15 +349,15 @@ async function DashboardContent({ locale }: { locale: string }) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    <p className="text-lg font-bold text-primary dark:text-primary-dark">
                       {article.views_24h.toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-500">views</p>
+                    <p className="text-xs text-secondary">views</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-sm text-center py-4">
+              <p className="text-secondary text-sm text-center py-4">
                 Nu există articole trending momentan
               </p>
             )}
@@ -366,7 +366,7 @@ async function DashboardContent({ locale }: { locale: string }) {
 
         {/* Quick Actions */}
         <div className="admin-card">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
             Acțiuni Rapide
           </h2>
           <div className="grid grid-cols-2 gap-4">
@@ -385,7 +385,7 @@ async function DashboardContent({ locale }: { locale: string }) {
                   clipRule="evenodd"
                 />
               </svg>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <span className="text-sm font-medium text-primary dark:text-primary-dark">
                 Articol Nou
               </span>
             </Link>
@@ -401,7 +401,7 @@ async function DashboardContent({ locale }: { locale: string }) {
               >
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <span className="text-sm font-medium text-primary dark:text-primary-dark">
                 Categorie Nouă
               </span>
             </Link>
@@ -417,14 +417,14 @@ async function DashboardContent({ locale }: { locale: string }) {
               >
                 <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
               </svg>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <span className="text-sm font-medium text-primary dark:text-primary-dark">
                 Încarcă Imagini
               </span>
             </Link>
 
             <Link
               href={`/${locale}/admin/statistics`}
-              className="flex flex-col items-center justify-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group"
+              className="flex flex-col items-center justify-center p-6 bg-surface-sunken dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group"
             >
               <svg
                 className="w-10 h-10 text-gray-600 dark:text-gray-400 mb-2 group-hover:scale-110 transition-transform"
@@ -433,7 +433,7 @@ async function DashboardContent({ locale }: { locale: string }) {
               >
                 <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
               </svg>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <span className="text-sm font-medium text-primary dark:text-primary-dark">
                 Statistici Detaliate
               </span>
             </Link>
@@ -463,7 +463,7 @@ async function DashboardContent({ locale }: { locale: string }) {
 
 function LoadingSkeleton() {
   return (
-    <div className="bg-white p-6 rounded-lg shadow animate-pulse">
+    <div className="bg-surface p-6 rounded-lg shadow animate-pulse">
       <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
       <div className="space-y-3">
         <div className="h-20 bg-gray-200 rounded"></div>

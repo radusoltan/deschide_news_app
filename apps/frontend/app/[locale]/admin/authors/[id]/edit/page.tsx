@@ -30,7 +30,7 @@ export default async function EditAuthorPage({ params }: EditAuthorPageProps) {
     <div className="p-4">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
           Edit Author: {author.firstName} {author.lastName}
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">

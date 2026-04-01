@@ -43,7 +43,7 @@ export default async function AuthorsPage({ params, searchParams }: AuthorsPageP
       {/* Page Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
             Authors
           </h1>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -70,7 +70,7 @@ export default async function AuthorsPage({ params, searchParams }: AuthorsPageP
       )}
 
       {/* Authors Table */}
-      <div className="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
+      <div className="bg-surface dark:bg-surface-dark relative shadow-md sm:rounded-lg overflow-hidden">
         <AuthorsTable authors={authorsData} totalItems={totalItems} locale={locale} />
       </div>
 

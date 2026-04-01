@@ -10,7 +10,7 @@ import Link from 'next/link';
 export default function ArticleNotFound() {
   return (
     <main id="content">
-      <div className="bg-gray-50 py-12">
+      <div className="bg-surface-sunken py-12">
         <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
           <div className="flex flex-col items-center justify-center min-h-[500px]">
             <div className="max-w-md w-full text-center">
@@ -33,7 +33,7 @@ export default function ArticleNotFound() {
               </div>
 
               {/* 404 Title */}
-              <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
+              <h1 className="text-6xl font-bold text-primary mb-4">404</h1>
 
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">
                 Article Not Found
@@ -45,7 +45,7 @@ export default function ArticleNotFound() {
 
               {/* Possible Reasons */}
               <div className="text-left mb-8 p-4 bg-gray-100 rounded">
-                <p className="text-sm font-semibold text-gray-700 mb-2">
+                <p className="text-sm font-semibold text-primary mb-2">
                   This could be because:
                 </p>
                 <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
@@ -80,7 +80,7 @@ export default function ArticleNotFound() {
 
                 <button
                   onClick={() => window.history.back()}
-                  className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-tomato-500 transition-colors"
+                  className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-primary bg-surface hover:bg-surface-sunken focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-tomato-500 transition-colors"
                 >
                   <svg
                     className="w-5 h-5 mr-2"
@@ -101,7 +101,7 @@ export default function ArticleNotFound() {
 
               {/* Search Suggestion */}
               <div className="mt-8 pt-6 border-t border-gray-200">
-                <p className="text-sm text-gray-500 mb-3">
+                <p className="text-sm text-secondary mb-3">
                   Try searching for what you&apos;re looking for:
                 </p>
                 <div className="flex">

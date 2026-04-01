@@ -18,14 +18,14 @@ export function DateRangePicker({ defaultRange }: DateRangePickerProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="dateRange" className="text-sm font-medium text-gray-700">
+      <label htmlFor="dateRange" className="text-sm font-medium text-primary">
         Date Range:
       </label>
       <select
         id="dateRange"
         defaultValue={defaultRange}
         onChange={handleChange}
-        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-surface text-sm"
       >
         <option value="today">Today</option>
         <option value="yesterday">Yesterday</option>

@@ -22,14 +22,14 @@ export default function Sidebar() {
     `flex items-center p-2 text-base rounded-lg group ${
       isActive(href)
         ? 'bg-blue-50 text-blue-700 font-semibold dark:bg-blue-900/30 dark:text-blue-300'
-        : 'text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
+        : 'text-primary hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
     }`;
 
   const iconClass = (href: string) =>
     `w-6 h-6 transition duration-75 ${
       isActive(href)
         ? 'text-blue-700 dark:text-blue-300'
-        : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white'
+        : 'text-secondary group-hover:text-primary dark:text-gray-400 dark:group-hover:text-white'
     }`;
 
   return (
@@ -39,9 +39,9 @@ export default function Sidebar() {
         className="fixed top-0 left-0 z-20 flex flex-col flex-shrink-0 hidden w-64 h-full pt-16 font-normal duration-75 lg:flex transition-width"
         aria-label="Sidebar"
       >
-        <div className="relative flex flex-col flex-1 min-h-0 pt-0 bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+        <div className="relative flex flex-col flex-1 min-h-0 pt-0 bg-surface border-r border-gray-200 dark:bg-surface-dark dark:border-gray-700">
           <div className="flex flex-col flex-1 pt-5 pb-4 overflow-y-auto">
-            <div className="flex-1 px-3 space-y-1 bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+            <div className="flex-1 px-3 space-y-1 bg-surface divide-y divide-gray-200 dark:bg-surface-dark dark:divide-gray-700">
               <ul className="pb-2 space-y-2">
                 {/* Mobile Search */}
                 <li>
@@ -52,7 +52,7 @@ export default function Sidebar() {
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                         <svg
-                          className="w-5 h-5 text-gray-500"
+                          className="w-5 h-5 text-secondary"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                           xmlns="http://www.w3.org/2000/svg"
@@ -68,7 +68,7 @@ export default function Sidebar() {
                         type="text"
                         name="search"
                         id="mobile-search"
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-gray-200 dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         placeholder="Search"
                       />
                     </div>
@@ -280,11 +280,11 @@ export default function Sidebar() {
                 <li>
                   <button
                     type="button"
-                    className="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                    className="flex items-center w-full p-2 text-base text-primary transition duration-75 rounded-lg group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                     onClick={() => setUsersOpen(!usersOpen)}
                   >
                     <svg
-                      className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+                      className="flex-shrink-0 w-6 h-6 text-secondary transition duration-75 group-hover:text-primary dark:text-gray-400 dark:group-hover:text-white"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
@@ -314,7 +314,7 @@ export default function Sidebar() {
                       <li>
                         <Link
                           href={`/${locale}/admin/users`}
-                          className="flex items-center p-2 text-base text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                          className="flex items-center p-2 text-base text-primary transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                         >
                           All Users
                         </Link>
@@ -322,7 +322,7 @@ export default function Sidebar() {
                       <li>
                         <Link
                           href={`/${locale}/admin/users/new`}
-                          className="flex items-center p-2 text-base text-gray-900 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                          className="flex items-center p-2 text-base text-primary transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
                         >
                           Add New
                         </Link>
@@ -360,7 +360,7 @@ export default function Sidebar() {
 
       {/* Mobile Sidebar Backdrop */}
       <div
-        className="fixed inset-0 z-10 hidden bg-gray-900/50 dark:bg-gray-900/90"
+        className="fixed inset-0 z-10 hidden bg-gray-900/50 dark:bg-surface-dark/90"
         id="sidebarBackdrop"
       />
     </>

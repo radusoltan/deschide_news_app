@@ -20,7 +20,13 @@ echo "=========================================="
 # Daily backup (pg_dump with custom format for compression)
 DAILY_BACKUP="$BACKUP_DIR/daily/${DB_NAME}_${DATE}.dump"
 echo "Creating daily backup: $DAILY_BACKUP"
-PGPASSWORD="${PGPASSWORD:-iIzmHACi7+W+yq9NFRT2FeadUPAmgEna}" pg_dump -h "$DB_HOST" -U "$DB_USER" -Fc "$DB_NAME" > "$DAILY_BACKUP"
+# PGPASSWORD must be set in environment (e.g. via .pgpass or env var)
+if [ -z "${PGPASSWORD:-}" ]; then
+    echo "ERROR: PGPASSWORD environment variable is not set."
+    echo "Set it before running: export PGPASSWORD='your_password'"
+    exit 1
+fi
+pg_dump -h "$DB_HOST" -U "$DB_USER" -Fc "$DB_NAME" > "$DAILY_BACKUP"
 
 # Verify backup
 if [ -f "$DAILY_BACKUP" ] && [ -s "$DAILY_BACKUP" ]; then

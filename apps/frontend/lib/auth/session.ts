@@ -13,7 +13,12 @@ import type { AuthTokens } from '../api-client';
 
 const SESSION_COOKIE_NAME = 'session';
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
-const SECRET_KEY = process.env.SESSION_SECRET || 'your-secret-key-change-in-production';
+const SECRET_KEY = process.env.SESSION_SECRET;
+if (!SECRET_KEY) {
+  throw new Error(
+    'SESSION_SECRET environment variable is required. Set it in .env.local for development or as an environment variable in production.'
+  );
+}
 const key = new TextEncoder().encode(SECRET_KEY);
 
 // ============================================================================

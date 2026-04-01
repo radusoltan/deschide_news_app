@@ -93,7 +93,7 @@ export default function CreateShortLinkForm({ locale, accessToken }: CreateShort
           <span className="font-medium">Link scurt creat cu succes!</span>
         </Alert>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 space-y-4">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-md p-6 space-y-4">
           <div>
             <Label htmlFor="created-url">Link scurt generat:</Label>
             <div className="flex gap-2 mt-2">
@@ -165,7 +165,7 @@ export default function CreateShortLinkForm({ locale, accessToken }: CreateShort
         </Alert>
       )}
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 space-y-4">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-md p-6 space-y-4">
         {/* Original URL */}
         <div>
           <Label htmlFor="originalUrl">URL Original *</Label>
@@ -178,7 +178,7 @@ export default function CreateShortLinkForm({ locale, accessToken }: CreateShort
             required
             disabled={isSubmitting}
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-secondary dark:text-gray-400">
             URL-ul complet către care va redirecționa linkul scurt
           </p>
         </div>
@@ -196,7 +196,7 @@ export default function CreateShortLinkForm({ locale, accessToken }: CreateShort
             pattern="[a-zA-Z0-9\-_]+"
             title="Folosiți doar litere, cifre, cratimă și underscore"
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-secondary dark:text-gray-400">
             Lăsați gol pentru generare automată. Folosiți doar litere, cifre, - și _
           </p>
         </div>
@@ -213,7 +213,7 @@ export default function CreateShortLinkForm({ locale, accessToken }: CreateShort
             disabled={isSubmitting}
             maxLength={255}
           />
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-secondary dark:text-gray-400">
             Ajută la identificarea linkului în listă
           </p>
         </div>

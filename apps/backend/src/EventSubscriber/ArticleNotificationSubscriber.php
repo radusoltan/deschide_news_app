@@ -29,7 +29,7 @@ final readonly class ArticleNotificationSubscriber implements EventSubscriberInt
     public function onArticlePublished(ArticlePublishedEvent $event): void
     {
         $article = $event->article;
-        $categoryName = $article->getCategory()?->getName() ?? 'Fără categorie';
+        $categoryName = $article->getCategory()?->getTitle() ?? 'Fără categorie';
 
         $this->notificationService->notify(
             type: NotificationType::ARTICLE_PUBLISHED,
@@ -45,7 +45,7 @@ final readonly class ArticleNotificationSubscriber implements EventSubscriberInt
     public function onArticleUpdated(ArticleUpdatedEvent $event): void
     {
         $article = $event->article;
-        $categoryName = $article->getCategory()?->getName() ?? 'Fără categorie';
+        $categoryName = $article->getCategory()?->getTitle() ?? 'Fără categorie';
 
         $this->notificationService->notify(
             type: NotificationType::ARTICLE_UPDATED,

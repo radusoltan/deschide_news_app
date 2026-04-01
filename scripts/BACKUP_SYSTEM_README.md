@@ -144,28 +144,28 @@ BACKUP_FILE="/var/www/deschide_news_app/backups/deschide_20251220_134912.sql.gz"
 ⚠️ **CAUTION:** This will permanently delete all current data!
 
 ```bash
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 dropdb -h 127.0.0.1 -p 6432 -U deschide_admin deschide
 ```
 
 **5. Create new database:**
 
 ```bash
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 createdb -h 127.0.0.1 -p 6432 -U deschide_admin deschide
 ```
 
 **6. Restore backup:**
 
 ```bash
-gunzip -c "$BACKUP_FILE" | PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+gunzip -c "$BACKUP_FILE" | PGPASSWORD="$PGPASSWORD" \
 pg_restore -h 127.0.0.1 -p 6432 -U deschide_admin -d deschide
 ```
 
 **7. Verify restoration:**
 
 ```bash
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 psql -h 127.0.0.1 -p 6432 -U deschide_admin -d deschide -c "\dt"
 ```
 
@@ -220,13 +220,13 @@ fi
 cd /var/www/deschide_news_app/apps/backend
 symfony server:stop
 
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 dropdb -h 127.0.0.1 -p 6432 -U deschide_admin deschide
 
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 createdb -h 127.0.0.1 -p 6432 -U deschide_admin deschide
 
-gunzip -c "$BACKUP_FILE" | PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+gunzip -c "$BACKUP_FILE" | PGPASSWORD="$PGPASSWORD" \
 pg_restore -h 127.0.0.1 -p 6432 -U deschide_admin -d deschide
 
 symfony serve -d --port=8081
@@ -323,20 +323,20 @@ Test restore in a separate database:
 
 ```bash
 # Create test database
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 createdb -h 127.0.0.1 -p 6432 -U deschide_admin deschide_test
 
 # Restore backup to test database
 gunzip -c /var/www/deschide_news_app/backups/deschide_20251220_134912.sql.gz | \
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 pg_restore -h 127.0.0.1 -p 6432 -U deschide_admin -d deschide_test
 
 # Verify data
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 psql -h 127.0.0.1 -p 6432 -U deschide_admin -d deschide_test -c "SELECT COUNT(*) FROM article"
 
 # Drop test database
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 dropdb -h 127.0.0.1 -p 6432 -U deschide_admin deschide_test
 ```
 
@@ -393,7 +393,7 @@ sudo systemctl status pgbouncer
 **Test connection manually:**
 
 ```bash
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 psql -h 127.0.0.1 -p 6432 -U deschide_admin -d deschide -c "SELECT 1"
 ```
 
@@ -417,7 +417,7 @@ chmod 755 /var/www/deschide_news_app/backups/
 **Check database size:**
 
 ```bash
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 psql -h 127.0.0.1 -p 6432 -U deschide_admin -d deschide -c \
 "SELECT pg_size_pretty(pg_database_size('deschide'))"
 ```
@@ -444,7 +444,7 @@ xz -9 backup.dump
 **Force drop:**
 
 ```bash
-PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+PGPASSWORD="$PGPASSWORD" \
 dropdb -h 127.0.0.1 -p 6432 -U deschide_admin --force deschide
 ```
 

@@ -42,10 +42,10 @@ export function PostPreview({ content, isKeyPoint, locale }: PostPreviewProps) {
   const isEmpty = !stripHtml(content).trim();
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
-      <div className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+      <div className="bg-surface-sunken dark:bg-surface-dark border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <h3 className="text-sm font-semibold text-primary dark:text-primary-dark">
           {t.preview}
         </h3>
       </div>
@@ -55,7 +55,7 @@ export function PostPreview({ content, isKeyPoint, locale }: PostPreviewProps) {
         {isEmpty ? (
           <div className="text-center py-12">
             <svg
-              className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"
+              className="w-16 h-16 mx-auto text-primary-dark dark:text-gray-600 mb-4"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -73,7 +73,7 @@ export function PostPreview({ content, isKeyPoint, locale }: PostPreviewProps) {
                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
               />
             </svg>
-            <p className="text-gray-400 dark:text-gray-500">{t.empty}</p>
+            <p className="text-gray-400 dark:text-secondary">{t.empty}</p>
           </div>
         ) : (
           <div
@@ -107,7 +107,7 @@ export function PostPreview({ content, isKeyPoint, locale }: PostPreviewProps) {
                 </div>
 
                 {/* Mock Timestamp */}
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-secondary dark:text-gray-400">
                   {t.now}
                 </div>
               </div>

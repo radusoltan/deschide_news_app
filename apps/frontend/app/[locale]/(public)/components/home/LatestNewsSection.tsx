@@ -111,8 +111,8 @@ function FeaturedArticleCard({ article, locale }: { article: Article; locale: st
             )}
             {article.publishedAt && (
               <>
-                {categoryTitle && <span className="text-gray-300 text-xs">·</span>}
-                <time className="text-xs font-sans text-gray-300" dateTime={article.publishedAt}>
+                {categoryTitle && <span className="text-primary-dark text-xs">·</span>}
+                <time className="text-xs font-sans text-primary-dark" dateTime={article.publishedAt}>
                   {formatRelativeTime(article.publishedAt, locale)}
                 </time>
               </>

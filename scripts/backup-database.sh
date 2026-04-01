@@ -18,8 +18,13 @@ BACKUP_DIR="/var/www/deschide_news_app/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 RETENTION_DAYS=7
 
-# Database password (from environment or default)
-export PGPASSWORD="${PGPASSWORD:-iIzmHACi7+W+yq9NFRT2FeadUPAmgEna}"
+# Database password (MUST be set in environment - no hardcoded defaults)
+if [ -z "${PGPASSWORD:-}" ]; then
+    log_error "PGPASSWORD environment variable is not set."
+    log_error "Set it before running: export PGPASSWORD='your_password'"
+    exit 1
+fi
+export PGPASSWORD
 
 # Color codes for output
 GREEN='\033[0;32m'
@@ -226,15 +231,15 @@ To restore from this backup:
    symfony server:stop
 
 2. Drop existing database (CAUTION!):
-   PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+   PGPASSWORD="$PGPASSWORD" \
    dropdb -h 127.0.0.1 -p 6432 -U deschide_admin deschide
 
 3. Create new database:
-   PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+   PGPASSWORD="$PGPASSWORD" \
    createdb -h 127.0.0.1 -p 6432 -U deschide_admin deschide
 
 4. Restore backup:
-   gunzip -c BACKUP_FILE.sql.gz | PGPASSWORD="iIzmHACi7+W+yq9NFRT2FeadUPAmgEna" \
+   gunzip -c BACKUP_FILE.sql.gz | PGPASSWORD="$PGPASSWORD" \
    pg_restore -h 127.0.0.1 -p 6432 -U deschide_admin -d deschide
 
 5. Restart the application:

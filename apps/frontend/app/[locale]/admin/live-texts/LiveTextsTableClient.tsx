@@ -87,7 +87,7 @@ export function LiveTextsTableClient({ liveTexts, locale }: LiveTextsTableClient
     setDeletingId(id);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
       const response = await fetch(`${apiUrl}/api/live_texts/${id}`, {
         method: 'DELETE',
         credentials: 'include',
@@ -123,7 +123,7 @@ export function LiveTextsTableClient({ liveTexts, locale }: LiveTextsTableClient
         );
       case 'ended':
         return (
-          <span className="px-2 py-1 text-xs font-bold rounded-full bg-gray-500 text-white">
+          <span className="px-2 py-1 text-xs font-bold rounded-full bg-surface-sunken0 text-white">
             {t.statusEnded}
           </span>
         );
@@ -152,7 +152,7 @@ export function LiveTextsTableClient({ liveTexts, locale }: LiveTextsTableClient
 
   if (liveTexts.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-12 text-center">
         <svg
           className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4"
           fill="none"
@@ -172,40 +172,40 @@ export function LiveTextsTableClient({ liveTexts, locale }: LiveTextsTableClient
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div className="bg-surface dark:bg-surface-dark rounded-lg shadow overflow-hidden">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-900">
+          <thead className="bg-surface-sunken dark:bg-surface-dark">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary dark:text-gray-400 uppercase tracking-wider">
                 {t.title}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary dark:text-gray-400 uppercase tracking-wider">
                 {t.status}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary dark:text-gray-400 uppercase tracking-wider">
                 {t.category}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary dark:text-gray-400 uppercase tracking-wider">
                 {t.startTime}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary dark:text-gray-400 uppercase tracking-wider">
                 {t.author}
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-secondary dark:text-gray-400 uppercase tracking-wider">
                 {t.actions}
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-surface dark:bg-surface-dark divide-y divide-gray-200 dark:divide-gray-700">
             {liveTexts.map((liveText) => (
-              <tr key={liveText.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <tr key={liveText.id} className="hover:bg-surface-sunken dark:hover:bg-gray-700 transition-colors">
                 <td className="px-6 py-4">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="text-sm font-medium text-primary dark:text-primary-dark">
                     {liveText.title}
                   </div>
                   {liveText.description && (
-                    <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
+                    <div className="text-sm text-secondary dark:text-gray-400 line-clamp-1">
                       {liveText.description}
                     </div>
                   )}
@@ -214,17 +214,17 @@ export function LiveTextsTableClient({ liveTexts, locale }: LiveTextsTableClient
                   {getStatusBadge(liveText.status)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-white">
+                  <div className="text-sm text-primary dark:text-primary-dark">
                     {liveText.category?.title || '-'}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="text-sm text-secondary dark:text-gray-400">
                     {formatDate(liveText.startTime)}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900 dark:text-white">
+                  <div className="text-sm text-primary dark:text-primary-dark">
                     {liveText.author?.username || '-'}
                   </div>
                 </td>

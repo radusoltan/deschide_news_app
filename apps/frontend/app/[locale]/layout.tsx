@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import ServerIntlProvider from '@/app/components/ServerIntlProvider';
 import { generateHomepageMetadata, generateGlobalSchemas, renderStructuredData } from '@/lib/seo';
 import WebVitals from '@/components/performance/WebVitals';
+import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar';
 import { golosText, notoSerif } from '../fonts';
 import '../globals.css';
 
@@ -58,9 +59,9 @@ export default async function LocaleLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="manifest" href="/site.webmanifest" />
 
-        {/* Theme color - Deschide Accent Blue */}
-        <meta name="theme-color" content="#2563eb" />
-        <meta name="msapplication-TileColor" content="#2563eb" />
+        {/* Theme color - Deschide Oxford Blue */}
+        <meta name="theme-color" content="#112240" />
+        <meta name="msapplication-TileColor" content="#112240" />
 
         {/* Preconnect to external domains for performance */}
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_URL} crossOrigin="anonymous" />
@@ -82,6 +83,7 @@ export default async function LocaleLayout({
       </head>
       <body className="antialiased font-sans">
         <WebVitals />
+        <ServiceWorkerRegistrar />
         <ServerIntlProvider messages={messages} locale={locale}>
           {children}
         </ServerIntlProvider>

@@ -145,17 +145,17 @@ export default function PressQueuePage() {
       {/* Header */}
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-primary dark:text-primary-dark">
             Coadă Comunicate de Presă
           </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-secondary dark:text-gray-400">
             Revizuiește și aprobă comunicatele de presă primite automat din Zoho Mail
           </p>
         </div>
         <button
           onClick={handleFetchEmails}
           disabled={fetchingEmails}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition flex-shrink-0"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg bg-surface text-primary hover:bg-surface-sunken disabled:opacity-50 disabled:cursor-not-allowed dark:bg-surface-dark dark:text-primary-dark dark:border-gray-600 dark:hover:bg-gray-700 transition flex-shrink-0"
         >
           {fetchingEmails ? (
             <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -192,12 +192,12 @@ export default function PressQueuePage() {
             className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
               filter === s
                 ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
+                : 'bg-surface text-primary border border-gray-300 hover:bg-surface-sunken dark:bg-surface-dark dark:text-primary-dark dark:border-gray-600 dark:hover:bg-gray-700'
             }`}
           >
             {STATUS_LABELS[s]}
             {filter === s && !loading && (
-              <span className="ml-2 px-1.5 py-0.5 text-xs bg-white/20 rounded">
+              <span className="ml-2 px-1.5 py-0.5 text-xs bg-surface/20 rounded">
                 {totalItems}
               </span>
             )}
@@ -215,18 +215,18 @@ export default function PressQueuePage() {
 
       {/* Loading */}
       {loading && (
-        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <div className="text-center py-12 text-secondary dark:text-gray-400">
           Se încarcă...
         </div>
       )}
 
       {/* Empty State */}
       {!loading && items.length === 0 && !error && (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="text-center py-12 bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700">
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
-          <p className="mt-2 text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-secondary dark:text-gray-400">
             {filter === 'pending' ? 'Nu sunt comunicate noi de revizuit' : 'Niciun rezultat'}
           </p>
         </div>
@@ -238,11 +238,11 @@ export default function PressQueuePage() {
           {items.map((pr) => (
             <div
               key={pr.id}
-              className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+              className="bg-surface dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
             >
               {/* Row Header */}
               <div
-                className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition"
+                className="p-4 cursor-pointer hover:bg-surface-sunken dark:hover:bg-gray-700/50 transition"
                 onClick={() => setExpandedId(expandedId === pr.id ? null : pr.id)}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -251,24 +251,24 @@ export default function PressQueuePage() {
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded ${STATUS_COLORS[pr.status]}`}>
                         {STATUS_LABELS[pr.status] || pr.status}
                       </span>
-                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded ${CATEGORY_COLORS[pr.categorySlug] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded ${CATEGORY_COLORS[pr.categorySlug] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-primary-dark'}`}>
                         {pr.categorySlug}
                       </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                      <span className="text-xs text-secondary dark:text-gray-400">
                         {pr.senderName}
                       </span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                      <span className="text-xs text-gray-400 dark:text-secondary">
                         {formatDate(pr.receivedAt)}
                       </span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">
+                      <span className="text-xs text-gray-400 dark:text-secondary">
                         {pr.contentLength} caractere
                       </span>
                     </div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-sm font-semibold text-primary dark:text-primary-dark">
                       {pr.title}
                     </h3>
                     {pr.lead && (
-                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                      <p className="mt-1 text-xs text-secondary dark:text-gray-400 line-clamp-2">
                         {pr.lead}
                       </p>
                     )}
@@ -308,10 +308,10 @@ export default function PressQueuePage() {
 
               {/* Expanded Content */}
               {expandedId === pr.id && (
-                <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900/50">
+                <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-surface-sunken dark:bg-surface-dark/50">
                   {pr.sourceUrl && (
                     <div className="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Sursă originală: </span>
+                      <span className="text-xs font-medium text-secondary dark:text-gray-400">Sursă originală: </span>
                       <a
                         href={pr.sourceUrl}
                         target="_blank"
@@ -339,7 +339,7 @@ export default function PressQueuePage() {
           <button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page <= 1}
-            className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300"
+            className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-primary-dark"
           >
             Anterior
           </button>
@@ -349,7 +349,7 @@ export default function PressQueuePage() {
           <button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page >= totalPages}
-            className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-300"
+            className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-primary-dark"
           >
             Următor
           </button>

@@ -111,7 +111,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
           <span>/</span>
           <span>Edit Article</span>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
           Edit Article
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -127,7 +127,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
       />
 
       {/* Article Form with Lock Management */}
-      <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-6">
+      <div className="bg-surface dark:bg-surface-dark shadow-md sm:rounded-lg p-6">
         <ArticleEditWrapper
           locale={locale}
           article={{
@@ -140,6 +140,8 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
             category: categoryId,
             authors: authorIris,
             publishAt: publishAtLocal,
+            badge: article.badge || null,
+            isFeatured: article.isFeatured || false,
           }}
           categories={categories}
           authors={authors}

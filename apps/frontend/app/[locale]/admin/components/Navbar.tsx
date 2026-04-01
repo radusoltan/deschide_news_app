@@ -92,7 +92,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
   };
 
   return (
-    <nav className="fixed z-30 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+    <nav className="fixed z-30 w-full bg-surface border-b border-gray-200 dark:bg-surface-dark dark:border-gray-700">
       <div className="px-3 py-3 lg:px-5 lg:pl-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center justify-start">
@@ -101,7 +101,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
               id="toggleSidebarMobile"
               aria-expanded={sidebarOpen}
               aria-controls="sidebar"
-              className="p-2 text-gray-600 rounded cursor-pointer lg:hidden hover:text-gray-900 hover:bg-gray-100 focus:bg-gray-100 dark:focus:bg-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+              className="p-2 text-gray-600 rounded cursor-pointer lg:hidden hover:text-primary hover:bg-gray-100 focus:bg-gray-100 dark:focus:bg-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
               onClick={toggleSidebar}
             >
               <svg
@@ -132,7 +132,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
 
             {/* Logo */}
             <Link href={`/${locale}/admin`} className="flex ml-2 md:mr-24">
-              <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">
+              <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-primary-dark">
                 Deschide Admin
               </span>
             </Link>
@@ -145,7 +145,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
               <div className="relative mt-1 lg:w-96">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                   <svg
-                    className="w-5 h-5 text-gray-500 dark:text-gray-400"
+                    className="w-5 h-5 text-secondary dark:text-gray-400"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                     xmlns="http://www.w3.org/2000/svg"
@@ -161,7 +161,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
                   type="text"
                   name="search"
                   id="topbar-search"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                  className="bg-surface-sunken border border-gray-300 text-primary sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-primary-dark dark:focus:ring-primary-500 dark:focus:border-primary-500"
                   placeholder="Search"
                 />
               </div>
@@ -173,7 +173,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
             <button
               id="toggleSidebarMobileSearch"
               type="button"
-              className="p-2 text-gray-500 rounded-lg lg:hidden hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+              className="p-2 text-secondary rounded-lg lg:hidden hover:text-primary hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
             >
               <span className="sr-only">Search</span>
               <svg
@@ -196,7 +196,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
             {/* Apps */}
             <button
               type="button"
-              className="hidden p-2 text-gray-500 rounded-lg sm:flex hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
+              className="hidden p-2 text-secondary rounded-lg sm:flex hover:text-primary hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
             >
               <span className="sr-only">View apps</span>
               <svg
@@ -213,7 +213,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
             <button
               id="theme-toggle"
               type="button"
-              className="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5"
+              className="text-secondary dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5"
               onClick={toggleDarkMode}
             >
               {mounted ? (
@@ -266,16 +266,16 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
                 />
               </button>
               {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600 z-50">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-surface rounded-lg shadow-lg border border-gray-200 dark:bg-gray-700 dark:border-gray-600 z-50">
                   <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-600">
-                    <span className="block text-sm text-gray-900 dark:text-white">{username}</span>
-                    <span className="block text-sm font-medium text-gray-500 truncate dark:text-gray-400">admin@deschide.local</span>
+                    <span className="block text-sm text-primary dark:text-primary-dark">{username}</span>
+                    <span className="block text-sm font-medium text-secondary truncate dark:text-gray-400">admin@deschide.local</span>
                   </div>
                   <ul className="py-1">
                     <li>
                       <Link
                         href={`/${locale}/admin/profile`}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white"
+                        className="block px-4 py-2 text-sm text-primary hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white"
                         onClick={() => setProfileOpen(false)}
                       >
                         Profile
@@ -284,7 +284,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
                     <li>
                       <Link
                         href={`/${locale}/admin/settings`}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white"
+                        className="block px-4 py-2 text-sm text-primary hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white"
                         onClick={() => setProfileOpen(false)}
                       >
                         Settings
@@ -294,7 +294,7 @@ export default function Navbar({ username = 'Admin' }: { username?: string }) {
                   <div className="border-t border-gray-200 dark:border-gray-600">
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white"
+                      className="block w-full text-left px-4 py-2 text-sm text-primary hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600 dark:hover:text-white"
                     >
                       Sign out
                     </button>

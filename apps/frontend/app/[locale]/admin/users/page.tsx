@@ -46,7 +46,7 @@ export default async function UsersPage({ params, searchParams }: UsersPageProps
             <span>/</span>
             <span>Users</span>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
             Users
           </h1>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -73,7 +73,7 @@ export default async function UsersPage({ params, searchParams }: UsersPageProps
       )}
 
       {/* Users Table */}
-      <div className="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
+      <div className="bg-surface dark:bg-surface-dark relative shadow-md sm:rounded-lg overflow-hidden">
         <UsersTable users={usersData} totalItems={totalItems} locale={locale} />
       </div>
 
@@ -83,7 +83,7 @@ export default async function UsersPage({ params, searchParams }: UsersPageProps
           {currentPage > 1 && (
             <Link
               href={`/${locale}/admin/users?page=${currentPage - 1}`}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="px-4 py-2 text-sm font-medium text-primary bg-surface border border-gray-300 rounded-lg hover:bg-surface-sunken dark:bg-surface-dark dark:text-primary-dark dark:border-gray-600 dark:hover:bg-gray-700"
             >
               Previous
             </Link>
@@ -94,7 +94,7 @@ export default async function UsersPage({ params, searchParams }: UsersPageProps
           {currentPage < totalPages && (
             <Link
               href={`/${locale}/admin/users?page=${currentPage + 1}`}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+              className="px-4 py-2 text-sm font-medium text-primary bg-surface border border-gray-300 rounded-lg hover:bg-surface-sunken dark:bg-surface-dark dark:text-primary-dark dark:border-gray-600 dark:hover:bg-gray-700"
             >
               Next
             </Link>

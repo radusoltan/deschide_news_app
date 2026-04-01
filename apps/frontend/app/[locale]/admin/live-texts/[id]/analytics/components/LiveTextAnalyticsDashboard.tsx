@@ -91,7 +91,7 @@ export function LiveTextAnalyticsDashboard({
         <button
           onClick={fetchAnalytics}
           disabled={isRefreshing}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           Refresh
@@ -172,8 +172,8 @@ export function LiveTextAnalyticsDashboard({
 
       {/* Charts Row 1 */}
       {analytics.viewsOverTime && analytics.viewsOverTime.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-lg font-semibold text-primary dark:text-gray-100 mb-4">
             Views Over Time
           </h2>
           <ViewsOverTimeChart data={analytics.viewsOverTime} />
@@ -184,8 +184,8 @@ export function LiveTextAnalyticsDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Post Engagement */}
         {analytics.postEngagement && analytics.postEngagement.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-primary dark:text-gray-100 mb-4">
               Top Posts by Engagement
             </h2>
             <PostEngagementTable data={analytics.postEngagement} />
@@ -194,8 +194,8 @@ export function LiveTextAnalyticsDashboard({
 
         {/* Viewers by Platform */}
         {analytics.viewersByPlatform && analytics.viewersByPlatform.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-primary dark:text-gray-100 mb-4">
               Viewers by Platform
             </h2>
             <ViewersByPlatformChart data={analytics.viewersByPlatform} />

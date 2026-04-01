@@ -105,13 +105,13 @@ export default function SortableMenuItem({
         flex items-center gap-3 px-4 py-3 border-b
         dark:border-gray-700 transition-colors
         ${isDragging ? 'bg-blue-50 dark:bg-blue-900/30 shadow-lg z-50 rounded-lg opacity-90' : ''}
-        ${item.isActive ? 'bg-white dark:bg-gray-800' : 'bg-gray-50/50 dark:bg-gray-800/50'}
+        ${item.isActive ? 'bg-surface dark:bg-surface-dark' : 'bg-surface-sunken/50 dark:bg-surface-dark/50'}
         ${depth === 1 ? 'ml-10 border-l-2 border-l-blue-200 dark:border-l-blue-700' : ''}
       `}
     >
       {/* Drag handle */}
       <button
-        className="cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 touch-none"
+        className="cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-600 dark:hover:text-primary-dark touch-none"
         {...attributes}
         {...listeners}
         aria-label={`Drag ${item.label}`}
@@ -123,7 +123,7 @@ export default function SortableMenuItem({
       {item.type === 'dropdown' ? (
         <button
           onClick={onToggleExpand}
-          className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="p-1 text-secondary hover:text-primary dark:text-gray-400 dark:hover:text-gray-200"
           aria-label={isExpanded ? 'Collapse' : 'Expand'}
         >
           {isExpanded ? (
@@ -153,19 +153,19 @@ export default function SortableMenuItem({
         <span
           className={`font-medium text-sm ${
             item.isActive
-              ? 'text-gray-900 dark:text-white'
-              : 'text-gray-400 dark:text-gray-500 line-through'
+              ? 'text-primary dark:text-primary-dark'
+              : 'text-gray-400 dark:text-secondary line-through'
           }`}
         >
           {item.label}
         </span>
         {item.url && (
-          <div className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-xs">
+          <div className="text-xs text-gray-400 dark:text-secondary truncate max-w-xs">
             {item.url}
           </div>
         )}
         {item.type === 'dropdown' && hasChildren && (
-          <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
+          <span className="text-xs text-gray-400 dark:text-secondary ml-2">
             ({(item.children || []).length} sub-items)
           </span>
         )}

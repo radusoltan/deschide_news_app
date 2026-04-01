@@ -4,7 +4,7 @@
 
 import { ArticleListResponse } from '../types/article';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 /**
  * Fetch articles by category
@@ -37,7 +37,10 @@ export async function fetchArticlesByCategory(
   const response = await fetch(url.toString(), {
     method: 'GET',
     headers,
-    next: { tags: ['articles'] },
+    next: {
+      revalidate: 120,
+      tags: ['articles'],
+    },
   });
 
   if (!response.ok) {
@@ -77,7 +80,10 @@ export async function fetchLatestArticles(
   const response = await fetch(url.toString(), {
     method: 'GET',
     headers,
-    next: { tags: ['articles'] },
+    next: {
+      revalidate: 60,
+      tags: ['articles'],
+    },
   });
 
   if (!response.ok) {

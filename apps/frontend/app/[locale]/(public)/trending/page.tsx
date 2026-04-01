@@ -25,7 +25,7 @@ export default async function TrendingPage({
   const { locale } = await params;
   const { period = 'week' } = await searchParams;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
 
   try {
     // Calculate date filter based on period
@@ -106,7 +106,7 @@ export default async function TrendingPage({
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl font-bold text-primary dark:text-primary-dark mb-4">
             {t.title}
           </h1>
           <p className="text-gray-600 dark:text-gray-400">{t.subtitle}</p>
@@ -120,7 +120,7 @@ export default async function TrendingPage({
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 period === 'today'
                   ? 'bg-brand-tomato-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
               }`}
             >
               {t.today}
@@ -130,7 +130,7 @@ export default async function TrendingPage({
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 period === 'week'
                   ? 'bg-brand-tomato-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
               }`}
             >
               {t.week}
@@ -140,7 +140,7 @@ export default async function TrendingPage({
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 period === 'month'
                   ? 'bg-brand-tomato-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                  : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
               }`}
             >
               {t.month}

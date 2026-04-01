@@ -7,7 +7,7 @@
 import type { RedirectCheckResponse } from '../types/slug';
 import type { RedirectStatusCode } from '../types/redirect';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 const REDIRECT_CHECK_TIMEOUT = 3000; // 3 seconds for middleware
 const MAX_REDIRECT_CHAIN_LENGTH = 5; // Prevent infinite loops
 

@@ -8,7 +8,7 @@ import type { Locale } from '@/lib/types';
 import { getCategorySlug, getCategoryTitle, getAuthorNames } from './metadata-generator';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 const ORGANIZATION_LOGO = `${SITE_URL}/logo.png`;
 
 /**

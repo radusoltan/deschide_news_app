@@ -24,7 +24,7 @@ export function ScoreBoard({ match, showDetails = true }: ScoreBoardProps) {
       case 'live':
         return (
           <span className="px-3 py-1 text-xs font-bold text-white bg-red-600 rounded-full uppercase animate-pulse">
-            <span className="inline-block w-2 h-2 mr-1 bg-white rounded-full animate-ping"></span>
+            <span className="inline-block w-2 h-2 mr-1 bg-surface rounded-full animate-ping"></span>
             LIVE
           </span>
         );
@@ -90,7 +90,7 @@ export function ScoreBoard({ match, showDetails = true }: ScoreBoardProps) {
             {match.competition}
           </p>
           {match.venue && (
-            <p className="text-xs text-gray-500 dark:text-gray-500">
+            <p className="text-xs text-secondary dark:text-secondary">
               {match.venue}
             </p>
           )}
@@ -111,7 +111,7 @@ export function ScoreBoard({ match, showDetails = true }: ScoreBoardProps) {
               />
             </div>
           )}
-          <p className="text-center text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="text-center text-lg sm:text-xl font-bold text-primary dark:text-gray-100">
             {match.homeTeam}
           </p>
         </div>
@@ -119,13 +119,13 @@ export function ScoreBoard({ match, showDetails = true }: ScoreBoardProps) {
         {/* Score */}
         <div className="flex flex-col items-center space-y-2">
           <div className="flex items-center gap-4">
-            <span className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-gray-100">
+            <span className="text-4xl sm:text-5xl font-bold text-primary dark:text-gray-100">
               {match.homeScore}
             </span>
             <span className="text-3xl sm:text-4xl font-bold text-gray-400 dark:text-gray-600">
               -
             </span>
-            <span className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-gray-100">
+            <span className="text-4xl sm:text-5xl font-bold text-primary dark:text-gray-100">
               {match.awayScore}
             </span>
           </div>
@@ -149,7 +149,7 @@ export function ScoreBoard({ match, showDetails = true }: ScoreBoardProps) {
               />
             </div>
           )}
-          <p className="text-center text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="text-center text-lg sm:text-xl font-bold text-primary dark:text-gray-100">
             {match.awayTeam}
           </p>
         </div>

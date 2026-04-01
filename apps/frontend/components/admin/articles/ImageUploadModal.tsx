@@ -229,14 +229,14 @@ export default function ImageUploadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Upload Images</h2>
+          <h2 className="text-2xl font-semibold text-primary dark:text-primary-dark">Upload Images</h2>
           <button
             onClick={handleClose}
             disabled={isProcessing}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-primary-dark transition-colors disabled:opacity-50"
           >
             <FiX className="w-6 h-6" />
           </button>
@@ -252,7 +252,7 @@ export default function ImageUploadModal({
               className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
                 uploadMode === 'file'
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-gray-200'
               }`}
             >
               <FiUpload className="inline-block w-4 h-4 mr-2" />
@@ -264,7 +264,7 @@ export default function ImageUploadModal({
               className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
                 uploadMode === 'url'
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-gray-200'
               }`}
             >
               <FiLink className="inline-block w-4 h-4 mr-2" />
@@ -293,7 +293,7 @@ export default function ImageUploadModal({
                 </p>
               ) : (
                 <>
-                  <p className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  <p className="text-lg font-medium text-primary dark:text-primary-dark mb-2">
                     Drag & drop images here, or click to browse
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -310,7 +310,7 @@ export default function ImageUploadModal({
               <div>
                 <label
                   htmlFor="imageUrl"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
                 >
                   Image URL
                 </label>
@@ -322,7 +322,7 @@ export default function ImageUploadModal({
                     onChange={(e) => setImageUrl(e.target.value)}
                     placeholder="https://example.com/image.jpg"
                     disabled={isProcessing}
-                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-surface dark:bg-gray-700 text-primary dark:text-primary-dark disabled:opacity-50"
                   />
                   <button
                     type="button"
@@ -333,7 +333,7 @@ export default function ImageUploadModal({
                     {isProcessing ? 'Uploading...' : 'Upload'}
                   </button>
                 </div>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-2 text-xs text-secondary dark:text-gray-400">
                   Enter a direct URL to an image (JPEG, PNG, GIF, WebP)
                 </p>
               </div>
@@ -343,13 +343,13 @@ export default function ImageUploadModal({
           {/* Upload Progress List */}
           {hasUploads && (
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <h3 className="text-sm font-medium text-primary dark:text-primary-dark">
                 Uploads ({uploadsList.length})
               </h3>
               {uploadsList.map((upload, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                  className="flex items-center gap-3 p-3 bg-surface-sunken dark:bg-gray-700 rounded-lg"
                 >
                   {/* Status Icon */}
                   <div className="flex-shrink-0">
@@ -389,7 +389,7 @@ export default function ImageUploadModal({
 
                   {/* File Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-primary dark:text-primary-dark truncate">
                       {upload.filename}
                     </p>
                     {upload.status === 'error' && upload.error && (
@@ -420,7 +420,7 @@ export default function ImageUploadModal({
             <button
               onClick={handleClose}
               disabled={isProcessing}
-              className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 text-sm font-medium text-primary dark:text-primary-dark bg-surface dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>

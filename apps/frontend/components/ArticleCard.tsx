@@ -42,6 +42,36 @@ function getCategoryTitle(category: Category | string): string {
   return 'Uncategorized';
 }
 
+function getAuthorAttribution(article: Article, locale: string): string | null {
+  const firstAuthor = article.authors?.[0];
+
+  if (!firstAuthor || typeof firstAuthor === 'string') {
+    return null;
+  }
+
+  const authorName =
+    firstAuthor.fullName ||
+    `${firstAuthor.firstName || ''} ${firstAuthor.lastName || ''}`.trim();
+
+  if (!authorName) {
+    return null;
+  }
+
+  const type = firstAuthor.type || 'journalist';
+  const prefixes = {
+    journalist: { ro: 'De', en: 'By', ru: 'От' },
+    agency: { ro: 'Sursa:', en: 'Source:', ru: 'Источник:' },
+    press_office: { ro: 'Comunicat:', en: 'Press release:', ru: 'Пресс-релиз:' },
+  } as const;
+
+  const localizedPrefix =
+    prefixes[type as keyof typeof prefixes]?.[
+      locale as keyof (typeof prefixes)['journalist']
+    ] || prefixes.journalist.ro;
+
+  return `${localizedPrefix} ${authorName}`.trim();
+}
+
 export default function ArticleCard({
   article,
   locale,
@@ -58,6 +88,7 @@ export default function ArticleCard({
   const excerpt = article.lead || (article.content ? getFirstSentence(article.content) : '');
   const articleUrl = buildArticleUrl(article, locale as Locale);
   const categoryUrl = buildCategoryUrl(article.category, locale as Locale);
+  const authorAttribution = getAuthorAttribution(article, locale);
 
   // Compact variant — horizontal layout for sidebars
   if (variant === 'compact') {
@@ -80,6 +111,9 @@ export default function ArticleCard({
             <h3 className="text-sm font-heading text-brand-oxford-900 leading-snug line-clamp-2 group-hover:text-brand-tomato-500 transition-colors">
               {article.title}
             </h3>
+            {authorAttribution && (
+              <p className="text-xs text-secondary font-body mt-1">{authorAttribution}</p>
+            )}
             <span className="text-xs text-gray-400 font-body mt-1 block">
               {getCategoryTitle(article.category)}
             </span>
@@ -130,6 +164,9 @@ export default function ArticleCard({
                 {excerpt}
               </p>
             )}
+            {authorAttribution && (
+              <p className="mt-2 text-xs text-white/80 font-body">{authorAttribution}</p>
+            )}
           </div>
         </Link>
       </article>
@@ -169,16 +206,19 @@ export default function ArticleCard({
         </h3>
 
         {/* Excerpt */}
-        <p className="hidden md:block text-gray-500 text-sm leading-relaxed mb-3 line-clamp-2 flex-grow font-body">
+        <p className="hidden md:block text-secondary text-sm leading-relaxed mb-3 line-clamp-2 flex-grow font-body">
           {excerpt || '\u00A0'}
         </p>
+        {authorAttribution && (
+          <p className="text-xs text-secondary font-body mb-3">{authorAttribution}</p>
+        )}
 
         {/* Footer with category and view count */}
         <div className="mt-auto pt-2">
           <div className="flex items-center justify-between">
             <Link
               href={categoryUrl}
-              className="inline-flex items-center text-xs font-medium text-gray-500 hover:text-brand-tomato-500 transition-colors uppercase tracking-wide font-body"
+              className="inline-flex items-center text-xs font-medium text-secondary hover:text-brand-tomato-500 transition-colors uppercase tracking-wide font-body"
             >
               <span className="w-0.5 h-3 bg-brand-tomato-500 mr-2" />
               {getCategoryTitle(article.category)}

@@ -42,8 +42,8 @@ export default function TagBadge({
   };
 
   const variantClasses = {
-    default: 'bg-brand-oxford-100 text-brand-oxford-900 hover:bg-brand-oxford-200 dark:bg-brand-oxford-900 dark:text-white',
-    outline: 'border border-brand-oxford-300 text-brand-oxford-900 hover:bg-brand-oxford-50 dark:border-brand-oxford-700 dark:text-white dark:hover:bg-brand-oxford-800',
+    default: 'bg-brand-oxford-100 text-brand-oxford-900 hover:bg-brand-oxford-200 dark:bg-brand-oxford-900 dark:text-primary-dark',
+    outline: 'border border-brand-oxford-300 text-brand-oxford-900 hover:bg-brand-oxford-50 dark:border-brand-oxford-700 dark:text-primary-dark dark:hover:bg-brand-oxford-800',
     solid: 'bg-brand-tomato text-white hover:bg-brand-tomato-600 dark:bg-brand-tomato-600 dark:hover:bg-brand-tomato-500',
   };
 

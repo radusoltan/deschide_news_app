@@ -21,7 +21,7 @@ export const BrandShowcase: React.FC = () => {
 
         <div className="space-y-8">
           {/* Blue Logos */}
-          <div className="bg-white p-8 rounded-lg">
+          <div className="bg-surface p-8 rounded-lg">
             <p className="text-sm font-medium text-gray-600 mb-4">Blue (Oxford) - Primary</p>
             <div className="flex items-center gap-8 flex-wrap">
               <Logo variant="blue" size="sm" />
@@ -32,7 +32,7 @@ export const BrandShowcase: React.FC = () => {
           </div>
 
           {/* Red Logos */}
-          <div className="bg-white p-8 rounded-lg">
+          <div className="bg-surface p-8 rounded-lg">
             <p className="text-sm font-medium text-gray-600 mb-4">Red (Tomato) - Secondary</p>
             <div className="flex items-center gap-8 flex-wrap">
               <Logo variant="red" size="sm" />
@@ -60,7 +60,7 @@ export const BrandShowcase: React.FC = () => {
           </div>
 
           {/* Logo with Tagline */}
-          <div className="bg-white p-8 rounded-lg">
+          <div className="bg-surface p-8 rounded-lg">
             <p className="text-sm font-medium text-gray-600 mb-4">With Tagline</p>
             <LogoWithTagline variant="blue" size="md" tagline="Știri din Moldova" />
           </div>
@@ -71,7 +71,7 @@ export const BrandShowcase: React.FC = () => {
       <section>
         <h2 className="text-2xl font-bold mb-8 text-gray-800">Typography - Headings</h2>
 
-        <div className="space-y-8 bg-white p-8 rounded-lg">
+        <div className="space-y-8 bg-surface p-8 rounded-lg">
           <div>
             <p className="text-sm font-medium text-gray-600 mb-2">Hero Heading</p>
             <HeroHeading variant="oxford">Breaking News from Moldova</HeroHeading>
@@ -103,7 +103,7 @@ export const BrandShowcase: React.FC = () => {
       <section>
         <h2 className="text-2xl font-bold mb-8 text-gray-800">Typography - Text</h2>
 
-        <div className="space-y-6 bg-white p-8 rounded-lg">
+        <div className="space-y-6 bg-surface p-8 rounded-lg">
           <div>
             <p className="text-sm font-medium text-gray-600 mb-2">Body Large</p>
             <Text variant="body-lg">
@@ -153,28 +153,28 @@ export const BrandShowcase: React.FC = () => {
             <div className="bg-brand-oxford h-24 rounded-lg"></div>
             <p className="text-sm font-medium">Oxford Blue</p>
             <p className="text-xs text-gray-600">#112240</p>
-            <p className="text-xs text-gray-500">40% usage</p>
+            <p className="text-xs text-secondary">40% usage</p>
           </div>
 
           <div className="space-y-2">
             <div className="bg-brand-tomato h-24 rounded-lg"></div>
             <p className="text-sm font-medium">Tomato</p>
             <p className="text-xs text-gray-600">#F05E45</p>
-            <p className="text-xs text-gray-500">40-50% usage</p>
+            <p className="text-xs text-secondary">40-50% usage</p>
           </div>
 
           <div className="space-y-2">
             <div className="bg-brand-red h-24 rounded-lg"></div>
             <p className="text-sm font-medium">Red CMYK</p>
             <p className="text-xs text-gray-600">#E92628</p>
-            <p className="text-xs text-gray-500">10-30% accent</p>
+            <p className="text-xs text-secondary">10-30% accent</p>
           </div>
 
           <div className="space-y-2">
             <div className="bg-brand-mindaro h-24 rounded-lg"></div>
             <p className="text-sm font-medium">Mindaro</p>
             <p className="text-xs text-gray-600">#D4FB8C</p>
-            <p className="text-xs text-gray-500">Max 10%</p>
+            <p className="text-xs text-secondary">Max 10%</p>
           </div>
         </div>
       </section>
@@ -198,7 +198,7 @@ export const BrandShowcase: React.FC = () => {
       <section>
         <h2 className="text-2xl font-bold mb-8 text-gray-800">Brand Buttons</h2>
 
-        <div className="flex flex-wrap gap-4 bg-white p-8 rounded-lg">
+        <div className="flex flex-wrap gap-4 bg-surface p-8 rounded-lg">
           <button className="btn-brand-primary">Primary Button</button>
           <button className="btn-brand-secondary">Secondary Button</button>
           <button className="btn-brand-accent">Accent Button</button>
@@ -230,17 +230,17 @@ export const BrandShowcase: React.FC = () => {
         <h2 className="text-2xl font-bold mb-8 text-gray-800">Accent Bars</h2>
 
         <div className="space-y-4">
-          <div className="accent-bar-oxford bg-white p-6 rounded-lg">
+          <div className="accent-bar-oxford bg-surface p-6 rounded-lg">
             <Heading level={3} variant="oxford">Oxford Accent Bar</Heading>
             <Text variant="body" className="mt-2">Used for primary content sections and highlights.</Text>
           </div>
 
-          <div className="accent-bar-tomato bg-white p-6 rounded-lg">
+          <div className="accent-bar-tomato bg-surface p-6 rounded-lg">
             <Heading level={3} variant="tomato">Tomato Accent Bar</Heading>
             <Text variant="body" className="mt-2">Used for secondary content and featured items.</Text>
           </div>
 
-          <div className="accent-bar-red bg-white p-6 rounded-lg">
+          <div className="accent-bar-red bg-surface p-6 rounded-lg">
             <Heading level={3} variant="default">Red Accent Bar</Heading>
             <Text variant="body" className="mt-2">Used for breaking news and urgent alerts.</Text>
           </div>

@@ -19,7 +19,7 @@ export default async function AdminLayout({
   const username = session?.user?.username ?? 'Admin';
 
   return (
-    <div className="antialiased bg-gray-50 dark:bg-gray-900">
+    <div className="antialiased bg-surface-sunken dark:bg-surface-dark">
       <FlowbiteInit />
       <Navbar username={username} />
       <Sidebar />

@@ -77,13 +77,20 @@ function formatViewCount(count: number, locale: string): string {
   return count.toString();
 }
 
+function getCalendarDayDiff(dateString: string): number {
+  const date = new Date(dateString);
+  const now = new Date();
+  const startOfToday = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfTargetDay = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+
+  return Math.floor((startOfToday - startOfTargetDay) / (1000 * 60 * 60 * 24));
+}
+
 function formatPublishedDate(dateString: string | undefined, locale: string): string {
   if (!dateString) return '';
 
   const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = getCalendarDayDiff(dateString);
 
   if (diffDays === 0) {
     return locale === 'ro' ? 'Azi' : locale === 'ru' ? 'Сегодня' : 'Today';
@@ -111,10 +118,7 @@ function formatPublishedDate(dateString: string | undefined, locale: string): st
 
 function isNewVideo(dateString: string | undefined): boolean {
   if (!dateString) return false;
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = getCalendarDayDiff(dateString);
   return diffDays <= 3;
 }
 
@@ -214,7 +218,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, locale, onPlay, featured =
             <div className="absolute inset-0 rounded-full border border-white/30 animate-ping opacity-0 group-hover:opacity-60" style={{ animationDuration: '2s' }} />
 
             {/* Inner Glow */}
-            <div className="absolute inset-2 rounded-full bg-white/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-2 rounded-full bg-surface/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </div>
         </div>
 
@@ -246,7 +250,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, locale, onPlay, featured =
             'animate-pulse'
           )}>
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+              <span className="w-1.5 h-1.5 bg-surface rounded-full animate-ping" />
               {t.newEpisode}
             </div>
           </div>
@@ -265,7 +269,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, locale, onPlay, featured =
             'group-hover:border-slate-500/60'
           )}
           style={{
-            color: video.videoShow.color || '#fff',
+            color: video.videoShow.color || 'var(--color-surface)',
             textShadow: `0 0 10px ${video.videoShow.color}40`
           }}
           >
@@ -393,7 +397,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ video, onClose, locale }) => {
             'absolute -top-14 right-0 z-10',
             'w-12 h-12 rounded-full',
             'flex items-center justify-center',
-            'bg-white/5 hover:bg-brand-tomato-500/20',
+            'bg-surface/5 hover:bg-brand-tomato-500/20',
             'border border-white/10 hover:border-brand-tomato-500/50',
             'text-white/70 hover:text-white',
             'backdrop-blur-md',
@@ -433,7 +437,7 @@ const VideoModal: React.FC<VideoModalProps> = ({ video, onClose, locale }) => {
             {video.videoShow && (
               <span
                 className="px-3 py-1 rounded-full bg-slate-800/50 border border-slate-700/50 font-medium"
-                style={{ color: video.videoShow.color || '#fff' }}
+                style={{ color: video.videoShow.color || 'var(--color-surface)' }}
               >
                 {video.videoShow.name}
               </span>
@@ -564,7 +568,7 @@ export const VideoShowsSlider: React.FC<VideoShowsSliderProps> = ({
               className={cn(
                 'group inline-flex items-center gap-2.5',
                 'px-6 py-3 rounded-full',
-                'bg-gradient-to-r from-white/5 to-white/10',
+                'bg-gradient-to-r from-white/5 to-surface/10',
                 'hover:from-brand-tomato-500/20 hover:to-brand-tomato-600/20',
                 'border border-white/10 hover:border-brand-tomato-500/50',
                 'backdrop-blur-sm',
@@ -601,7 +605,7 @@ export const VideoShowsSlider: React.FC<VideoShowsSliderProps> = ({
                   href={`/${locale}/emisiuni/${show.slug}`}
                   className={cn(
                     'px-5 py-2.5 rounded-full text-sm font-semibold',
-                    'bg-white/5 hover:bg-white/10',
+                    'bg-surface/5 hover:bg-surface/10',
                     'text-slate-300 hover:text-white',
                     'border border-white/10 hover:border-white/20',
                     'backdrop-blur-sm',

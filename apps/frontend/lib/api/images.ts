@@ -16,7 +16,7 @@ import type {
   CropCoordinates
 } from '@/lib/types/image';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 /**
  * Get a fresh access token, refreshing if necessary
@@ -349,7 +349,7 @@ export async function resetCrop(
  * Get public URL for image (from CDN)
  */
 export function getImageUrl(image: Pick<Image, 'filename'>): string {
-  const CDN_BASE = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
+  const CDN_BASE = process.env.NEXT_PUBLIC_CDN_URL ?? '';
   return `${CDN_BASE}/uploads/images/${image.filename}`;
 }
 
@@ -357,7 +357,7 @@ export function getImageUrl(image: Pick<Image, 'filename'>): string {
  * Get public URL for thumbnail (from CDN)
  */
 export function getThumbnailUrl(thumbnail: Pick<Thumbnail, 'path'>): string {
-  const CDN_BASE = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
+  const CDN_BASE = process.env.NEXT_PUBLIC_CDN_URL ?? '';
   return `${CDN_BASE}/uploads/${thumbnail.path}`;
 }
 

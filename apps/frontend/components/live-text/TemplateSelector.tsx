@@ -60,7 +60,7 @@ export function TemplateSelector({
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
         const response = await fetch(`${apiUrl}/api/live_text_templates`);
 
         if (!response.ok) {
@@ -102,7 +102,7 @@ export function TemplateSelector({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <h3 className="text-lg font-semibold text-primary dark:text-primary-dark">
         {t.selectTemplate}
       </h3>
 
@@ -115,12 +115,12 @@ export function TemplateSelector({
           className={`p-4 rounded-lg border-2 transition-all text-left ${
             selectedTemplateId === null
               ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
+              : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-surface dark:bg-surface-dark'
           }`}
         >
           <div className="flex items-center gap-3 mb-2">
             <span className="text-3xl">⚪</span>
-            <h4 className="font-semibold text-gray-900 dark:text-white">
+            <h4 className="font-semibold text-primary dark:text-primary-dark">
               {t.noTemplate}
             </h4>
           </div>
@@ -142,13 +142,13 @@ export function TemplateSelector({
             className={`p-4 rounded-lg border-2 transition-all text-left ${
               selectedTemplateId === template.id
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
+                : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 bg-surface dark:bg-surface-dark'
             }`}
           >
             {/* Template Header */}
             <div className="flex items-center gap-3 mb-2">
               <span className="text-3xl">{TEMPLATE_ICONS[template.type]}</span>
-              <h4 className="font-semibold text-gray-900 dark:text-white">
+              <h4 className="font-semibold text-primary dark:text-primary-dark">
                 {template.name}
               </h4>
             </div>
@@ -173,17 +173,17 @@ export function TemplateSelector({
             {/* Features Summary */}
             <div className="mt-3 flex flex-wrap gap-1">
               {template.config.features.enableReactions && (
-                <span className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-primary dark:text-primary-dark">
                   ❤️ Reactions
                 </span>
               )}
               {template.config.features.enableTimeline && (
-                <span className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-primary dark:text-primary-dark">
                   📅 Timeline
                 </span>
               )}
               {template.config.features.autoRefresh && (
-                <span className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <span className="px-2 py-1 text-xs rounded bg-gray-100 dark:bg-gray-700 text-primary dark:text-primary-dark">
                   🔄 Auto-refresh
                 </span>
               )}

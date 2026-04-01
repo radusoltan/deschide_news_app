@@ -67,7 +67,7 @@ export default function CategoryNav({
       <div className="md:hidden">
         <button
           onClick={toggleMobileDropdown}
-          className="w-full flex items-center justify-between px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-2 bg-surface border border-gray-300 rounded-lg text-primary font-medium hover:bg-surface-sunken transition-colors"
           aria-expanded={isMobileOpen}
           aria-label="Toggle category menu"
         >
@@ -92,7 +92,7 @@ export default function CategoryNav({
         </button>
 
         {isMobileOpen && (
-          <div className="mt-2 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+          <div className="mt-2 bg-surface border border-gray-300 rounded-lg shadow-lg overflow-hidden">
             {/* Menu items */}
             {menuItems.map((category) => {
               const isActive = category.slug === currentCategorySlug;
@@ -114,7 +114,7 @@ export default function CategoryNav({
             {/* Stiri section for dropdown items */}
             {dropdownItems.length > 0 && (
               <>
-                <div className="px-4 py-2 bg-gray-100 text-gray-500 text-sm font-semibold border-t border-gray-200">
+                <div className="px-4 py-2 bg-gray-100 text-secondary text-sm font-semibold border-t border-gray-200">
                   Știri
                 </div>
                 {dropdownItems.map((category) => {
@@ -189,7 +189,7 @@ export default function CategoryNav({
               </button>
 
               {isStiriDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="absolute top-full left-0 mt-1 w-48 bg-surface border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
                   {dropdownItems.map((category) => {
                     const isActive = category.slug === currentCategorySlug;
                     return (

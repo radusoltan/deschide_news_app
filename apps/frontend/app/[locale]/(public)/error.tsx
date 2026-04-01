@@ -47,7 +47,7 @@ export default function PublicError({
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">
+        <h1 className="text-2xl font-bold text-primary mb-3">
           Ups! A apărut o problemă
         </h1>
 
@@ -82,7 +82,7 @@ export default function PublicError({
 
         {/* Alternative navigation */}
         <div className="mt-8 pt-6 border-t">
-          <p className="text-sm text-gray-500 mb-3">Sau navigați către:</p>
+          <p className="text-sm text-secondary mb-3">Sau navigați către:</p>
           <div className="flex flex-wrap justify-center gap-2">
             <Link
               href="/archive"
@@ -90,14 +90,14 @@ export default function PublicError({
             >
               Arhivă
             </Link>
-            <span className="text-gray-300">•</span>
+            <span className="text-primary-dark">•</span>
             <Link
               href="/search"
               className="text-sm text-brand-oxford hover:underline"
             >
               Căutare
             </Link>
-            <span className="text-gray-300">•</span>
+            <span className="text-primary-dark">•</span>
             <Link
               href="/contact"
               className="text-sm text-brand-oxford hover:underline"

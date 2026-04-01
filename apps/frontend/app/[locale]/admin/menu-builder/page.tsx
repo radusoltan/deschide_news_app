@@ -15,7 +15,7 @@ export default async function MenuBuilderPage({ params }: MenuBuilderPageProps) 
     <div className="p-4">
       {/* Page Header */}
       <div className="mb-4">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
           Menu Builder
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -24,7 +24,7 @@ export default async function MenuBuilderPage({ params }: MenuBuilderPageProps) 
       </div>
 
       {/* Menu Builder Manager */}
-      <div className="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
+      <div className="bg-surface dark:bg-surface-dark relative shadow-md sm:rounded-lg overflow-hidden">
         <Suspense
           fallback={
             <div className="flex justify-center items-center py-12">

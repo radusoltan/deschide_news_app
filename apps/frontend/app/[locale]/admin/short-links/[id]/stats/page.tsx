@@ -79,10 +79,10 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
             Linkuri Scurte
           </Link>
           <span>/</span>
-          <span className="text-gray-900 dark:text-white">Statistici</span>
+          <span className="text-primary dark:text-primary-dark">Statistici</span>
         </div>
 
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
           Statistici Link Scurt
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -91,7 +91,7 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
       </div>
 
       {/* Link Info Card */}
-      <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div className="mb-6 bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
@@ -105,7 +105,7 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
             <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
               URL Original
             </h3>
-            <p className="text-gray-900 dark:text-white truncate">
+            <p className="text-primary dark:text-primary-dark truncate">
               {shortLink.originalUrl}
             </p>
           </div>
@@ -114,7 +114,7 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
               <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                 Titlu
               </h3>
-              <p className="text-gray-900 dark:text-white">
+              <p className="text-primary dark:text-primary-dark">
                 {shortLink.title}
               </p>
             </div>
@@ -123,7 +123,7 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
             <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
               Creat
             </h3>
-            <p className="text-gray-900 dark:text-white">
+            <p className="text-primary dark:text-primary-dark">
               {new Date(shortLink.createdAt).toLocaleDateString('ro-RO', {
                 year: 'numeric',
                 month: 'long',
@@ -138,13 +138,13 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Total Clicuri
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+              <p className="text-2xl font-bold text-primary dark:text-primary-dark mt-1">
                 {shortLink.clickCount.toLocaleString('ro-RO')}
               </p>
             </div>
@@ -166,13 +166,13 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Clicuri (30 zile)
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+              <p className="text-2xl font-bold text-primary dark:text-primary-dark mt-1">
                 {totalClicksFromDays.toLocaleString('ro-RO')}
               </p>
             </div>
@@ -194,13 +194,13 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Surse Unice
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+              <p className="text-2xl font-bold text-primary dark:text-primary-dark mt-1">
                 {topReferrers.length}
               </p>
             </div>
@@ -222,13 +222,13 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Țări
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+              <p className="text-2xl font-bold text-primary dark:text-primary-dark mt-1">
                 {countries.length}
               </p>
             </div>

@@ -47,7 +47,7 @@ export default function TagList({
   if (!tags || tags.length === 0) {
     if (showEmpty) {
       return (
-        <div className={`text-gray-500 text-sm italic ${className}`}>
+        <div className={`text-secondary text-sm italic ${className}`}>
           {emptyMessage}
         </div>
       );
@@ -72,7 +72,7 @@ export default function TagList({
         />
       ))}
       {hasMore && (
-        <span className="text-sm text-gray-500 ml-1">
+        <span className="text-sm text-secondary ml-1">
           +{tags.length - maxTags} more
         </span>
       )}

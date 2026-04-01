@@ -293,7 +293,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
       <div className="container mx-auto px-4 py-16 max-w-6xl">
         {/* Introduction */}
         <div className="max-w-4xl mx-auto text-center mb-20 animate-fade-in stagger-1">
-          <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed">
+          <p className="text-lg md:text-xl text-primary dark:text-primary-dark leading-relaxed">
             {t.intro}
           </p>
         </div>
@@ -302,7 +302,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
         <section className="mb-20 animate-fade-in-up stagger-2">
           <div className="text-center mb-12">
             <div className="inline-block">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-2 relative">
+              <h2 className="text-4xl md:text-5xl font-bold text-primary dark:text-primary-dark mb-2 relative">
                 {t.leadership.title}
                 <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brand-tomato-500 to-transparent"></div>
               </h2>
@@ -313,11 +313,11 @@ export default async function TeamPage({ params }: TeamPageProps) {
             {t.leadership.members.map((member, index) => (
               <div
                 key={index}
-                className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2"
+                className="group relative bg-surface dark:bg-surface-dark rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2"
               >
                 {/* Premium Gradient Border */}
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-tomato-500 via-brand-red-600 to-brand-oxford-900 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="absolute inset-[2px] bg-white dark:bg-gray-800 rounded-2xl"></div>
+                <div className="absolute inset-[2px] bg-surface dark:bg-surface-dark rounded-2xl"></div>
 
                 {/* Card Content */}
                 <div className="relative p-8">
@@ -328,7 +328,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
                     </span>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center group-hover:text-brand-tomato-500 transition-colors duration-300">
+                  <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-2 text-center group-hover:text-brand-tomato-500 transition-colors duration-300">
                     {member.name}
                   </h3>
 
@@ -338,7 +338,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
 
                   <div className="h-1 w-16 bg-gradient-to-r from-brand-tomato-500 to-brand-red-600 mx-auto mb-4 rounded-full"></div>
 
-                  <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed">
+                  <p className="text-gray-600 dark:text-primary-dark text-center leading-relaxed">
                     {member.bio}
                   </p>
                 </div>
@@ -351,7 +351,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
         <section className="mb-20 animate-fade-in-up stagger-3">
           <div className="text-center mb-12">
             <div className="inline-block">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-2 relative">
+              <h2 className="text-4xl md:text-5xl font-bold text-primary dark:text-primary-dark mb-2 relative">
                 {t.editorial.title}
                 <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brand-oxford-900 to-transparent"></div>
               </h2>
@@ -362,7 +362,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
             {t.editorial.members.map((member, index) => (
               <div
                 key={index}
-                className="group bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-l-4 border-brand-oxford-900 hover:border-brand-tomato-500 hover:-translate-y-1"
+                className="group bg-surface dark:bg-surface-dark rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-l-4 border-brand-oxford-900 hover:border-brand-tomato-500 hover:-translate-y-1"
               >
                 <div className="p-6">
                   {/* Avatar with Oxford Blue */}
@@ -372,7 +372,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 text-center group-hover:text-brand-oxford-900 dark:group-hover:text-brand-tomato-500 transition-colors duration-300">
+                  <h3 className="text-xl font-bold text-primary dark:text-primary-dark mb-1 text-center group-hover:text-brand-oxford-900 dark:group-hover:text-brand-tomato-500 transition-colors duration-300">
                     {member.name}
                   </h3>
 
@@ -380,7 +380,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
                     {member.role}
                   </p>
 
-                  <p className="text-gray-600 dark:text-gray-300 text-center text-sm leading-relaxed">
+                  <p className="text-gray-600 dark:text-primary-dark text-center text-sm leading-relaxed">
                     {member.bio}
                   </p>
                 </div>
@@ -393,7 +393,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
         <section className="animate-fade-in-up stagger-4">
           <div className="text-center mb-12">
             <div className="inline-block">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-2 relative">
+              <h2 className="text-4xl md:text-5xl font-bold text-primary dark:text-primary-dark mb-2 relative">
                 {t.technical.title}
                 <div className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brand-red-600 to-transparent"></div>
               </h2>
@@ -404,7 +404,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
             {t.technical.members.map((member, index) => (
               <div
                 key={index}
-                className="group relative bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-750 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2 border border-gray-200 dark:border-gray-700"
+                className="group relative bg-gradient-to-br from-gray-50 to-surface dark:from-gray-800 dark:to-gray-750 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden hover:-translate-y-2 border border-gray-200 dark:border-gray-700"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-oxford-900/5 to-brand-red-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
@@ -416,7 +416,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
                     </span>
                   </div>
 
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center">
+                  <h3 className="text-2xl font-bold text-primary dark:text-primary-dark mb-2 text-center">
                     {member.name}
                   </h3>
 
@@ -426,7 +426,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
 
                   <div className="h-1 w-16 bg-gradient-to-r from-brand-oxford-900 to-brand-red-600 mx-auto mb-4 rounded-full"></div>
 
-                  <p className="text-gray-600 dark:text-gray-300 text-center leading-relaxed">
+                  <p className="text-gray-600 dark:text-primary-dark text-center leading-relaxed">
                     {member.bio}
                   </p>
                 </div>

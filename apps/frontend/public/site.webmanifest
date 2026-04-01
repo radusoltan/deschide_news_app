@@ -1,11 +1,33 @@
 {
-  "name": "Deschide News",
+  "name": "Deschide — Știri din Moldova",
   "short_name": "Deschide",
-  "description": "Multilingual news portal - Romanian, English, Russian",
-  "icons": [],
-  "theme_color": "#112240",
-  "background_color": "#ffffff",
-  "display": "standalone",
+  "description": "Portal de știri independent din Republica Moldova. Știri în română, engleză și rusă.",
   "start_url": "/",
-  "scope": "/"
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#112240",
+  "background_color": "#faf9f6",
+  "lang": "ro",
+  "dir": "ltr",
+  "categories": ["news", "magazine"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
 }

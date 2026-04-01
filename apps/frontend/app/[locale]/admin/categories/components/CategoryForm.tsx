@@ -37,12 +37,12 @@ function Toggle({
         }`}
       >
         <span
-          className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-1 ring-gray-200 dark:ring-gray-500 transition-transform duration-200 translate-y-0.5 ${
+          className={`inline-block h-5 w-5 rounded-full bg-surface shadow-sm ring-1 ring-gray-200 dark:ring-gray-500 transition-transform duration-200 translate-y-0.5 ${
             checked ? 'translate-x-[1.375rem]' : 'translate-x-0.5'
           }`}
         />
       </span>
-      <span className="text-sm font-medium text-gray-900 dark:text-gray-300">{label}</span>
+      <span className="text-sm font-medium text-primary dark:text-primary-dark">{label}</span>
     </button>
   );
 }
@@ -301,7 +301,7 @@ export default function CategoryForm({ locale, categories = [], category }: Cate
           required
           disabled={loading}
         />
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-xs text-secondary dark:text-gray-400">
           URL-friendly version of the title
         </p>
       </div>
@@ -323,7 +323,7 @@ export default function CategoryForm({ locale, categories = [], category }: Cate
             </option>
           ))}
         </Select>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-xs text-secondary dark:text-gray-400">
           Select a parent to create a subcategory, or leave empty for a top-level category
         </p>
       </div>
@@ -386,7 +386,7 @@ export default function CategoryForm({ locale, categories = [], category }: Cate
       {formData.onFrontPage && (
         <div className="space-y-3">
           <Label>Front Page Layout</Label>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-secondary dark:text-gray-400">
             Choose how this category section appears on the homepage
           </p>
           {/* Hidden input for form submission */}
@@ -405,7 +405,7 @@ export default function CategoryForm({ locale, categories = [], category }: Cate
                   className={`relative flex flex-col items-center p-3 rounded-lg border-2 transition-all duration-200 cursor-pointer
                     ${isSelected
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500/30'
-                      : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
+                      : 'border-gray-200 dark:border-gray-600 bg-surface dark:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
                     }
                     ${loading ? 'opacity-50 cursor-not-allowed' : ''}
                   `}
@@ -420,15 +420,15 @@ export default function CategoryForm({ locale, categories = [], category }: Cate
                   )}
 
                   {/* Preview diagram */}
-                  <div className={`w-full mb-2 ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                  <div className={`w-full mb-2 ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-secondary'}`}>
                     <Preview />
                   </div>
 
                   {/* Label */}
-                  <span className={`text-xs font-semibold ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300'}`}>
+                  <span className={`text-xs font-semibold ${isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-primary dark:text-primary-dark'}`}>
                     {option.label}
                   </span>
-                  <span className={`text-[10px] mt-0.5 text-center leading-tight ${isSelected ? 'text-blue-600/70 dark:text-blue-400/70' : 'text-gray-400 dark:text-gray-500'}`}>
+                  <span className={`text-[10px] mt-0.5 text-center leading-tight ${isSelected ? 'text-blue-600/70 dark:text-blue-400/70' : 'text-gray-400 dark:text-secondary'}`}>
                     {option.description}
                   </span>
                 </button>

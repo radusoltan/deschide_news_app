@@ -99,7 +99,7 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-primary dark:text-primary-dark">
             {t.title}
           </h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
@@ -139,13 +139,13 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         {/* Total */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 {t.totalLiveTexts}
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {totalItems}
               </p>
             </div>
@@ -168,13 +168,13 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
         </div>
 
         {/* Live */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 {t.live}
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {liveCount}
               </p>
             </div>
@@ -191,13 +191,13 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
         </div>
 
         {/* Paused */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 {t.paused}
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {pausedCount}
               </p>
             </div>
@@ -220,13 +220,13 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
         </div>
 
         {/* Draft */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 {t.draft}
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {draftCount}
               </p>
             </div>
@@ -249,13 +249,13 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
         </div>
 
         {/* Ended */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 {t.ended}
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {endedCount}
               </p>
             </div>
@@ -285,7 +285,7 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             !statusParam
               ? 'bg-red-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
           }`}
         >
           {t.all}
@@ -295,7 +295,7 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             statusParam === 'live'
               ? 'bg-red-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
           }`}
         >
           {t.live}
@@ -305,7 +305,7 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             statusParam === 'paused'
               ? 'bg-red-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
           }`}
         >
           {t.paused}
@@ -315,7 +315,7 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             statusParam === 'draft'
               ? 'bg-red-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
           }`}
         >
           {t.draft}
@@ -325,7 +325,7 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             statusParam === 'ended'
               ? 'bg-red-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              : 'bg-gray-200 text-primary hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600'
           }`}
         >
           {t.ended}
@@ -338,7 +338,7 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-8 flex items-center justify-between">
-          <div className="text-sm text-gray-700 dark:text-gray-400">
+          <div className="text-sm text-primary dark:text-gray-400">
             Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
             {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} results
           </div>
@@ -346,7 +346,7 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
             {currentPage > 1 && (
               <Link
                 href={`/${locale}/admin/live-texts?page=${currentPage - 1}${statusParam ? `&status=${statusParam}` : ''}`}
-                className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-primary dark:text-primary-dark hover:bg-surface-sunken dark:hover:bg-gray-700"
               >
                 Previous
               </Link>
@@ -354,7 +354,7 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
             {currentPage < totalPages && (
               <Link
                 href={`/${locale}/admin/live-texts?page=${currentPage + 1}${statusParam ? `&status=${statusParam}` : ''}`}
-                className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 bg-surface dark:bg-surface-dark border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium text-primary dark:text-primary-dark hover:bg-surface-sunken dark:hover:bg-gray-700"
               >
                 Next
               </Link>

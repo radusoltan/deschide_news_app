@@ -30,7 +30,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className = '' }:
 
   if (variant === 'table') {
     return (
-      <div className={`animate-pulse bg-white p-6 rounded-lg shadow ${className}`}>
+      <div className={`animate-pulse bg-surface p-6 rounded-lg shadow ${className}`}>
         <div className="h-6 bg-gray-300 rounded w-1/3 mb-4"></div>
         <div className="space-y-3">
           {skeletons.map((i) => (
@@ -62,7 +62,7 @@ export function LoadingSkeleton({ variant = 'card', count = 1, className = '' }:
   return (
     <>
       {skeletons.map((i) => (
-        <div key={i} className={`animate-pulse bg-white p-6 rounded-lg shadow ${className}`}>
+        <div key={i} className={`animate-pulse bg-surface p-6 rounded-lg shadow ${className}`}>
           <div className="h-6 bg-gray-300 rounded w-1/2 mb-4"></div>
           <div className="space-y-3">
             <div className="h-4 bg-gray-200 rounded w-full"></div>

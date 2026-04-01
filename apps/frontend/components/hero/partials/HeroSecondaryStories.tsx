@@ -102,7 +102,7 @@ const SecondaryStoryCard: React.FC<{
         className="group flex-shrink-0 w-[280px] snap-start"
         style={{ animationDelay: `${index * 100}ms` }}
       >
-        <article className="bg-white/5 backdrop-blur-sm rounded-lg overflow-hidden hover:bg-white/10 transition-all duration-300">
+        <article className="bg-surface/5 backdrop-blur-sm rounded-lg overflow-hidden hover:bg-surface/10 transition-all duration-300">
           {/* Image */}
           <div className="relative aspect-video">
             {imageToUse ? (
@@ -142,7 +142,7 @@ const SecondaryStoryCard: React.FC<{
       className="group block animate-fade-in"
       style={{ animationDelay: `${index * 100}ms` }}
     >
-      <article className="flex gap-3 p-3 rounded-lg hover:bg-white/5 transition-all duration-300">
+      <article className="flex gap-3 p-3 rounded-lg hover:bg-surface/5 transition-all duration-300">
         {/* Thumbnail */}
         <div className="relative w-24 h-16 flex-shrink-0 rounded-md overflow-hidden">
           {imageToUse ? (
