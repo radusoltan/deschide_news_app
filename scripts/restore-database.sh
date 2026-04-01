@@ -15,8 +15,13 @@ DB_HOST="127.0.0.1"
 DB_PORT="6432"
 BACKEND_DIR="/var/www/deschide_news_app/apps/backend"
 
-# Database password (from environment or default)
-export PGPASSWORD="${PGPASSWORD:-iIzmHACi7+W+yq9NFRT2FeadUPAmgEna}"
+# Database password (MUST be set in environment - no hardcoded defaults)
+if [ -z "${PGPASSWORD:-}" ]; then
+    echo -e "${RED}[ERROR]${NC} PGPASSWORD environment variable is not set."
+    echo -e "${RED}[ERROR]${NC} Set it before running: export PGPASSWORD='your_password'"
+    exit 1
+fi
+export PGPASSWORD
 
 # Color codes for output
 GREEN='\033[0;32m'
