@@ -305,6 +305,17 @@ services:
         arguments:
             $vaultPath: '%env(default::VAULT_PATH)%'
 
+    # Daily Briefing Service (Sprint 17 — briefing zilnic)
+    App\Service\Editorial\DailyBriefingService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $briefingNotebookId: '%notebooklm.briefing_notebook_id%'
+
+    # Daily Briefing Command (Sprint 17)
+    App\Command\Editorial\DailyBriefingCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:
