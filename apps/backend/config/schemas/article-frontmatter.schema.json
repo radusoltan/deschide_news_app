@@ -44,19 +44,16 @@
       "description": "Prioritatea editorială"
     },
     "date_created": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Data creării (ISO 8601)"
+      "type": ["string", "integer"],
+      "description": "Data creării (ISO 8601 string sau Unix timestamp)"
     },
     "date_published": {
-      "type": ["string", "null"],
-      "format": "date-time",
-      "description": "Data publicării (ISO 8601)"
+      "type": ["string", "integer", "null"],
+      "description": "Data publicării (ISO 8601 string sau Unix timestamp)"
     },
     "date_modified": {
-      "type": ["string", "null"],
-      "format": "date-time",
-      "description": "Data ultimei modificări (ISO 8601)"
+      "type": ["string", "integer", "null"],
+      "description": "Data ultimei modificări (ISO 8601 string sau Unix timestamp)"
     },
     "author": {
       "type": ["string", "null"],
@@ -161,9 +158,8 @@
           "description": "Identificator agent AI"
         },
         "processed_at": {
-          "type": ["string", "null"],
-          "format": "date-time",
-          "description": "Data procesării AI"
+          "type": ["string", "integer", "null"],
+          "description": "Data procesării AI (ISO 8601 string sau Unix timestamp)"
         },
         "auto_generated": {
           "type": "boolean",

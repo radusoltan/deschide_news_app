@@ -71,9 +71,9 @@ class VaultSyncService
         // Map tags
         $this->mapTags($article, $fm['tags'] ?? []);
 
-        // Map dates
+        // Map dates (YAML parser may return Unix timestamps or ISO strings)
         if (isset($fm['date_published']) && $fm['date_published'] !== null) {
-            $article->setPublishedAt(new \DateTimeImmutable($fm['date_published']));
+            $article->setPublishedAt($this->parseDate($fm['date_published']));
         }
 
         // Map SEO fields for default locale (ro)
@@ -223,6 +223,15 @@ class VaultSyncService
         if (is_array($keywords) && $keywords !== []) {
             $article->setMetaDescription(mb_substr(implode(', ', $keywords), 0, 160));
         }
+    }
+
+    private function parseDate(string|int $value): \DateTimeImmutable
+    {
+        if (is_int($value)) {
+            return (new \DateTimeImmutable())->setTimestamp($value);
+        }
+
+        return new \DateTimeImmutable($value);
     }
 
     private function slugify(string $text): string
