@@ -54,7 +54,7 @@ export default function CategoryFilter({
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
         const response = await fetch(`${apiUrl}/api/archive/categories?locale=${locale}`, {
           headers: {
             'Accept': 'application/json',
@@ -111,7 +111,7 @@ export default function CategoryFilter({
         <span
           className={`
             text-xs px-2 py-0.5 rounded-full
-            ${selectedCategory === null ? 'bg-white/20' : 'bg-amber-200/50'}
+            ${selectedCategory === null ? 'bg-surface/20' : 'bg-amber-200/50'}
           `}
         >
           {totalCount.toLocaleString()}
@@ -130,7 +130,7 @@ export default function CategoryFilter({
               ${
                 selectedCategory === category.id
                   ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg shadow-amber-600/25'
-                  : 'bg-white/50 hover:bg-amber-50 text-amber-800 hover:shadow-sm border border-amber-100/50 hover:border-amber-200'
+                  : 'bg-surface/50 hover:bg-amber-50 text-amber-800 hover:shadow-sm border border-amber-100/50 hover:border-amber-200'
               }
             `}
           >
@@ -140,7 +140,7 @@ export default function CategoryFilter({
                 text-xs px-2 py-0.5 rounded-full flex-shrink-0
                 ${
                   selectedCategory === category.id
-                    ? 'bg-white/20 text-amber-100'
+                    ? 'bg-surface/20 text-amber-100'
                     : 'bg-amber-100 text-amber-700 group-hover:bg-amber-200'
                 }
               `}

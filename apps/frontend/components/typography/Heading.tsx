@@ -40,7 +40,7 @@ export const Heading: React.FC<HeadingProps> = ({
   const colorVariants = {
     oxford: 'text-brand-oxford',
     tomato: 'text-brand-tomato',
-    default: 'text-gray-900 dark:text-white',
+    default: 'text-primary dark:text-primary-dark',
   };
 
   // Typography scale with responsive sizing
@@ -97,7 +97,7 @@ export const HeroHeading: React.FC<Omit<HeadingProps, 'level'>> = ({
   const colorVariants = {
     oxford: 'text-brand-oxford',
     tomato: 'text-brand-tomato',
-    default: 'text-gray-900 dark:text-white',
+    default: 'text-primary dark:text-primary-dark',
   };
 
   const sizeStyles = responsive

@@ -43,7 +43,7 @@ export default async function CategorySection({
   const viewAllLabel = viewAllLabels[locale] || viewAllLabels.ro;
 
   return (
-    <section className="bg-white py-6">
+    <section className="bg-surface py-6">
       <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
         {/* Section header */}
         <div className="flex items-center justify-between mb-5">

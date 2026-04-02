@@ -2,7 +2,7 @@
  * Press Releases API - Editorial queue management
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 export interface PressRelease {
   '@id': string;

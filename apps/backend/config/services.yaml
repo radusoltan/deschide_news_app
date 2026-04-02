@@ -215,6 +215,117 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
+    # Entity Translation Handler (Gemini CLI subprocess — categories, authors)
+    App\MessageHandler\TranslateEntityHandler:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $projectDir: '%kernel.project_dir%'
+
+    # SEO Optimization Handler (Gemini CLI subprocess)
+    App\MessageHandler\OptimizeSeoHandler:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $projectDir: '%kernel.project_dir%'
+
+    # SEO Backfill Command (Gemini CLI batch subprocess)
+    App\Command\SeoBackfillCommand:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $projectDir: '%kernel.project_dir%'
+
+    # Elasticsearch Trilingual Index Manager (Sprint 16)
+    App\Service\Search\ElasticsearchIndexManager:
+        arguments:
+            $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
+            $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
+            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
+
+    # Gemini Structured Translator (Sprint 16)
+    App\Service\Translation\GeminiStructuredTranslator:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
+    # Scraping Services (Sprint 16)
+    App\MessageHandler\Editorial\ProcessScrapedArticleHandler:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    App\Service\Scraping\RssFeedParser:
+        arguments:
+            $scrapingUserAgent: '%scraping.user_agent%'
+            $scrapingTimeout: '%scraping.timeout%'
+
+    App\Service\Scraping\ScraperService:
+        arguments:
+            $scrapingUserAgent: '%scraping.user_agent%'
+            $scrapingTimeout: '%scraping.timeout%'
+            $scrapingRateLimitDefault: '%scraping.rate_limit_default%'
+
+    # NotebookLM Service (Sprint 17 — AI Agents)
+    App\Service\NotebookLM\NotebookLMService:
+        arguments:
+            $enabled: '%notebooklm.enabled%'
+            $cliPath: '%notebooklm.cli_path%'
+
+    # Article Ingestion Service (Sprint 17 — entity extraction, atomic notes, MOC)
+    App\Service\Editorial\ArticleIngestionService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $notebooks: '%notebooklm.notebooks%'
+
+    # Ingest Article Handler (Sprint 17 — async AI ingestion pipeline)
+    App\MessageHandler\Editorial\IngestArticleHandler:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Ingest Article Command (Sprint 17 — manual ingestion)
+    App\Command\Editorial\IngestArticleCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Dossier Generation Service (Sprint 17 — automated dossiers)
+    App\Service\Editorial\DossierGenerationService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
+    # Generate Dossiers Command (Sprint 17)
+    App\Command\Editorial\GenerateDossiersCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Weekly Summary Service (Sprint 17 — sinteză săptămânală)
+    App\Service\Editorial\WeeklySummaryService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $weeklyNotebookId: '%notebooklm.weekly_notebook_id%'
+
+    # Weekly Summary Command (Sprint 17)
+    App\Command\Editorial\WeeklySummaryCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Daily Briefing Service (Sprint 17 — briefing zilnic)
+    App\Service\Editorial\DailyBriefingService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $briefingNotebookId: '%notebooklm.briefing_notebook_id%'
+
+    # Daily Briefing Command (Sprint 17)
+    App\Command\Editorial\DailyBriefingCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Editorial Metrics Service (Sprint 18 — dashboard + vault snapshot)
+    App\Service\Metrics\EditorialMetricsService:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Translation Evaluator Service (Sprint 18 — Evaluator-Optimizer loop)
+    App\Service\Translation\TranslationEvaluatorService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:
@@ -236,4 +347,9 @@ when@test:
         # Make password hasher public for test fixtures
         Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface:
             alias: 'security.user_password_hasher'
+            public: true
+
+        # Make editorial services public for integration tests
+        App\Service\Editorial\VaultSyncService:
+            autowire: true
             public: true

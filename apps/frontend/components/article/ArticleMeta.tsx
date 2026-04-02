@@ -162,7 +162,7 @@ export default function ArticleMeta({ article, locale, className = '' }: Article
   return (
     <div className={className}>
       {/* Article Meta Info Bar */}
-      <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between overflow-hidden bg-gray-100 dark:bg-gray-900 dark:bg-opacity-20 mt-12 mb-6 px-6 py-4">
+      <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between overflow-hidden bg-gray-100 dark:bg-surface-dark dark:bg-opacity-20 mt-12 mb-6 px-6 py-4">
         <div className="text-sm mb-4 sm:mb-0">
           {/* Authors */}
           {authors.length > 0 && (
@@ -240,7 +240,7 @@ export default function ArticleMeta({ article, locale, className = '' }: Article
 
       {/* Social Share Buttons - Mobile */}
       <div className="lg:hidden mb-6 px-6 py-4 bg-gray-100">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Share this article</h3>
+        <h3 className="text-sm font-semibold text-primary mb-3">Share this article</h3>
         <SocialShare title={article.title} url={pageUrl} />
       </div>
 

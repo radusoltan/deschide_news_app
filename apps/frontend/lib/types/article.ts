@@ -20,9 +20,11 @@ export interface Category {
   status?: string;
   onFrontPage?: boolean;
   frontPagePosition?: number;
+  frontPageLayout?: string | null;
   inMenu?: boolean;
   inFooterMenu?: boolean;
   articleCount?: number;
+  translatedSlugs?: { ro?: string; en?: string; ru?: string };
 }
 
 export interface Author {
@@ -63,6 +65,9 @@ export interface Article {
   archiveReason?: string; // Reason for archival (e.g., 'outdated', 'inaccurate', 'manual')
   locale?: string;
   translatableLocale?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  translatedSlugs?: { ro?: string; en?: string; ru?: string };
 }
 
 export interface ArticleListResponse {

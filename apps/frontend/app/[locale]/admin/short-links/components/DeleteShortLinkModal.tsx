@@ -59,10 +59,10 @@ export default function DeleteShortLinkModal({
       <ModalHeader>Confirmare ștergere</ModalHeader>
       <ModalBody>
         <div className="space-y-4">
-          <p className="text-base leading-relaxed text-gray-500 dark:text-gray-400">
+          <p className="text-base leading-relaxed text-secondary dark:text-gray-400">
             Sigur doriți să ștergeți linkul scurt <strong>{shortLink.code}</strong>?
           </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-secondary dark:text-gray-400">
             Această acțiune este permanentă și nu poate fi anulată. Toate
             statisticile asociate vor fi pierdute.
           </p>

@@ -75,7 +75,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-primary dark:text-primary-dark">
             Articles
           </h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
@@ -96,13 +96,13 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Total Articles
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {totalItems}
               </p>
             </div>
@@ -124,13 +124,13 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Published
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {publishedArticles}
               </p>
             </div>
@@ -152,13 +152,13 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 New
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {newArticles}
               </p>
             </div>
@@ -180,13 +180,13 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Total Views
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {totalViews.toLocaleString()}
               </p>
             </div>

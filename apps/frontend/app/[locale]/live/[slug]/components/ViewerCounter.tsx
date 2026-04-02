@@ -102,7 +102,7 @@ export function ViewerCounter({
       {/* Viewer count with animation */}
       <div className="flex items-baseline gap-1">
         <span
-          className={`font-semibold text-gray-900 dark:text-gray-100 transition-all duration-500 ${
+          className={`font-semibold text-primary dark:text-gray-100 transition-all duration-500 ${
             isAnimating ? 'scale-110 text-red-600' : ''
           }`}
         >

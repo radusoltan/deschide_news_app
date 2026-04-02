@@ -9,7 +9,7 @@ interface ViewsOverTimeChartProps {
 export function ViewsOverTimeChart({ data }: ViewsOverTimeChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+      <div className="text-center text-secondary dark:text-gray-400 py-8">
         No data available
       </div>
     );
@@ -92,12 +92,12 @@ export function ViewsOverTimeChart({ data }: ViewsOverTimeChartProps) {
       {/* Legend */}
       <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
         <div>
-          Total: <span className="font-semibold text-gray-900 dark:text-gray-100">
+          Total: <span className="font-semibold text-primary dark:text-gray-100">
             {data.reduce((sum, item) => sum + item.count, 0).toLocaleString()}
           </span> views
         </div>
         <div>
-          Peak: <span className="font-semibold text-gray-900 dark:text-gray-100">
+          Peak: <span className="font-semibold text-primary dark:text-gray-100">
             {maxCount.toLocaleString()}
           </span> views/hour
         </div>

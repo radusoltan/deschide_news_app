@@ -82,7 +82,7 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
   };
 
   return (
-    <section className="bg-white py-6">
+    <section className="bg-surface py-6">
       <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
         {/* Main grid: 4 columns - Hero spans 2 cols + 2 rows, 4 secondary cards fill the rest */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">

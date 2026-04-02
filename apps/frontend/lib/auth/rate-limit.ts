@@ -137,8 +137,8 @@ export async function getClientIdentifier(): Promise<string> {
   if (realIp) return realIp;
   if (forwardedFor) return forwardedFor.split(',')[0].trim();
 
-  // Fallback for development
-  return 'localhost';
+  // Stable fallback when proxy headers are unavailable.
+  return 'unknown-client';
 }
 
 /**

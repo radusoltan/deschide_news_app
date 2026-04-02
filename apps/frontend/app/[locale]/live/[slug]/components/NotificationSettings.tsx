@@ -28,7 +28,7 @@ export function NotificationSettings({ className = '' }: NotificationSettingsPro
   const { isEnabled, volume, toggle, setVolume, test } = useSoundNotifications();
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 ${className}`}>
+    <div className={`bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-4 ${className}`}>
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -38,7 +38,7 @@ export function NotificationSettings({ className = '' }: NotificationSettingsPro
             ) : (
               <BellOff className="h-5 w-5 text-gray-400" />
             )}
-            <h3 className="font-medium text-gray-900 dark:text-gray-100">
+            <h3 className="font-medium text-primary dark:text-gray-100">
               Sound Notifications
             </h3>
           </div>
@@ -54,7 +54,7 @@ export function NotificationSettings({ className = '' }: NotificationSettingsPro
           >
             <span
               className={`
-                inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                inline-block h-4 w-4 transform rounded-full bg-surface transition-transform
                 ${isEnabled ? 'translate-x-6' : 'translate-x-1'}
               `}
             />
@@ -73,7 +73,7 @@ export function NotificationSettings({ className = '' }: NotificationSettingsPro
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600 dark:text-gray-400">Volume</span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
+              <span className="font-medium text-primary dark:text-gray-100">
                 {Math.round(volume * 100)}%
               </span>
             </div>
@@ -101,11 +101,11 @@ export function NotificationSettings({ className = '' }: NotificationSettingsPro
         {/* Test Buttons */}
         {isEnabled && (
           <div className="space-y-2">
-            <div className="text-xs text-gray-500 dark:text-gray-500">Test sounds:</div>
+            <div className="text-xs text-secondary dark:text-secondary">Test sounds:</div>
             <div className="flex gap-2">
               <button
                 onClick={() => test('normal')}
-                className="flex-1 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="flex-1 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-primary dark:text-primary-dark rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 Normal
               </button>

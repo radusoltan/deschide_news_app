@@ -8,7 +8,7 @@ import type { Article } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
 /**
  * Truncate text to specified length with ellipsis
@@ -31,7 +31,7 @@ function stripHtml(html: string): string {
  * Best practices: 50-60 characters, front-load keywords
  */
 export function generateTitle(article: Article, locale: Locale): string {
-  const baseTitle = truncate(article.title, 55);
+  const baseTitle = article.metaTitle || truncate(article.title, 55);
   return `${baseTitle} | ${SITE_NAME}`;
 }
 
@@ -40,6 +40,10 @@ export function generateTitle(article: Article, locale: Locale): string {
  * Best practices: 150-160 characters, include keywords, call-to-action
  */
 export function generateDescription(article: Article): string {
+  if (article.metaDescription) {
+    return truncate(article.metaDescription, 160);
+  }
+
   if (article.lead) {
     return truncate(article.lead, 155);
   }
@@ -211,7 +215,27 @@ export function generateArticleMetadata(
   const description = generateDescription(article);
   const keywords = generateKeywords(article);
   const canonicalUrl = buildCanonicalUrl(article, locale);
-  const alternateUrls = buildAlternateUrls(article);
+
+  // Build translations for hreflang alternate URLs using translatedSlugs
+  const articleSlugs = article.translatedSlugs;
+  const categorySlugs = typeof article.category === 'object' ? article.category?.translatedSlugs : undefined;
+  const translations = (articleSlugs || categorySlugs)
+    ? {
+        ro: {
+          slug: articleSlugs?.ro || article.slug,
+          category: { slug: categorySlugs?.ro || getCategorySlug(article.category) },
+        },
+        en: {
+          slug: articleSlugs?.en || article.slug,
+          category: { slug: categorySlugs?.en || getCategorySlug(article.category) },
+        },
+        ru: {
+          slug: articleSlugs?.ru || article.slug,
+          category: { slug: categorySlugs?.ru || getCategorySlug(article.category) },
+        },
+      }
+    : undefined;
+  const alternateUrls = buildAlternateUrls(article, translations);
   const authorNames = getAuthorNames(article);
   const categoryTitle = getCategoryTitle(article.category);
   const publishedTime = getPublicationDate(article);

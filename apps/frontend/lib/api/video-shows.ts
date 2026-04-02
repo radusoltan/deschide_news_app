@@ -9,7 +9,7 @@ import {
   YouTubeVideosListResponse,
 } from '../types/video';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 // ============================================================================
 // Video Shows API

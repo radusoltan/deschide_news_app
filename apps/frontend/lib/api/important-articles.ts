@@ -5,7 +5,7 @@
 
 import { ImportantArticlesListResponse } from '../types/article';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 /**
  * Fetch important articles list
@@ -28,7 +28,7 @@ export async function fetchImportantArticles(
   const response = await fetch(`${API_BASE_URL}/api/important_articles`, {
     method: 'GET',
     headers,
-    next: { tags: ['articles'] },
+    next: { revalidate: 60, tags: ['articles'] },
   });
 
   if (!response.ok) {
@@ -74,7 +74,7 @@ export function getFeaturedImage(articleImages: any[]) {
  * @returns Full CDN URL
  */
 export function buildImageUrl(path: string): string {
-  const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
+  const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
   return `${CDN_URL}/uploads/${path}`;
 }
 

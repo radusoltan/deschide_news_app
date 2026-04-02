@@ -72,7 +72,7 @@ export default function NetworkError({ locale, onRetry }: NetworkErrorProps) {
         </div>
 
         {/* Error Message */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">
+        <h1 className="text-2xl font-bold text-primary mb-3">
           {t.title}
         </h1>
         <p className="text-gray-600 mb-6">
@@ -80,8 +80,8 @@ export default function NetworkError({ locale, onRetry }: NetworkErrorProps) {
         </p>
 
         {/* Tips */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg text-left">
-          <p className="text-sm font-semibold text-gray-700 mb-3">{t.tips}</p>
+        <div className="mb-6 p-4 bg-surface-sunken rounded-lg text-left">
+          <p className="text-sm font-semibold text-primary mb-3">{t.tips}</p>
           <ul className="space-y-2 text-sm text-gray-600">
             <li className="flex items-start gap-2">
               <span className="text-orange-600 mt-0.5">•</span>
@@ -110,7 +110,7 @@ export default function NetworkError({ locale, onRetry }: NetworkErrorProps) {
           )}
           <Link
             href={`/${locale}`}
-            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+            className="px-6 py-3 bg-gray-200 text-primary rounded-lg font-medium hover:bg-gray-300 transition-colors"
           >
             {t.home}
           </Link>

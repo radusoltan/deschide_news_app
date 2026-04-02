@@ -3,7 +3,7 @@
 import { getAccessToken } from '@/lib/dal';
 import type { PaginatedNotifications, UnreadCountResponse } from '@/lib/types/notification';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 export async function fetchUnreadCount(): Promise<UnreadCountResponse> {
   try {

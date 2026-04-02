@@ -83,7 +83,7 @@ export function formatRelativeTime(dateString: string, locale: string): string {
   if (diffMins < 60) {
     return `${diffMins} min`;
   }
-  if (diffHours < 1) {
+  if (diffHours < 24) {
     return `${diffHours}h`;
   }
 

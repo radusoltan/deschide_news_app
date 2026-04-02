@@ -21,7 +21,7 @@ export function LiveTextSkeleton() {
       <div className="hidden lg:grid grid-cols-12 gap-6">
         {/* Main live content */}
         <div className="col-span-8">
-          <div className="bg-white rounded-xl border p-6 space-y-4">
+          <div className="bg-surface rounded-xl border p-6 space-y-4">
             {/* Live header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -65,7 +65,7 @@ export function LiveTextSkeleton() {
         <div className="col-span-4 space-y-4">
           <div className="h-6 w-32 bg-gray-200 rounded" />
           {[1, 2].map((i) => (
-            <div key={i} className="bg-white rounded-lg border p-4 space-y-3">
+            <div key={i} className="bg-surface rounded-lg border p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 bg-red-400 rounded-full" />
                 <div className="h-5 w-32 bg-gray-200 rounded" />
@@ -79,7 +79,7 @@ export function LiveTextSkeleton() {
 
       {/* Mobile: Single card */}
       <div className="lg:hidden">
-        <div className="bg-white rounded-xl border p-4 space-y-4">
+        <div className="bg-surface rounded-xl border p-4 space-y-4">
           {/* Live badge */}
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 bg-red-200 rounded-full" />

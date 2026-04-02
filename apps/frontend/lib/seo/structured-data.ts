@@ -8,7 +8,7 @@ import type { Locale } from '@/lib/types';
 import { getCategorySlug, getCategoryTitle, getAuthorNames } from './metadata-generator';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 const ORGANIZATION_LOGO = `${SITE_URL}/logo.png`;
 
 /**
@@ -114,10 +114,14 @@ export function generateNewsArticleSchema(
     wordCount = plainText.split(/\s+/).length;
   }
 
-  // Get keywords
+  // Get keywords (category + authors + tags)
+  const tagNames = (article.tags || [])
+    .map((tag: any) => (typeof tag === 'object' && tag?.name ? tag.name : null))
+    .filter(Boolean);
   const keywords = [
     getCategoryTitle(article.category),
     ...getAuthorNames(article),
+    ...tagNames,
   ].filter(Boolean).join(', ');
 
   // Determine dateModified based on archive status

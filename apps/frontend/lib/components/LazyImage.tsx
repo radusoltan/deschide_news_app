@@ -198,8 +198,8 @@ export function LazyImage({
 
       {/* Error State */}
       {hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-          <div className="text-center text-gray-500 dark:text-gray-400">
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-surface-dark">
+          <div className="text-center text-secondary dark:text-gray-400">
             <svg
               className="w-12 h-12 mx-auto mb-2"
               fill="none"

@@ -13,7 +13,7 @@ import { CACHE_TAGS } from './cache-config';
 // Configuration
 // ============================================================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 // ============================================================================
 // Types
@@ -243,7 +243,7 @@ export function getAuthorInitials(name: string): string {
  */
 export function getAuthorAvatarUrl(author: Author): string | null {
   if (author.image?.path) {
-    const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
+    const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
     return `${CDN_URL}/uploads/${author.image.path}`;
   }
   return null;

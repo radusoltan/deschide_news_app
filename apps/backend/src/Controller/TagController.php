@@ -204,6 +204,68 @@ class TagController extends AbstractController
     }
 
     /**
+     * Merge a source tag into a target tag.
+     *
+     * All articles from the source tag are moved to the target tag.
+     * The source tag is deleted after merge.
+     *
+     * Body: { "targetTagId": 5 }
+     *
+     * @example POST /api/tags/10/merge
+     */
+    #[Route('/{id}/merge', name: 'merge', methods: ['POST'], priority: 2)]
+    public function merge(int $id, Request $request): JsonResponse
+    {
+        $sourceTag = $this->tagService->findTagById($id);
+        if (!$sourceTag) {
+            return $this->json([
+                '@context' => '/api/contexts/Error',
+                '@type' => 'hydra:Error',
+                'hydra:title' => 'Tag not found',
+                'hydra:description' => \sprintf('Source tag with ID %d does not exist.', $id),
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $body = json_decode($request->getContent(), true);
+        $targetTagId = $body['targetTagId'] ?? null;
+
+        if (!$targetTagId || !\is_int($targetTagId)) {
+            return $this->json([
+                '@context' => '/api/contexts/Error',
+                '@type' => 'hydra:Error',
+                'hydra:title' => 'Invalid request',
+                'hydra:description' => 'Request body must contain "targetTagId" as integer.',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($targetTagId === $id) {
+            return $this->json([
+                '@context' => '/api/contexts/Error',
+                '@type' => 'hydra:Error',
+                'hydra:title' => 'Invalid merge',
+                'hydra:description' => 'Cannot merge a tag into itself.',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $targetTag = $this->tagService->findTagById($targetTagId);
+        if (!$targetTag) {
+            return $this->json([
+                '@context' => '/api/contexts/Error',
+                '@type' => 'hydra:Error',
+                'hydra:title' => 'Target tag not found',
+                'hydra:description' => \sprintf('Target tag with ID %d does not exist.', $targetTagId),
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $this->tagService->mergeTags($sourceTag, $targetTag);
+
+        return $this->json([
+            'message' => \sprintf('Tag "%s" merged into "%s" successfully.', $sourceTag->getName(), $targetTag->getName()),
+            'targetTag' => $this->serializeTag($targetTag),
+        ], Response::HTTP_OK);
+    }
+
+    /**
      * Extract locale from request (Accept-Language header or query param).
      */
     private function extractLocale(Request $request): string
@@ -226,7 +288,7 @@ class TagController extends AbstractController
      */
     private function serializeTag(Tag $tag): array
     {
-        return [
+        $data = [
             '@id' => \sprintf('/api/tags/%d', $tag->getId()),
             '@type' => 'Tag',
             'id' => $tag->getId(),
@@ -235,5 +297,11 @@ class TagController extends AbstractController
             'description' => $tag->getDescription(),
             'usageCount' => $tag->getUsageCount(),
         ];
+
+        if ($tag->getTranslatedSlugs()) {
+            $data['translatedSlugs'] = $tag->getTranslatedSlugs();
+        }
+
+        return $data;
     }
 }

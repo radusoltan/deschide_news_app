@@ -6,7 +6,7 @@
 export default function ArticleLoading() {
   return (
     <main id="content">
-      <div className="bg-gray-50 py-6">
+      <div className="bg-surface-sunken py-6">
         <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
           <div className="flex flex-row flex-wrap">
             {/* Left - Article Content Skeleton */}
@@ -72,7 +72,7 @@ export default function ArticleLoading() {
 
             {/* Right Sidebar Skeleton */}
             <div className="flex-shrink max-w-full w-full lg:w-1/3 lg:pl-8 lg:pt-14 lg:pb-8 order-first lg:order-last">
-              <div className="w-full bg-white">
+              <div className="w-full bg-surface">
                 <div className="mb-6">
                   <div className="p-4 bg-gray-100">
                     <div className="animate-pulse h-6 bg-gray-300 rounded w-32"></div>

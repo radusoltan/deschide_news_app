@@ -26,7 +26,7 @@ export default function NotificationBell({ username }: NotificationBellProps) {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
+        className="p-2 text-secondary rounded-lg hover:text-primary hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
         aria-label={`Notificari${unreadCount > 0 ? ` (${unreadCount} necitite)` : ''}`}
       >
         <Bell className="w-6 h-6" />

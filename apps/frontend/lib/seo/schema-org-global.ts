@@ -6,7 +6,7 @@
  */
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
 /**
  * NewsMediaOrganization Schema
@@ -60,11 +60,10 @@ export function generateNewsMediaOrganizationSchema(
     },
     description: descriptions[locale],
     sameAs: [
-      // Add your social media profiles here
-      // 'https://facebook.com/deschidenews',
-      // 'https://twitter.com/deschidenews',
-      // 'https://instagram.com/deschidenews',
-      // 'https://linkedin.com/company/deschidenews',
+      'https://facebook.com/deschide',
+      'https://twitter.com/deschide',
+      'https://youtube.com/@deschide',
+      'https://instagram.com/deschide',
     ],
     address: {
       '@type': 'PostalAddress',

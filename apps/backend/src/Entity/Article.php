@@ -51,6 +51,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_article_featured_published', columns: ['is_featured', 'published_at'])]
 #[ORM\Index(name: 'idx_article_category_status_published', columns: ['category_id', 'status', 'published_at'])]
 #[ORM\Index(name: 'idx_article_status_archived', columns: ['status', 'archived_at'])]
+#[ORM\Index(name: 'idx_article_content_hash', columns: ['content_hash'])]
 #[ApiResource(
     operations: [
         new Get(
@@ -168,6 +169,19 @@ class Article implements Translatable
     #[Groups(['article:detail', 'article:write'])] // Content only in detail view
     private ?string $content = null;
 
+    // SEO fields
+    #[Gedmo\Translatable]
+    #[ORM\Column(type: Types::STRING, length: 60, nullable: true)]
+    #[Assert\Length(max: 60, maxMessage: 'Meta title nu poate depăși {{ limit }} caractere.')]
+    #[Groups(['article:read', 'article:write'])]
+    private ?string $metaTitle = null;
+
+    #[Gedmo\Translatable]
+    #[ORM\Column(type: Types::STRING, length: 160, nullable: true)]
+    #[Assert\Length(max: 160, maxMessage: 'Meta description nu poate depăși {{ limit }} caractere.')]
+    #[Groups(['article:read', 'article:write'])]
+    private ?string $metaDescription = null;
+
     // Relationships
     #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'articles')]
     #[ORM\JoinColumn(name: 'category_id', referencedColumnName: 'id', nullable: true)]
@@ -260,6 +274,11 @@ class Article implements Translatable
     #[Groups(['article:read', 'article:write'])]
     private ?string $sourceEmail = null;
 
+    // Content hash for deduplication (SHA-256 of normalized body)
+    #[ORM\Column(length: 64, nullable: true)]
+    #[Groups(['article:read'])]
+    private ?string $contentHash = null;
+
     // Translation workflow fields
     #[ORM\Column(options: ['default' => false])]
     #[Groups(['article:read', 'article:write'])]
@@ -276,6 +295,15 @@ class Article implements Translatable
     #[ORM\Column(length: 50, nullable: true)]
     #[Groups(['article:read'])]
     private ?string $translatedBy = null;
+
+    /**
+     * Non-persisted field populated by ArticleProvider / SlugController.
+     * Contains slug translations for all locales: {"ro": "slug-ro", "en": "slug-en", "ru": "slug-ru"}
+     *
+     * @var array<string, string>|null
+     */
+    #[Groups(['article:read'])]
+    private ?array $translatedSlugs = null;
 
     public function __construct()
     {
@@ -336,6 +364,30 @@ class Article implements Translatable
     public function setContent(string $content): self
     {
         $this->content = $content;
+
+        return $this;
+    }
+
+    public function getMetaTitle(): ?string
+    {
+        return $this->metaTitle;
+    }
+
+    public function setMetaTitle(?string $metaTitle): self
+    {
+        $this->metaTitle = $metaTitle;
+
+        return $this;
+    }
+
+    public function getMetaDescription(): ?string
+    {
+        return $this->metaDescription;
+    }
+
+    public function setMetaDescription(?string $metaDescription): self
+    {
+        $this->metaDescription = $metaDescription;
 
         return $this;
     }
@@ -647,6 +699,18 @@ class Article implements Translatable
         return $this;
     }
 
+    public function getContentHash(): ?string
+    {
+        return $this->contentHash;
+    }
+
+    public function setContentHash(?string $contentHash): static
+    {
+        $this->contentHash = $contentHash;
+
+        return $this;
+    }
+
     public function isRequestTranslation(): bool
     {
         return $this->requestTranslation;
@@ -691,6 +755,24 @@ class Article implements Translatable
     public function setTranslatedBy(?string $translatedBy): static
     {
         $this->translatedBy = $translatedBy;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    public function getTranslatedSlugs(): ?array
+    {
+        return $this->translatedSlugs;
+    }
+
+    /**
+     * @param array<string, string>|null $translatedSlugs
+     */
+    public function setTranslatedSlugs(?array $translatedSlugs): self
+    {
+        $this->translatedSlugs = $translatedSlugs;
 
         return $this;
     }

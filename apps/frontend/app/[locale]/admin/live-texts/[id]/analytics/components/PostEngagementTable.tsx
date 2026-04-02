@@ -8,7 +8,7 @@ interface PostEngagementTableProps {
 export function PostEngagementTable({ data }: PostEngagementTableProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+      <div className="text-center text-secondary dark:text-gray-400 py-8">
         No engagement data available
       </div>
     );
@@ -48,13 +48,13 @@ export function PostEngagementTable({ data }: PostEngagementTableProps) {
           {data.map((post) => (
             <tr
               key={post.postId}
-              className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              className="border-b border-gray-100 dark:border-gray-800 hover:bg-surface-sunken dark:hover:bg-gray-700/50 transition-colors"
             >
               <td className="py-3 px-2">
-                <div className="text-gray-900 dark:text-gray-100 line-clamp-2">
+                <div className="text-primary dark:text-gray-100 line-clamp-2">
                   {post.content}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                <div className="text-xs text-secondary dark:text-secondary mt-1">
                   Post #{post.postId}
                 </div>
               </td>

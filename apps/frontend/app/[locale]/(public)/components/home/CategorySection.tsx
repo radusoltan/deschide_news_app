@@ -136,9 +136,8 @@ function VerticalCard({
 
         {/* Title */}
         <h3
-          className={`font-sans font-bold leading-tight line-clamp-2 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] group-hover:text-[var(--color-accent)] transition-colors duration-200 ${
-            small ? 'text-sm' : 'text-base lg:text-lg'
-          }`}
+          className={`font-sans font-bold leading-tight line-clamp-2 text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] group-hover:text-[var(--color-accent)] transition-colors duration-200 ${small ? 'text-sm' : 'text-base lg:text-lg'
+            }`}
         >
           {article.title}
         </h3>
@@ -335,7 +334,7 @@ function LayoutCompactList({ articles, locale }: { articles: Article[]; locale: 
       {articles.slice(0, 6).map((article) => (
         <div
           key={article.id}
-          className="py-3 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] last:border-b-0"
+          className="py-3 border-[var(--color-border)] dark:border-[var(--color-border-dark)] last:border-b-0"
         >
           <CompactRow article={article} locale={locale} />
         </div>
@@ -355,13 +354,13 @@ function LayoutGrid4col({ articles, locale }: { articles: Article[]; locale: str
   );
 }
 
-/** Layout D — 1 featured + 3 compact stacked + 4 small cards */
+/** Layout D — 1 featured + 4 compact stacked + 3 small cards */
 function LayoutFeaturedGrid({ articles, locale }: { articles: Article[]; locale: string }) {
   if (articles.length === 0) return null;
 
   const featured = articles[0];
-  const stacked = articles.slice(1, 4);
-  const bottom = articles.slice(4, 8);
+  const stacked = articles.slice(1, 5);
+  const bottom = articles.slice(5, 8);
 
   return (
     <div>
@@ -374,7 +373,7 @@ function LayoutFeaturedGrid({ articles, locale }: { articles: Article[]; locale:
             {stacked.map((article) => (
               <div
                 key={article.id}
-                className="py-3 border-b border-[var(--color-border)] dark:border-[var(--color-border-dark)] last:border-b-0"
+                className="first:pt-0 py-5 border-[var(--color-border)] dark:border-[var(--color-border-dark)] last:border-b-0"
               >
                 <CompactRow article={article} locale={locale} />
               </div>
@@ -383,9 +382,9 @@ function LayoutFeaturedGrid({ articles, locale }: { articles: Article[]; locale:
         )}
       </div>
 
-      {/* Bottom: 4 small cards */}
+      {/* Bottom: 3 small cards */}
       {bottom.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {bottom.map((article) => (
             <VerticalCard key={article.id} article={article} locale={locale} small />
           ))}

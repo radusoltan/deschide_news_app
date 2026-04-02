@@ -78,7 +78,7 @@ export default function YearFilter({
         <span
           className={`
             text-sm px-2 py-0.5 rounded-full
-            ${selectedYear === null ? 'bg-white/20' : 'bg-amber-200/50 group-hover:bg-amber-200'}
+            ${selectedYear === null ? 'bg-surface/20' : 'bg-amber-200/50 group-hover:bg-amber-200'}
           `}
         >
           {years.reduce((acc, y) => acc + y.count, 0).toLocaleString()}
@@ -118,7 +118,7 @@ export default function YearFilter({
               <div
                 className={`
                   h-1.5 rounded-full transition-all duration-500
-                  ${selectedYear === yearData.year ? 'bg-white/40' : 'bg-amber-300'}
+                  ${selectedYear === yearData.year ? 'bg-surface/40' : 'bg-amber-300'}
                 `}
                 style={{
                   width: `${Math.min((yearData.count / Math.max(...years.map(y => y.count))) * 40, 40)}px`,

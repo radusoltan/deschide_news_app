@@ -5,7 +5,7 @@
  * Can be used with @vercel/og or similar services
  */
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
 /**
  * OG Image Configuration

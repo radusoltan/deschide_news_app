@@ -44,6 +44,7 @@ const customJestConfig = {
     '/__tests__/smoke/',
     '/__tests__/performance/',
     '/__tests__/diagnostics/',
+    '/__tests__/manual_test_admin.spec.ts',
   ],
 
   // Coverage collection
@@ -82,6 +83,10 @@ const customJestConfig = {
 
   // Module file extensions
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
+
+  modulePathIgnorePatterns: [
+    '<rootDir>/.next/standalone',
+  ],
 
   // Verbose output
   verbose: true,

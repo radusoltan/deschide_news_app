@@ -28,7 +28,7 @@ export default function GlobalError({
 
   return (
     <html lang="ro">
-      <body className="min-h-screen bg-gray-50">
+      <body className="min-h-screen bg-surface-sunken">
         <div className="min-h-screen flex items-center justify-center px-4">
           <div className="max-w-md w-full text-center">
             {/* Error Icon */}
@@ -49,7 +49,7 @@ export default function GlobalError({
             </div>
 
             {/* Title */}
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            <h1 className="text-3xl font-bold text-primary mb-4">
               Ceva nu a funcționat
             </h1>
 

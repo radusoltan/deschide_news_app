@@ -50,7 +50,7 @@ export const Text: React.FC<TextProps> = ({
   const colorStyles = {
     oxford: 'text-brand-oxford',
     tomato: 'text-brand-tomato',
-    gray: 'text-gray-700 dark:text-gray-300',
+    gray: 'text-primary dark:text-primary-dark',
     white: 'text-white',
   };
 

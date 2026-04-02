@@ -150,10 +150,10 @@ export function ArchiveStats({ token, onRefresh }: ArchiveStatsProps) {
     <div>
       {/* Header with refresh button */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Archive Statistics</h2>
+        <h2 className="text-2xl font-bold text-primary">Archive Statistics</h2>
         <button
           onClick={handleRefresh}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-primary rounded-lg transition-colors"
           disabled={loading}
         >
           <svg

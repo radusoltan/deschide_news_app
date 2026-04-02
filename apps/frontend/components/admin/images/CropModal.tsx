@@ -141,13 +141,13 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
 
   return (
     <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 w-full h-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col rounded-lg">
+      <div className="bg-surface dark:bg-surface-dark w-full h-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col rounded-lg">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <h2 className="text-xl font-bold dark:text-white">Crop Thumbnail</h2>
+          <h2 className="text-xl font-bold dark:text-primary-dark">Crop Thumbnail</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl leading-none"
+            className="text-secondary hover:text-primary dark:text-gray-400 dark:hover:text-gray-200 text-2xl leading-none"
             disabled={isProcessing}
           >
             ✕
@@ -158,7 +158,7 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
         <div className="flex-1 p-4 overflow-y-auto min-h-0">
           {/* Profile Selection */}
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2 dark:text-white">Thumbnail Profile</label>
+            <label className="block text-sm font-medium mb-2 dark:text-primary-dark">Thumbnail Profile</label>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
               {profiles.map((profile) => (
                 <button
@@ -171,15 +171,15 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
                       : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
                   } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  <div className="font-medium text-sm dark:text-white">{profile.displayName}</div>
-                  <div className="text-xs text-gray-600 dark:text-gray-300 font-mono">
+                  <div className="font-medium text-sm dark:text-primary-dark">{profile.displayName}</div>
+                  <div className="text-xs text-gray-600 dark:text-primary-dark font-mono">
                     {profile.name}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <div className="text-xs text-secondary dark:text-gray-400">
                     {profile.dimensionsLabel}
                   </div>
                   {profile.description && (
-                    <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">{profile.description}</div>
+                    <div className="text-xs text-gray-400 dark:text-secondary mt-1">{profile.description}</div>
                   )}
                 </button>
               ))}
@@ -188,7 +188,7 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
 
           {/* Format Selection */}
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2 dark:text-white">Format</label>
+            <label className="block text-sm font-medium mb-2 dark:text-primary-dark">Format</label>
             <div className="flex gap-2">
               {(['jpg', 'webp'] as const).map((format) => (
                 <button
@@ -198,7 +198,7 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
                   className={`px-6 py-3 rounded-lg border transition-all ${
                     selectedFormat === format
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900 dark:border-blue-400 text-blue-700 dark:text-blue-200'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 dark:text-gray-300'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 dark:text-primary-dark'
                   } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {format.toUpperCase()}
@@ -210,7 +210,7 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
           {/* Cropper */}
           <div className="space-y-3 mb-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium dark:text-white">
+              <h3 className="text-lg font-medium dark:text-primary-dark">
                 {selectedProfile.displayName} - {selectedProfile.dimensionsLabel}
               </h3>
               <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -283,7 +283,7 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
               <button
                 onClick={handleReset}
                 disabled={isProcessing}
-                className="px-6 py-3 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 dark:text-white font-medium"
+                className="px-6 py-3 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 dark:text-primary-dark font-medium"
               >
                 Reset Crop Position
               </button>
@@ -295,12 +295,12 @@ export function CropModal({ image, profiles, onCropComplete, onClose }: CropModa
         </div>
 
         {/* Actions - Fixed footer */}
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-surface-sunken dark:bg-surface-dark flex-shrink-0">
           <div className="flex justify-end gap-3">
             <button
               onClick={onClose}
               disabled={isProcessing}
-              className="px-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 dark:text-white font-medium transition-colors"
+              className="px-8 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-700 disabled:opacity-50 dark:text-primary-dark font-medium transition-colors"
             >
               Close
             </button>

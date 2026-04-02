@@ -28,7 +28,7 @@ export default async function EditLiveTextPage({ params }: EditLiveTextPageProps
   // Fetch categories for selection
   let categories: any[] = [];
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
     const response = await fetch(`${apiUrl}/api/categories?itemsPerPage=100&status=active`, {
       headers: {
         'Accept': 'application/ld+json',
@@ -66,7 +66,7 @@ export default async function EditLiveTextPage({ params }: EditLiveTextPageProps
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-3xl font-bold text-primary dark:text-primary-dark">
           {t.title}
         </h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">

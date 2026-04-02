@@ -11,7 +11,7 @@ import { Heading } from '@/components/typography';
 
 export default function SocialCardsDemo() {
   return (
-    <main className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-surface-sunken py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="text-center mb-12">
@@ -42,7 +42,7 @@ export default function SocialCardsDemo() {
                 layout="with-border"
                 category="Politică"
               />
-              <p className="text-sm text-gray-500 mt-2 text-center">With Border Layout</p>
+              <p className="text-sm text-secondary mt-2 text-center">With Border Layout</p>
             </div>
 
             {/* No Border */}
@@ -53,7 +53,7 @@ export default function SocialCardsDemo() {
                 layout="no-border"
                 category="Economie"
               />
-              <p className="text-sm text-gray-500 mt-2 text-center">No Border Layout</p>
+              <p className="text-sm text-secondary mt-2 text-center">No Border Layout</p>
             </div>
 
             {/* Without Category Badge */}
@@ -63,7 +63,7 @@ export default function SocialCardsDemo() {
                 image="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&h=600&fit=crop"
                 layout="with-border"
               />
-              <p className="text-sm text-gray-500 mt-2 text-center">Without Category</p>
+              <p className="text-sm text-secondary mt-2 text-center">Without Category</p>
             </div>
           </div>
         </section>
@@ -89,7 +89,7 @@ export default function SocialCardsDemo() {
                 }}
                 badge="Opinie"
               />
-              <p className="text-sm text-gray-500 mt-2 text-center">Standard Badge</p>
+              <p className="text-sm text-secondary mt-2 text-center">Standard Badge</p>
             </div>
 
             {/* Custom Badge */}
@@ -103,7 +103,7 @@ export default function SocialCardsDemo() {
                 }}
                 badge="Opinia Este"
               />
-              <p className="text-sm text-gray-500 mt-2 text-center">Custom Badge</p>
+              <p className="text-sm text-secondary mt-2 text-center">Custom Badge</p>
             </div>
 
             {/* Short Title */}
@@ -117,7 +117,7 @@ export default function SocialCardsDemo() {
                 }}
                 badge="Editorial"
               />
-              <p className="text-sm text-gray-500 mt-2 text-center">Short Title</p>
+              <p className="text-sm text-secondary mt-2 text-center">Short Title</p>
             </div>
           </div>
         </section>
@@ -139,7 +139,7 @@ export default function SocialCardsDemo() {
                 author="Maria Ionescu"
                 authorTitle="Former Minister of Justice"
               />
-              <p className="text-sm text-gray-500 mt-2 text-center">With Author Title</p>
+              <p className="text-sm text-secondary mt-2 text-center">With Author Title</p>
             </div>
 
             {/* Without Author Title */}
@@ -148,7 +148,7 @@ export default function SocialCardsDemo() {
                 quote="The greatest threat to democracy is not external pressure, but internal corruption and complacency."
                 author="Ion Popescu"
               />
-              <p className="text-sm text-gray-500 mt-2 text-center">Without Author Title</p>
+              <p className="text-sm text-secondary mt-2 text-center">Without Author Title</p>
             </div>
 
             {/* Short Quote */}
@@ -158,7 +158,7 @@ export default function SocialCardsDemo() {
                 author="Alexandru Popa"
                 authorTitle="Political Analyst"
               />
-              <p className="text-sm text-gray-500 mt-2 text-center">Short Quote</p>
+              <p className="text-sm text-secondary mt-2 text-center">Short Quote</p>
             </div>
           </div>
         </section>
@@ -198,13 +198,13 @@ export default function SocialCardsDemo() {
         </section>
 
         {/* Design Notes */}
-        <section className="bg-white rounded-lg shadow-lg p-8">
+        <section className="bg-surface rounded-lg shadow-lg p-8">
           <Heading level={2} variant="oxford" className="mb-4">
             Design Notes
           </Heading>
           <div className="prose prose-lg max-w-none">
             <h3 className="font-heading text-brand-oxford">Brand Compliance</h3>
-            <ul className="text-gray-700">
+            <ul className="text-primary">
               <li><strong>Typography:</strong> League Spartan Bold (headings - always UPPERCASE), Poppins (body text)</li>
               <li><strong>Colors:</strong> Oxford Blue (#112240), Tomato (#F05E45), Mindaro (#D4FB8C - max 10%)</li>
               <li><strong>Logo:</strong> White variant, size sm, bottom right placement</li>
@@ -212,7 +212,7 @@ export default function SocialCardsDemo() {
             </ul>
 
             <h3 className="font-heading text-brand-oxford">Technical Features</h3>
-            <ul className="text-gray-700">
+            <ul className="text-primary">
               <li>Responsive design (mobile-first)</li>
               <li>Smooth hover animations (scale 1.02x)</li>
               <li>Next.js Image optimization</li>
@@ -222,7 +222,7 @@ export default function SocialCardsDemo() {
             </ul>
 
             <h3 className="font-heading text-brand-oxford">Export Sizes</h3>
-            <ul className="text-gray-700">
+            <ul className="text-primary">
               <li><strong>Instagram:</strong> 1080x1080px</li>
               <li><strong>Facebook:</strong> 1200x1200px</li>
               <li><strong>Twitter:</strong> 1200x1200px</li>

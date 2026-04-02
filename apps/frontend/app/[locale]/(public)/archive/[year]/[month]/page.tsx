@@ -37,7 +37,7 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
     notFound();
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
 
   try {
     // Fetch articles for the month
@@ -179,7 +179,7 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
 
         {/* Page Header */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+          <h1 className="text-4xl font-bold text-primary dark:text-primary-dark mb-4">
             {monthName} {yearNum}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">
@@ -195,7 +195,7 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
               <section key={day}>
                 {/* Day Header */}
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                  <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-1">
                     {day} {monthName} {yearNum}
                   </h2>
                   <p className="text-gray-600 dark:text-gray-400 text-sm">
@@ -213,8 +213,8 @@ export default async function MonthArchivePage({ params }: MonthArchivePageProps
             ))}
 
             {/* Calendar View */}
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-gray-100 dark:bg-surface-dark rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
                 {locale === 'ro' && 'Calendar'}
                 {locale === 'en' && 'Calendar'}
                 {locale === 'ru' && 'Календарь'}

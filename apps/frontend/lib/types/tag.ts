@@ -21,6 +21,11 @@ export interface Tag {
   updatedAt: string;
   locale?: string;
   translatableLocale?: string | null;
+  translatedSlugs?: {
+    ro?: string;
+    en?: string;
+    ru?: string;
+  };
 }
 
 /**

@@ -32,7 +32,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 #[ORM\Cache(usage: 'NONSTRICT_READ_WRITE', region: 'long_lived')]  // L2 cache: categories rarely change
-#[UniqueEntity('slug', message: 'This slug is already in use. Please choose a different slug.')]
+#[UniqueEntity('slug', message: 'This slug is already in use. Please choose a different slug.', groups: ['create'])]
 #[ORM\Table(name: 'categories')]
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Index(name: 'idx_category_status', columns: ['status'])]
@@ -50,11 +50,18 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Post(
             uriTemplate: '/categories',
-            denormalizationContext: ['groups' => ['category:write']]
+            denormalizationContext: ['groups' => ['category:write']],
+            validationContext: ['groups' => ['Default', 'create']],
         ),
         new Put(
             uriTemplate: '/categories/{id}',
             denormalizationContext: ['groups' => ['category:write']]
+        ),
+        new \ApiPlatform\Metadata\Patch(
+            uriTemplate: '/categories/{id}',
+            denormalizationContext: ['groups' => ['category:write']],
+            inputFormats: ['json' => ['application/merge-patch+json']],
+            validationContext: ['groups' => ['patch']],
         ),
         new Delete(
             uriTemplate: '/categories/{id}'
@@ -80,7 +87,7 @@ class Category implements Translatable
     // Translatable fields
     #[Gedmo\Translatable]
     #[ORM\Column(type: Types::STRING, length: 255)]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(groups: ['Default'])]
     #[Assert\Length(max: 255)]
     #[Groups(['category:read', 'category:write', 'article:read'])]
     private ?string $title = null;
@@ -118,6 +125,10 @@ class Category implements Translatable
     #[Groups(['category:read', 'category:write'])]
     private int $frontPagePosition = 0;
 
+    #[ORM\Column(type: Types::STRING, length: 20, nullable: true)]
+    #[Groups(['category:read', 'category:write'])]
+    private ?string $frontPageLayout = null;
+
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     #[Groups(['category:read', 'category:write'])]
     private bool $inMenu = false;
@@ -125,6 +136,19 @@ class Category implements Translatable
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     #[Groups(['category:read', 'category:write'])]
     private bool $inFooterMenu = false;
+
+    // Translation tracking
+    #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['category:read'])]
+    private ?string $translationStatus = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(['category:read'])]
+    private ?\DateTimeImmutable $translatedAt = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['category:read'])]
+    private ?string $translatedBy = null;
 
     // Timestamps
     #[Gedmo\Timestampable(on: 'create')]
@@ -141,6 +165,15 @@ class Category implements Translatable
     #[Gedmo\Locale]
     #[Groups(['category:read'])]
     private ?string $locale = null;
+
+    /**
+     * Non-persisted field populated by providers.
+     * Contains slug translations for all locales: {"ro": "politica", "en": "politics", "ru": "politika"}
+     *
+     * @var array<string, string>|null
+     */
+    #[Groups(['category:read', 'article:read'])]
+    private ?array $translatedSlugs = null;
 
     public function __construct()
     {
@@ -250,6 +283,18 @@ class Category implements Translatable
         return $this;
     }
 
+    public function getFrontPageLayout(): ?string
+    {
+        return $this->frontPageLayout;
+    }
+
+    public function setFrontPageLayout(?string $frontPageLayout): self
+    {
+        $this->frontPageLayout = $frontPageLayout;
+
+        return $this;
+    }
+
     public function isInMenu(): bool
     {
         return $this->inMenu;
@@ -322,6 +367,60 @@ class Category implements Translatable
     public function getLocale(): ?string
     {
         return $this->locale;
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    public function getTranslatedSlugs(): ?array
+    {
+        return $this->translatedSlugs;
+    }
+
+    /**
+     * @param array<string, string>|null $translatedSlugs
+     */
+    public function setTranslatedSlugs(?array $translatedSlugs): self
+    {
+        $this->translatedSlugs = $translatedSlugs;
+
+        return $this;
+    }
+
+    public function getTranslationStatus(): ?string
+    {
+        return $this->translationStatus;
+    }
+
+    public function setTranslationStatus(?string $translationStatus): static
+    {
+        $this->translationStatus = $translationStatus;
+
+        return $this;
+    }
+
+    public function getTranslatedAt(): ?\DateTimeImmutable
+    {
+        return $this->translatedAt;
+    }
+
+    public function setTranslatedAt(?\DateTimeImmutable $translatedAt): static
+    {
+        $this->translatedAt = $translatedAt;
+
+        return $this;
+    }
+
+    public function getTranslatedBy(): ?string
+    {
+        return $this->translatedBy;
+    }
+
+    public function setTranslatedBy(?string $translatedBy): static
+    {
+        $this->translatedBy = $translatedBy;
+
+        return $this;
     }
 
     /**

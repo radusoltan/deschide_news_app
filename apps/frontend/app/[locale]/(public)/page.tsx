@@ -215,13 +215,13 @@ export default async function HomePage({ params }: PageProps) {
             {/* Main content column */}
             <div className="lg:col-span-8 space-y-12">
 
-              {/* Category sections with alternating layouts */}
+              {/* Category sections — use layout from API, fallback to cycling */}
               {categoriesForSections.map((category, index) => (
                 <CategorySection
                   key={category.id}
                   category={category}
                   locale={locale}
-                  layout={LAYOUT_CYCLE[index % LAYOUT_CYCLE.length]}
+                  layout={category.frontPageLayout || LAYOUT_CYCLE[index % LAYOUT_CYCLE.length]}
                 />
               ))}
 

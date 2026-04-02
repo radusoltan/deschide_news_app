@@ -61,7 +61,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   return (
     <>
       {/* Category Section - Premium Editorial Design */}
-      <div className="bg-white py-8">
+      <div className="bg-surface py-8">
         <div className="xl:container mx-auto px-4 sm:px-6 xl:px-8">
           <div className="flex flex-row flex-wrap">
             {/* Left - Main Content */}

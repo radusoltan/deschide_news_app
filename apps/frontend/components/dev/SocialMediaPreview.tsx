@@ -33,7 +33,7 @@ export default function SocialMediaPreview({ ogMeta, twitterMeta }: SocialMediaP
           className={`px-4 py-2 rounded ${
             activePreview === 'facebook'
               ? 'bg-blue-600 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-50'
+              : 'bg-surface text-primary hover:bg-surface-sunken'
           }`}
         >
           Facebook
@@ -43,7 +43,7 @@ export default function SocialMediaPreview({ ogMeta, twitterMeta }: SocialMediaP
           className={`px-4 py-2 rounded ${
             activePreview === 'twitter'
               ? 'bg-blue-400 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-50'
+              : 'bg-surface text-primary hover:bg-surface-sunken'
           }`}
         >
           Twitter
@@ -53,7 +53,7 @@ export default function SocialMediaPreview({ ogMeta, twitterMeta }: SocialMediaP
           className={`px-4 py-2 rounded ${
             activePreview === 'linkedin'
               ? 'bg-blue-700 text-white'
-              : 'bg-white text-gray-700 hover:bg-gray-50'
+              : 'bg-surface text-primary hover:bg-surface-sunken'
           }`}
         >
           LinkedIn
@@ -61,7 +61,7 @@ export default function SocialMediaPreview({ ogMeta, twitterMeta }: SocialMediaP
       </div>
 
       {/* Preview Cards */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-xl">
+      <div className="bg-surface rounded-lg shadow-md overflow-hidden max-w-xl">
         {activePreview === 'facebook' && (
           <FacebookPreview
             title={ogMeta.title}
@@ -93,7 +93,7 @@ export default function SocialMediaPreview({ ogMeta, twitterMeta }: SocialMediaP
 
       {/* Debug Info */}
       <details className="mt-4">
-        <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-900">
+        <summary className="cursor-pointer text-sm text-gray-600 hover:text-primary">
           View Raw Meta Data
         </summary>
         <div className="mt-2 p-4 bg-gray-800 text-green-400 rounded text-xs overflow-auto max-h-64">
@@ -137,9 +137,9 @@ function FacebookPreview({
           />
         </div>
       )}
-      <div className="p-3 border-t border-gray-200 bg-gray-50">
-        <div className="text-xs text-gray-500 uppercase mb-1">{domain}</div>
-        <div className="font-semibold text-gray-900 mb-1 line-clamp-2">{title}</div>
+      <div className="p-3 border-t border-gray-200 bg-surface-sunken">
+        <div className="text-xs text-secondary uppercase mb-1">{domain}</div>
+        <div className="font-semibold text-primary mb-1 line-clamp-2">{title}</div>
         <div className="text-sm text-gray-600 line-clamp-1">{description}</div>
       </div>
     </div>
@@ -173,9 +173,9 @@ function TwitterPreview({
         </div>
       )}
       <div className="p-3">
-        <div className="font-semibold text-gray-900 mb-1 line-clamp-1">{title}</div>
+        <div className="font-semibold text-primary mb-1 line-clamp-1">{title}</div>
         <div className="text-sm text-gray-600 line-clamp-2 mb-1">{description}</div>
-        {site && <div className="text-xs text-gray-500">{site}</div>}
+        {site && <div className="text-xs text-secondary">{site}</div>}
       </div>
     </div>
   );
@@ -209,9 +209,9 @@ function LinkedInPreview({
           />
         </div>
       )}
-      <div className="p-3 bg-white">
-        <div className="font-semibold text-gray-900 mb-1 line-clamp-2">{title}</div>
-        <div className="text-xs text-gray-500 mb-2">{domain}</div>
+      <div className="p-3 bg-surface">
+        <div className="font-semibold text-primary mb-1 line-clamp-2">{title}</div>
+        <div className="text-xs text-secondary mb-2">{domain}</div>
       </div>
     </div>
   );

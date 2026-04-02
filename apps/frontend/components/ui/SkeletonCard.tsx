@@ -59,7 +59,7 @@ export function ArticleCardSkeleton({
 }: Partial<SkeletonCardProps>) {
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm overflow-hidden animate-fade-in ${className}`}
+      className={`bg-surface rounded-lg shadow-sm overflow-hidden animate-fade-in ${className}`}
       role="status"
       aria-label="Loading article"
     >
@@ -111,7 +111,7 @@ export function HeroCardSkeleton({
 }: Partial<SkeletonCardProps>) {
   return (
     <div
-      className={`bg-white rounded-xl shadow-lg overflow-hidden animate-fade-in ${className}`}
+      className={`bg-surface rounded-xl shadow-lg overflow-hidden animate-fade-in ${className}`}
       role="status"
       aria-label="Loading hero article"
     >
@@ -162,7 +162,7 @@ export function CompactCardSkeleton({
 }: Partial<SkeletonCardProps>) {
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm p-3 animate-fade-in ${className}`}
+      className={`bg-surface rounded-lg shadow-sm p-3 animate-fade-in ${className}`}
       role="status"
       aria-label="Loading compact article"
     >
@@ -197,7 +197,7 @@ export function HorizontalCardSkeleton({
 }: Partial<SkeletonCardProps>) {
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm overflow-hidden animate-fade-in ${className}`}
+      className={`bg-surface rounded-lg shadow-sm overflow-hidden animate-fade-in ${className}`}
       role="status"
       aria-label="Loading article"
     >

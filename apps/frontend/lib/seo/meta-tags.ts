@@ -7,7 +7,7 @@
 import type { Metadata } from 'next';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/images/og-default.jpg`;
 const DEFAULT_OG_IMAGE_ALT = 'Deschide News - Portal de știri';
 

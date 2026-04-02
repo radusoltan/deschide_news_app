@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
             flexDirection: 'column',
             width: '100%',
             height: '100%',
-            background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%)',
+            background: 'linear-gradient(135deg, #1e3a8a 0%, var(--color-accent) 50%, #60a5fa 100%)',
             padding: '80px',
             fontFamily: 'system-ui, sans-serif',
           }}

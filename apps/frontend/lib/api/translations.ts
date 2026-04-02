@@ -57,7 +57,7 @@ export async function fetchArticleTranslations(
     const categoryId = currentArticle.category?.id;
 
     // Fetch translations from the backend endpoint
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
     const response = await fetch(`${API_BASE_URL}/api/articles/${articleId}/translations`, {
       method: 'GET',
       headers: {
@@ -131,7 +131,7 @@ export async function fetchCategoryTranslations(
     const categoryId = currentCategory.id;
 
     // Fetch translations from the backend endpoint
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
     const response = await fetch(`${API_BASE_URL}/api/categories/${categoryId}/translations`, {
       method: 'GET',
       headers: {

@@ -11,13 +11,13 @@ import { TagList } from '@/components/tags';
 import type { Locale } from '@/lib/types';
 
 interface TagPageProps {
-  params: {
+  params: Promise<{
     locale: string;
     slug: string;
-  };
-  searchParams?: {
+  }>;
+  searchParams?: Promise<{
     page?: string;
-  };
+  }>;
 }
 
 /**
@@ -26,7 +26,7 @@ interface TagPageProps {
 export async function generateMetadata({
   params,
 }: TagPageProps): Promise<Metadata> {
-  const { locale, slug } = params;
+  const { locale, slug } = await params;
 
   try {
     // Fetch tag by slug
@@ -44,6 +44,13 @@ export async function generateMetadata({
       tag.description ||
       `Articles tagged with ${tag.name} - ${tag.usageCount} articles`;
 
+    const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+
+    // Use translated slugs for proper hreflang alternates
+    const slugRo = tag.translatedSlugs?.ro || slug;
+    const slugEn = tag.translatedSlugs?.en || slug;
+    const slugRu = tag.translatedSlugs?.ru || slug;
+
     return {
       title,
       description,
@@ -54,7 +61,12 @@ export async function generateMetadata({
         type: 'website',
       },
       alternates: {
-        canonical: `/${locale}/tags/${slug}`,
+        canonical: `${SITE_URL}/${locale}/tags/${slug}`,
+        languages: {
+          ro: `${SITE_URL}/ro/tags/${slugRo}`,
+          en: `${SITE_URL}/en/tags/${slugEn}`,
+          ru: `${SITE_URL}/ru/tags/${slugRu}`,
+        },
       },
     };
   } catch (error) {
@@ -71,9 +83,10 @@ export default async function TagPage({
   params,
   searchParams,
 }: TagPageProps) {
-  const { locale: localeParam, slug } = params;
+  const { locale: localeParam, slug } = await params;
+  const resolvedSearch = searchParams ? await searchParams : {};
   const locale = localeParam as Locale;
-  const page = parseInt(searchParams?.page || '1', 10);
+  const page = parseInt(resolvedSearch?.page || '1', 10);
 
   // Fetch tag information
   let tag = null;
@@ -130,7 +143,7 @@ export default async function TagPage({
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-3 text-gray-900 dark:text-gray-100">
+        <h1 className="text-4xl font-bold mb-3 text-primary dark:text-gray-100">
           {headings[locale as keyof typeof headings] || headings.ro}{' '}
           <span className="text-blue-600 dark:text-blue-400">#{tag.name}</span>
         </h1>
@@ -141,7 +154,7 @@ export default async function TagPage({
           </p>
         )}
 
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-secondary dark:text-gray-400">
           {locale === 'ro' && `${totalItems} articole`}
           {locale === 'en' && `${totalItems} articles`}
           {locale === 'ru' && `${totalItems} статей`}
@@ -162,20 +175,18 @@ export default async function TagPage({
               ))}
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center text-gray-500 dark:text-gray-400">
+            <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-md p-8 text-center text-secondary dark:text-gray-400">
               {emptyMessages[locale as keyof typeof emptyMessages] ||
                 emptyMessages.ro}
             </div>
           )}
-
-          {/* Pagination would go here if needed */}
         </div>
 
         {/* Sidebar - Related Tags */}
         <div className="lg:col-span-1">
           {relatedTags.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sticky top-4">
-              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
+            <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-md p-6 sticky top-4">
+              <h2 className="text-xl font-bold mb-4 text-primary dark:text-gray-100">
                 {relatedHeadings[locale as keyof typeof relatedHeadings] ||
                   relatedHeadings.ro}
               </h2>

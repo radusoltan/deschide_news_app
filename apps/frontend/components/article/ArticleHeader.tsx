@@ -5,9 +5,11 @@
 
 import Link from 'next/link';
 import type { Article } from '@/lib/types/article';
+import type { Tag } from '@/lib/types/tag';
 import type { Locale } from '@/lib/types';
 import { buildAuthorUrl, buildCategoryUrl } from '@/lib/utils/url-builder';
 import { SafeHtml } from '@/components/SafeHtml';
+import { TagList } from '@/components/tags';
 
 interface ArticleHeaderProps {
   article: Article;
@@ -94,7 +96,7 @@ export default function ArticleHeader({
 
       {/* Article Lead/Summary - Premium Typography */}
       {article.lead && (
-        <p className="text-xl text-gray-700 mb-4 font-body font-medium leading-relaxed">
+        <p className="text-xl text-primary mb-4 font-body font-medium leading-relaxed">
           {article.lead}
         </p>
       )}
@@ -153,6 +155,17 @@ export default function ArticleHeader({
           </Link>
         )}
       </div>
+
+      {/* Tags */}
+      {article.tags && article.tags.length > 0 && (
+        <TagList
+          tags={article.tags.filter((tag): tag is Tag => typeof tag !== 'string')}
+          locale={locale}
+          variant="outline"
+          size="sm"
+          showHash={true}
+        />
+      )}
     </header>
   );
 }

@@ -111,8 +111,8 @@ function FeaturedArticleCard({ article, locale }: { article: Article; locale: st
             )}
             {article.publishedAt && (
               <>
-                {categoryTitle && <span className="text-gray-300 text-xs">·</span>}
-                <time className="text-xs font-sans text-gray-300" dateTime={article.publishedAt}>
+                {categoryTitle && <span className="text-primary-dark text-xs">·</span>}
+                <time className="text-xs font-sans text-primary-dark" dateTime={article.publishedAt}>
                   {formatRelativeTime(article.publishedAt, locale)}
                 </time>
               </>
@@ -282,7 +282,7 @@ function LatestNewsSectionContent({ articles, popularArticles, locale }: LatestN
       <div className="flex flex-col-reverse lg:flex-row gap-8">
 
         {/* ── Sidebar (LEFT on desktop, BELOW on mobile) ── */}
-        <aside className="w-full lg:w-1/3 lg:pr-8 lg:pt-14">
+        <aside className="w-full lg:w-1/3 lg:pr-8">
           <div className="sticky top-24 space-y-8">
             <InTrendWidget articles={popularArticles} locale={locale} />
             <AdPlaceholder locale={locale} />
@@ -337,7 +337,7 @@ function LatestNewsSectionSkeleton() {
     <section className="mt-8 md:mt-12">
       <div className="flex flex-col-reverse lg:flex-row gap-8">
         {/* Sidebar skeleton */}
-        <aside className="w-full lg:w-1/3 lg:pr-8 lg:pt-14 space-y-8">
+        <aside className="w-full lg:w-1/3 lg:pr-8 lg:pt-1 space-y-8">
           <div>
             <div className="w-28 h-6 bg-[var(--color-skeleton)] dark:bg-[var(--color-skeleton-dark)] rounded animate-pulse mb-4" />
             {Array.from({ length: 10 }).map((_, i) => (

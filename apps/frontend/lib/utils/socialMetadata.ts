@@ -25,7 +25,7 @@ interface SocialMetadata {
 
 const SITE_NAME = 'Deschide News';
 const DEFAULT_IMAGE = '/images/og-default.jpg';
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3005';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
 /**
  * Generate Open Graph metadata for LiveText
@@ -69,7 +69,7 @@ export function generateArticleMetadata(article: Article, locale: string = 'ro')
     const selectedImage = featuredImage || firstImage;
 
     if (selectedImage && selectedImage.image) {
-      const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL || 'http://127.0.0.1:8082';
+      const cdnUrl = process.env.NEXT_PUBLIC_CDN_URL ?? '';
       // Check if image is an object with path property, otherwise it's a string URL
       if (typeof selectedImage.image === 'object' && 'path' in selectedImage.image) {
         image = `${cdnUrl}/uploads/${selectedImage.image.path}`;

@@ -113,6 +113,9 @@ class SlugController extends AbstractController
                 $article->getCategory()->setTranslatableLocale($locale);
                 $this->entityManager->refresh($article->getCategory());
             }
+
+            // Populate translatedSlugs for hreflang support
+            $this->populateArticleTranslatedSlugs($article);
         }
 
         if (!$article) {
@@ -248,5 +251,57 @@ class SlugController extends AbstractController
         ]);
 
         return new JsonResponse($json, 200, [], true);
+    }
+
+    /**
+     * Populate translatedSlugs on an article and its category
+     * for hreflang alternate URL generation.
+     */
+    private function populateArticleTranslatedSlugs(\App\Entity\Article $article): void
+    {
+        $conn = $this->entityManager->getConnection();
+        $articleId = (string) $article->getId();
+
+        // Article slug: base table (RO) + ext_translations (EN, RU)
+        $baseSlug = $conn->fetchOne(
+            'SELECT slug FROM articles WHERE id = ?',
+            [$articleId]
+        );
+        $slugs = ['ro' => $baseSlug];
+
+        $translationRows = $conn->executeQuery(
+            "SELECT locale, content FROM ext_translations "
+            . "WHERE object_class = 'App\\Entity\\Article' AND field = 'slug' "
+            . "AND foreign_key = ?",
+            [$articleId]
+        )->fetchAllAssociative();
+
+        foreach ($translationRows as $row) {
+            $slugs[$row['locale']] = $row['content'];
+        }
+        $article->setTranslatedSlugs($slugs);
+
+        // Category slug: base table (RO) + ext_translations (EN, RU)
+        $category = $article->getCategory();
+        if ($category && $category->getId()) {
+            $catId = (string) $category->getId();
+            $catBaseSlug = $conn->fetchOne(
+                'SELECT slug FROM categories WHERE id = ?',
+                [$catId]
+            );
+            $catSlugs = ['ro' => $catBaseSlug];
+
+            $catTranslationRows = $conn->executeQuery(
+                "SELECT locale, content FROM ext_translations "
+                . "WHERE object_class = 'App\\Entity\\Category' AND field = 'slug' "
+                . "AND foreign_key = ?",
+                [$catId]
+            )->fetchAllAssociative();
+
+            foreach ($catTranslationRows as $row) {
+                $catSlugs[$row['locale']] = $row['content'];
+            }
+            $category->setTranslatedSlugs($catSlugs);
+        }
     }
 }

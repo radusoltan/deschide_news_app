@@ -163,20 +163,20 @@ export default function ContactPage({ params }: ContactPageProps) {
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Page Header */}
       <div className="mb-12 text-center">
-        <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">{t.title}</h1>
+        <h1 className="text-5xl font-bold text-primary dark:text-primary-dark mb-4">{t.title}</h1>
         <p className="text-xl text-gray-600 dark:text-gray-400">{t.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Contact Form */}
         <div className="lg:col-span-2">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+          <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-lg p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name */}
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
                 >
                   {t.form.name} *
                 </label>
@@ -187,7 +187,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark"
                 />
               </div>
 
@@ -195,7 +195,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
                 >
                   {t.form.email} *
                 </label>
@@ -206,7 +206,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark"
                 />
               </div>
 
@@ -214,7 +214,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <div>
                 <label
                   htmlFor="category"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
                 >
                   {t.form.category} *
                 </label>
@@ -224,7 +224,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.category}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark"
                 >
                   <option value="general">{t.form.categories.general}</option>
                   <option value="press">{t.form.categories.press}</option>
@@ -238,7 +238,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <div>
                 <label
                   htmlFor="subject"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
                 >
                   {t.form.subject} *
                 </label>
@@ -249,7 +249,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark"
                 />
               </div>
 
@@ -257,7 +257,7 @@ export default function ContactPage({ params }: ContactPageProps) {
               <div>
                 <label
                   htmlFor="message"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                  className="block text-sm font-medium text-primary dark:text-primary-dark mb-2"
                 >
                   {t.form.message} *
                 </label>
@@ -268,7 +268,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   onChange={handleChange}
                   required
                   rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-tomato-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-primary-dark resize-none"
                 />
               </div>
 
@@ -300,8 +300,8 @@ export default function ContactPage({ params }: ContactPageProps) {
         {/* Contact Information */}
         <div className="space-y-6">
           {/* Info Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-6">
               {t.info.title}
             </h2>
 
@@ -322,7 +322,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   />
                 </svg>
                 <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">Email</div>
+                  <div className="text-sm text-secondary dark:text-gray-400">Email</div>
                   <a
                     href={`mailto:${t.info.email}`}
                     className="text-brand-tomato-500 hover:text-brand-tomato-500-dark font-medium"
@@ -354,12 +354,12 @@ export default function ContactPage({ params }: ContactPageProps) {
                   />
                 </svg>
                 <div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="text-sm text-secondary dark:text-gray-400">
                     {locale === 'ro' && 'Adresă'}
                     {locale === 'en' && 'Address'}
                     {locale === 'ru' && 'Адрес'}
                   </div>
-                  <div className="text-gray-900 dark:text-white font-medium">
+                  <div className="text-primary dark:text-primary-dark font-medium">
                     {t.info.address}
                   </div>
                 </div>
@@ -381,7 +381,7 @@ export default function ContactPage({ params }: ContactPageProps) {
                   />
                 </svg>
                 <div>
-                  <div className="text-gray-900 dark:text-white font-medium">
+                  <div className="text-primary dark:text-primary-dark font-medium">
                     {t.info.workingHours}
                   </div>
                 </div>
@@ -390,8 +390,8 @@ export default function ContactPage({ params }: ContactPageProps) {
           </div>
 
           {/* Social Media (Placeholder) */}
-          <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          <div className="bg-gray-100 dark:bg-surface-dark rounded-lg p-6">
+            <h3 className="text-lg font-bold text-primary dark:text-primary-dark mb-4">
               {locale === 'ro' && 'Urmărește-ne'}
               {locale === 'en' && 'Follow Us'}
               {locale === 'ru' && 'Следите за Нами'}

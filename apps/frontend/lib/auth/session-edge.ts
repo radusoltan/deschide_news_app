@@ -6,7 +6,12 @@
 import { jwtVerify } from 'jose';
 import type { SessionPayload } from './session';
 
-const SECRET_KEY = process.env.SESSION_SECRET || 'your-secret-key-change-in-production';
+const SECRET_KEY = process.env.SESSION_SECRET;
+if (!SECRET_KEY) {
+  throw new Error(
+    'SESSION_SECRET environment variable is required. Set it in .env.local for development or as an environment variable in production.'
+  );
+}
 const key = new TextEncoder().encode(SECRET_KEY);
 
 /**

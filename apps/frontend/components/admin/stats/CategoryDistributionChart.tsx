@@ -27,7 +27,7 @@ interface Props {
 
 // Default color palette
 const COLORS = [
-  '#3b82f6', // blue
+  'var(--color-accent)', // blue
   '#10b981', // green
   '#f59e0b', // amber
   '#ef4444', // red
@@ -45,8 +45,8 @@ const CustomTooltip = ({ active, payload, total }: any) => {
     const data = payload[0];
     const percentage = ((data.value / total) * 100).toFixed(1);
     return (
-      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-        <p className="font-semibold text-gray-900">{data.name}</p>
+      <div className="bg-surface p-3 rounded-lg shadow-lg border border-gray-200">
+        <p className="font-semibold text-primary">{data.name}</p>
         <p className="text-sm text-gray-600">
           {data.value} articles ({percentage}%)
         </p>
@@ -62,10 +62,10 @@ export function CategoryDistributionChart({
 }: Props) {
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-        <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No category data available</p>
+      <div className="bg-surface p-6 rounded-lg shadow">
+        <h3 className="text-lg font-semibold text-primary mb-4">{title}</h3>
+        <div className="h-64 flex items-center justify-center bg-surface-sunken rounded-lg">
+          <p className="text-secondary">No category data available</p>
         </div>
       </div>
     );
@@ -87,8 +87,8 @@ export function CategoryDistributionChart({
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+    <div className="bg-surface p-6 rounded-lg shadow">
+      <h3 className="text-lg font-semibold text-primary mb-4">{title}</h3>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie Chart */}
@@ -122,22 +122,22 @@ export function CategoryDistributionChart({
               return (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-3 bg-surface-sunken rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: item.color }}
                     ></div>
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-primary">
                       {item.name}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm font-semibold text-primary">
                       {item.value}
                     </span>
-                    <span className="text-xs text-gray-500 w-12 text-right">
+                    <span className="text-xs text-secondary w-12 text-right">
                       ({percentage}%)
                     </span>
                   </div>
@@ -150,7 +150,7 @@ export function CategoryDistributionChart({
           <div className="mt-4 pt-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-gray-600">Total Articles:</span>
-              <span className="text-lg font-bold text-gray-900">{total}</span>
+              <span className="text-lg font-bold text-primary">{total}</span>
             </div>
           </div>
         </div>

@@ -35,7 +35,7 @@ export default async function NewCategoryPage({ params }: NewCategoryPageProps) 
           <span>/</span>
           <span>New Category</span>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
           Create New Category
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -44,7 +44,7 @@ export default async function NewCategoryPage({ params }: NewCategoryPageProps) 
       </div>
 
       {/* Category Form */}
-      <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-6">
+      <div className="bg-surface dark:bg-surface-dark shadow-md sm:rounded-lg p-6">
         <CategoryForm locale={locale} categories={categories} />
       </div>
     </div>

@@ -65,7 +65,7 @@ export default async function ImagesPage({ params, searchParams }: PageProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-primary dark:text-primary-dark">
             Image Library
           </h1>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
@@ -93,16 +93,16 @@ export default async function ImagesPage({ params, searchParams }: PageProps) {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {/* Total Images */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Total Images
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {totalItems}
               </p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-secondary dark:text-gray-400">
                 JPEG: {jpegCount} · PNG: {pngCount} · WebP: {webpCount} · GIF: {gifCount}
               </p>
             </div>
@@ -125,19 +125,19 @@ export default async function ImagesPage({ params, searchParams }: PageProps) {
         </div>
 
         {/* Storage */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Total Storage
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {totalSizeMB}
-                <span className="text-lg font-normal text-gray-500 dark:text-gray-400 ml-1">
+                <span className="text-lg font-normal text-secondary dark:text-gray-400 ml-1">
                   MB
                 </span>
               </p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-secondary dark:text-gray-400">
                 Original images
               </p>
             </div>
@@ -160,19 +160,19 @@ export default async function ImagesPage({ params, searchParams }: PageProps) {
         </div>
 
         {/* Average Size */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Average Size
               </p>
-              <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="mt-2 text-3xl font-bold text-primary dark:text-primary-dark">
                 {totalItems > 0 ? (totalSize / currentPageImages / (1024 * 1024)).toFixed(2) : '0'}
-                <span className="text-lg font-normal text-gray-500 dark:text-gray-400 ml-1">
+                <span className="text-lg font-normal text-secondary dark:text-gray-400 ml-1">
                   MB
                 </span>
               </p>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-secondary dark:text-gray-400">
                 Per image
               </p>
             </div>

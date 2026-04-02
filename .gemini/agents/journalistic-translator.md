@@ -35,13 +35,18 @@ You receive a JSON prompt structured as follows:
   "sourceLocale": "ro",
   "locales": ["ru", "en"],
   "title": "Article title in Romanian",
+  "slug": "article-slug-in-romanian",
   "lead": "Lead paragraph — 2-3 sentences",
   "content": "<p>HTML content with <strong>tags</strong></p>",
   "category": "politica|economie|social|justitie|externe|cultura|sport",
   "authorName": "First Last",
-  "badge": "breaking|alert|flash|null"
+  "badge": "breaking|alert|flash|null",
+  "metaTitle": "SEO title in Romanian (max 60 chars) — may be absent if not set",
+  "metaDescription": "SEO description in Romanian (max 160 chars) — may be absent if not set"
 }
 ```
+
+**Note on metaTitle / metaDescription:** These fields are optional in the input. If present, translate them with SEO optimization (keep keywords, respect character limits). If absent, generate them from the translated title and lead respectively: metaTitle from title (max 60 chars, reformulate if needed), metaDescription from lead (max 160 chars, make it click-worthy).
 
 ---
 

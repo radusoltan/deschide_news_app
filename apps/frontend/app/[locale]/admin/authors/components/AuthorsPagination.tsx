@@ -57,7 +57,7 @@ export function AuthorsPagination({ currentPage, totalPages, locale }: AuthorsPa
       {/* Previous button */}
       <Link
         href={createPageURL(currentPage - 1)}
-        className={`min-w-[40px] flex justify-center items-center text-gray-800 hover:bg-gray-100 py-2 px-3 text-sm rounded-lg focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-white dark:hover:bg-white/10 dark:focus:bg-white/10 ${
+        className={`min-w-[40px] flex justify-center items-center text-gray-800 hover:bg-gray-100 py-2 px-3 text-sm rounded-lg focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-primary-dark dark:hover:bg-surface/10 dark:focus:bg-surface/10 ${
           currentPage <= 1 ? 'pointer-events-none opacity-50' : ''
         }`}
         aria-label="Previous page"
@@ -86,7 +86,7 @@ export function AuthorsPagination({ currentPage, totalPages, locale }: AuthorsPa
             return (
               <span
                 key={`dots-${index}`}
-                className="min-w-[40px] flex justify-center items-center text-gray-800 py-2 px-3 text-sm rounded-lg focus:outline-none dark:text-white"
+                className="min-w-[40px] flex justify-center items-center text-gray-800 py-2 px-3 text-sm rounded-lg focus:outline-none dark:text-primary-dark"
               >
                 ...
               </span>
@@ -100,7 +100,7 @@ export function AuthorsPagination({ currentPage, totalPages, locale }: AuthorsPa
               className={`min-w-[40px] flex justify-center items-center py-2 px-3 text-sm rounded-lg focus:outline-none ${
                 currentPage === pageNumber
                   ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500'
-                  : 'text-gray-800 hover:bg-gray-100 dark:text-white dark:hover:bg-white/10'
+                  : 'text-gray-800 hover:bg-gray-100 dark:text-primary-dark dark:hover:bg-surface/10'
               }`}
               aria-current={currentPage === pageNumber ? 'page' : undefined}
             >
@@ -113,7 +113,7 @@ export function AuthorsPagination({ currentPage, totalPages, locale }: AuthorsPa
       {/* Next button */}
       <Link
         href={createPageURL(currentPage + 1)}
-        className={`min-w-[40px] flex justify-center items-center text-gray-800 hover:bg-gray-100 py-2 px-3 text-sm rounded-lg focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-white dark:hover:bg-white/10 dark:focus:bg-white/10 ${
+        className={`min-w-[40px] flex justify-center items-center text-gray-800 hover:bg-gray-100 py-2 px-3 text-sm rounded-lg focus:outline-none focus:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-primary-dark dark:hover:bg-surface/10 dark:focus:bg-surface/10 ${
           currentPage >= totalPages ? 'pointer-events-none opacity-50' : ''
         }`}
         aria-label="Next page"

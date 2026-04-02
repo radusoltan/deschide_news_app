@@ -15,14 +15,19 @@
   --color-surface-sunken: oklch(95% 0.005 90);
 
   /* Text Colors */
+  --color-primary: oklch(20% 0 0);
   --color-text-primary: oklch(20% 0 0);
+  --color-secondary: oklch(40% 0 0);
   --color-text-secondary: oklch(40% 0 0);
+  --color-tertiary: oklch(55% 0 0);
   --color-text-tertiary: oklch(55% 0 0);
 
   /* Brand and Accent */
   --color-accent: oklch(45% 0.15 165);
   --color-accent-hover: oklch(40% 0.17 165);
   --color-breaking: oklch(55% 0.22 25);
+  --color-alert: oklch(70% 0.18 85);
+  --color-flash: oklch(55% 0.20 280);
 
   /* Section Colors (Guardian-inspired) */
   --color-section-politics: oklch(55% 0.18 25);
@@ -43,8 +48,11 @@
   --color-surface-dark: oklch(15% 0.02 260);
   --color-surface-elevated-dark: oklch(20% 0.02 260);
   --color-surface-sunken-dark: oklch(12% 0.02 260);
+  --color-primary-dark: oklch(90% 0.01 260);
   --color-text-primary-dark: oklch(90% 0.01 260);
+  --color-secondary-dark: oklch(70% 0.01 260);
   --color-text-secondary-dark: oklch(70% 0.01 260);
+  --color-tertiary-dark: oklch(60% 0.01 260);
   --color-text-tertiary-dark: oklch(60% 0.01 260);
   --color-border-dark: oklch(30% 0.02 260);
   --color-focus-dark: oklch(65% 0.25 260);

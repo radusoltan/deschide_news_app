@@ -57,6 +57,28 @@ framework:
                     multiplier: 3
                     max_delay: 60000
 
+            # Scraping pipeline transport (Sprint 16)
+            scraping:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: scraping
+                retry_strategy:
+                    max_retries: 2
+                    delay: 5000
+                    multiplier: 3
+                    max_delay: 60000
+
+            # Editorial processing transport (Sprint 16)
+            editorial:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: editorial
+                retry_strategy:
+                    max_retries: 3
+                    delay: 3000
+                    multiplier: 2
+                    max_delay: 45000
+
         routing:
             # Route your messages to the transports
             # Cache messages (Sprint 2)
@@ -77,9 +99,23 @@ framework:
             # Translation: default route is 'translations' (normal priority).
             # Priority routing is handled by TranslationPriorityDispatcher.
             'App\Message\TranslateArticleMessage': translations
+            'App\Message\TranslateEntityMessage': translations
 
             # Batch translation scheduling (processed by TranslatePendingBatchHandler)
             'App\Message\TranslatePendingBatch': async
+
+            # SEO optimization (Gemini AI generates metaTitle, metaDescription, tags)
+            'App\Message\OptimizeSeoMessage': async
+
+            # Scraping pipeline (Sprint 16)
+            'App\Message\Editorial\ScrapeSourceMessage': scraping
+            'App\Message\Editorial\ProcessScrapedArticleMessage': editorial
+
+            # AI ingestion pipeline (Sprint 17)
+            'App\Message\Editorial\IngestArticleMessage': editorial
+
+            # Translation evaluation pipeline (Sprint 18)
+            'App\Message\Editorial\EvaluateTranslationMessage': editorial
 
 # when@test:
 #    framework:

@@ -11,7 +11,7 @@ import { buildArticleUrl, parseDate } from '@/lib/seo/sitemap-utils';
 import { SITEMAP_CONFIG } from '@/lib/seo/sitemap-config';
 
 export default async function imageSitemap(): Promise<MetadataRoute.Sitemap> {
-  const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL || 'http://localhost:8082';
+  const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
   const { locales } = SITEMAP_CONFIG;
 
   const sitemapEntries: MetadataRoute.Sitemap = [];

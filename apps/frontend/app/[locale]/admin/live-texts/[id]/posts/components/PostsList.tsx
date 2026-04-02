@@ -54,7 +54,7 @@ export function PostsList({ posts, locale, onEdit, onDelete, onRefresh }: PostsL
     setDeletingId(postId);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
       const response = await fetch(`${apiUrl}/api/live_text_posts/${postId}`, {
         method: 'DELETE',
         credentials: 'include',
@@ -94,7 +94,7 @@ export function PostsList({ posts, locale, onEdit, onDelete, onRefresh }: PostsL
 
   if (posts.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
         <svg
           className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4"
           fill="none"
@@ -115,7 +115,7 @@ export function PostsList({ posts, locale, onEdit, onDelete, onRefresh }: PostsL
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
         {t.posts} ({posts.length})
       </h3>
 
@@ -123,7 +123,7 @@ export function PostsList({ posts, locale, onEdit, onDelete, onRefresh }: PostsL
         {posts.map((post) => (
           <div
             key={post.id}
-            className={`bg-white dark:bg-gray-800 rounded-lg border ${
+            className={`bg-surface dark:bg-surface-dark rounded-lg border ${
               post.isKeyPoint
                 ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/10'
                 : 'border-gray-200 dark:border-gray-700'
@@ -153,7 +153,7 @@ export function PostsList({ posts, locale, onEdit, onDelete, onRefresh }: PostsL
                 </div>
 
                 {/* Timestamp */}
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="text-sm text-secondary dark:text-gray-400">
                   {formatDate(post.publishedAt)}
                 </div>
               </div>
@@ -207,7 +207,7 @@ export function PostsList({ posts, locale, onEdit, onDelete, onRefresh }: PostsL
             </div>
 
             {/* Content Preview */}
-            <div className="text-gray-700 dark:text-gray-300 line-clamp-3">
+            <div className="text-primary dark:text-primary-dark line-clamp-3">
               {stripHtml(post.contentHtml)}
             </div>
           </div>

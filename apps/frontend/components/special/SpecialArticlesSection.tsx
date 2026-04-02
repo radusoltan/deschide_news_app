@@ -81,7 +81,7 @@ export const SpecialArticlesSection: React.FC<SpecialArticlesSectionProps> = ({
       aria-label="Urgent news"
     >
       {/* Clean card container */}
-      <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+      <div className="bg-surface-sunken rounded-lg p-3 space-y-2">
         {sortedArticles.map((article, index) => (
           <div
             key={article.id}

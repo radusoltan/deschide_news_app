@@ -10,6 +10,7 @@ use App\Enum\NotificationType;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 final class TranslationResultProcessor
 {
@@ -101,8 +102,31 @@ final class TranslationResultProcessor
                 $translationRepo->translate($article, 'content', $locale, $tData['content']);
             }
 
-            if (!empty($tData['slug'])) {
-                $translationRepo->translate($article, 'slug', $locale, $tData['slug']);
+            // Slug: use Gemini's slug, or generate from translated title as fallback
+            $slug = $tData['slug'] ?? '';
+            if (empty($slug) && !empty($tData['title'])) {
+                $slugLocale = $locale === 'ru' ? 'ru' : 'en';
+                $slugger = new AsciiSlugger($slugLocale);
+                $slug = $slugger->slug($tData['title'])->lower()->toString();
+                $this->logger->info('TranslationResultProcessor: generated fallback slug from title', [
+                    'articleId' => $article->getId(),
+                    'locale' => $locale,
+                    'slug' => $slug,
+                ]);
+            }
+            if (!empty($slug)) {
+                $translationRepo->translate($article, 'slug', $locale, $slug);
+            }
+
+            // SEO fields
+            if (!empty($tData['metaTitle'])) {
+                $metaTitle = mb_substr($tData['metaTitle'], 0, 60);
+                $translationRepo->translate($article, 'metaTitle', $locale, $metaTitle);
+            }
+
+            if (!empty($tData['metaDescription'])) {
+                $metaDesc = mb_substr($tData['metaDescription'], 0, 160);
+                $translationRepo->translate($article, 'metaDescription', $locale, $metaDesc);
             }
 
             $translatedLocales[] = $locale;

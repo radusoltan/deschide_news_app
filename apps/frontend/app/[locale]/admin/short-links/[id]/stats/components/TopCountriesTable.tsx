@@ -72,12 +72,12 @@ const COUNTRY_NAMES: Record<string, string> = {
 export default function TopCountriesTable({ data }: TopCountriesTableProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-4">
           Top Țări
         </h3>
-        <div className="h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-          <p className="text-gray-500 dark:text-gray-400">
+        <div className="h-64 flex items-center justify-center bg-surface-sunken dark:bg-gray-700/50 rounded-lg">
+          <p className="text-secondary dark:text-gray-400">
             Nu există date disponibile
           </p>
         </div>
@@ -93,9 +93,9 @@ export default function TopCountriesTable({ data }: TopCountriesTableProps) {
     .slice(0, 15);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div className="bg-surface dark:bg-surface-dark rounded-lg shadow overflow-hidden">
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-lg font-semibold text-primary dark:text-primary-dark">
           Top Țări
         </h3>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -104,8 +104,8 @@ export default function TopCountriesTable({ data }: TopCountriesTableProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <table className="w-full text-sm text-left text-secondary dark:text-gray-400">
+          <thead className="text-xs text-primary uppercase bg-surface-sunken dark:bg-gray-700 dark:text-gray-400">
             <tr>
               <th scope="col" className="px-6 py-3">
                 #
@@ -133,9 +133,9 @@ export default function TopCountriesTable({ data }: TopCountriesTableProps) {
               return (
                 <tr
                   key={country.countryCode}
-                  className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                  className="bg-surface border-b dark:bg-surface-dark dark:border-gray-700 hover:bg-surface-sunken dark:hover:bg-gray-600"
                 >
-                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                  <td className="px-6 py-4 font-medium text-primary dark:text-primary-dark">
                     {index + 1}
                   </td>
                   <td className="px-6 py-4">
@@ -146,12 +146,12 @@ export default function TopCountriesTable({ data }: TopCountriesTableProps) {
                       {country.countryCode}
                     </Badge>
                   </td>
-                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                  <td className="px-6 py-4 font-medium text-primary dark:text-primary-dark">
                     {COUNTRY_NAMES[country.countryCode] ||
                       country.countryCode}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                    <span className="font-semibold text-primary dark:text-primary-dark">
                       {country.count.toLocaleString('ro-RO')}
                     </span>
                   </td>
@@ -192,7 +192,7 @@ export default function TopCountriesTable({ data }: TopCountriesTableProps) {
 
       {/* Summary footer */}
       {data.length > 15 && (
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 text-sm text-gray-600 dark:text-gray-400 text-center">
+        <div className="px-6 py-4 bg-surface-sunken dark:bg-gray-700/50 text-sm text-gray-600 dark:text-gray-400 text-center">
           Afișare top 15 din {data.length} țări
         </div>
       )}

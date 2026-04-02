@@ -44,7 +44,7 @@ export default async function CategoriesPage({ params, searchParams }: Categorie
       {/* Page Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
             Categories
           </h1>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -71,7 +71,7 @@ export default async function CategoriesPage({ params, searchParams }: Categorie
       )}
 
       {/* Categories Table */}
-      <div className="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
+      <div className="bg-surface dark:bg-surface-dark relative shadow-md sm:rounded-lg overflow-hidden">
         <CategoriesTable categories={categoriesData} totalItems={totalItems} locale={locale} />
       </div>
 
@@ -89,7 +89,7 @@ export default async function CategoriesPage({ params, searchParams }: Categorie
       {/* Front Page Order Section */}
       {(() => {
         const frontPageCategories = categoriesData
-          .filter((cat: any) => cat.onFrontPage)
+          .filter((cat: any) => cat.onFrontPage && cat.slug !== 'opinii')
           .map((cat: any) => ({
             id: cat.id,
             title: cat.title,
@@ -100,7 +100,7 @@ export default async function CategoriesPage({ params, searchParams }: Categorie
         if (frontPageCategories.length === 0) return null;
 
         return (
-          <div className="mt-8 bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
+          <div className="mt-8 bg-surface dark:bg-surface-dark relative shadow-md sm:rounded-lg overflow-hidden">
             <FrontPageOrder categories={frontPageCategories} locale={locale} />
           </div>
         );

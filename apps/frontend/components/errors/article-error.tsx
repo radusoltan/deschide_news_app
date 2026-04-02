@@ -66,7 +66,7 @@ export default function ArticleError({ error, locale, onRetry }: ArticleErrorPro
         </div>
 
         {/* Error Message */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">
+        <h1 className="text-2xl font-bold text-primary mb-3">
           {t.title}
         </h1>
         <p className="text-gray-600 mb-6">
@@ -76,7 +76,7 @@ export default function ArticleError({ error, locale, onRetry }: ArticleErrorPro
         {/* Error Details (Development) */}
         {process.env.NODE_ENV === 'development' && errorMessage && (
           <div className="mb-6 p-4 bg-gray-100 rounded-lg text-left">
-            <p className="text-sm font-semibold text-gray-700 mb-2">{t.error}:</p>
+            <p className="text-sm font-semibold text-primary mb-2">{t.error}:</p>
             <p className="text-sm text-gray-600 font-mono break-all">{errorMessage}</p>
           </div>
         )}
@@ -93,7 +93,7 @@ export default function ArticleError({ error, locale, onRetry }: ArticleErrorPro
           )}
           <Link
             href={`/${locale}`}
-            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+            className="px-6 py-3 bg-gray-200 text-primary rounded-lg font-medium hover:bg-gray-300 transition-colors"
           >
             {t.home}
           </Link>

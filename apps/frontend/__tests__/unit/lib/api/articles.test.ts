@@ -117,9 +117,9 @@ describe('Articles API', () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          next: {
+          next: expect.objectContaining({
             revalidate: 120,
-          },
+          }),
         })
       );
     });
@@ -215,9 +215,9 @@ describe('Articles API', () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          next: {
+          next: expect.objectContaining({
             revalidate: 60,
-          },
+          }),
         })
       );
     });

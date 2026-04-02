@@ -33,7 +33,7 @@ export default async function MostPopular({
   }
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full bg-surface">
       {/* Simple Header - matches homepage pattern */}
       <div className="p-4 bg-gray-100">
         <h2 className="text-lg font-bold text-brand-oxford-900">Most Popular</h2>
@@ -47,7 +47,7 @@ export default async function MostPopular({
           return (
             <li
               key={article.id}
-              className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+              className="border-b border-gray-100 hover:bg-surface-sunken transition-colors"
             >
               <Link
                 href={articleUrl}

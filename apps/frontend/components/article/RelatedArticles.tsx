@@ -29,7 +29,7 @@ export default function RelatedArticles({
     <section className={`${className}`}>
       {/* Section Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 border-b-2 border-red-600 pb-2 inline-block">
+        <h2 className="text-2xl font-bold text-primary border-b-2 border-red-600 pb-2 inline-block">
           {title}
         </h2>
       </div>

@@ -63,7 +63,7 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
           <span>/</span>
           <span>Edit Category</span>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
           Edit Category
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -79,7 +79,7 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
       />
 
       {/* Category Form */}
-      <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-6">
+      <div className="bg-surface dark:bg-surface-dark shadow-md sm:rounded-lg p-6">
         <CategoryForm
           locale={locale}
           categories={categories}
@@ -89,6 +89,7 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
             slug: category.slug,
             status: category.status || 'active',
             onFrontPage: category.onFrontPage || false,
+            frontPageLayout: (category.frontPageLayout as any) || null,
             inMenu: category.inMenu || false,
             inFooterMenu: category.inFooterMenu || false,
             parentId,

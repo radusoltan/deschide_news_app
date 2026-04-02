@@ -146,7 +146,7 @@ const translations = {
 };
 
 const reasonBadgeColors: Record<string, string> = {
-  old_content: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+  old_content: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-primary-dark',
   legal_request: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
   duplicate: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
   quality: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300',
@@ -180,7 +180,7 @@ export default function ArchivedArticlesList({
   const t = translations[locale as keyof typeof translations] || translations.ro;
   const reasons = reasonLabels[locale as keyof typeof reasonLabels] || reasonLabels.ro;
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
 
   const showNotification = useCallback((message: string, type: 'success' | 'error') => {
     setNotification({ show: true, message, type });
@@ -328,47 +328,47 @@ export default function ArchivedArticlesList({
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <div className="bg-surface dark:bg-surface-dark rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t.title}</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <h3 className="text-lg font-semibold text-primary dark:text-primary-dark">{t.title}</h3>
+          <p className="text-sm text-secondary dark:text-gray-400">
             {totalItems} {t.itemsInArchive}
           </p>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+            <thead className="bg-surface-sunken dark:bg-gray-700">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-secondary dark:text-primary-dark uppercase tracking-wider">
                   {t.id}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-secondary dark:text-primary-dark uppercase tracking-wider">
                   {t.titleCol}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-secondary dark:text-primary-dark uppercase tracking-wider">
                   {t.category}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-secondary dark:text-primary-dark uppercase tracking-wider">
                   {t.published}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-secondary dark:text-primary-dark uppercase tracking-wider">
                   {t.archived}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-secondary dark:text-primary-dark uppercase tracking-wider">
                   {t.reason}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-secondary dark:text-primary-dark uppercase tracking-wider">
                   {t.actions}
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="bg-surface dark:bg-surface-dark divide-y divide-gray-200 dark:divide-gray-700">
               {loading ? (
                 <LoadingSkeleton />
               ) : articles.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={7} className="px-4 py-12 text-center text-secondary dark:text-gray-400">
                     {t.noArticles}
                   </td>
                 </tr>
@@ -376,9 +376,9 @@ export default function ArchivedArticlesList({
                 articles.map(article => (
                   <tr
                     key={article.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="hover:bg-surface-sunken dark:hover:bg-gray-700 transition-colors"
                   >
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 font-medium">
+                    <td className="px-4 py-3 text-sm text-primary dark:text-gray-100 font-medium">
                       {article.id}
                     </td>
                     <td className="px-4 py-3 text-sm">
@@ -395,10 +395,10 @@ export default function ArchivedArticlesList({
                         {article.category?.title || '-'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-4 py-3 text-sm text-secondary dark:text-gray-400">
                       {formatDate(article.publishedAt)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-4 py-3 text-sm text-secondary dark:text-gray-400">
                       {formatDate(article.archivedAt)}
                     </td>
                     <td className="px-4 py-3">
@@ -435,21 +435,21 @@ export default function ArchivedArticlesList({
 
         {totalPages > 1 && (
           <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-secondary dark:text-gray-400">
               {t.page} {page} {t.of} {totalPages}
             </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1 || loading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 text-sm font-medium text-primary dark:text-primary-dark bg-surface dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-surface-sunken dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {t.previous}
               </button>
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages || loading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 text-sm font-medium text-primary dark:text-primary-dark bg-surface dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-surface-sunken dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {t.next}
               </button>
@@ -461,20 +461,20 @@ export default function ArchivedArticlesList({
       {/* Confirmation Modal */}
       {confirmModal.show && confirmModal.article && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-primary dark:text-primary-dark mb-2">
               {t.confirmUnarchive}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-1">
               {confirmModal.article.title}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
+            <p className="text-sm text-secondary dark:text-secondary mb-6">
               {t.confirmMessage}
             </p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setConfirmModal({ show: false, article: null })}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-primary dark:text-primary-dark bg-surface dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded hover:bg-surface-sunken dark:hover:bg-gray-600 transition-colors"
               >
                 {t.cancel}
               </button>

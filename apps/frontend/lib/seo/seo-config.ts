@@ -6,7 +6,7 @@
 export const SEO_CONFIG = {
   // Site information
   siteName: process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News',
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? '',
 
   // Default metadata
   defaultTitle: 'Deschide News - Știri de ultimă oră',
@@ -30,7 +30,7 @@ export const SEO_CONFIG = {
   organization: {
     name: 'Deschide News',
     legalName: 'Deschide Media SRL',
-    url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3005',
+    url: process.env.NEXT_PUBLIC_SITE_URL ?? '',
     logo: '/logo.png',
     foundingDate: '2024',
     address: {

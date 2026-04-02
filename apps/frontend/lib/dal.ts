@@ -46,7 +46,7 @@ export async function getAccessToken(): Promise<string | null> {
   return getFreshAccessToken();
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 interface ApiRequestOptions extends RequestInit {
   locale?: string;
@@ -79,14 +79,24 @@ const getFreshAccessToken = cache(async (): Promise<string | null> => {
     return null;
   }
 
-  // Refresh the token directly during server rendering.
-  // We cannot call cookies().set() during render (only in Server Actions
-  // invoked from client or Route Handlers), so we just fetch a new access
-  // token and return it for the current request without updating the cookie.
+  // Prefer the Server Action so the session cookie stays in sync when possible.
+  // If that fails in the current render context, fall back to a direct API
+  // refresh and return a fresh token for the current request only.
   try {
     console.log('[DAL] Access token expired, refreshing...');
-    const newTokens = await apiRefreshToken(session.tokens.refreshToken);
-    console.log('[DAL] Token refreshed successfully');
+    const refreshedSession = await refreshSessionToken();
+
+    if (refreshedSession.success) {
+      console.log('[DAL] Token refreshed successfully via session action');
+      return refreshedSession.accessToken;
+    }
+  } catch (error) {
+    console.warn('[DAL] Session action refresh failed, trying direct API refresh:', error);
+  }
+
+  try {
+    const newTokens = await apiRefreshToken(refreshToken);
+    console.log('[DAL] Token refreshed successfully via direct API call');
     return newTokens.token;
   } catch (error) {
     console.error('[DAL] Token refresh failed:', error);
@@ -143,6 +153,29 @@ async function authenticatedFetch(
 }
 
 // ============================================================================
+// Translation Trigger (server-side only)
+// ============================================================================
+
+export async function triggerTranslation(
+  entityType: 'article' | 'category' | 'author',
+  entityId: number
+): Promise<{ message: string }> {
+  const endpoint = `/api/${entityType === 'article' ? 'articles' : entityType === 'category' ? 'categories' : 'authors'}/${entityId}/translate`;
+
+  const response = await authenticatedFetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+    throw new Error(errorData.error || errorData.message || `Translation request failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// ============================================================================
 // Articles Data Access
 // ============================================================================
 
@@ -164,7 +197,10 @@ export interface Article {
   category?: string | object;
   author?: string | object;
   authors?: Array<string | object>; // Array of author IRIs or objects
+  tags?: Array<string | object>; // Array of tag IRIs or objects
   relatedArticles?: Array<string | object>; // Array of related article IRIs or objects
+  metaTitle?: string | null;
+  metaDescription?: string | null;
 }
 
 export interface ArticlesCollection {
@@ -247,8 +283,11 @@ export async function createArticle(
     status?: string;
     category?: string;
     authors?: string[]; // Array of author IRIs
+    tags?: string[]; // Array of tag IRIs
     badge?: string | null;
     isFeatured?: boolean;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
   },
   locale: string = 'ro'
 ): Promise<Article> {
@@ -288,8 +327,11 @@ export async function updateArticle(
     status?: string;
     category?: string;
     authors?: string[]; // Array of author IRIs
+    tags?: string[]; // Array of tag IRIs
     badge?: string | null;
     isFeatured?: boolean;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
   },
   locale: string = 'ro'
 ): Promise<Article> {
@@ -335,6 +377,7 @@ export interface Category {
   slug: string;
   status?: string;
   onFrontPage?: boolean;
+  frontPageLayout?: string | null;
   inMenu?: boolean;
   inFooterMenu?: boolean;
   parent?: any;
@@ -407,6 +450,9 @@ export async function createCategory(
     slug: string;
     status?: string;
     onFrontPage?: boolean;
+    frontPageLayout?: string | null;
+    inMenu?: boolean;
+    inFooterMenu?: boolean;
     parent?: string | null;
   },
   locale: string = 'ro'
@@ -444,6 +490,9 @@ export async function updateCategory(
     slug?: string;
     status?: string;
     onFrontPage?: boolean;
+    frontPageLayout?: string | null;
+    inMenu?: boolean;
+    inFooterMenu?: boolean;
     parent?: string | null;
   },
   locale: string = 'ro'
@@ -480,8 +529,9 @@ export async function updateCategoryPositions(
 ): Promise<void> {
   for (const { id, frontPagePosition } of positions) {
     const response = await authenticatedFetch(`/api/categories/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       locale,
+      headers: { 'Content-Type': 'application/merge-patch+json' },
       body: JSON.stringify({ frontPagePosition }),
     });
 

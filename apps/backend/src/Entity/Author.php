@@ -166,6 +166,19 @@ class Author implements Translatable
     #[Groups(['author:read', 'author:write', 'article:read'])]
     private ?string $emailDomain = null;
 
+    // Translation tracking
+    #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['author:read'])]
+    private ?string $translationStatus = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(['author:read'])]
+    private ?\DateTimeImmutable $translatedAt = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['author:read'])]
+    private ?string $translatedBy = null;
+
     // Timestamps
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
@@ -395,6 +408,42 @@ class Author implements Translatable
     public function getLocale(): ?string
     {
         return $this->locale;
+    }
+
+    public function getTranslationStatus(): ?string
+    {
+        return $this->translationStatus;
+    }
+
+    public function setTranslationStatus(?string $translationStatus): static
+    {
+        $this->translationStatus = $translationStatus;
+
+        return $this;
+    }
+
+    public function getTranslatedAt(): ?\DateTimeImmutable
+    {
+        return $this->translatedAt;
+    }
+
+    public function setTranslatedAt(?\DateTimeImmutable $translatedAt): static
+    {
+        $this->translatedAt = $translatedAt;
+
+        return $this;
+    }
+
+    public function getTranslatedBy(): ?string
+    {
+        return $this->translatedBy;
+    }
+
+    public function setTranslatedBy(?string $translatedBy): static
+    {
+        $this->translatedBy = $translatedBy;
+
+        return $this;
     }
 
     /**

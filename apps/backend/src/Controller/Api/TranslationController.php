@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\Enum\TranslatableEntityType;
+use App\Message\TranslateArticleMessage;
+use App\Message\TranslateEntityMessage;
 use App\Repository\ArticleRepository;
+use App\Repository\AuthorRepository;
 use App\Repository\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\TranslatableListener;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
@@ -28,7 +33,9 @@ class TranslationController extends AbstractController
     public function __construct(
         private readonly ArticleRepository $articleRepository,
         private readonly CategoryRepository $categoryRepository,
+        private readonly AuthorRepository $authorRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly MessageBusInterface $bus,
     ) {
     }
 
@@ -254,5 +261,128 @@ class TranslationController extends AbstractController
             'translations' => $translations,
             'note' => 'Authors are not translatable - same slug used for all locales',
         ]);
+    }
+
+    // ========================================================================
+    // POST endpoints — trigger AI translation via Messenger queue
+    // ========================================================================
+
+    /**
+     * Trigger AI translation for a category (title → EN, RU).
+     *
+     * Dispatches an async message to the translations queue.
+     * Requires ROLE_ADMIN or ROLE_EDITOR (enforced by security.yaml firewall).
+     */
+    #[Route('/categories/{id}/translate', name: 'category_translate', methods: ['POST'])]
+    public function translateCategory(int $id): JsonResponse
+    {
+        $category = $this->categoryRepository->find($id);
+
+        if (!$category) {
+            return $this->json([
+                'error' => 'Category not found',
+                'entityType' => 'category',
+                'entityId' => $id,
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($category->getTranslationStatus() === 'in_progress') {
+            return $this->json([
+                'error' => 'Translation already in progress',
+                'entityType' => 'category',
+                'entityId' => $id,
+            ], Response::HTTP_CONFLICT);
+        }
+
+        $this->bus->dispatch(new TranslateEntityMessage(
+            entityType: TranslatableEntityType::CATEGORY,
+            entityId: $id,
+            force: true,
+        ));
+
+        return $this->json([
+            'message' => 'Translation queued',
+            'entityType' => 'category',
+            'entityId' => $id,
+        ], Response::HTTP_ACCEPTED);
+    }
+
+    /**
+     * Trigger AI translation for an author (bio → EN, RU).
+     *
+     * Dispatches an async message to the translations queue.
+     * Requires ROLE_ADMIN or ROLE_EDITOR (enforced by security.yaml firewall).
+     */
+    #[Route('/authors/{id}/translate', name: 'author_translate', methods: ['POST'])]
+    public function translateAuthor(int $id): JsonResponse
+    {
+        $author = $this->authorRepository->find($id);
+
+        if (!$author) {
+            return $this->json([
+                'error' => 'Author not found',
+                'entityType' => 'author',
+                'entityId' => $id,
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($author->getTranslationStatus() === 'in_progress') {
+            return $this->json([
+                'error' => 'Translation already in progress',
+                'entityType' => 'author',
+                'entityId' => $id,
+            ], Response::HTTP_CONFLICT);
+        }
+
+        $this->bus->dispatch(new TranslateEntityMessage(
+            entityType: TranslatableEntityType::AUTHOR,
+            entityId: $id,
+            force: true,
+        ));
+
+        return $this->json([
+            'message' => 'Translation queued',
+            'entityType' => 'author',
+            'entityId' => $id,
+        ], Response::HTTP_ACCEPTED);
+    }
+
+    /**
+     * Trigger AI translation for an article (title, lead, content → EN, RU).
+     *
+     * Dispatches an async message to the translations queue.
+     * Requires ROLE_ADMIN or ROLE_EDITOR (enforced by security.yaml firewall).
+     */
+    #[Route('/articles/{id}/translate', name: 'article_translate', methods: ['POST'])]
+    public function translateArticle(int $id): JsonResponse
+    {
+        $article = $this->articleRepository->find($id);
+
+        if (!$article) {
+            return $this->json([
+                'error' => 'Article not found',
+                'entityType' => 'article',
+                'entityId' => $id,
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($article->getTranslationStatus() === 'in_progress') {
+            return $this->json([
+                'error' => 'Translation already in progress',
+                'entityType' => 'article',
+                'entityId' => $id,
+            ], Response::HTTP_CONFLICT);
+        }
+
+        $this->bus->dispatch(new TranslateArticleMessage(
+            articleId: $id,
+            forceRetranslate: true,
+        ));
+
+        return $this->json([
+            'message' => 'Translation queued',
+            'entityType' => 'article',
+            'entityId' => $id,
+        ], Response::HTTP_ACCEPTED);
     }
 }

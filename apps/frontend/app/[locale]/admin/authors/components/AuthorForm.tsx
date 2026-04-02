@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Label, TextInput, Textarea, Select, Button, Spinner, Checkbox } from 'flowbite-react';
 import { createAuthorAction, updateAuthorAction } from '@/app/actions/authors';
+import TranslateButton from '@/components/admin/TranslateButton';
 
 interface AuthorFormProps {
   locale: string;
@@ -20,6 +21,7 @@ interface AuthorFormProps {
     facebook?: string;
     linkedin?: string;
     website?: string;
+    translationStatus?: string | null;
   };
 }
 
@@ -98,8 +100,8 @@ export default function AuthorForm({ locale, author }: AuthorFormProps) {
       )}
 
       {/* Basic Information */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      <div className="bg-surface dark:bg-surface-dark p-6 rounded-lg shadow">
+        <h3 className="text-lg font-medium text-primary dark:text-primary-dark mb-4">
           Basic Information
         </h3>
 
@@ -217,12 +219,21 @@ export default function AuthorForm({ locale, author }: AuthorFormProps) {
             rows={4}
             disabled={loading}
           />
+          {author?.id && formData.bio && (
+            <div className="mt-2">
+              <TranslateButton
+                entityType="author"
+                entityId={author.id}
+                currentStatus={author.translationStatus}
+              />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Social Media Links */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      <div className="bg-surface dark:bg-surface-dark p-6 rounded-lg shadow">
+        <h3 className="text-lg font-medium text-primary dark:text-primary-dark mb-4">
           Social Media & Website
         </h3>
 

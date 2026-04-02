@@ -365,7 +365,7 @@ export default async function TermsPage({ params }: TermsPageProps) {
 
         <div className="container mx-auto px-4 max-w-4xl relative z-10">
           <div className="text-center animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+            <div className="inline-flex items-center gap-2 bg-surface/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
               <svg className="w-5 h-5 text-brand-mindaro-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
@@ -383,7 +383,7 @@ export default async function TermsPage({ params }: TermsPageProps) {
         {/* Introduction Alert */}
         <div className="bg-gradient-to-r from-brand-tomato-500 to-brand-red-600 rounded-2xl shadow-xl p-8 mb-8 animate-fade-in">
           <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-white rounded-lg flex items-center justify-center">
+            <div className="flex-shrink-0 w-12 h-12 bg-surface rounded-lg flex items-center justify-center">
               <svg className="w-7 h-7 text-brand-tomato-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
               </svg>
@@ -402,8 +402,8 @@ export default async function TermsPage({ params }: TermsPageProps) {
         </div>
 
         {/* Table of Contents */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-12 border-t-4 border-brand-oxford-900 animate-fade-in stagger-1">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+        <div className="bg-surface dark:bg-surface-dark rounded-2xl shadow-lg p-8 mb-12 border-t-4 border-brand-oxford-900 animate-fade-in stagger-1">
+          <h2 className="text-2xl font-bold text-primary dark:text-primary-dark mb-6 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-oxford-900 to-brand-oxford-700 flex items-center justify-center">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
@@ -416,12 +416,12 @@ export default async function TermsPage({ params }: TermsPageProps) {
               <a
                 key={index}
                 href={`#${t.sections[index].id}`}
-                className="group flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-750 transition-all duration-200"
+                className="group flex items-start gap-3 p-3 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-750 transition-all duration-200"
               >
                 <span className="flex-shrink-0 w-7 h-7 rounded-md bg-brand-oxford-900 text-white flex items-center justify-center text-sm font-bold group-hover:scale-110 transition-transform duration-200">
                   {index + 1}
                 </span>
-                <span className="text-gray-700 dark:text-gray-300 group-hover:text-brand-oxford-900 dark:group-hover:text-brand-tomato-500 font-medium transition-colors duration-200">
+                <span className="text-primary dark:text-primary-dark group-hover:text-brand-oxford-900 dark:group-hover:text-brand-tomato-500 font-medium transition-colors duration-200">
                   {item}
                 </span>
               </a>
@@ -435,7 +435,7 @@ export default async function TermsPage({ params }: TermsPageProps) {
             <section
               key={section.id}
               id={section.id}
-              className="group bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden animate-fade-in"
+              className="group bg-surface dark:bg-surface-dark rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 overflow-hidden animate-fade-in"
               style={{ animationDelay: `${(index + 2) * 100}ms` }}
             >
               {/* Section Header with Gradient Bar */}
@@ -446,7 +446,7 @@ export default async function TermsPage({ params }: TermsPageProps) {
                   <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-brand-oxford-900 to-brand-tomato-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
                     <span className="text-white font-bold text-xl">{index + 1}</span>
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex-1 pt-2">
+                  <h2 className="text-2xl md:text-3xl font-bold text-primary dark:text-primary-dark flex-1 pt-2">
                     {section.title}
                   </h2>
                 </div>
@@ -455,7 +455,7 @@ export default async function TermsPage({ params }: TermsPageProps) {
                   {section.content.map((paragraph, pIndex) => (
                     <p
                       key={pIndex}
-                      className="text-gray-700 dark:text-gray-300 leading-relaxed"
+                      className="text-primary dark:text-primary-dark leading-relaxed"
                     >
                       {paragraph}
                     </p>
@@ -482,7 +482,7 @@ export default async function TermsPage({ params }: TermsPageProps) {
             </p>
             <a
               href="mailto:legal@deschide.md"
-              className="inline-flex items-center gap-3 bg-white text-brand-oxford-900 font-semibold px-8 py-4 rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-2xl hover:scale-105"
+              className="inline-flex items-center gap-3 bg-surface text-brand-oxford-900 font-semibold px-8 py-4 rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-2xl hover:scale-105"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />

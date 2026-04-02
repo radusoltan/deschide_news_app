@@ -143,11 +143,19 @@ final readonly class TranslateArticleHandler
             'sourceLocale' => 'ro',
             'locales' => $locales,
             'title' => $article->getTitle(),
+            'slug' => $article->getSlug(),
             'lead' => $article->getLead() ?? '',
             'content' => $article->getContent(),
             'category' => $article->getCategory()?->getTitle() ?? '',
             'authorName' => $article->getAuthors()->first()?->getFullName() ?? '',
         ];
+
+        if ($article->getMetaTitle() !== null) {
+            $data['metaTitle'] = $article->getMetaTitle();
+        }
+        if ($article->getMetaDescription() !== null) {
+            $data['metaDescription'] = $article->getMetaDescription();
+        }
 
         return json_encode($data, \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR);
     }

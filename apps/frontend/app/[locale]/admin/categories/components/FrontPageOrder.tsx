@@ -81,7 +81,7 @@ export default function FrontPageOrder({ categories: initial, locale }: FrontPag
 
   if (items.length === 0) {
     return (
-      <div className="p-4 text-sm text-gray-500 dark:text-gray-400">
+      <div className="p-4 text-sm text-secondary dark:text-gray-400">
         No categories are marked for the front page.
       </div>
     );
@@ -92,10 +92,10 @@ export default function FrontPageOrder({ categories: initial, locale }: FrontPag
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-primary dark:text-primary-dark">
             Ordine pe Pagina Principala
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-secondary dark:text-gray-400">
             Trage pentru a reordona categoriile afisate pe homepage
           </p>
         </div>
@@ -134,28 +134,28 @@ export default function FrontPageOrder({ categories: initial, locale }: FrontPag
                 ? 'opacity-50 bg-blue-50 dark:bg-blue-900/20'
                 : overIndex === index
                 ? 'bg-blue-50 dark:bg-blue-900/20 border-t-2 border-blue-500'
-                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                : 'hover:bg-surface-sunken dark:hover:bg-gray-700/50'
             }`}
           >
             {/* Drag handle */}
-            <span className="text-gray-400 dark:text-gray-500 flex-shrink-0 select-none" title="Drag to reorder">
+            <span className="text-gray-400 dark:text-secondary flex-shrink-0 select-none" title="Drag to reorder">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
               </svg>
             </span>
 
             {/* Position number */}
-            <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-sm font-bold text-gray-700 dark:text-gray-300 flex-shrink-0">
+            <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-sm font-bold text-primary dark:text-primary-dark flex-shrink-0">
               {index + 1}
             </span>
 
             {/* Title */}
-            <span className="flex-1 font-medium text-gray-900 dark:text-white">
+            <span className="flex-1 font-medium text-primary dark:text-primary-dark">
               {item.title}
             </span>
 
             {/* Slug */}
-            <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+            <span className="text-xs text-gray-400 dark:text-secondary font-mono">
               /{item.slug}
             </span>
 
@@ -164,7 +164,7 @@ export default function FrontPageOrder({ categories: initial, locale }: FrontPag
               <button
                 onClick={() => moveItem(index, -1)}
                 disabled={index === 0}
-                className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-primary-dark disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Move up"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,7 +174,7 @@ export default function FrontPageOrder({ categories: initial, locale }: FrontPag
               <button
                 onClick={() => moveItem(index, 1)}
                 disabled={index === items.length - 1}
-                className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-primary-dark disabled:opacity-30 disabled:cursor-not-allowed"
                 title="Move down"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

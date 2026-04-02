@@ -1,222 +1,184 @@
-/**
- * Proxy Configuration (Next.js 16)
- * Migrated from middleware.ts to proxy.ts
- *
- * @see NEXTJS_ALIGNMENT_PLAN.md - Phase 3 Data Fetching Optimization
- * @see https://nextjs.org/docs/app/api-reference/file-conventions/proxy
- *
- * Key differences from middleware:
- * - Runs on Node.js runtime (not Edge)
- * - Focus on lightweight routing logic
- * - No Edge runtime limitation
- */
-
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { i18nRouter } from 'next-i18n-router';
-import i18nConfig from './i18nConfig';
-import { decrypt } from '@/lib/auth/session-edge';
-import {
-  checkUrlRedirect,
-  extractRedirectInfo,
-  isRedirectLoop,
-  logRedirect,
-} from '@/lib/middleware/redirect-handler';
-import {
-  detectLocale,
-  getPathWithoutLocale,
-} from '@/lib/middleware/locale-handler';
-import { handleMiddlewareError } from '@/lib/middleware/error-handler';
-import { shouldSkipRedirectCheck } from '@/lib/utils/redirect-utils';
+import { NextResponse } from 'next/server';
 
-// ============================================================================
-// Configuration
-// ============================================================================
+const locales = ['ro', 'en', 'ru'] as const;
+const defaultLocale = 'ro';
+const localeCookieName = 'NEXT_LOCALE';
 
-// Routes that require authentication
-const protectedRoutes = ['/dashboard', '/admin', '/profile'];
+const publicPathPrefixes = ['/_next', '/api', '/icons'];
+const publicPathnames = new Set([
+  '/favicon.ico',
+  '/robots.txt',
+  '/site.webmanifest',
+  '/sw.js',
+  '/sitemap.xml',
+  '/news-sitemap.xml',
+  '/image-sitemap.xml',
+  '/sitemap-archive.xml',
+]);
 
-// Routes that should redirect to home if authenticated
-const authRoutes = ['/login'];
+const protectedPaths = ['/admin', '/dashboard', '/profile'];
+const authPaths = ['/login'];
 
-// ============================================================================
-// Proxy Function (replaces middleware)
-// ============================================================================
+type Locale = (typeof locales)[number];
 
-export async function proxy(request: NextRequest) {
+function isLocale(value: string | null | undefined): value is Locale {
+  return Boolean(value && locales.includes(value as Locale));
+}
+
+function getLocaleFromPath(pathname: string): Locale | null {
+  const segment = pathname.split('/').filter(Boolean)[0];
+  return isLocale(segment) ? segment : null;
+}
+
+function getPathWithoutLocale(pathname: string): string {
+  const locale = getLocaleFromPath(pathname);
+  if (!locale) {
+    return pathname;
+  }
+
+  const strippedPath = pathname.slice(`/${locale}`.length);
+  return strippedPath || '/';
+}
+
+function hasFileExtension(pathname: string): boolean {
+  return /\.[^/]+$/.test(pathname);
+}
+
+function isPublicPath(pathname: string): boolean {
+  if (publicPathnames.has(pathname)) {
+    return true;
+  }
+
+  if (publicPathPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+    return true;
+  }
+
+  if (pathname.startsWith('/.well-known')) {
+    return true;
+  }
+
+  const pathnameWithoutLocale = getPathWithoutLocale(pathname);
+
+  return publicPathnames.has(pathnameWithoutLocale) || hasFileExtension(pathnameWithoutLocale);
+}
+
+function getLocaleFromHeaders(request: NextRequest): Locale {
+  const header = request.headers.get('accept-language') ?? '';
+
+  const parsedLocales = header
+    .split(',')
+    .map((part) => {
+      const [language, qualityPart] = part.trim().split(';');
+      const quality = qualityPart ? Number.parseFloat(qualityPart.split('=')[1] ?? '1') : 1;
+      return {
+        locale: language.split('-')[0]?.toLowerCase() ?? '',
+        quality: Number.isFinite(quality) ? quality : 0,
+      };
+    })
+    .sort((left, right) => right.quality - left.quality);
+
+  for (const entry of parsedLocales) {
+    if (isLocale(entry.locale)) {
+      return entry.locale;
+    }
+  }
+
+  return defaultLocale;
+}
+
+function getPreferredLocale(request: NextRequest): Locale {
+  const cookieLocale = request.cookies.get(localeCookieName)?.value;
+  if (isLocale(cookieLocale)) {
+    return cookieLocale;
+  }
+
+  return getLocaleFromHeaders(request);
+}
+
+function withLocaleCookie(response: NextResponse, locale: Locale): NextResponse {
+  response.cookies.set(localeCookieName, locale, {
+    maxAge: 365 * 24 * 60 * 60,
+    path: '/',
+    sameSite: 'lax',
+  });
+
+  return response;
+}
+
+function matchesProtectedPath(pathname: string): boolean {
+  return protectedPaths.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
+function matchesAuthPath(pathname: string): boolean {
+  return authPaths.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
+async function hasValidSession(request: NextRequest): Promise<boolean> {
+  const sessionCookie = request.cookies.get('session')?.value;
+
+  if (!sessionCookie) {
+    return false;
+  }
+
   try {
-    const path = request.nextUrl.pathname;
-
-    // ========================================================================
-    // 0. SKIP FOR SPECIAL PATHS
-    // ========================================================================
-    // Skip proxy for .well-known paths (used by browsers/tools)
-    if (path.startsWith('/.well-known')) {
-      return NextResponse.next();
-    }
-
-    // Remove locale prefix for route matching
-    const pathWithoutLocale = getPathWithoutLocale(path);
-
-    // ========================================================================
-    // 1. REDIRECT CHECK (if not skipped)
-    // ========================================================================
-    // Detect locale first for redirect check
-    const locale = detectLocale(request);
-
-    if (!shouldSkipRedirectCheck(pathWithoutLocale)) {
-      const redirectResult = await checkUrlRedirect(pathWithoutLocale, locale);
-
-      if (redirectResult) {
-        const redirectInfo = extractRedirectInfo(redirectResult);
-
-        if (redirectInfo.shouldRedirect && redirectInfo.finalUrl) {
-          // Check for redirect loop
-          if (isRedirectLoop(pathWithoutLocale, redirectInfo.finalUrl)) {
-            console.error('[Proxy] Redirect loop detected:', {
-              from: pathWithoutLocale,
-              to: redirectInfo.finalUrl,
-            });
-          } else {
-            // Log redirect
-            logRedirect(
-              pathWithoutLocale,
-              redirectInfo.finalUrl,
-              redirectInfo.statusCode,
-              redirectInfo.chainLength
-            );
-
-            // Perform redirect
-            const redirectUrl = new URL(redirectInfo.finalUrl, request.url);
-
-            // Preserve query parameters
-            request.nextUrl.searchParams.forEach((value, key) => {
-              redirectUrl.searchParams.set(key, value);
-            });
-
-            return NextResponse.redirect(redirectUrl, {
-              status: redirectInfo.statusCode,
-            });
-          }
-        }
-      }
-    }
-
-    // ========================================================================
-    // 2. AUTHENTICATION CHECK (lightweight - no DB calls)
-    // ========================================================================
-    const isProtectedRoute = protectedRoutes.some((route) =>
-      pathWithoutLocale.startsWith(route)
-    );
-
-    const isAuthRoute = authRoutes.some((route) =>
-      pathWithoutLocale.startsWith(route)
-    );
-
-    // Get session cookie (lightweight check)
-    const cookie = request.cookies.get('session')?.value;
-    const hasSession = !!cookie;
-
-    // For protected routes, do a quick session existence check
-    // Full session validation happens in the route handler
-    if (isProtectedRoute && !hasSession) {
-      const loginUrl = new URL(`/${locale}/login`, request.url);
-      loginUrl.searchParams.set('from', `/${locale}${pathWithoutLocale}`);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    // Optional: Decrypt session for more accurate auth check
-    // Only do this if needed, as it adds latency
-    if (isProtectedRoute && hasSession) {
-      const session = await decrypt(cookie);
-      if (!session) {
-        const loginUrl = new URL(`/${locale}/login`, request.url);
-        loginUrl.searchParams.set('from', `/${locale}${pathWithoutLocale}`);
-        return NextResponse.redirect(loginUrl);
-      }
-    }
-
-    // ========================================================================
-    // 3. LOCALE HANDLING (i18n)
-    // ========================================================================
-    const response = i18nRouter(request, i18nConfig);
-
-    // Set locale cookie if not already set
-    if (!request.cookies.get('NEXT_LOCALE')) {
-      response.cookies.set('NEXT_LOCALE', locale, {
-        maxAge: 365 * 24 * 60 * 60, // 1 year
-        path: '/',
-        sameSite: 'lax',
-      });
-    }
-
-    // ========================================================================
-    // 4. CACHE HEADERS & PERFORMANCE OPTIMIZATION
-    // ========================================================================
-
-    // Static assets from Next.js - cache for 1 year (immutable)
-    if (path.startsWith('/_next/static/')) {
-      response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-    }
-    // Images - cache for 30 days with stale-while-revalidate
-    else if (path.match(/\.(jpg|jpeg|png|webp|avif|gif|svg|ico)$/)) {
-      response.headers.set('Cache-Control', 'public, max-age=2592000, stale-while-revalidate=86400');
-    }
-    // Fonts - cache for 1 year
-    else if (path.match(/\.(woff|woff2|ttf|otf|eot)$/)) {
-      response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-    }
-    // API responses - cache for 2 minutes (except auth/vitals)
-    else if (path.startsWith('/api/') && !path.includes('/web-vitals') && !path.includes('/auth/')) {
-      response.headers.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=60');
-    }
-    // HTML pages - no browser cache so Mercure-driven router.refresh() always fetches fresh content
-    else if (!path.startsWith('/api/') && !path.startsWith('/_next/')) {
-      response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    }
-
-    // ========================================================================
-    // 5. SECURITY HEADERS
-    // ========================================================================
-    response.headers.set('X-Content-Type-Options', 'nosniff');
-    response.headers.set('X-Frame-Options', 'SAMEORIGIN');
-    response.headers.set('X-XSS-Protection', '1; mode=block');
-    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-
-    return response;
-  } catch (error) {
-    // Handle errors gracefully - don't break the request
-    return handleMiddlewareError(error, request);
+    const { decrypt } = await import('@/lib/auth/session-edge');
+    return Boolean(await decrypt(sessionCookie));
+  } catch {
+    return false;
   }
 }
 
-// ============================================================================
-// Proxy Configuration
-// ============================================================================
+export async function proxy(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
 
-/**
- * Proxy Configuration
- * Applies proxy to specific routes only
- *
- * Excludes:
- * - /api/* - API routes
- * - /_next/* - Next.js internal files
- * - /static/* - Static assets
- * - Files with extensions (.jpg, .css, etc.)
- * - /favicon.ico, /robots.txt, /sitemap.xml
- */
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
+  }
+
+  const localeFromPath = getLocaleFromPath(pathname);
+
+  if (!localeFromPath) {
+    const locale = getPreferredLocale(request);
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = pathname === '/' ? `/${locale}/` : `/${locale}${pathname}`;
+
+    return withLocaleCookie(NextResponse.redirect(redirectUrl), locale);
+  }
+
+  const pathWithoutLocale = getPathWithoutLocale(pathname);
+
+  if (matchesProtectedPath(pathWithoutLocale)) {
+    const authenticated = await hasValidSession(request);
+
+    if (!authenticated) {
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = `/${localeFromPath}/login`;
+      loginUrl.searchParams.set('from', `${pathname}${search}`);
+
+      return withLocaleCookie(NextResponse.redirect(loginUrl), localeFromPath);
+    }
+  }
+
+  if (matchesAuthPath(pathWithoutLocale)) {
+    const authenticated = await hasValidSession(request);
+
+    if (authenticated) {
+      const adminUrl = request.nextUrl.clone();
+      adminUrl.pathname = `/${localeFromPath}/admin`;
+
+      return withLocaleCookie(NextResponse.redirect(adminUrl), localeFromPath);
+    }
+  }
+
+  const response = NextResponse.next();
+  response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+  return withLocaleCookie(response, localeFromPath);
+}
+
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - .well-known (browser/system requests)
-     * - favicon.ico, robots.txt, sitemap.xml (static files)
-     * - Files with extensions (images, css, js, etc.)
-     * - XML sitemaps (sitemap.xml, news-sitemap.xml, image-sitemap.xml)
-     */
-    '/((?!api|_next/static|_next/image|\\.well-known|favicon.ico|robots.txt|.*\\.xml|.*\\.(?:jpg|jpeg|png|gif|svg|ico|css|js|woff|woff2|ttf|eot)).*)',
+    '/((?!api|_next/static|_next/image|icons|favicon.ico|sw.js|site.webmanifest|robots.txt|sitemap.xml|news-sitemap.xml|image-sitemap.xml|sitemap-archive.xml).*)',
   ],
 };

@@ -29,7 +29,7 @@ export function AnalyticsMetricCard({
   isLive = false
 }: AnalyticsMetricCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-all hover:shadow-lg">
+    <div className="bg-surface dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-all hover:shadow-lg">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
@@ -43,11 +43,11 @@ export function AnalyticsMetricCard({
               </span>
             )}
           </div>
-          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+          <p className="text-3xl font-bold text-primary dark:text-gray-100">
             {value}
           </p>
           {description && (
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-500">
+            <p className="mt-2 text-xs text-secondary dark:text-secondary">
               {description}
             </p>
           )}

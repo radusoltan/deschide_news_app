@@ -74,6 +74,19 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
     }).filter((iri: string) => iri !== '');
   }
 
+  // Extract tags from article (already full Tag objects from eager loading)
+  let articleTags: any[] = [];
+  if (article.tags && Array.isArray(article.tags)) {
+    articleTags = article.tags
+      .map((tag: any) => {
+        if (typeof tag === 'object' && tag !== null && 'id' in tag) {
+          return tag;
+        }
+        return null;
+      })
+      .filter((t: any) => t !== null);
+  }
+
   // Extract related article IDs
   let relatedArticleIds: number[] = [];
   if (article.relatedArticles && Array.isArray(article.relatedArticles)) {
@@ -111,7 +124,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
           <span>/</span>
           <span>Edit Article</span>
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-semibold text-primary dark:text-primary-dark">
           Edit Article
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
@@ -127,7 +140,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
       />
 
       {/* Article Form with Lock Management */}
-      <div className="bg-white dark:bg-gray-800 shadow-md sm:rounded-lg p-6">
+      <div className="bg-surface dark:bg-surface-dark shadow-md sm:rounded-lg p-6">
         <ArticleEditWrapper
           locale={locale}
           article={{
@@ -139,7 +152,12 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
             status: article.status || 'new',
             category: categoryId,
             authors: authorIris,
+            tags: articleTags,
             publishAt: publishAtLocal,
+            badge: article.badge || null,
+            isFeatured: article.isFeatured || false,
+            metaTitle: article.metaTitle || null,
+            metaDescription: article.metaDescription || null,
           }}
           categories={categories}
           authors={authors}

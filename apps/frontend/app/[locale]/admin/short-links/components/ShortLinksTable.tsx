@@ -28,7 +28,7 @@ export default function ShortLinksTable({
 
   if (!shortLinks || shortLinks.length === 0) {
     return (
-      <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+      <div className="p-8 text-center text-secondary dark:text-gray-400">
         <p className="text-lg mb-2">Niciun link scurt găsit</p>
         <p className="text-sm">Creați primul link scurt pentru a începe.</p>
       </div>
@@ -70,8 +70,8 @@ export default function ShortLinksTable({
   return (
     <div className="overflow-x-auto">
       <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <table className="w-full text-sm text-left text-secondary dark:text-gray-400">
+          <thead className="text-xs text-primary uppercase bg-surface-sunken dark:bg-gray-700 dark:text-gray-400">
             <tr>
               <th scope="col" className="px-6 py-3">
                 Cod
@@ -97,19 +97,19 @@ export default function ShortLinksTable({
             {shortLinks.map((link) => (
               <tr
                 key={link.id}
-                className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                className="bg-surface border-b dark:bg-surface-dark dark:border-gray-700 hover:bg-surface-sunken dark:hover:bg-gray-600"
               >
-                <td className="px-6 py-4 font-mono font-medium text-gray-900 dark:text-white">
+                <td className="px-6 py-4 font-mono font-medium text-primary dark:text-primary-dark">
                   {link.code}
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-col gap-1">
                     {link.title && (
-                      <div className="font-medium text-gray-900 dark:text-white">
+                      <div className="font-medium text-primary dark:text-primary-dark">
                         {link.title}
                       </div>
                     )}
-                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-md">
+                    <div className="text-xs text-secondary dark:text-gray-400 truncate max-w-md">
                       {link.originalUrl}
                     </div>
                     {link.article && (

@@ -77,7 +77,7 @@ export function ReactionButtons({ postId, initialCounts, locale }: ReactionButto
 
   const fetchCounts = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
       const response = await fetch(`${apiUrl}/api/live_text_posts/${postId}/reactions/count`, {
         credentials: 'include',
       });
@@ -112,7 +112,7 @@ export function ReactionButtons({ postId, initialCounts, locale }: ReactionButto
   const handleReaction = async (reactionType: string) => {
     if (isSubmitting) return;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8081';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
 
     // If clicking same reaction, remove it
     if (userReaction === reactionType) {
@@ -210,7 +210,7 @@ export function ReactionButtons({ postId, initialCounts, locale }: ReactionButto
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
               isActive
                 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 ring-2 ring-red-500'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                : 'bg-gray-100 dark:bg-surface-dark text-primary dark:text-primary-dark hover:bg-gray-200 dark:hover:bg-gray-700'
             } disabled:opacity-50`}
             title={labels[reactionType as keyof typeof labels]}
           >

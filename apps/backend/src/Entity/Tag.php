@@ -125,6 +125,15 @@ class Tag implements Translatable
     #[Gedmo\Locale]
     private ?string $locale = null;
 
+    /**
+     * Non-persisted field populated by TagProvider.
+     * Contains slug translations for all locales: {"ro": "politica", "en": "politics", "ru": "politika"}
+     *
+     * @var array<string, string>|null
+     */
+    #[Groups(['tag:read'])]
+    private ?array $translatedSlugs = null;
+
     public function __construct()
     {
         $this->articles = new ArrayCollection();
@@ -242,5 +251,23 @@ class Tag implements Translatable
     public function getLocale(): ?string
     {
         return $this->locale;
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    public function getTranslatedSlugs(): ?array
+    {
+        return $this->translatedSlugs;
+    }
+
+    /**
+     * @param array<string, string>|null $translatedSlugs
+     */
+    public function setTranslatedSlugs(?array $translatedSlugs): self
+    {
+        $this->translatedSlugs = $translatedSlugs;
+
+        return $this;
     }
 }
