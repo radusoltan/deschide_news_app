@@ -51,6 +51,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_article_featured_published', columns: ['is_featured', 'published_at'])]
 #[ORM\Index(name: 'idx_article_category_status_published', columns: ['category_id', 'status', 'published_at'])]
 #[ORM\Index(name: 'idx_article_status_archived', columns: ['status', 'archived_at'])]
+#[ORM\Index(name: 'idx_article_content_hash', columns: ['content_hash'])]
 #[ApiResource(
     operations: [
         new Get(
@@ -272,6 +273,11 @@ class Article implements Translatable
     #[ORM\Column(length: 64, nullable: true, unique: true)]
     #[Groups(['article:read', 'article:write'])]
     private ?string $sourceEmail = null;
+
+    // Content hash for deduplication (SHA-256 of normalized body)
+    #[ORM\Column(length: 64, nullable: true)]
+    #[Groups(['article:read'])]
+    private ?string $contentHash = null;
 
     // Translation workflow fields
     #[ORM\Column(options: ['default' => false])]
@@ -689,6 +695,18 @@ class Article implements Translatable
     public function setSourceEmail(?string $sourceEmail): static
     {
         $this->sourceEmail = $sourceEmail;
+
+        return $this;
+    }
+
+    public function getContentHash(): ?string
+    {
+        return $this->contentHash;
+    }
+
+    public function setContentHash(?string $contentHash): static
+    {
+        $this->contentHash = $contentHash;
 
         return $this;
     }
