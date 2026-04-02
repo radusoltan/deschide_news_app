@@ -66,10 +66,10 @@ export default function ArticleBody({
     <div className={`max-w-full ${className}`}>
       {/* Table of Contents - show only if enabled and headings exist */}
       {enableTableOfContents && headings.length > 0 && (
-        <div className="mb-8 bg-surface border border-gray-200 rounded-lg p-4 md:p-6">
+        <div className="mb-8 bg-surface dark:bg-surface-elevated-dark border border-gray-200 dark:border-border-dark rounded-lg p-4 md:p-6">
           <button
             onClick={() => setShowTOC(!showTOC)}
-            className="flex items-center justify-between w-full text-left font-bold text-gray-800 mb-2 md:mb-0"
+            className="flex items-center justify-between w-full text-left font-bold text-gray-800 dark:text-primary-dark mb-2 md:mb-0"
           >
             <span className="flex items-center">
               <svg
@@ -111,7 +111,7 @@ export default function ArticleBody({
                 >
                   <button
                     onClick={() => scrollToHeading(heading.id)}
-                    className="text-sm text-primary hover:text-brand-tomato-500 hover:underline transition-colors text-left"
+                    className="text-sm text-primary dark:text-primary-dark hover:text-brand-tomato-500 hover:underline transition-colors text-left"
                   >
                     {heading.text}
                   </button>
@@ -127,22 +127,23 @@ export default function ArticleBody({
         className={`
           article-body
           font-serif leading-relaxed prose prose-lg max-w-none
-          prose-headings:font-bold prose-headings:text-gray-800
+          text-primary dark:text-primary-dark
+          prose-headings:font-bold prose-headings:text-gray-800 dark:prose-headings:text-primary-dark
           prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
           prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
-          prose-p:text-primary prose-p:mb-5 prose-p:leading-relaxed
+          prose-p:text-primary dark:prose-p:text-primary-dark prose-p:mb-5 prose-p:leading-relaxed
           prose-a:text-brand-tomato-500 prose-a:no-underline hover:prose-a:underline
-          prose-strong:text-primary prose-strong:font-semibold
-          prose-em:text-primary
+          prose-strong:text-primary dark:prose-strong:text-primary-dark prose-strong:font-semibold
+          prose-em:text-primary dark:prose-em:text-primary-dark
           prose-ul:list-disc prose-ul:ml-6 prose-ul:mb-5
           prose-ol:list-decimal prose-ol:ml-6 prose-ol:mb-5
-          prose-li:text-primary prose-li:mb-2
+          prose-li:text-primary dark:prose-li:text-primary-dark prose-li:mb-2
           prose-blockquote:border-l-4 prose-blockquote:border-brand-tomato-500
-          prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600
+          prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600 dark:prose-blockquote:text-secondary-dark
           prose-img:rounded-lg prose-img:shadow-md prose-img:my-6
           prose-table:border-collapse prose-table:w-full prose-table:mb-6
-          prose-th:bg-gray-100 prose-th:p-3 prose-th:text-left prose-th:font-semibold
-          prose-td:border prose-td:border-gray-200 prose-td:p-3
+          prose-th:bg-gray-100 dark:prose-th:bg-surface-elevated-dark prose-th:p-3 prose-th:text-left prose-th:font-semibold
+          prose-td:border prose-td:border-gray-200 dark:prose-td:border-border-dark prose-td:p-3
           ${className}
         `}
         style={{ fontSize: '1.125rem' }}

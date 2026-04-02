@@ -72,7 +72,7 @@ function SocialShare({
   };
 
   return (
-    <div className={`flex items-center space-x-3 ${className}`}>
+    <div className={`flex items-center space-x-3 text-gray-700 dark:text-secondary-dark ${className}`}>
       {/* Facebook */}
       <a
         href={shareLinks.facebook}
@@ -162,8 +162,8 @@ export default function ArticleMeta({ article, locale, className = '' }: Article
   return (
     <div className={className}>
       {/* Article Meta Info Bar */}
-      <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between overflow-hidden bg-gray-100 dark:bg-surface-dark dark:bg-opacity-20 mt-12 mb-6 px-6 py-4">
-        <div className="text-sm mb-4 sm:mb-0">
+      <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between overflow-hidden bg-gray-100 dark:bg-surface-elevated-dark mt-12 mb-6 px-6 py-4">
+        <div className="text-sm text-primary dark:text-primary-dark mb-4 sm:mb-0">
           {/* Authors */}
           {authors.length > 0 && (
             <span className="block sm:inline-block mr-4 mb-2 sm:mb-0">
@@ -185,7 +185,7 @@ export default function ArticleMeta({ article, locale, className = '' }: Article
                 <span key={`author-${author.id || index}`}>
                   <Link
                     href={buildAuthorUrl(author.slug, locale)}
-                    className="font-semibold hover:text-red-600"
+                    className="font-semibold hover:text-red-600 dark:hover:text-red-400"
                   >
                     {author.fullName}
                   </Link>
@@ -239,8 +239,8 @@ export default function ArticleMeta({ article, locale, className = '' }: Article
       </div>
 
       {/* Social Share Buttons - Mobile */}
-      <div className="lg:hidden mb-6 px-6 py-4 bg-gray-100">
-        <h3 className="text-sm font-semibold text-primary mb-3">Share this article</h3>
+      <div className="lg:hidden mb-6 px-6 py-4 bg-gray-100 dark:bg-surface-elevated-dark">
+        <h3 className="text-sm font-semibold text-primary dark:text-primary-dark mb-3">Share this article</h3>
         <SocialShare title={article.title} url={pageUrl} />
       </div>
 

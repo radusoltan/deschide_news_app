@@ -86,8 +86,8 @@ export default function ArticleImage({
 
   if (imageError) {
     return (
-      <div className="w-full h-64 bg-gray-200 flex items-center justify-center rounded-lg">
-        <div className="text-center text-secondary">
+      <div className="w-full h-64 bg-gray-200 dark:bg-surface-elevated-dark flex items-center justify-center rounded-lg">
+        <div className="text-center text-secondary dark:text-secondary-dark">
           <svg
             className="w-12 h-12 mx-auto mb-2"
             fill="none"
@@ -150,10 +150,10 @@ export default function ArticleImage({
 
         {/* Image caption and credit */}
         {(alt || image.credit) && (
-          <figcaption className="text-sm text-gray-600 mt-2 px-2">
+          <figcaption className="text-sm text-gray-600 dark:text-secondary-dark mt-2 px-2">
             {alt && <span className="block">{alt}</span>}
             {image.credit && (
-              <span className="block text-xs text-secondary mt-1">
+              <span className="block text-xs text-secondary dark:text-secondary-dark mt-1">
                 Photo credit: {image.credit}
               </span>
             )}
