@@ -119,20 +119,50 @@ class ElasticsearchIndexManager
                         'tokenizer' => 'standard',
                         'filter' => ['lowercase', 'romanian_stop', 'romanian_stemmer'],
                     ],
+                    'romanian_fuzzy' => [
+                        'type' => 'custom',
+                        'tokenizer' => 'standard',
+                        'filter' => ['lowercase', 'asciifolding', 'romanian_synonyms', 'romanian_stop', 'romanian_stemmer'],
+                    ],
                     'russian_custom' => [
                         'type' => 'custom',
                         'tokenizer' => 'standard',
                         'filter' => ['lowercase', 'russian_stop', 'russian_stemmer'],
+                    ],
+                    'russian_fuzzy' => [
+                        'type' => 'custom',
+                        'tokenizer' => 'standard',
+                        'filter' => ['lowercase', 'asciifolding', 'russian_stop', 'russian_stemmer'],
                     ],
                     'english_custom' => [
                         'type' => 'custom',
                         'tokenizer' => 'standard',
                         'filter' => ['lowercase', 'english_stop', 'english_stemmer'],
                     ],
+                    'english_fuzzy' => [
+                        'type' => 'custom',
+                        'tokenizer' => 'standard',
+                        'filter' => ['lowercase', 'asciifolding', 'english_stop', 'english_stemmer'],
+                    ],
                 ],
                 'filter' => [
                     'romanian_stop' => ['type' => 'stop', 'stopwords' => '_romanian_'],
                     'romanian_stemmer' => ['type' => 'stemmer', 'language' => 'romanian'],
+                    'romanian_synonyms' => [
+                        'type' => 'synonym',
+                        'synonyms' => [
+                            'BNM, Banca Nationala => Banca Națională a Moldovei',
+                            'CNA => Centrul Național Anticorupție',
+                            'UE, EU => Uniunea Europeană',
+                            'CSM => Consiliul Superior al Magistraturii',
+                            'PAS => Partidul Acțiune și Solidaritate',
+                            'PSRM => Partidul Socialiștilor',
+                            'RM, Moldova => Republica Moldova',
+                            'MAIA, MApN => Ministerul Afacerilor Externe',
+                            'SIS => Serviciul de Informații și Securitate',
+                            'PG => Procuratura Generală',
+                        ],
+                    ],
                     'russian_stop' => ['type' => 'stop', 'stopwords' => '_russian_'],
                     'russian_stemmer' => ['type' => 'stemmer', 'language' => 'russian'],
                     'english_stop' => ['type' => 'stop', 'stopwords' => '_english_'],
@@ -151,20 +181,56 @@ class ElasticsearchIndexManager
             'properties' => [
                 'article_id' => ['type' => 'integer'],
 
-                // Trilingual title fields (boost applied at query time)
-                'title_ro' => ['type' => 'text', 'analyzer' => 'romanian_custom'],
-                'title_en' => ['type' => 'text', 'analyzer' => 'english_custom'],
-                'title_ru' => ['type' => 'text', 'analyzer' => 'russian_custom'],
+                // Trilingual title fields with fuzzy sub-fields for diacritics-insensitive search
+                'title_ro' => [
+                    'type' => 'text',
+                    'analyzer' => 'romanian_custom',
+                    'fields' => ['fuzzy' => ['type' => 'text', 'analyzer' => 'romanian_fuzzy']],
+                ],
+                'title_en' => [
+                    'type' => 'text',
+                    'analyzer' => 'english_custom',
+                    'fields' => ['fuzzy' => ['type' => 'text', 'analyzer' => 'english_fuzzy']],
+                ],
+                'title_ru' => [
+                    'type' => 'text',
+                    'analyzer' => 'russian_custom',
+                    'fields' => ['fuzzy' => ['type' => 'text', 'analyzer' => 'russian_fuzzy']],
+                ],
 
-                // Trilingual body fields
-                'body_ro' => ['type' => 'text', 'analyzer' => 'romanian_custom'],
-                'body_en' => ['type' => 'text', 'analyzer' => 'english_custom'],
-                'body_ru' => ['type' => 'text', 'analyzer' => 'russian_custom'],
+                // Trilingual body fields with fuzzy sub-fields
+                'body_ro' => [
+                    'type' => 'text',
+                    'analyzer' => 'romanian_custom',
+                    'fields' => ['fuzzy' => ['type' => 'text', 'analyzer' => 'romanian_fuzzy']],
+                ],
+                'body_en' => [
+                    'type' => 'text',
+                    'analyzer' => 'english_custom',
+                    'fields' => ['fuzzy' => ['type' => 'text', 'analyzer' => 'english_fuzzy']],
+                ],
+                'body_ru' => [
+                    'type' => 'text',
+                    'analyzer' => 'russian_custom',
+                    'fields' => ['fuzzy' => ['type' => 'text', 'analyzer' => 'russian_fuzzy']],
+                ],
 
-                // Trilingual description fields (boost applied at query time)
-                'description_ro' => ['type' => 'text', 'analyzer' => 'romanian_custom'],
-                'description_en' => ['type' => 'text', 'analyzer' => 'english_custom'],
-                'description_ru' => ['type' => 'text', 'analyzer' => 'russian_custom'],
+                // Trilingual description fields with fuzzy sub-fields
+                'description_ro' => [
+                    'type' => 'text',
+                    'analyzer' => 'romanian_custom',
+                    'fields' => ['fuzzy' => ['type' => 'text', 'analyzer' => 'romanian_fuzzy']],
+                ],
+                'description_en' => [
+                    'type' => 'text',
+                    'analyzer' => 'english_custom',
+                    'fields' => ['fuzzy' => ['type' => 'text', 'analyzer' => 'english_fuzzy']],
+                ],
+                'description_ru' => [
+                    'type' => 'text',
+                    'analyzer' => 'russian_custom',
+                    'fields' => ['fuzzy' => ['type' => 'text', 'analyzer' => 'russian_fuzzy']],
+                ],
 
                 // Keyword fields
                 'categories' => ['type' => 'keyword'],

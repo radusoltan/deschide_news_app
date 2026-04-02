@@ -7,6 +7,7 @@ namespace App\MessageHandler\Editorial;
 use App\Dto\Scraping\ScrapedContent;
 use App\Entity\Article;
 use App\Enum\ArticleStatus;
+use App\Message\Editorial\EvaluateTranslationMessage;
 use App\Message\Editorial\IngestArticleMessage;
 use App\Message\Editorial\ProcessScrapedArticleMessage;
 use App\Message\TranslateArticleMessage;
@@ -78,6 +79,14 @@ final readonly class ProcessScrapedArticleHandler
                 articleId: $article->getId(),
                 locales: $targetLocales,
             ));
+
+            // Dispatch evaluation for each target locale (runs after translation completes)
+            foreach ($targetLocales as $locale) {
+                $this->messageBus->dispatch(new EvaluateTranslationMessage(
+                    articleId: $article->getId(),
+                    targetLang: $locale,
+                ));
+            }
         }
 
         // Dispatch AI ingestion (entity extraction, atomic notes, MOC, NotebookLM)
