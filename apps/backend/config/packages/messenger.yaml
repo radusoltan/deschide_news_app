@@ -114,6 +114,9 @@ framework:
             # AI ingestion pipeline (Sprint 17)
             'App\Message\Editorial\IngestArticleMessage': editorial
 
+            # Translation evaluation pipeline (Sprint 18)
+            'App\Message\Editorial\EvaluateTranslationMessage': editorial
+
 # when@test:
 #    framework:
 #        messenger:
