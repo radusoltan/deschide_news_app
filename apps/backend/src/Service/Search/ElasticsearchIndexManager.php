@@ -8,7 +8,7 @@ use Elastic\Elasticsearch\Client;
 use Elastic\Elasticsearch\ClientBuilder;
 use Psr\Log\LoggerInterface;
 
-final class ElasticsearchIndexManager
+class ElasticsearchIndexManager
 {
     private const INDEX_NAME = 'deschide_articles_trilingual';
 
