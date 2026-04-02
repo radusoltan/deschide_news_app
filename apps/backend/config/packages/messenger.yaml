@@ -111,6 +111,9 @@ framework:
             'App\Message\Editorial\ScrapeSourceMessage': scraping
             'App\Message\Editorial\ProcessScrapedArticleMessage': editorial
 
+            # AI ingestion pipeline (Sprint 17)
+            'App\Message\Editorial\IngestArticleMessage': editorial
+
 # when@test:
 #    framework:
 #        messenger:

@@ -268,6 +268,22 @@ services:
             $enabled: '%notebooklm.enabled%'
             $cliPath: '%notebooklm.cli_path%'
 
+    # Article Ingestion Service (Sprint 17 — entity extraction, atomic notes, MOC)
+    App\Service\Editorial\ArticleIngestionService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $notebooks: '%notebooklm.notebooks%'
+
+    # Ingest Article Handler (Sprint 17 — async AI ingestion pipeline)
+    App\MessageHandler\Editorial\IngestArticleHandler:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Ingest Article Command (Sprint 17 — manual ingestion)
+    App\Command\Editorial\IngestArticleCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:
