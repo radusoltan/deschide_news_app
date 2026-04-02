@@ -168,6 +168,7 @@ const nextConfig = {
               "img-src 'self' data: https: http://127.0.0.1:8082 http://127.0.0.1:8081 http://api.news-app.local",
               "font-src 'self' data:",
               "connect-src 'self' http://127.0.0.1:8081 http://127.0.0.1:8082 http://api.news-app.local ws://localhost:3000 http://localhost:3000",
+              "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.facebook.com https://www.google.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
