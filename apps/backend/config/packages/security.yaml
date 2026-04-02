@@ -79,6 +79,9 @@ security:
         - { path: ^/api/live_texts/.+/viewers, roles: PUBLIC_ACCESS }
         - { path: ^/api/live_texts/generate_session, roles: PUBLIC_ACCESS }
 
+        # Vault webhook (authenticated via X-Webhook-Secret header, not JWT)
+        - { path: ^/api/webhook/vault-sync, roles: PUBLIC_ACCESS, methods: [POST] }
+
         # Embed API (public access for external sites)
         - { path: ^/api/embed, roles: PUBLIC_ACCESS }
 
