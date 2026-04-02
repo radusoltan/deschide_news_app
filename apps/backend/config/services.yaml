@@ -233,6 +233,35 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
+    # Elasticsearch Trilingual Index Manager (Sprint 16)
+    App\Service\Search\ElasticsearchIndexManager:
+        arguments:
+            $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
+            $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
+            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
+
+    # Gemini Structured Translator (Sprint 16)
+    App\Service\Translation\GeminiStructuredTranslator:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
+    # Scraping Services (Sprint 16)
+    App\MessageHandler\Editorial\ProcessScrapedArticleHandler:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    App\Service\Scraping\RssFeedParser:
+        arguments:
+            $scrapingUserAgent: '%scraping.user_agent%'
+            $scrapingTimeout: '%scraping.timeout%'
+
+    App\Service\Scraping\ScraperService:
+        arguments:
+            $scrapingUserAgent: '%scraping.user_agent%'
+            $scrapingTimeout: '%scraping.timeout%'
+            $scrapingRateLimitDefault: '%scraping.rate_limit_default%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:

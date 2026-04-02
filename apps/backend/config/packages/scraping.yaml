@@ -1,0 +1,34 @@
+parameters:
+    scraping.sources:
+        moldpres:
+            name: 'Moldpres'
+            base_url: 'https://www.moldpres.md'
+            feed_urls:
+                ro: 'https://www.moldpres.md/ro/rss'
+                en: 'https://www.moldpres.md/en/rss'
+                ru: 'https://www.moldpres.md/ru/rss'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'ro'
+        ipn:
+            name: 'IPN Press'
+            base_url: 'https://www.ipn.md'
+            feed_urls:
+                ro: 'https://www.ipn.md/ro/rss'
+                en: 'https://www.ipn.md/en/rss'
+                ru: 'https://www.ipn.md/ru/rss'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'ro'
+        gov_md:
+            name: 'Gov.md'
+            base_url: 'https://gov.md'
+            feed_urls:
+                ro: 'https://gov.md/ro/rss.xml'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'ro'
+
+    scraping.rate_limit_default: 1
+    scraping.user_agent: 'DeschideNewsBot/1.0 (+https://deschide.md/bot)'
+    scraping.timeout: 30
