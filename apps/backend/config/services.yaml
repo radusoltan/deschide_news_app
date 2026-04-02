@@ -233,7 +233,11 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
-    # Scraping Services
+    # Scraping Services (Sprint 16)
+    App\MessageHandler\Editorial\ProcessScrapedArticleHandler:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
     App\Service\Scraping\RssFeedParser:
         arguments:
             $scrapingUserAgent: '%scraping.user_agent%'
