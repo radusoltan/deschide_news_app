@@ -1,0 +1,3 @@
+parameters:
+    editorial.vault_path: '%env(VAULT_PATH)%'
+    editorial.vault_webhook_secret: '%env(VAULT_WEBHOOK_SECRET)%'

@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://deschide.md/schemas/article-frontmatter.schema.json",
+  "title": "Deschide News — Article Frontmatter",
+  "description": "Schema de validare pentru frontmatter-ul articolelor din vault-ul editorial Obsidian",
+  "type": "object",
+  "required": ["id", "type", "language", "title", "status", "date_created"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^art-",
+      "description": "Identificator unic, prefix art-"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["news", "analysis", "opinion", "interview", "press-release", "investigation", "report"],
+      "description": "Tipul articolului"
+    },
+    "language": {
+      "type": "string",
+      "enum": ["ro", "en", "ru"],
+      "description": "Limba principală a articolului"
+    },
+    "title": {
+      "$ref": "#/$defs/trilingualRequired",
+      "description": "Titlul articolului — ro obligatoriu, en/ru opționale"
+    },
+    "description": {
+      "$ref": "#/$defs/trilingualOptional",
+      "description": "Descrierea / lead-ul articolului"
+    },
+    "slug": {
+      "$ref": "#/$defs/trilingualOptional",
+      "description": "Slug-ul URL-ului per limbă"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "review", "scheduled", "published", "archived"],
+      "description": "Statusul editorial"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "urgent"],
+      "description": "Prioritatea editorială"
+    },
+    "date_created": {
+      "type": ["string", "integer"],
+      "description": "Data creării (ISO 8601 string sau Unix timestamp)"
+    },
+    "date_published": {
+      "type": ["string", "integer", "null"],
+      "description": "Data publicării (ISO 8601 string sau Unix timestamp)"
+    },
+    "date_modified": {
+      "type": ["string", "integer", "null"],
+      "description": "Data ultimei modificări (ISO 8601 string sau Unix timestamp)"
+    },
+    "author": {
+      "type": ["string", "null"],
+      "description": "Slug-ul autorului"
+    },
+    "editor": {
+      "type": ["string", "null"],
+      "description": "Slug-ul editorului"
+    },
+    "categories": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lista de categorii (slug-uri sau label-uri)"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lista de tag-uri (slug-uri)"
+    },
+    "seo": {
+      "type": "object",
+      "properties": {
+        "canonical": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL canonical"
+        },
+        "og_image": {
+          "type": "string",
+          "description": "Cale imagine Open Graph"
+        },
+        "og_type": {
+          "type": "string",
+          "description": "Tip Open Graph (article, website etc.)"
+        },
+        "twitter_card": {
+          "type": "string",
+          "enum": ["summary", "summary_large_image", "player", "app"],
+          "description": "Tip card Twitter"
+        },
+        "keywords": {
+          "$ref": "#/$defs/trilingualArrayOptional",
+          "description": "Cuvinte cheie SEO per limbă"
+        }
+      },
+      "additionalProperties": false
+    },
+    "hreflang": {
+      "$ref": "#/$defs/trilingualOptional",
+      "description": "URL-uri hreflang per limbă"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Numele sursei"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL sursă originală"
+        },
+        "original_language": {
+          "type": "string",
+          "enum": ["ro", "en", "ru", "fr", "de", "it", "es", "uk"],
+          "description": "Limba originală a sursei"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ai": {
+      "type": "object",
+      "properties": {
+        "translation_status": {
+          "type": "object",
+          "properties": {
+            "ro": { "$ref": "#/$defs/translationStatusEnum" },
+            "en": { "$ref": "#/$defs/translationStatusEnum" },
+            "ru": { "$ref": "#/$defs/translationStatusEnum" }
+          },
+          "additionalProperties": false
+        },
+        "classification_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Încrederea clasificării AI (0-1)"
+        },
+        "entities_extracted": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Entități extrase de AI"
+        },
+        "sentiment": {
+          "type": ["string", "null"],
+          "enum": ["positive", "negative", "neutral", "mixed", null],
+          "description": "Sentimentul detectat"
+        },
+        "processed_by": {
+          "type": ["string", "null"],
+          "description": "Identificator agent AI"
+        },
+        "processed_at": {
+          "type": ["string", "integer", "null"],
+          "description": "Data procesării AI (ISO 8601 string sau Unix timestamp)"
+        },
+        "auto_generated": {
+          "type": "boolean",
+          "description": "Dacă conținutul a fost generat automat de AI"
+        },
+        "reviewed": {
+          "type": "boolean",
+          "description": "Dacă conținutul a fost revizuit de un om"
+        }
+      },
+      "additionalProperties": false
+    },
+    "featured_image": {
+      "type": "object",
+      "properties": {
+        "src": {
+          "type": "string",
+          "description": "Calea către imagine"
+        },
+        "alt": {
+          "type": "string",
+          "description": "Text alternativ"
+        },
+        "credit": {
+          "type": "string",
+          "description": "Credit foto"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "trilingualRequired": {
+      "type": "object",
+      "required": ["ro"],
+      "properties": {
+        "ro": { "type": "string", "minLength": 1 },
+        "en": { "type": "string" },
+        "ru": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "trilingualOptional": {
+      "type": "object",
+      "properties": {
+        "ro": { "type": "string" },
+        "en": { "type": "string" },
+        "ru": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "trilingualArrayOptional": {
+      "type": "object",
+      "properties": {
+        "ro": { "type": "array", "items": { "type": "string" } },
+        "en": { "type": "array", "items": { "type": "string" } },
+        "ru": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "translationStatusEnum": {
+      "type": "string",
+      "enum": ["pending", "in_progress", "complete", "failed", "skipped"]
+    }
+  }
+}

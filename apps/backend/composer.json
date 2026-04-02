@@ -18,6 +18,7 @@
         "facebook/graph-sdk": "^5.1.4",
         "gesdinet/jwt-refresh-token-bundle": "^2.0",
         "intervention/image": "^3.11.6",
+        "league/commonmark": "^2.8",
         "league/csv": "^9.27.1",
         "lexik/jwt-authentication-bundle": "^3.2",
         "nelmio/cors-bundle": "^2.6",
