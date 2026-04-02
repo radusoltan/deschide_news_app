@@ -262,6 +262,12 @@ services:
             $scrapingTimeout: '%scraping.timeout%'
             $scrapingRateLimitDefault: '%scraping.rate_limit_default%'
 
+    # NotebookLM Service (Sprint 17 — AI Agents)
+    App\Service\NotebookLM\NotebookLMService:
+        arguments:
+            $enabled: '%notebooklm.enabled%'
+            $cliPath: '%notebooklm.cli_path%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:
