@@ -24,6 +24,8 @@ import {
   ArticleMeta,
   ArticleSidebar,
 } from '@/components/article';
+import ArticleDisclaimer from '@/components/article/ArticleDisclaimer';
+import DRRMBanner from '@/components/banners/DRRMBanner';
 import { generateArticleMetadata, generateArticleStructuredData } from '@/lib/seo';
 import StructuredData from '@/components/seo/StructuredData';
 import Breadcrumb, { buildArticleBreadcrumbs } from '@/components/navigation/Breadcrumb';
@@ -248,8 +250,16 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           />
         )}
 
+        {/* Copyright disclaimer */}
+        <ArticleDisclaimer locale={locale} />
+
         {/* Article Meta (author bio, social share) */}
         <ArticleMeta article={article} locale={locale} />
+
+        {/* Partnership Banner */}
+        <div className="mt-8">
+          <DRRMBanner />
+        </div>
       </ArticleLayout>
     </>
   );

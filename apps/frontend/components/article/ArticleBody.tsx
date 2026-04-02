@@ -123,20 +123,28 @@ export default function ArticleBody({
       )}
 
       {/* Article Content */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .article-body p { margin-bottom: 1.25em; }
+        .article-body p:last-child { margin-bottom: 0; }
+        .article-body h2 { margin-top: 2em; margin-bottom: 1em; }
+        .article-body h3 { margin-top: 1.5em; margin-bottom: 0.75em; }
+        .article-body ul, .article-body ol { margin-bottom: 1.25em; }
+        .article-body blockquote { margin-top: 1.5em; margin-bottom: 1.5em; }
+      `}} />
       <div
         className={`
           article-body
           font-serif leading-relaxed prose prose-lg max-w-none
           text-primary dark:text-primary-dark
           prose-headings:font-bold prose-headings:text-gray-800 dark:prose-headings:text-primary-dark
-          prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-4
-          prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
-          prose-p:text-primary dark:prose-p:text-primary-dark prose-p:mb-5 prose-p:leading-relaxed
+          prose-h2:text-2xl
+          prose-h3:text-xl
+          prose-p:text-primary dark:prose-p:text-primary-dark prose-p:leading-relaxed
           prose-a:text-brand-tomato-500 prose-a:no-underline hover:prose-a:underline
           prose-strong:text-primary dark:prose-strong:text-primary-dark prose-strong:font-semibold
           prose-em:text-primary dark:prose-em:text-primary-dark
-          prose-ul:list-disc prose-ul:ml-6 prose-ul:mb-5
-          prose-ol:list-decimal prose-ol:ml-6 prose-ol:mb-5
+          prose-ul:list-disc prose-ul:ml-6
+          prose-ol:list-decimal prose-ol:ml-6
           prose-li:text-primary dark:prose-li:text-primary-dark prose-li:mb-2
           prose-blockquote:border-l-4 prose-blockquote:border-brand-tomato-500
           prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-600 dark:prose-blockquote:text-secondary-dark
