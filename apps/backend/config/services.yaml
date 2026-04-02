@@ -316,6 +316,11 @@ services:
         arguments:
             $vaultPath: '%env(default::VAULT_PATH)%'
 
+    # Editorial Metrics Service (Sprint 18 — dashboard + vault snapshot)
+    App\Service\Metrics\EditorialMetricsService:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
     # Translation Evaluator Service (Sprint 18 — Evaluator-Optimizer loop)
     App\Service\Translation\TranslationEvaluatorService:
         arguments:
