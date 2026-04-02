@@ -233,6 +233,14 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
+    # Elasticsearch Trilingual Index Manager (Sprint 16)
+    App\Service\Search\ElasticsearchIndexManager:
+        arguments:
+            $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
+            $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
+            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
+
     # Gemini Structured Translator (Sprint 16)
     App\Service\Translation\GeminiStructuredTranslator:
         arguments:
