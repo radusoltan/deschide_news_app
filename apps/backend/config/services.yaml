@@ -284,6 +284,16 @@ services:
         arguments:
             $vaultPath: '%env(default::VAULT_PATH)%'
 
+    # Dossier Generation Service (Sprint 17 — automated dossiers)
+    App\Service\Editorial\DossierGenerationService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
+    # Generate Dossiers Command (Sprint 17)
+    App\Command\Editorial\GenerateDossiersCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:
