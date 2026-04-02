@@ -294,6 +294,17 @@ services:
         arguments:
             $vaultPath: '%env(default::VAULT_PATH)%'
 
+    # Weekly Summary Service (Sprint 17 — sinteză săptămânală)
+    App\Service\Editorial\WeeklySummaryService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $weeklyNotebookId: '%notebooklm.weekly_notebook_id%'
+
+    # Weekly Summary Command (Sprint 17)
+    App\Command\Editorial\WeeklySummaryCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:
