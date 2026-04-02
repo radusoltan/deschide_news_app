@@ -233,6 +233,11 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
+    # Gemini Structured Translator (Sprint 16)
+    App\Service\Translation\GeminiStructuredTranslator:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
     # Scraping Services (Sprint 16)
     App\MessageHandler\Editorial\ProcessScrapedArticleHandler:
         arguments:
