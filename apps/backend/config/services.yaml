@@ -262,6 +262,60 @@ services:
             $scrapingTimeout: '%scraping.timeout%'
             $scrapingRateLimitDefault: '%scraping.rate_limit_default%'
 
+    # NotebookLM Service (Sprint 17 — AI Agents)
+    App\Service\NotebookLM\NotebookLMService:
+        arguments:
+            $enabled: '%notebooklm.enabled%'
+            $cliPath: '%notebooklm.cli_path%'
+
+    # Article Ingestion Service (Sprint 17 — entity extraction, atomic notes, MOC)
+    App\Service\Editorial\ArticleIngestionService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $notebooks: '%notebooklm.notebooks%'
+
+    # Ingest Article Handler (Sprint 17 — async AI ingestion pipeline)
+    App\MessageHandler\Editorial\IngestArticleHandler:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Ingest Article Command (Sprint 17 — manual ingestion)
+    App\Command\Editorial\IngestArticleCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Dossier Generation Service (Sprint 17 — automated dossiers)
+    App\Service\Editorial\DossierGenerationService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
+    # Generate Dossiers Command (Sprint 17)
+    App\Command\Editorial\GenerateDossiersCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Weekly Summary Service (Sprint 17 — sinteză săptămânală)
+    App\Service\Editorial\WeeklySummaryService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $weeklyNotebookId: '%notebooklm.weekly_notebook_id%'
+
+    # Weekly Summary Command (Sprint 17)
+    App\Command\Editorial\WeeklySummaryCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Daily Briefing Service (Sprint 17 — briefing zilnic)
+    App\Service\Editorial\DailyBriefingService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $briefingNotebookId: '%notebooklm.briefing_notebook_id%'
+
+    # Daily Briefing Command (Sprint 17)
+    App\Command\Editorial\DailyBriefingCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:

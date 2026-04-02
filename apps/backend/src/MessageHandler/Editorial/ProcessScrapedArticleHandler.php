@@ -7,6 +7,7 @@ namespace App\MessageHandler\Editorial;
 use App\Dto\Scraping\ScrapedContent;
 use App\Entity\Article;
 use App\Enum\ArticleStatus;
+use App\Message\Editorial\IngestArticleMessage;
 use App\Message\Editorial\ProcessScrapedArticleMessage;
 use App\Message\TranslateArticleMessage;
 use App\Service\Scraping\FrontmatterGenerator;
@@ -78,6 +79,11 @@ final readonly class ProcessScrapedArticleHandler
                 locales: $targetLocales,
             ));
         }
+
+        // Dispatch AI ingestion (entity extraction, atomic notes, MOC, NotebookLM)
+        $this->messageBus->dispatch(new IngestArticleMessage(
+            articleId: $article->getId(),
+        ));
     }
 
     private function writeVaultFile(ProcessScrapedArticleMessage $message): void
