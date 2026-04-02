@@ -120,7 +120,7 @@ final class WeeklySummaryCommand extends Command
     {
         $counts = [];
         foreach ($articles as $article) {
-            $cat = $article->getCategory()?->getName() ?? 'Necategorizat';
+            $cat = $article->getCategory()?->getTitle() ?? 'Necategorizat';
             $counts[$cat] = ($counts[$cat] ?? 0) + 1;
         }
         arsort($counts);

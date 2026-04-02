@@ -90,6 +90,10 @@ final class WeeklySummaryService
 
         $markdown = "---\n{$frontmatter}---\n\n{$summaryContent}\n";
 
+        if ($vaultPath === '') {
+            return '';
+        }
+
         $dir = "{$vaultPath}/dossiers";
         if (!is_dir($dir) && !mkdir($dir, 0o755, true)) {
             return '';
@@ -196,7 +200,7 @@ final class WeeklySummaryService
         foreach ($articles as $article) {
             $date = $article->getPublishedAt()?->format('d.m') ?? 'N/A';
             $title = $article->getTitle() ?? 'Fără titlu';
-            $category = $article->getCategory()?->getName() ?? 'Necategorizat';
+            $category = $article->getCategory()?->getTitle() ?? 'Necategorizat';
 
             $articleList .= "- [{$date}] [{$category}] {$title}\n";
             $byCategory[$category] = ($byCategory[$category] ?? 0) + 1;

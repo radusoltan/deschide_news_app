@@ -236,7 +236,7 @@ final class ArticleIngestionService
             return false;
         }
 
-        $category = $article->getCategory()?->getName() ?? '';
+        $category = $article->getCategory()?->getTitle() ?? '';
         $notebookId = $this->notebookLMService->resolveNotebookId($category, $this->notebooks);
 
         if ($notebookId === null) {
@@ -473,7 +473,7 @@ PROMPT;
         $mocs = [];
 
         // From article category
-        $catName = $article->getCategory()?->getName();
+        $catName = $article->getCategory()?->getTitle();
         if ($catName !== null) {
             $catSlug = mb_strtolower($catName);
             if (isset(self::MOC_MAPPING[$catSlug])) {

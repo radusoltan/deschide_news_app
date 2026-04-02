@@ -184,7 +184,7 @@ final class DailyBriefingService
         $articleList = '';
         foreach ($articles as $article) {
             $title = $article->getTitle() ?? 'Fără titlu';
-            $category = $article->getCategory()?->getName() ?? '';
+            $category = $article->getCategory()?->getTitle() ?? '';
             $source = ''; // Could extract from sourceEmail if available
 
             $articleList .= "- [{$category}] {$title}\n";

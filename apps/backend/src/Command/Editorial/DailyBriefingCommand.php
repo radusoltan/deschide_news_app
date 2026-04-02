@@ -62,7 +62,7 @@ final class DailyBriefingCommand extends Command
 
         if ($input->getOption('dry-run')) {
             foreach ($articles as $article) {
-                $io->text("  - [{$article->getCategory()?->getName()}] {$article->getTitle()}");
+                $io->text("  - [{$article->getCategory()?->getTitle()}] {$article->getTitle()}");
             }
             $io->note('Dry run — would generate briefing with ' . \count($articles) . ' articles');
 
