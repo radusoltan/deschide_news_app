@@ -11,6 +11,7 @@ final readonly class OptimizeSeoMessage
         public bool $generateMeta = true,
         public bool $suggestTags = true,
         public bool $force = false,
+        public string $locale = 'ro',
     ) {
     }
 }

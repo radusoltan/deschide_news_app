@@ -23,14 +23,15 @@ class SeoController extends AbstractController
     /**
      * Trigger SEO optimization for an article via Gemini AI.
      *
-     * Generates metaTitle, metaDescription, and suggests tags (all in Romanian).
+     * Generates metaTitle, metaDescription, and suggests tags in the specified locale.
      * This is a synchronous endpoint — waits for Gemini to respond.
      *
      * Request body (optional JSON):
      * {
      *   "force": false,
      *   "generateMeta": true,
-     *   "suggestTags": true
+     *   "suggestTags": true,
+     *   "locale": "ro"
      * }
      */
     #[Route('/articles/{id}/optimize-seo', name: 'optimize_seo', methods: ['POST'])]
@@ -47,11 +48,18 @@ class SeoController extends AbstractController
             }
         }
 
+        $locale = $body['locale'] ?? $request->headers->get('Accept-Language', 'ro');
+        // Normalize to supported locale
+        if (!\in_array($locale, ['ro', 'en', 'ru'], true)) {
+            $locale = 'ro';
+        }
+
         $message = new OptimizeSeoMessage(
             articleId: $id,
             generateMeta: (bool) ($body['generateMeta'] ?? true),
             suggestTags: (bool) ($body['suggestTags'] ?? true),
             force: (bool) ($body['force'] ?? false),
+            locale: $locale,
         );
 
         $result = $this->handler->handle($message);
