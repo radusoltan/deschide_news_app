@@ -54,6 +54,17 @@ const LAYOUT_CYCLE: CategorySectionLayout[] = [
   'grid-4col',      // C — 4-col wide grid
 ];
 
+// Normalize DB frontPageLayout values to component layout names
+const LAYOUT_MAP: Record<string, CategorySectionLayout> = {
+  'featured':       'featured-grid',
+  'featured-grid':  'featured-grid',
+  'grid-3-cols':    'grid-3col',
+  'grid-3col':      'grid-3col',
+  'grid-4-cols':    'grid-4col',
+  'grid-4col':      'grid-4col',
+  'compact-list':   'compact-list',
+};
+
 // Generate dynamic metadata based on locale
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
@@ -221,7 +232,7 @@ export default async function HomePage({ params }: PageProps) {
                   key={category.id}
                   category={category}
                   locale={locale}
-                  layout={category.frontPageLayout || LAYOUT_CYCLE[index % LAYOUT_CYCLE.length]}
+                  layout={LAYOUT_MAP[category.frontPageLayout] || LAYOUT_CYCLE[index % LAYOUT_CYCLE.length]}
                 />
               ))}
 
