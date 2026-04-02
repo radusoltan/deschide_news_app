@@ -233,6 +233,18 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
+    # Scraping Services
+    App\Service\Scraping\RssFeedParser:
+        arguments:
+            $scrapingUserAgent: '%scraping.user_agent%'
+            $scrapingTimeout: '%scraping.timeout%'
+
+    App\Service\Scraping\ScraperService:
+        arguments:
+            $scrapingUserAgent: '%scraping.user_agent%'
+            $scrapingTimeout: '%scraping.timeout%'
+            $scrapingRateLimitDefault: '%scraping.rate_limit_default%'
+
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
         arguments:
