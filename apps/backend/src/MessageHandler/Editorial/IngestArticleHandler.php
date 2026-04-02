@@ -7,6 +7,7 @@ namespace App\MessageHandler\Editorial;
 use App\Entity\Article;
 use App\Message\Editorial\IngestArticleMessage;
 use App\Service\Editorial\ArticleIngestionService;
+use App\Service\Editorial\ConnectionDetectionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -16,6 +17,7 @@ final readonly class IngestArticleHandler
 {
     public function __construct(
         private ArticleIngestionService $ingestionService,
+        private ConnectionDetectionService $connectionService,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
         private string $vaultPath = '',
@@ -59,12 +61,19 @@ final readonly class IngestArticleHandler
             $this->ingestionService->updateMOCs($article, $entities, $this->vaultPath);
         }
 
-        // Step 4: Feed to NotebookLM (graceful — skipped if unavailable)
+        // Step 4: Detect new entity connections via Elasticsearch
+        $connections = $this->connectionService->detectNewConnections($article, $entities);
+        if ($connections !== [] && $this->vaultPath !== '') {
+            $this->connectionService->saveConnectionAlerts($connections, $article, $this->vaultPath);
+        }
+
+        // Step 5: Feed to NotebookLM (graceful — skipped if unavailable)
         $this->ingestionService->feedNotebookLM($article);
 
         $this->logger->info('IngestArticleHandler: ingestion complete', [
             'articleId' => $article->getId(),
             'entitiesTotal' => $entities->totalCount(),
+            'connections' => \count($connections),
             'topics' => $entities->topics,
         ]);
     }
