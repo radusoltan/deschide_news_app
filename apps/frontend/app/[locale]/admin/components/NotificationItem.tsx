@@ -5,6 +5,9 @@ import {
   UserCircle,
   AlertTriangle,
   Cog,
+  Languages,
+  Bot,
+  Mail,
   type LucideIcon,
 } from 'lucide-react';
 import moment from 'moment';
@@ -15,6 +18,9 @@ import { NotificationType, NotificationImportance } from '@/lib/types/notificati
 const TYPE_ICON_MAP: Record<string, LucideIcon> = {
   [NotificationType.ARTICLE_PUBLISHED]: Newspaper,
   [NotificationType.ARTICLE_UPDATED]: Newspaper,
+  [NotificationType.ARTICLE_AUTO_CREATED]: Bot,
+  [NotificationType.ARTICLE_TRANSLATED]: Languages,
+  [NotificationType.PRESS_QUEUE_NEW]: Mail,
   [NotificationType.USER_LOGIN]: UserCircle,
   [NotificationType.USER_ACTION]: UserCircle,
   [NotificationType.SYSTEM_ERROR]: AlertTriangle,
