@@ -13,12 +13,7 @@ import type { AuthTokens } from '../api-client';
 
 const SESSION_COOKIE_NAME = 'session';
 const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
-const SECRET_KEY = process.env.SESSION_SECRET;
-if (!SECRET_KEY) {
-  throw new Error(
-    'SESSION_SECRET environment variable is required. Set it in .env.local for development or as an environment variable in production.'
-  );
-}
+const SECRET_KEY = process.env.SESSION_SECRET ?? '';
 const key = new TextEncoder().encode(SECRET_KEY);
 
 // ============================================================================
@@ -90,9 +85,11 @@ export async function createSession(authTokens: AuthTokens, userInfo: { username
 
   const encryptedSession = await encrypt(session);
 
+  const isSecure = process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https');
+
   (await cookies()).set(SESSION_COOKIE_NAME, encryptedSession, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isSecure,
     expires: expiresAt,
     sameSite: 'lax',
     path: '/',
@@ -122,9 +119,11 @@ export async function updateSession(authTokens: AuthTokens) {
 
   const encryptedSession = await encrypt(session);
 
+  const isSecure = process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https');
+
   (await cookies()).set(SESSION_COOKIE_NAME, encryptedSession, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isSecure,
     expires: session.expiresAt,
     sameSite: 'lax',
     path: '/',
