@@ -426,7 +426,7 @@ export default function PressQueuePage() {
                     )}
                   </div>
                   <div
-                    className="prose prose-sm max-w-none dark:prose-invert"
+                    className="text-sm leading-relaxed text-primary dark:text-gray-200 [&_p]:mb-3 [&_a]:text-blue-600 dark:[&_a]:text-blue-400 [&_a]:underline [&_strong]:font-semibold [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic dark:[&_blockquote]:border-gray-600"
                     dangerouslySetInnerHTML={{ __html: pr.content }}
                   />
                 </div>
