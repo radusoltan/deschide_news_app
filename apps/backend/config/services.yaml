@@ -16,6 +16,10 @@ parameters:
     gemini_cli_path: '%env(default:gemini_cli_default:GEMINI_CLI_PATH)%'
     gemini_cli_default: '/usr/bin/gemini'
 
+    # Claude CLI path for AI Newsroom Assistant (Sprint 20)
+    claude_cli_path: '%env(default:claude_cli_default:CLAUDE_CLI_PATH)%'
+    claude_cli_default: '/home/radu/.local/bin/claude'
+
     # Cloudflare CDN configuration
     cloudflare.api_token: '%env(default::CLOUDFLARE_API_TOKEN)%'
     cloudflare.zone_id: '%env(default::CLOUDFLARE_ZONE_ID)%'
@@ -325,6 +329,33 @@ services:
     App\Service\Metrics\EditorialMetricsService:
         arguments:
             $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # AI Newsroom: Anthropic API Client (for production with API key)
+    App\Service\Ai\AnthropicApiClient:
+        arguments:
+            $anthropicApiKey: '%env(default::ANTHROPIC_API_KEY)%'
+
+    # AI Newsroom: Claude CLI Client (uses `claude -p` subprocess, like Gemini CLI)
+    App\Service\Ai\ClaudeCliClient:
+        arguments:
+            $claudeCliPath: '%claude_cli_path%'
+
+    # AI Newsroom: Use Claude CLI as default client (same pattern as Gemini CLI for translations)
+    App\Service\Ai\AnthropicClientInterface:
+        alias: App\Service\Ai\ClaudeCliClient
+
+    # AI Multi-Provider Architecture (Sprint 21)
+    App\Service\Ai\Provider\AnthropicProvider:
+        tags: ['ai.provider']
+
+    App\Service\Ai\Provider\GeminiCliProvider:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+        tags: ['ai.provider']
+
+    App\Service\Ai\Provider\AiProviderRegistry:
+        arguments:
+            $providers: !tagged_iterator ai.provider
 
     # Internal Summary Service (Sprint 20 — TL;DR agent)
     App\Service\Editorial\InternalSummaryService:

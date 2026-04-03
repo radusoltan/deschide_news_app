@@ -11,7 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
 
-final class WeeklySummaryService
+class WeeklySummaryService
 {
     private const GEMINI_TIMEOUT = 180;
 

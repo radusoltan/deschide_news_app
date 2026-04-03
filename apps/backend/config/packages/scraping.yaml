@@ -1,5 +1,6 @@
 parameters:
     scraping.sources:
+        # === SURSE LOCALE (Moldova) ===
         moldpres:
             name: 'Moldpres'
             base_url: 'https://www.moldpres.md'
@@ -10,6 +11,9 @@ parameters:
             type: 'rss'
             rate_limit: 1
             original_language: 'ro'
+            is_international: false
+            priority_weight: 5
+            relevance_filter: false
         ipn:
             name: 'IPN Press'
             base_url: 'https://www.ipn.md'
@@ -20,6 +24,9 @@ parameters:
             type: 'rss'
             rate_limit: 1
             original_language: 'ro'
+            is_international: false
+            priority_weight: 5
+            relevance_filter: false
         gov_md:
             name: 'Gov.md'
             base_url: 'https://gov.md'
@@ -28,6 +35,82 @@ parameters:
             type: 'rss'
             rate_limit: 1
             original_language: 'ro'
+            is_international: false
+            priority_weight: 5
+            relevance_filter: false
+
+        # === SURSE INTERNAȚIONALE ===
+        reuters_world:
+            name: 'Reuters'
+            base_url: 'https://www.reuters.com'
+            feed_urls:
+                en: 'https://www.reuters.com/arc/outboundfeeds/v3/all/rss.xml'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'en'
+            is_international: true
+            priority_weight: 3
+            relevance_filter: true
+
+        ap_news:
+            name: 'AP News'
+            base_url: 'https://apnews.com'
+            feed_urls:
+                en: 'https://rsshub.app/apnews/topics/world-news'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'en'
+            is_international: true
+            priority_weight: 3
+            relevance_filter: true
+
+        agerpres:
+            name: 'Agerpres'
+            base_url: 'https://www.agerpres.ro'
+            feed_urls:
+                ro: 'https://www.agerpres.ro/rss/externe.xml'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'ro'
+            is_international: true
+            priority_weight: 4
+            relevance_filter: true
+
+        ec_press:
+            name: 'Comisia Europeană'
+            base_url: 'https://ec.europa.eu'
+            feed_urls:
+                en: 'https://ec.europa.eu/commission/presscorner/api/rss'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'en'
+            is_international: true
+            priority_weight: 4
+            relevance_filter: true
+
+        unian:
+            name: 'UNIAN'
+            base_url: 'https://www.unian.net'
+            feed_urls:
+                en: 'https://www.unian.net/rss/index.xml'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'en'
+            is_international: true
+            priority_weight: 3
+            relevance_filter: true
+
+        ukrinform:
+            name: 'Ukrinform'
+            base_url: 'https://www.ukrinform.net'
+            feed_urls:
+                en: 'https://www.ukrinform.net/rss/block-lastnews'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'en'
+            is_international: true
+            priority_weight: 3
+            relevance_filter: true
 
     scraping.rate_limit_default: 1
     scraping.user_agent: 'DeschideNewsBot/1.0 (+https://deschide.md/bot)'

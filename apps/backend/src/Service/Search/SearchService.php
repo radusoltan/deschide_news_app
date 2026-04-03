@@ -6,7 +6,7 @@ namespace App\Service\Search;
 
 use Psr\Log\LoggerInterface;
 
-final readonly class SearchService
+readonly class SearchService
 {
     private const DEFAULT_PAGE_SIZE = 20;
 

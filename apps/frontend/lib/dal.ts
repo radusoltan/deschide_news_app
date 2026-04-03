@@ -351,6 +351,30 @@ export async function updateArticle(
 }
 
 /**
+ * Partial update article (PATCH - only sends provided fields)
+ */
+export async function patchArticle(
+  id: number,
+  data: Record<string, unknown>,
+  locale: string = 'ro'
+): Promise<Article> {
+  const jsonBody = JSON.stringify(data);
+  const response = await authenticatedFetch(`/api/articles/${id}`, {
+    method: 'PATCH',
+    locale,
+    headers: { 'Content-Type': 'application/merge-patch+json' },
+    body: jsonBody,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || error.message || `Failed to patch article: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
  * Delete article (server-side only)
  */
 export async function deleteArticle(id: number, locale: string = 'ro'): Promise<void> {

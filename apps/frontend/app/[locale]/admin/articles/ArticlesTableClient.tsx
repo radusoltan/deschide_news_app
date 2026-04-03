@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { HiPencil, HiSearch, HiX, HiLockClosed } from 'react-icons/hi';
+import { HiPencil, HiSearch, HiX, HiLockClosed, HiTrash, HiExclamation, HiCheckCircle, HiClock } from 'react-icons/hi';
 import Link from 'next/link';
 import { DeleteArticleButton } from './components/DeleteArticleButton';
+import { batchDeleteArticlesAction, batchUpdateStatusAction } from '@/app/actions/articles';
 
 interface Article {
   id: number;
@@ -66,6 +67,14 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
   const [statusFilter, setStatusFilter] = useState<string>(currentSearchParams.get('status') || 'all');
   const [categoryFilter, setCategoryFilter] = useState<string>(currentSearchParams.get('category') || 'all');
   const [activeLocks, setActiveLocks] = useState<Map<number, ArticleLock>>(new Map());
+
+  // Batch selection state
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showBatchDeleteModal, setShowBatchDeleteModal] = useState(false);
+  const [isBatchDeleting, startBatchTransition] = useTransition();
+  const [isBatchUpdating, startBatchUpdateTransition] = useTransition();
+  const [batchError, setBatchError] = useState<string | null>(null);
+  const [batchResult, setBatchResult] = useState<string | null>(null);
 
   // Navigate with server-side filters
   const applyServerFilter = useCallback((key: string, value: string) => {
@@ -196,6 +205,83 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
     router.push('?');
   };
 
+  // Selection helpers
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === displayArticles.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(displayArticles.map((a) => a.id)));
+    }
+  };
+
+  const isAllSelected = displayArticles.length > 0 && selectedIds.size === displayArticles.length;
+  const isSomeSelected = selectedIds.size > 0 && selectedIds.size < displayArticles.length;
+
+  // Clear selection when articles change (filter, search, pagination)
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [articles, searchResults, statusFilter, categoryFilter]);
+
+  const handleBatchDelete = () => {
+    setBatchError(null);
+    setBatchResult(null);
+
+    startBatchTransition(async () => {
+      const result = await batchDeleteArticlesAction(Array.from(selectedIds), locale);
+
+      if (result.success) {
+        setBatchResult(result.message || null);
+        setSelectedIds(new Set());
+        setShowBatchDeleteModal(false);
+        router.refresh();
+      } else {
+        setBatchError(result.message || 'Batch delete failed');
+        // Remove successfully deleted from selection
+        if (result.deletedCount > 0) {
+          const failedSet = new Set(result.failedIds);
+          setSelectedIds(failedSet);
+          router.refresh();
+        }
+      }
+    });
+  };
+
+  const handleBatchStatusChange = (newStatus: string) => {
+    setBatchError(null);
+    setBatchResult(null);
+
+    startBatchUpdateTransition(async () => {
+      const result = await batchUpdateStatusAction(Array.from(selectedIds), newStatus, locale);
+
+      if (result.success) {
+        setBatchResult(result.message || null);
+        setSelectedIds(new Set());
+        router.refresh();
+      } else {
+        setBatchError(result.message || 'Status update failed');
+        if (result.updatedCount > 0) {
+          const failedSet = new Set(result.failedIds);
+          setSelectedIds(failedSet);
+          router.refresh();
+        }
+      }
+    });
+  };
+
+  const isBatchBusy = isBatchDeleting || isBatchUpdating;
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
@@ -325,12 +411,77 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
         )}
       </div>
 
+      {/* Batch Action Toolbar */}
+      {selectedIds.size > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg shadow mb-4 p-3 flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              {selectedIds.size} article{selectedIds.size > 1 ? 's' : ''} selected
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              disabled={isBatchBusy}
+            >
+              Clear selection
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleBatchStatusChange('submitted')}
+              disabled={isBatchBusy}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-yellow-800 bg-yellow-100 hover:bg-yellow-200 dark:text-yellow-200 dark:bg-yellow-900/50 dark:hover:bg-yellow-900/70 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <HiClock className="w-4 h-4" />
+              Mark Submitted
+            </button>
+            <button
+              onClick={() => handleBatchStatusChange('published')}
+              disabled={isBatchBusy}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-800 bg-green-100 hover:bg-green-200 dark:text-green-200 dark:bg-green-900/50 dark:hover:bg-green-900/70 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <HiCheckCircle className="w-4 h-4" />
+              Mark Published
+            </button>
+            <div className="w-px h-6 bg-blue-200 dark:bg-blue-700" />
+            <button
+              onClick={() => { setBatchError(null); setBatchResult(null); setShowBatchDeleteModal(true); }}
+              disabled={isBatchBusy}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <HiTrash className="w-4 h-4" />
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Result Toast */}
+      {batchResult && (
+        <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg mb-4 p-3 flex items-center justify-between">
+          <span className="text-sm text-green-800 dark:text-green-200">{batchResult}</span>
+          <button onClick={() => setBatchResult(null)} className="text-green-600 dark:text-green-400 hover:text-green-800">
+            <HiX className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Articles Table */}
       <div className="bg-surface dark:bg-surface-dark rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left text-secondary dark:text-gray-400">
             <thead className="text-xs text-primary uppercase bg-surface-sunken dark:bg-gray-700 dark:text-gray-400">
               <tr>
+                <th scope="col" className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => { if (el) el.indeterminate = isSomeSelected; }}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
+                    disabled={displayArticles.length === 0}
+                  />
+                </th>
                 <th scope="col" className="px-6 py-3">
                   Title
                 </th>
@@ -357,7 +508,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
             <tbody>
               {displayArticles.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={8} className="px-6 py-12 text-center">
                     <div className="text-secondary dark:text-gray-400">
                       <p className="text-lg mb-2">No articles found</p>
                       <p className="text-sm">
@@ -376,8 +527,20 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                   return (
                     <tr
                       key={article.id}
-                      className="bg-surface border-b dark:bg-surface-dark dark:border-gray-700 hover:bg-surface-sunken dark:hover:bg-gray-600"
+                      className={`border-b dark:border-gray-700 hover:bg-surface-sunken dark:hover:bg-gray-600 ${
+                        selectedIds.has(article.id)
+                          ? 'bg-blue-50 dark:bg-blue-900/20'
+                          : 'bg-surface dark:bg-surface-dark'
+                      }`}
                     >
+                      <td className="w-10 px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(article.id)}
+                          onChange={() => toggleSelect(article.id)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                      </td>
                       <td className="px-6 py-4 font-medium text-primary dark:text-primary-dark">
                         <div className="flex items-start gap-2">
                           <div className="flex-1">
@@ -457,6 +620,96 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
           </div>
         )}
       </div>
+
+      {/* Batch Delete Confirmation Modal */}
+      {showBatchDeleteModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            onClick={() => !isBatchDeleting && setShowBatchDeleteModal(false)}
+          />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative bg-surface dark:bg-surface-dark rounded-lg shadow-xl max-w-md w-full">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                    <HiExclamation className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-primary dark:text-primary-dark">
+                    Delete {selectedIds.size} article{selectedIds.size > 1 ? 's' : ''}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowBatchDeleteModal(false)}
+                  disabled={isBatchDeleting}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-primary-dark"
+                >
+                  <HiX className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Are you sure you want to delete <strong>{selectedIds.size}</strong> selected article{selectedIds.size > 1 ? 's' : ''}? This action cannot be undone.
+                </p>
+
+                {/* List selected articles */}
+                <div className="bg-surface-sunken dark:bg-gray-700 rounded-lg p-3 mb-4 max-h-48 overflow-y-auto">
+                  <ul className="space-y-1">
+                    {displayArticles
+                      .filter((a) => selectedIds.has(a.id))
+                      .map((a) => (
+                        <li key={a.id} className="text-sm text-primary dark:text-primary-dark flex items-center gap-2">
+                          <span className="text-xs text-secondary dark:text-gray-400 font-mono">#{a.id}</span>
+                          <span className="truncate">{a.title}</span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+
+                {batchError && (
+                  <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                    <p className="text-sm text-red-600 dark:text-red-400">{batchError}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setShowBatchDeleteModal(false)}
+                  disabled={isBatchDeleting}
+                  className="px-4 py-2 text-sm font-medium text-primary dark:text-primary-dark bg-surface dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-surface-sunken dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBatchDelete}
+                  disabled={isBatchDeleting}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {isBatchDeleting ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <HiTrash className="w-4 h-4" />
+                      Delete {selectedIds.size} article{selectedIds.size > 1 ? 's' : ''}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
