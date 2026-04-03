@@ -51,6 +51,7 @@ class SourceAuthorResolver
         $author->setFirstName($names[0]);
         $author->setLastName($names[1]);
         $author->setSlug($slug);
+        $author->setEmail($slug . '@source.deschide.md');
         if ($domain !== null) {
             $author->setEmailDomain($domain);
         }
