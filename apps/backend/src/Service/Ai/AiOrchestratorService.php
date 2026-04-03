@@ -365,7 +365,8 @@ final class AiOrchestratorService
         }
 
         // Add current message if not already last
-        $lastContent = !empty($parts) ? $messages->last()?->getContent() : null;
+        $lastMsg = !empty($messages) ? end($messages) : null;
+        $lastContent = $lastMsg?->getContent();
         if ($lastContent !== $currentMessage) {
             $parts[] = "[Utilizator]\n" . $currentMessage;
         }
