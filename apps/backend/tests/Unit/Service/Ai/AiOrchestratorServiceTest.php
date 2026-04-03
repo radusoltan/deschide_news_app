@@ -238,4 +238,51 @@ class AiOrchestratorServiceTest extends TestCase
 
         $this->orchestrator->processMessage($this->user, 'Test query');
     }
+
+    // =========================================================================
+    // Provider Routing (Sprint 21)
+    // =========================================================================
+
+    public function testSeoQuerySetsGeminiModel(): void
+    {
+        $result = $this->orchestrator->processMessage($this->user, 'Optimizează SEO pentru articolul 123');
+
+        $lastMessage = $result->getMessages()->last();
+        $this->assertSame('seo', $lastMessage->getAgentType());
+        $this->assertSame('gemini-2.5-flash', $lastMessage->getModel());
+    }
+
+    public function testTranslationQuerySetsGeminiModel(): void
+    {
+        $result = $this->orchestrator->processMessage($this->user, 'Traduce articolul în engleză');
+
+        $lastMessage = $result->getMessages()->last();
+        $this->assertSame('translation', $lastMessage->getAgentType());
+        $this->assertSame('gemini-2.5-flash', $lastMessage->getModel());
+    }
+
+    public function testContentQuerySetsClaudeModel(): void
+    {
+        $result = $this->orchestrator->processMessage($this->user, 'Rescrie textul acesta în ton formal');
+
+        $lastMessage = $result->getMessages()->last();
+        $this->assertSame('content', $lastMessage->getAgentType());
+        $this->assertSame('claude-sonnet-4-20250514', $lastMessage->getModel());
+    }
+
+    public function testVaultQuerySetsClaudeModel(): void
+    {
+        $result = $this->orchestrator->processMessage($this->user, 'Caută dosare despre Sandu');
+
+        $lastMessage = $result->getMessages()->last();
+        $this->assertSame('vault', $lastMessage->getAgentType());
+        $this->assertSame('claude-haiku-4-5-20251001', $lastMessage->getModel());
+    }
+
+    public function testClassifiesSeoQuery(): void
+    {
+        $result = $this->orchestrator->processMessage($this->user, 'Optimizează meta tags pentru SEO');
+
+        $this->assertSame('seo', $result->getAgentType());
+    }
 }
