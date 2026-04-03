@@ -120,6 +120,11 @@ framework:
             # DB→Vault sync pipeline (Sprint 19)
             'App\Message\Editorial\SyncArticleToVaultMessage': editorial
 
+            # Editorial scheduler (Sprint 22 — daily briefing, weekly summary, dossiers)
+            'App\Message\Editorial\GenerateDailyBriefingMessage': editorial
+            'App\Message\Editorial\GenerateWeeklySummaryMessage': editorial
+            'App\Message\Editorial\GenerateDossiersMessage': editorial
+
             # Mercure real-time updates (Sprint 20)
             'Symfony\Component\Mercure\Update': async
 
