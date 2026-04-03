@@ -331,6 +331,12 @@ services:
         arguments:
             $geminiCliPath: '%gemini_cli_path%'
 
+    # Background Generator Service (Sprint 20 — context istoric automat)
+    App\Service\Editorial\BackgroundGeneratorService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
     # Translation Evaluator Service (Sprint 18 — Evaluator-Optimizer loop)
     App\Service\Translation\TranslationEvaluatorService:
         arguments:
