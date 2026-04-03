@@ -1,0 +1,18 @@
+framework:
+    html_sanitizer:
+        sanitizers:
+            press_content:
+                allow_elements:
+                    p: ['class']
+                    br: []
+                    strong: []
+                    em: []
+                    a: ['href', 'title']
+                    ul: []
+                    ol: []
+                    li: []
+                    h2: []
+                    h3: []
+                    h4: []
+                    blockquote: []
+                    img: ['src', 'alt']

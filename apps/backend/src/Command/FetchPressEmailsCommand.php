@@ -8,6 +8,9 @@ use App\Entity\PressRelease;
 use App\Enum\NotificationImportance;
 use App\Enum\NotificationType;
 use App\Repository\PressReleaseRepository;
+use App\Enum\SourceType;
+use App\Service\ContentDeduplicator;
+use App\Service\ContentHasher;
 use App\Service\NotificationService;
 use App\Service\DocxExtractor;
 use App\Service\PressEmailParser;
@@ -52,6 +55,8 @@ class FetchPressEmailsCommand extends Command
         private readonly ZohoMailService $zohoMail,
         private readonly PressEmailParser $parser,
         private readonly DocxExtractor $docxExtractor,
+        private readonly ContentHasher $contentHasher,
+        private readonly ContentDeduplicator $deduplicator,
         private readonly EntityManagerInterface $em,
         private readonly PressReleaseRepository $pressReleaseRepository,
         private readonly NotificationService $notificationService,
@@ -158,6 +163,24 @@ class FetchPressEmailsCommand extends Command
                 continue;
             }
 
+            // Content hash deduplication
+            $hash = $this->contentHasher->hash($parsed['content']);
+            $dupCheck = $this->deduplicator->isDuplicate($hash);
+            if ($dupCheck->isDuplicate) {
+                $io->text(sprintf('    ⏭  Duplicate content (matches %s #%d)',
+                    $dupCheck->existingEntityType,
+                    $dupCheck->existingEntityId,
+                ));
+                $this->logger->info('Press fetcher: duplicate content hash', [
+                    'messageId' => $messageId,
+                    'hash' => $hash,
+                    'existingEntity' => $dupCheck->existingEntityType,
+                    'existingId' => $dupCheck->existingEntityId,
+                ]);
+                $skipped++;
+                continue;
+            }
+
             $io->text(sprintf('    ✓  Parsed: "%s" (%s, %d chars)',
                 mb_substr($parsed['title'], 0, 50),
                 $parsed['categorySlug'],
@@ -186,6 +209,10 @@ class FetchPressEmailsCommand extends Command
                 $pr->setReceivedAt(new \DateTimeImmutable(
                     '@' . (int) (((int) $email['receivedTime']) / 1000)
                 ));
+                $pr->setContentHash($hash);
+                $pr->setSourceType(SourceType::EMAIL);
+                $pr->setSourceName('email:zoho');
+                $pr->setOriginalLanguage('ro');
 
                 // Download image attachment if present
                 if ($email['hasAttachment'] || $email['hasInline']) {

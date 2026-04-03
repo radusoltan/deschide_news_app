@@ -143,13 +143,6 @@ services:
         arguments:
             $mercureJwtSecret: '%env(MERCURE_JWT_SECRET)%'
 
-    # Admin Notification Service (Mercure real-time + DB persistence)
-    App\Service\NotificationService:
-        arguments:
-            $httpClient: '@http_client'
-            $mercureUrl: '%env(MERCURE_URL)%'
-            $mercurePublisherJwt: '%env(MERCURE_JWT_SECRET)%'
-
     # LiveText Notification Service (Mercure)
     App\Service\LiveTextNotificationService:
         arguments:
@@ -251,10 +244,6 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
 
     # Scraping Services (Sprint 16)
-    App\MessageHandler\Editorial\ProcessScrapedArticleHandler:
-        arguments:
-            $vaultPath: '%env(default::VAULT_PATH)%'
-
     App\Service\Scraping\RssFeedParser:
         arguments:
             $scrapingUserAgent: '%scraping.user_agent%'

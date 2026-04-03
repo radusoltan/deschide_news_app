@@ -11,12 +11,12 @@ export interface PressRelease {
   title: string;
   lead: string | null;
   content: string;
-  sourceEmailId: string;
-  senderAddress: string;
-  senderName: string;
+  sourceEmailId: string | null;
+  senderAddress: string | null;
+  senderName: string | null;
   sourceUrl: string | null;
   categorySlug: string;
-  emailSubject: string;
+  emailSubject: string | null;
   status: 'pending' | 'approved' | 'rejected';
   receivedAt: string;
   createdAt: string;
@@ -24,6 +24,11 @@ export interface PressRelease {
   processedBy: { id: number; username: string } | null;
   article: { '@id': string; id: number; title: string } | null;
   contentLength: number;
+  contentHash: string | null;
+  sourceType: 'email' | 'scrape' | 'manual';
+  originalLanguage: string | null;
+  sourceName: string | null;
+  rejectionReason: string | null;
 }
 
 export interface PressReleaseCollection {

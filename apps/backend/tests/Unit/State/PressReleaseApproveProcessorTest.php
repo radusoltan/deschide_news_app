@@ -8,19 +8,22 @@ use App\Entity\Author;
 use App\Repository\ArticleRepository;
 use App\Repository\AuthorRepository;
 use App\Repository\CategoryRepository;
+use App\Service\SourceAuthorResolver;
 use App\State\PressReleaseApproveProcessor;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Envelope;
 
 /**
  * Unit tests for PressReleaseApproveProcessor.
  *
  * Tests extractDomain() and resolveAuthorFromSenderEmail() private methods
- * via reflection, as the full process() method depends on PressRelease entity
- * which is not yet fully implemented.
+ * via reflection.
  */
 class PressReleaseApproveProcessorTest extends TestCase
 {
@@ -44,12 +47,20 @@ class PressReleaseApproveProcessorTest extends TestCase
         $this->authorRepository = $this->createMock(AuthorRepository::class);
         $this->security = $this->createMock(Security::class);
 
+        $sourceAuthorResolver = $this->createMock(SourceAuthorResolver::class);
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturnCallback(fn ($msg) => new Envelope($msg));
+
         $this->processor = new PressReleaseApproveProcessor(
             $this->em,
             $this->categoryRepository,
             $this->articleRepository,
             $this->authorRepository,
+            $sourceAuthorResolver,
             $this->security,
+            $messageBus,
+            new NullLogger(),
+            '/tmp/test',
         );
     }
 
