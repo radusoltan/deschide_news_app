@@ -482,19 +482,43 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
       if (oldIndex === -1 || newIndex === -1) return;
 
       const movedItem = flatItems[oldIndex];
+      const targetItem = flatItems[newIndex];
 
       // Prevent dropping a dropdown inside another dropdown
       if (movedItem.item.type === 'dropdown' && movedItem.depth === 0) {
-        // Check if the target position is inside a dropdown (depth > 0)
         const targetDepth = flatItems[newIndex].depth;
         if (targetDepth === 1) {
-          // Don't allow nesting a dropdown inside another dropdown
           return;
         }
       }
 
-      // Reorder the flat list
-      const newFlatItems = arrayMove(flatItems, oldIndex, newIndex);
+      // Special case: dropping a non-dropdown item directly onto a dropdown
+      // → nest it as a child instead of reordering
+      const droppedOntoDropdown =
+        targetItem.item.type === 'dropdown' &&
+        movedItem.item.type !== 'dropdown' &&
+        targetItem.depth === 0;
+
+      let newFlatItems: FlatItem[];
+      if (droppedOntoDropdown) {
+        // Remove from old position
+        const withoutMoved = flatItems.filter((_, i) => i !== oldIndex);
+        // Find the dropdown and the end of its current children
+        const dropdownIdx = withoutMoved.findIndex((fi) => fi.item.id === targetItem.item.id);
+        let insertIdx = dropdownIdx + 1;
+        // Skip past existing children of this dropdown
+        while (insertIdx < withoutMoved.length && withoutMoved[insertIdx].depth === 1 && withoutMoved[insertIdx].parentId === targetItem.item.id) {
+          insertIdx++;
+        }
+        const nested: FlatItem = { ...movedItem, depth: 1, parentId: targetItem.item.id };
+        withoutMoved.splice(insertIdx, 0, nested);
+        newFlatItems = withoutMoved;
+        // Ensure the dropdown is expanded so the child is visible
+        setExpandedDropdowns((prev) => new Set([...prev, targetItem.item.id]));
+      } else {
+        // Normal reorder
+        newFlatItems = arrayMove(flatItems, oldIndex, newIndex);
+      }
 
       // Recalculate depths based on new positions and the moved item
       const recalculated = recalculateDepths(newFlatItems, active.id as number);
@@ -547,7 +571,7 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         }
       }
     },
-    [flatItems, tree, batchPatch, fetchMenuItems, showSuccessMessage, showErrorMessage]
+    [flatItems, tree, expandedDropdowns, batchPatch, fetchMenuItems, showSuccessMessage, showErrorMessage]
   );
 
   /**
@@ -656,15 +680,15 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
     });
   }, []);
 
-  // Auto-expand dropdowns that have children
+  // Auto-expand all dropdowns so items can be dropped into them
   useEffect(() => {
-    const withChildren = tree
-      .filter((i) => i.type === 'dropdown' && i.children && i.children.length > 0)
+    const allDropdowns = tree
+      .filter((i) => i.type === 'dropdown')
       .map((i) => i.id);
-    if (withChildren.length > 0) {
+    if (allDropdowns.length > 0) {
       setExpandedDropdowns((prev) => {
         const next = new Set(prev);
-        for (const id of withChildren) next.add(id);
+        for (const id of allDropdowns) next.add(id);
         return next;
       });
     }

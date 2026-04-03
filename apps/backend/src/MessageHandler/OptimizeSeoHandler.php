@@ -92,19 +92,26 @@ final readonly class OptimizeSeoHandler
             return null;
         }
 
+        $locale = $message->locale;
+
+        // Set translatable locale so Gedmo loads/saves the correct translation
+        $article->setTranslatableLocale($locale);
+        $this->articleRepository->getEntityManager()->refresh($article);
+
         $this->logger->info('OptimizeSeoHandler: starting SEO optimization', [
             'articleId' => $message->articleId,
+            'locale' => $locale,
             'force' => $message->force,
         ]);
 
         $start = microtime(true);
 
         try {
-            $prompt = $this->promptBuilder->build($article, $options);
+            $prompt = $this->promptBuilder->build($article, $options, $locale);
             $output = $this->runGemini($prompt);
             $data = $this->parseResponse($output);
 
-            $result = $this->resultProcessor->process($article, $data, $options);
+            $result = $this->resultProcessor->process($article, $data, $options, $locale);
 
             $duration = round(microtime(true) - $start, 2);
 

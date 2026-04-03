@@ -41,6 +41,18 @@ const nextConfig = {
       },
       {
         protocol: 'http',
+        hostname: 'api.news-app.local',
+        port: '',
+        pathname: '/media/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'api.news-app.local',
+        port: '',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'http',
         hostname: 'localhost',
         port: '8081',
         pathname: '/media/**',
@@ -72,6 +84,9 @@ const nextConfig = {
         pathname: '/uploads/**',
       },
     ],
+
+    // Allow local IPs for CDN in staging/development
+    dangerouslyAllowLocalIP: true,
 
     // Responsive image sizes
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
@@ -150,9 +165,10 @@ const nextConfig = {
               "default-src 'self'",
               `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''}`,
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https: http://127.0.0.1:8082 http://127.0.0.1:8081",
+              "img-src 'self' data: https: http://127.0.0.1:8082 http://127.0.0.1:8081 http://api.news-app.local",
               "font-src 'self' data:",
-              "connect-src 'self' http://127.0.0.1:8081 http://127.0.0.1:8082 ws://localhost:3000 http://localhost:3000",
+              "connect-src 'self' http://127.0.0.1:8081 http://127.0.0.1:8082 http://api.news-app.local ws://localhost:3000 http://localhost:3000",
+              "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.facebook.com https://www.google.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

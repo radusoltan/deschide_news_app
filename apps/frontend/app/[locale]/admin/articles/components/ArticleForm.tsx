@@ -148,7 +148,7 @@ export default function ArticleForm({ locale, categories, authors, article }: Ar
       const response = await fetch(`/api/articles/${article.id}/optimize-seo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ force: false }),
+        body: JSON.stringify({ force: false, locale }),
       });
 
       if (!response.ok) {

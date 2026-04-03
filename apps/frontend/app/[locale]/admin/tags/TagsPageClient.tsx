@@ -67,8 +67,8 @@ export default function TagsPageClient({
 
       if (res.ok) {
         const data = await res.json();
-        setTags(data['hydra:member'] || []);
-        setTotalItems(data['hydra:totalItems'] || 0);
+        setTags(data['hydra:member'] || data['member'] || []);
+        setTotalItems(data['hydra:totalItems'] || data['totalItems'] || 0);
       }
     } catch (err) {
       console.error('Failed to fetch tags:', err);
@@ -196,7 +196,7 @@ export default function TagsPageClient({
         if (res.ok) {
           const data = await res.json();
           setMergeResults(
-            (data['hydra:member'] || []).filter(
+            (data['hydra:member'] || data['member'] || data || []).filter(
               (t: Tag) => t.id !== mergeSource?.id
             )
           );

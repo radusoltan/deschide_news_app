@@ -24,7 +24,7 @@ final readonly class SeoResultProcessor
      *
      * @return array{metaTitle: ?string, metaDescription: ?string, tagsAdded: string[], tagsExisting: string[]}
      */
-    public function process(Article $article, array $data, array $options): array
+    public function process(Article $article, array $data, array $options, string $locale = 'ro'): array
     {
         $result = [
             'metaTitle' => null,
@@ -104,7 +104,7 @@ final readonly class SeoResultProcessor
 
             if ($tagNamesToAdd !== []) {
                 // addTagsToArticle handles find-or-create and deduplication
-                $this->tagService->addTagsToArticle($article, $tagNamesToAdd, 'ro');
+                $this->tagService->addTagsToArticle($article, $tagNamesToAdd, $locale);
 
                 $this->logger->info('SeoResultProcessor: tags processed', [
                     'articleId' => $article->getId(),

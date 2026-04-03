@@ -17,8 +17,8 @@ readonly class NotificationFilterService
         'user_action' => ['ROLE_ADMIN'],
         'system_error' => ['ROLE_ADMIN'],
         'job_failed' => ['ROLE_ADMIN'],
-        'article_auto_created' => ['ROLE_EDITOR', 'ROLE_SUPER_ADMIN'],
-        'article_translated' => ['ROLE_EDITOR', 'ROLE_SUPER_ADMIN'],
+        'article_auto_created' => ['ROLE_EDITOR', 'ROLE_ADMIN'],
+        'article_translated' => ['ROLE_EDITOR', 'ROLE_ADMIN'],
     ];
 
     public function __construct(

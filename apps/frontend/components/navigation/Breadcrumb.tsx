@@ -36,12 +36,12 @@ export default function Breadcrumb({ items, locale, className = '' }: Breadcrumb
                 <>
                   <Link
                     href={item.href}
-                    className="text-gray-600 hover:text-red-600 transition-colors"
+                    className="text-gray-600 dark:text-secondary-dark hover:text-red-600 transition-colors"
                   >
                     {item.label}
                   </Link>
                   <svg
-                    className="w-4 h-4 text-gray-400"
+                    className="w-4 h-4 text-gray-400 dark:text-tertiary-dark"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -55,7 +55,7 @@ export default function Breadcrumb({ items, locale, className = '' }: Breadcrumb
                   </svg>
                 </>
               ) : (
-                <span className={isLast ? 'text-primary font-medium' : 'text-gray-600'}>
+                <span className={isLast ? 'text-primary dark:text-primary-dark font-medium' : 'text-gray-600 dark:text-secondary-dark'}>
                   {item.label}
                 </span>
               )}

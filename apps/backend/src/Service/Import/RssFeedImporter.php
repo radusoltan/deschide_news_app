@@ -112,18 +112,23 @@ final class RssFeedImporter
         $stats = ['total' => 0, 'imported' => 0, 'skipped' => 0, 'errors' => 0, 'details' => []];
 
         $offset = 0;
+        // Track total rows examined to stop after $limit source articles,
+        // not after $limit new imports (which would keep paginating through
+        // already-imported articles indefinitely).
+        $totalExamined = 0;
 
-        while ($stats['imported'] < $limit) {
+        while ($totalExamined < $limit) {
             $rows = $this->fetchPage($offset);
             if ($rows === null || \count($rows) === 0) {
                 break;
             }
 
             foreach ($rows as $row) {
-                if ($stats['imported'] >= $limit) {
+                if ($totalExamined >= $limit) {
                     break 2;
                 }
 
+                $totalExamined++;
                 $stats['total']++;
 
                 try {

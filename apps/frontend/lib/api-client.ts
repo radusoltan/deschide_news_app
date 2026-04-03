@@ -3,7 +3,10 @@
  * Handles all HTTP requests to Symfony backend API
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
+// Server-side uses internal URL (bypasses Nginx), client-side uses public URL
+const API_BASE_URL = (typeof window === 'undefined'
+  ? process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL
+  : process.env.NEXT_PUBLIC_API_URL) ?? '';
 
 // ============================================================================
 // Types
