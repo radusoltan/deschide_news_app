@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\MessageHandler;
 
+use App\Message\Editorial\SyncArticleToVaultMessage;
 use App\Message\TranslateArticleMessage;
 use App\Repository\ArticleRepository;
 use App\Service\TranslationResultProcessor;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 
@@ -23,6 +25,7 @@ final readonly class TranslateArticleHandler
         private ArticleRepository $articleRepository,
         private TranslationResultProcessor $resultProcessor,
         private EntityManagerInterface $em,
+        private MessageBusInterface $messageBus,
         private LoggerInterface $logger,
         private string $geminiCliPath,
         private string $projectDir,
@@ -124,6 +127,15 @@ final readonly class TranslateArticleHandler
         if ($message->forceRetranslate) {
             $article->setRequestTranslation(false);
             $this->em->flush();
+        }
+
+        // Trigger vault sync to update .md with new translations (Sprint 19)
+        // Gedmo writes to ext_translations, so Article postUpdate won't fire
+        if ($successes !== []) {
+            $this->messageBus->dispatch(new SyncArticleToVaultMessage(
+                articleId: $message->articleId,
+                action: 'sync',
+            ));
         }
 
         $this->logger->info('TranslateArticleHandler: completed', [

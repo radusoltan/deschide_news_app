@@ -296,6 +296,11 @@ class Article implements Translatable
     #[Groups(['article:read'])]
     private ?string $translatedBy = null;
 
+    // AI-generated internal summary (TL;DR for editorial workflow)
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['article:read', 'article:detail'])]
+    private ?string $internalSummary = null;
+
     /**
      * Non-persisted field populated by ArticleProvider / SlugController.
      * Contains slug translations for all locales: {"ro": "slug-ro", "en": "slug-en", "ru": "slug-ru"}
@@ -755,6 +760,18 @@ class Article implements Translatable
     public function setTranslatedBy(?string $translatedBy): static
     {
         $this->translatedBy = $translatedBy;
+
+        return $this;
+    }
+
+    public function getInternalSummary(): ?string
+    {
+        return $this->internalSummary;
+    }
+
+    public function setInternalSummary(?string $internalSummary): self
+    {
+        $this->internalSummary = $internalSummary;
 
         return $this;
     }

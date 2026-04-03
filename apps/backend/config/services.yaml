@@ -268,6 +268,11 @@ services:
             $enabled: '%notebooklm.enabled%'
             $cliPath: '%notebooklm.cli_path%'
 
+    # DB→Vault Sync Service (Sprint 19 — unidirectional DB→Vault sync)
+    App\Service\Editorial\DbToVaultSyncService:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
     # Article Ingestion Service (Sprint 17 — entity extraction, atomic notes, MOC)
     App\Service\Editorial\ArticleIngestionService:
         arguments:
@@ -319,6 +324,17 @@ services:
     # Editorial Metrics Service (Sprint 18 — dashboard + vault snapshot)
     App\Service\Metrics\EditorialMetricsService:
         arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Internal Summary Service (Sprint 20 — TL;DR agent)
+    App\Service\Editorial\InternalSummaryService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
+    # Background Generator Service (Sprint 20 — context istoric automat)
+    App\Service\Editorial\BackgroundGeneratorService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
             $vaultPath: '%env(default::VAULT_PATH)%'
 
     # Translation Evaluator Service (Sprint 18 — Evaluator-Optimizer loop)
