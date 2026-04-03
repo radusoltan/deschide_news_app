@@ -6,6 +6,7 @@ namespace App\Tests\Unit\EventListener;
 
 use App\Entity\Article;
 use App\EventListener\ArticleVaultSyncListener;
+use App\Message\Editorial\IngestArticleMessage;
 use App\Message\Editorial\SyncArticleToVaultMessage;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\Envelope;
@@ -22,19 +23,29 @@ class ArticleVaultSyncListenerTest extends TestCase
         $this->listener = new ArticleVaultSyncListener($this->bus);
     }
 
-    public function testPostPersistDispatchesSyncMessage(): void
+    public function testPostPersistDispatchesSyncAndIngestMessages(): void
     {
         $article = $this->createStub(Article::class);
         $article->method('getId')->willReturn(42);
 
-        $this->bus->expects($this->once())
+        $dispatched = [];
+
+        $this->bus->expects($this->exactly(2))
             ->method('dispatch')
-            ->with($this->callback(function (SyncArticleToVaultMessage $msg) {
-                return $msg->articleId === 42 && $msg->action === 'sync';
-            }))
-            ->willReturn(new Envelope(new \stdClass()));
+            ->willReturnCallback(function (object $message) use (&$dispatched) {
+                $dispatched[] = $message;
+
+                return new Envelope(new \stdClass());
+            });
 
         $this->listener->postPersist($article);
+
+        $this->assertInstanceOf(SyncArticleToVaultMessage::class, $dispatched[0]);
+        $this->assertSame(42, $dispatched[0]->articleId);
+        $this->assertSame('sync', $dispatched[0]->action);
+
+        $this->assertInstanceOf(IngestArticleMessage::class, $dispatched[1]);
+        $this->assertSame(42, $dispatched[1]->articleId);
     }
 
     public function testPostUpdateDispatchesSyncMessage(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\EventListener;
 
 use App\Entity\Article;
+use App\Message\Editorial\IngestArticleMessage;
 use App\Message\Editorial\SyncArticleToVaultMessage;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Events;
@@ -24,6 +25,12 @@ class ArticleVaultSyncListener
         $this->bus->dispatch(new SyncArticleToVaultMessage(
             articleId: $article->getId(),
             action: 'sync',
+        ));
+
+        // Dispatch AI ingestion (entity extraction, MOC update, connections)
+        // Handler skips if article.ingestedAt is already set
+        $this->bus->dispatch(new IngestArticleMessage(
+            articleId: $article->getId(),
         ));
     }
 
