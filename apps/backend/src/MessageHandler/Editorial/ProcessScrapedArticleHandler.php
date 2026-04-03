@@ -11,6 +11,7 @@ use App\Message\Editorial\EvaluateTranslationMessage;
 use App\Message\Editorial\IngestArticleMessage;
 use App\Message\Editorial\ProcessScrapedArticleMessage;
 use App\Message\TranslateArticleMessage;
+use App\Service\Editorial\InternalSummaryService;
 use App\Service\Scraping\FrontmatterGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -22,6 +23,7 @@ final readonly class ProcessScrapedArticleHandler
 {
     public function __construct(
         private FrontmatterGenerator $frontmatterGenerator,
+        private InternalSummaryService $summaryService,
         private EntityManagerInterface $em,
         private MessageBusInterface $messageBus,
         private LoggerInterface $logger,
@@ -60,6 +62,17 @@ final readonly class ProcessScrapedArticleHandler
             $article->setPublishedAt($message->publishedAt);
         }
 
+        // Generate AI summary (TL;DR) before persisting
+        $summary = $this->summaryService->generateSummary(
+            $message->title,
+            strip_tags($message->bodyMarkdown),
+            $message->sourceName,
+        );
+
+        if ($summary !== null) {
+            $article->setInternalSummary($summary);
+        }
+
         $this->em->persist($article);
         $this->em->flush();
 
@@ -67,6 +80,7 @@ final readonly class ProcessScrapedArticleHandler
             'articleId' => $article->getId(),
             'title' => mb_substr($message->title, 0, 80),
             'source' => $message->sourceName,
+            'hasSummary' => $summary !== null,
         ]);
 
         // Write vault file if vault path is configured

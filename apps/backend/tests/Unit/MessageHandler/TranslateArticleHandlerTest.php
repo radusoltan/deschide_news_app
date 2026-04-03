@@ -17,6 +17,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[CoversClass(TranslateArticleHandler::class)]
 class TranslateArticleHandlerTest extends TestCase
@@ -38,10 +40,14 @@ class TranslateArticleHandlerTest extends TestCase
             new NullLogger(),
         );
 
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
+
         $this->handler = new TranslateArticleHandler(
             $this->articleRepository,
             $this->resultProcessor,
             $this->em,
+            $messageBus,
             new NullLogger(),
             '/usr/bin/gemini', // not actually called — process is not spawned
             '/tmp',

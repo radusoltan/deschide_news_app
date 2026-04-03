@@ -117,6 +117,9 @@ framework:
             # Translation evaluation pipeline (Sprint 18)
             'App\Message\Editorial\EvaluateTranslationMessage': editorial
 
+            # DB→Vault sync pipeline (Sprint 19)
+            'App\Message\Editorial\SyncArticleToVaultMessage': editorial
+
 # when@test:
 #    framework:
 #        messenger:
