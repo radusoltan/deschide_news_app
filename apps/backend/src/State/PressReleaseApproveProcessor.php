@@ -13,14 +13,20 @@ use App\Entity\Image;
 use App\Entity\PressRelease;
 use App\Enum\ArticleStatus;
 use App\Enum\PressReleaseStatus;
+use App\Enum\SourceType;
+use App\Message\Editorial\IngestArticleMessage;
+use App\Message\Editorial\SyncArticleToVaultMessage;
+use App\Message\TranslateArticleMessage;
 use App\Repository\ArticleRepository;
 use App\Repository\AuthorRepository;
 use App\Repository\CategoryRepository;
+use App\Service\SourceAuthorResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 class PressReleaseApproveProcessor implements ProcessorInterface
 {
@@ -29,7 +35,9 @@ class PressReleaseApproveProcessor implements ProcessorInterface
         private readonly CategoryRepository $categoryRepository,
         private readonly ArticleRepository $articleRepository,
         private readonly AuthorRepository $authorRepository,
+        private readonly SourceAuthorResolver $sourceAuthorResolver,
         private readonly Security $security,
+        private readonly MessageBusInterface $messageBus,
         private readonly LoggerInterface $logger,
         #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
     ) {
@@ -46,17 +54,22 @@ class PressReleaseApproveProcessor implements ProcessorInterface
         }
 
         // Create article from press release
+        $locale = $data->getOriginalLanguage() ?? 'ro';
         $article = new Article();
         $article->setTitle($data->getTitle());
         $article->setLead($data->getLead());
         $article->setContent($data->getContent());
         $article->setStatus(ArticleStatus::NEW);
-        $article->setTranslatableLocale('ro');
+        $article->setTranslatableLocale($locale);
+        $article->setContentHash($data->getContentHash());
 
-        // Only set sourceEmail if no existing article has it (unique constraint)
-        $existingArticle = $this->articleRepository->findOneBy(['sourceEmail' => $data->getSourceEmailId()]);
-        if ($existingArticle === null) {
-            $article->setSourceEmail($data->getSourceEmailId());
+        // Only set sourceEmail if present and no existing article has it (unique constraint)
+        $sourceEmailId = $data->getSourceEmailId();
+        if ($sourceEmailId !== null) {
+            $existingArticle = $this->articleRepository->findOneBy(['sourceEmail' => $sourceEmailId]);
+            if ($existingArticle === null) {
+                $article->setSourceEmail($sourceEmailId);
+            }
         }
 
         // Map category
@@ -68,11 +81,8 @@ class PressReleaseApproveProcessor implements ProcessorInterface
             $article->setCategory($category);
         }
 
-        // Auto-assign author based on sender email domain
-        $author = $this->resolveAuthorFromSenderEmail($data->getSenderAddress());
-        if ($author !== null) {
-            $article->addAuthor($author);
-        }
+        // Resolve author based on source type
+        $this->assignAuthor($article, $data);
 
         $this->em->persist($article);
 
@@ -93,7 +103,60 @@ class PressReleaseApproveProcessor implements ProcessorInterface
 
         $this->em->flush();
 
+        $this->logger->info('Article created from PressRelease', [
+            'articleId' => $article->getId(),
+            'pressReleaseId' => $data->getId(),
+            'sourceType' => $data->getSourceType()->value,
+        ]);
+
+        // Dispatch post-approval messages
+        $this->dispatchPostApprovalMessages($article, $locale);
+
         return $data;
+    }
+
+    private function assignAuthor(Article $article, PressRelease $data): void
+    {
+        if ($data->getSourceType() === SourceType::SCRAPE && $data->getSourceName() !== null) {
+            // For scrape sources, resolve author by source name
+            $author = $this->sourceAuthorResolver->resolve($data->getSourceName());
+            $article->addAuthor($author);
+        } elseif ($data->getSenderAddress() !== null) {
+            // For email sources, resolve author by sender email domain
+            $author = $this->resolveAuthorFromSenderEmail($data->getSenderAddress());
+            if ($author !== null) {
+                $article->addAuthor($author);
+            }
+        }
+    }
+
+    private function dispatchPostApprovalMessages(Article $article, string $locale): void
+    {
+        $articleId = $article->getId();
+
+        // Translate to non-original locales
+        $targetLocales = array_values(array_diff(['ro', 'en', 'ru'], [$locale]));
+        if ($targetLocales !== []) {
+            $this->messageBus->dispatch(new TranslateArticleMessage(
+                articleId: $articleId,
+                locales: $targetLocales,
+            ));
+        }
+
+        // AI ingestion
+        $this->messageBus->dispatch(new IngestArticleMessage(
+            articleId: $articleId,
+        ));
+
+        // Vault sync
+        $this->messageBus->dispatch(new SyncArticleToVaultMessage(
+            articleId: $articleId,
+        ));
+
+        $this->logger->info('Post-approval messages dispatched', [
+            'articleId' => $articleId,
+            'translateLocales' => $targetLocales,
+        ]);
     }
 
     private function attachImage(Article $article, PressRelease $pressRelease): void

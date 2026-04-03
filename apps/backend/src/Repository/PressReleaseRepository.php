@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Entity\PressRelease;
 use App\Enum\PressReleaseStatus;
+use App\Enum\SourceType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -27,5 +28,41 @@ class PressReleaseRepository extends ServiceEntityRepository
     public function findBySourceEmailId(string $sourceEmailId): ?PressRelease
     {
         return $this->findOneBy(['sourceEmailId' => $sourceEmailId]);
+    }
+
+    public function findByContentHash(string $hash): ?PressRelease
+    {
+        return $this->findOneBy(['contentHash' => $hash]);
+    }
+
+    public function findByContentHashAndSourceType(string $hash, SourceType $type): ?PressRelease
+    {
+        return $this->findOneBy(['contentHash' => $hash, 'sourceType' => $type]);
+    }
+
+    public function countBySourceType(SourceType $type): int
+    {
+        return $this->count(['sourceType' => $type]);
+    }
+
+    /**
+     * @return array<string, int> Pending count per source type, e.g. ['email' => 8, 'scrape' => 15]
+     */
+    public function countPendingBySourceType(): array
+    {
+        $rows = $this->createQueryBuilder('pr')
+            ->select('pr.sourceType AS type, COUNT(pr.id) AS cnt')
+            ->where('pr.status = :status')
+            ->setParameter('status', PressReleaseStatus::PENDING)
+            ->groupBy('pr.sourceType')
+            ->getQuery()
+            ->getArrayResult();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[$row['type']->value ?? $row['type']] = (int) $row['cnt'];
+        }
+
+        return $result;
     }
 }

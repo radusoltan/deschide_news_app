@@ -159,7 +159,7 @@ final readonly class TranslateArticleHandler
             'lead' => $article->getLead() ?? '',
             'content' => $article->getContent(),
             'category' => $article->getCategory()?->getTitle() ?? '',
-            'authorName' => $article->getAuthors()->first()?->getFullName() ?? '',
+            'authorName' => ($article->getAuthors()->first() ?: null)?->getFullName() ?? '',
         ];
 
         if ($article->getMetaTitle() !== null) {

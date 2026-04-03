@@ -9,12 +9,12 @@ export interface PressReleaseItem {
   title: string;
   lead: string | null;
   content: string;
-  sourceEmailId: string;
-  senderAddress: string;
-  senderName: string;
+  sourceEmailId: string | null;
+  senderAddress: string | null;
+  senderName: string | null;
   sourceUrl: string | null;
   categorySlug: string;
-  emailSubject: string;
+  emailSubject: string | null;
   status: 'pending' | 'approved' | 'rejected';
   receivedAt: string;
   createdAt: string;
@@ -22,6 +22,9 @@ export interface PressReleaseItem {
   article: { id: number; title: string } | null;
   articleId: number | null;
   contentLength: number;
+  sourceType: 'email' | 'scrape' | 'manual';
+  sourceName: string | null;
+  rejectionReason: string | null;
 }
 
 export interface PressReleaseListResult {
@@ -33,6 +36,7 @@ export interface PressReleaseListResult {
 export async function fetchPressReleases(
   status?: string,
   page: number = 1,
+  sourceType?: string,
 ): Promise<PressReleaseListResult> {
   const token = await getAccessToken();
   if (!token) {
@@ -42,6 +46,7 @@ export async function fetchPressReleases(
   const params = new URLSearchParams({ itemsPerPage: '20' });
   if (status) params.set('status', status);
   if (page > 1) params.set('page', String(page));
+  if (sourceType) params.set('sourceType', sourceType);
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/press_releases?${params}`, {
@@ -134,7 +139,34 @@ export async function fetchPressEmails(): Promise<FetchEmailsResult> {
   }
 }
 
-export async function rejectPressRelease(id: number): Promise<{ success: boolean; error?: string }> {
+export interface SourceTypeCounts {
+  email: number;
+  scrape: number;
+  manual: number;
+  total: number;
+}
+
+export async function fetchPressReleaseCounts(): Promise<SourceTypeCounts> {
+  const token = await getAccessToken();
+  if (!token) return { email: 0, scrape: 0, manual: 0, total: 0 };
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/press_releases/counts`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (!res.ok) return { email: 0, scrape: 0, manual: 0, total: 0 };
+    return await res.json();
+  } catch {
+    return { email: 0, scrape: 0, manual: 0, total: 0 };
+  }
+}
+
+export async function rejectPressRelease(id: number, reason?: string): Promise<{ success: boolean; error?: string }> {
   const token = await getAccessToken();
   if (!token) return { success: false, error: 'Nu ești autentificat' };
 
@@ -146,7 +178,10 @@ export async function rejectPressRelease(id: number): Promise<{ success: boolean
         Accept: 'application/ld+json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ status: 'rejected' }),
+      body: JSON.stringify({
+        status: 'rejected',
+        ...(reason ? { rejectionReason: reason } : {}),
+      }),
     });
 
     if (!res.ok) {
