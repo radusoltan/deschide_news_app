@@ -1,7 +1,14 @@
 'use server';
 
 import { revalidatePath, revalidateTag } from 'next/cache';
-import { createArticle, updateArticle, deleteArticle } from '@/lib/dal';
+import { createArticle, updateArticle, patchArticle, deleteArticle } from '@/lib/dal';
+
+export type BatchActionResult = {
+  success: boolean;
+  updatedCount: number;
+  failedIds: number[];
+  message?: string;
+};
 
 // ============================================================================
 // Types
@@ -326,4 +333,100 @@ export async function deleteArticleAction(
       },
     };
   }
+}
+
+// ============================================================================
+// Batch Actions
+// ============================================================================
+
+export interface BatchDeleteState {
+  success: boolean;
+  deletedCount: number;
+  failedIds: number[];
+  message?: string;
+}
+
+/**
+ * Batch delete multiple articles
+ */
+export async function batchDeleteArticlesAction(
+  ids: number[],
+  locale: string
+): Promise<BatchDeleteState> {
+  if (ids.length === 0) {
+    return { success: false, deletedCount: 0, failedIds: [], message: 'No articles selected' };
+  }
+
+  const failedIds: number[] = [];
+  let deletedCount = 0;
+
+  for (const id of ids) {
+    try {
+      await deleteArticle(id, locale);
+      deletedCount++;
+    } catch (error) {
+      console.error(`Failed to delete article ${id}:`, error);
+      failedIds.push(id);
+    }
+  }
+
+  // Revalidate caches
+  revalidatePath(`/[locale]/admin/articles`, 'page');
+  safelyRevalidateArticles();
+  revalidatePath('/ro', 'page');
+  revalidatePath('/en', 'page');
+  revalidatePath('/ru', 'page');
+
+  const success = failedIds.length === 0;
+  const message = success
+    ? `${deletedCount} article${deletedCount > 1 ? 's' : ''} deleted successfully`
+    : `Deleted ${deletedCount} of ${ids.length} articles. ${failedIds.length} failed.`;
+
+  return { success, deletedCount, failedIds, message };
+}
+
+/**
+ * Batch update status for multiple articles
+ */
+export async function batchUpdateStatusAction(
+  ids: number[],
+  status: string,
+  locale: string
+): Promise<BatchActionResult> {
+  if (ids.length === 0) {
+    return { success: false, updatedCount: 0, failedIds: [], message: 'No articles selected' };
+  }
+
+  const allowedStatuses = ['new', 'submitted', 'published'];
+  if (!allowedStatuses.includes(status)) {
+    return { success: false, updatedCount: 0, failedIds: [], message: `Invalid status: ${status}` };
+  }
+
+  const failedIds: number[] = [];
+  let updatedCount = 0;
+
+  for (const id of ids) {
+    try {
+      await patchArticle(id, { status }, locale);
+      updatedCount++;
+    } catch (error) {
+      console.error(`Failed to update article ${id} status:`, error);
+      failedIds.push(id);
+    }
+  }
+
+  // Revalidate caches
+  revalidatePath(`/[locale]/admin/articles`, 'page');
+  safelyRevalidateArticles();
+  revalidatePath('/ro', 'page');
+  revalidatePath('/en', 'page');
+  revalidatePath('/ru', 'page');
+
+  const success = failedIds.length === 0;
+  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+  const message = success
+    ? `${updatedCount} article${updatedCount > 1 ? 's' : ''} marked as ${statusLabel}`
+    : `Updated ${updatedCount} of ${ids.length} articles. ${failedIds.length} failed.`;
+
+  return { success, updatedCount, failedIds, message };
 }

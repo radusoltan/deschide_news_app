@@ -23,3 +23,9 @@ framework:
             policy: 'fixed_window'
             limit: 120
             interval: '1 minute'
+
+        # AI Chat rate limit (per user, 30 requests/hour)
+        ai_chat:
+            policy: 'fixed_window'
+            limit: 30
+            interval: '1 hour'

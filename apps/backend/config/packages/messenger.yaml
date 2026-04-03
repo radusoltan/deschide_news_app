@@ -120,6 +120,9 @@ framework:
             # DB→Vault sync pipeline (Sprint 19)
             'App\Message\Editorial\SyncArticleToVaultMessage': editorial
 
+            # Mercure real-time updates (Sprint 20)
+            'Symfony\Component\Mercure\Update': async
+
 # when@test:
 #    framework:
 #        messenger:

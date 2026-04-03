@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Enum\ArchiveReason;
@@ -81,6 +82,10 @@ use Symfony\Component\Validator\Constraints as Assert;
             denormalizationContext: ['groups' => ['article:write']]
         ),
         new Put(
+            uriTemplate: '/articles/{id}',
+            denormalizationContext: ['groups' => ['article:write']]
+        ),
+        new Patch(
             uriTemplate: '/articles/{id}',
             denormalizationContext: ['groups' => ['article:write']]
         ),
