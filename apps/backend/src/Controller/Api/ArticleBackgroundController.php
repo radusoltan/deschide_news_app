@@ -29,7 +29,7 @@ class ArticleBackgroundController extends AbstractController
     /**
      * GET /api/articles/{id}/background — generează și returnează un paragraf de context istoric.
      */
-    #[Route('/{id}/background', name: 'get', methods: ['GET'])]
+    #[Route('/{id}/background', name: 'get', methods: ['GET'], requirements: ['id' => '\d+'], priority: 10)]
     public function getBackground(int $id): JsonResponse
     {
         $article = $this->em->getRepository(Article::class)->find($id);
@@ -59,7 +59,7 @@ class ArticleBackgroundController extends AbstractController
     /**
      * POST /api/articles/{id}/background/apply — inserează paragraful de context în conținutul articolului.
      */
-    #[Route('/{id}/background/apply', name: 'apply', methods: ['POST'])]
+    #[Route('/{id}/background/apply', name: 'apply', methods: ['POST'], requirements: ['id' => '\d+'], priority: 10)]
     public function applyBackground(int $id, Request $request): JsonResponse
     {
         $article = $this->em->getRepository(Article::class)->find($id);

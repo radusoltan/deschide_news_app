@@ -28,7 +28,7 @@ class ArticleSummaryController extends AbstractController
     /**
      * GET /api/articles/{id}/summary — returnează summary-ul existent.
      */
-    #[Route('/{id}/summary', name: 'get', methods: ['GET'])]
+    #[Route('/{id}/summary', name: 'get', methods: ['GET'], requirements: ['id' => '\d+'], priority: 10)]
     public function getSummary(int $id): JsonResponse
     {
         $article = $this->em->getRepository(Article::class)->find($id);
@@ -47,7 +47,7 @@ class ArticleSummaryController extends AbstractController
     /**
      * POST /api/articles/{id}/summary/regenerate — regenerează summary-ul cu Gemini.
      */
-    #[Route('/{id}/summary/regenerate', name: 'regenerate', methods: ['POST'])]
+    #[Route('/{id}/summary/regenerate', name: 'regenerate', methods: ['POST'], requirements: ['id' => '\d+'], priority: 10)]
     public function regenerateSummary(int $id): JsonResponse
     {
         $article = $this->em->getRepository(Article::class)->find($id);
