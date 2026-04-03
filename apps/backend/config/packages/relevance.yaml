@@ -1,48 +1,47 @@
 parameters:
-    relevance.keywords:
-        # Tier 1 — Mențiune directă Moldova (orice articol care conține aceste cuvinte trece)
-        tier1_direct:
-            - 'Moldova'
-            - 'Moldovan'
-            - 'Chișinău'
-            - 'Chisinau'
-            - 'Kishinev'
-            - 'Кишинёв'
-            - 'Молдова'
-            - 'Transnistria'
-            - 'Transdniestria'
-            - 'Приднестровье'
-            - 'Gagauzia'
-            - 'Гагаузия'
-            - 'Sandu'
-            - 'Recean'
-            - 'Moldpres'
+    # Tier 1 — Mențiune directă Moldova (orice articol care conține aceste cuvinte trece)
+    relevance.tier1_direct:
+        - 'Moldova'
+        - 'Moldovan'
+        - 'Chișinău'
+        - 'Chisinau'
+        - 'Kishinev'
+        - 'Кишинёв'
+        - 'Молдова'
+        - 'Transnistria'
+        - 'Transdniestria'
+        - 'Приднестровье'
+        - 'Gagauzia'
+        - 'Гагаузия'
+        - 'Sandu'
+        - 'Recean'
+        - 'Moldpres'
 
-        # Tier 2 — Context regional (trece dacă apar cel puțin 2 din aceste cuvinte împreună)
-        tier2_regional:
-            - 'Eastern Europe'
-            - 'Black Sea'
-            - 'EU enlargement'
-            - 'EU accession'
-            - 'Eastern Partnership'
-            - 'Russia sanctions'
-            - 'energy security Europe'
-            - 'NATO east'
-            - 'Ukraine border'
-            - 'Romania Moldova'
-            - 'OSCE'
-            - 'IMF Eastern Europe'
-            - 'World Bank Moldova'
+    # Tier 2 — Context regional (trece dacă apar cel puțin 2 din aceste cuvinte împreună)
+    relevance.tier2_regional:
+        - 'Eastern Europe'
+        - 'Black Sea'
+        - 'EU enlargement'
+        - 'EU accession'
+        - 'Eastern Partnership'
+        - 'Russia sanctions'
+        - 'energy security Europe'
+        - 'NATO east'
+        - 'Ukraine border'
+        - 'Romania Moldova'
+        - 'OSCE'
+        - 'IMF Eastern Europe'
+        - 'World Bank Moldova'
 
-        # Tier 3 — Persoane și instituții cheie (trece dacă apare oricare)
-        tier3_entities:
-            - 'Maia Sandu'
-            - 'Dorin Recean'
-            - 'Igor Dodon'
-            - 'Ilan Shor'
-            - 'Krasnoselsky'
-            - 'Красносельский'
-            - 'Moldovagaz'
-            - 'Energocom'
+    # Tier 3 — Persoane și instituții cheie (trece dacă apare oricare)
+    relevance.tier3_entities:
+        - 'Maia Sandu'
+        - 'Dorin Recean'
+        - 'Igor Dodon'
+        - 'Ilan Shor'
+        - 'Krasnoselsky'
+        - 'Красносельский'
+        - 'Moldovagaz'
+        - 'Energocom'
 
     relevance.min_score: 1

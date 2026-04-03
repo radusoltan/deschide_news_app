@@ -16,11 +16,11 @@ final readonly class RelevanceFilterService
      * @param list<string> $tier3Keywords
      */
     public function __construct(
-        #[Autowire(param: 'relevance.keywords.tier1_direct')]
+        #[Autowire(param: 'relevance.tier1_direct')]
         private array $tier1Keywords,
-        #[Autowire(param: 'relevance.keywords.tier2_regional')]
+        #[Autowire(param: 'relevance.tier2_regional')]
         private array $tier2Keywords,
-        #[Autowire(param: 'relevance.keywords.tier3_entities')]
+        #[Autowire(param: 'relevance.tier3_entities')]
         private array $tier3Keywords,
         #[Autowire(param: 'relevance.min_score')]
         private int $minScore,
