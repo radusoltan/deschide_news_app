@@ -14,21 +14,28 @@ final class ArticleIngestionService
 {
     private const GEMINI_TIMEOUT = 120;
 
-    /** @var array<string, string> MOC mapping: category slug → MOC filename */
+    /** @var array<string, string> MOC mapping: category title (lowercase) → MOC filename */
     private const MOC_MAPPING = [
-        'politica' => 'MOC-Politica-Interna.md',
         'politică' => 'MOC-Politica-Interna.md',
+        'politica' => 'MOC-Politica-Interna.md',
         'economie' => 'MOC-Economie.md',
         'integrare-ue' => 'MOC-Integrare-UE.md',
-        'justitie' => 'MOC-Justitie-Anticoruptie.md',
-        'justiție' => 'MOC-Justitie-Anticoruptie.md',
+        'justiție' => 'MOC-Justitie.md',
+        'justitie' => 'MOC-Justitie.md',
         'transnistria' => 'MOC-Transnistria.md',
+        'externe' => 'MOC-Relatii-Externe.md',
         'extern' => 'MOC-Relatii-Externe.md',
         'societate' => 'MOC-Societate.md',
         'sport' => 'MOC-Sport.md',
-        'cultura' => 'MOC-Cultura.md',
         'cultură' => 'MOC-Cultura.md',
+        'cultura' => 'MOC-Cultura.md',
         'energie' => 'MOC-Energie.md',
+        'editoriale' => 'MOC-Politica-Interna.md',
+        'opinii' => 'MOC-Politica-Interna.md',
+        'românia' => 'MOC-Politica-Interna.md',
+        'romania' => 'MOC-Politica-Interna.md',
+        'anti-fake' => 'MOC-Societate.md',
+        'advertorial' => 'MOC-Economie.md',
     ];
 
     public function __construct(
@@ -203,7 +210,7 @@ final class ArticleIngestionService
 
             if (str_contains($content, '## Cronologie')) {
                 $content = preg_replace(
-                    '/(## Cronologie\s*\n)/',
+                    '/(## Cronologie[^\n]*\n)/',
                     "$1{$entry}\n",
                     $content,
                     1,
