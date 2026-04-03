@@ -32,24 +32,22 @@ final class GeminiCliProvider implements AiProviderInterface
     {
         $startTime = microtime(true);
 
-        // Build stdin content: system prompt + user prompt
-        $stdinContent = '';
+        // Build full prompt: system prompt + user prompt, all via -p argument
+        $fullPrompt = '';
         if ($systemPrompt !== null && $systemPrompt !== '') {
-            $stdinContent = $systemPrompt . "\n\n---\n\n";
+            $fullPrompt = $systemPrompt . "\n\n---\n\n";
         }
-        $stdinContent .= $prompt;
+        $fullPrompt .= $prompt;
 
-        // Short instruction via -p, full content via stdin
+        // Everything via -p argument (avoids stdin issues in PHP-FPM)
         $process = new Process(
             command: [
                 $this->geminiCliPath,
-                '-p', 'Process the request from the input below. Respond in the language of the request.',
+                '-p', $fullPrompt,
             ],
-            env: ['HOME' => '/home/radu', 'PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin'],
             timeout: self::TIMEOUT,
         );
 
-        $process->setInput($stdinContent);
         $process->run();
 
         $duration = (int) round((microtime(true) - $startTime) * 1000);

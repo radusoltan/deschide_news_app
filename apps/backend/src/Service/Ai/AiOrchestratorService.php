@@ -9,14 +9,17 @@ use App\Entity\AiMessage;
 use App\Entity\AiPromptTemplate;
 use App\Entity\User;
 use App\Enum\AiAgentType;
+use App\Message\TranslateArticleMessage;
 use App\Repository\AiConversationRepository;
 use App\Repository\AiPromptTemplateRepository;
+use App\Repository\ArticleRepository;
 use App\Service\Ai\Provider\AiProviderRegistry;
 use App\Service\Editorial\DailyBriefingService;
 use App\Service\Editorial\WeeklySummaryService;
 use App\Service\Search\SearchService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\Uuid;
 
 final class AiOrchestratorService
@@ -35,9 +38,11 @@ final class AiOrchestratorService
         private readonly LoggerInterface $logger,
         private readonly AiConversationRepository $conversationRepository,
         private readonly AiPromptTemplateRepository $templateRepository,
+        private readonly ArticleRepository $articleRepository,
         private readonly SearchService $searchService,
         private readonly DailyBriefingService $dailyBriefingService,
         private readonly WeeklySummaryService $weeklySummaryService,
+        private readonly MessageBusInterface $messageBus,
     ) {}
 
     /**
@@ -89,7 +94,7 @@ final class AiOrchestratorService
 
         // Route to agent and get response
         try {
-            $responseText = $this->routeToAgent($agentType, $message, $conversation);
+            $responseText = $this->routeToAgent($agentType, $message, $conversation, $templateFields);
         } catch (\Throwable $e) {
             $this->logger->error('AI agent failed', [
                 'agentType' => $agentType->value,
@@ -215,12 +220,12 @@ final class AiOrchestratorService
         return AiAgentType::CONTENT;
     }
 
-    private function routeToAgent(AiAgentType $agentType, string $message, AiConversation $conversation): string
+    private function routeToAgent(AiAgentType $agentType, string $message, AiConversation $conversation, ?array $templateFields = null): string
     {
         return match ($agentType) {
             AiAgentType::VAULT => $this->handleVaultQuery($message, $conversation),
             AiAgentType::CONTENT => $this->handleContentRequest($message, $conversation),
-            AiAgentType::TRANSLATION => $this->handleTranslationRequest($message, $conversation),
+            AiAgentType::TRANSLATION => $this->handleTranslationRequest($message, $conversation, $templateFields),
             AiAgentType::BRIEFING => $this->handleBriefingRequest($message, $conversation),
             AiAgentType::SEO => $this->handleSeoRequest($message),
         };
@@ -266,12 +271,55 @@ final class AiOrchestratorService
         );
     }
 
-    private function handleTranslationRequest(string $message, AiConversation $conversation): string
+    private function handleTranslationRequest(string $message, AiConversation $conversation, ?array $templateFields = null): string
     {
-        $provider = $this->providerRegistry->getProvider(AiAgentType::TRANSLATION);
-        $prompt = $this->buildPromptWithHistory($conversation, $message);
+        // Branch 1: Template with articleId → dispatch async translation via existing pipeline
+        $articleId = $templateFields['articleId'] ?? null;
+        if ($articleId !== null && is_numeric($articleId)) {
+            return $this->dispatchArticleTranslation((int) $articleId, $templateFields['locales'] ?? 'en,ru');
+        }
 
-        return $provider->chat($prompt, AiAgentType::TRANSLATION->getSystemPrompt());
+        // Branch 2: Free-form translation → Gemini CLI direct
+        $provider = $this->providerRegistry->getProvider(AiAgentType::TRANSLATION);
+
+        return $provider->chat($message, AiAgentType::TRANSLATION->getSystemPrompt());
+    }
+
+    private function dispatchArticleTranslation(int $articleId, string $localesStr): string
+    {
+        $article = $this->articleRepository->find($articleId);
+        if ($article === null) {
+            return sprintf('Articolul cu ID %d nu a fost găsit în baza de date.', $articleId);
+        }
+
+        $locales = array_map('trim', explode(',', $localesStr));
+        $locales = array_filter($locales, fn (string $l) => \in_array($l, ['en', 'ru'], true));
+
+        if ($locales === []) {
+            return 'Limbi invalide. Limbile suportate sunt: en (engleză), ru (rusă).';
+        }
+
+        $this->messageBus->dispatch(new TranslateArticleMessage(
+            articleId: $articleId,
+            locales: array_values($locales),
+            forceRetranslate: true,
+        ));
+
+        $localeLabels = array_map(fn (string $l) => match ($l) {
+            'en' => 'engleză',
+            'ru' => 'rusă',
+            default => $l,
+        }, $locales);
+
+        return sprintf(
+            "Traducerea articolului **#%d** (%s) in %s a fost lansata.\n\n"
+            . "Procesul ruleaza asincron prin pipeline-ul Gemini dedicat traducerilor. "
+            . "Rezultatele vor fi salvate automat in campurile de traducere ale articolului.\n\n"
+            . "Poti verifica statusul in lista de articole (coloana Traduceri).",
+            $articleId,
+            mb_substr($article->getTitle() ?? '', 0, 60),
+            implode(' si ', $localeLabels),
+        );
     }
 
     private function handleBriefingRequest(string $message, AiConversation $conversation): string

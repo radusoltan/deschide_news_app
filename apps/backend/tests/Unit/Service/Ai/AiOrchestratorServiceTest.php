@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Enum\AiAgentType;
 use App\Repository\AiConversationRepository;
 use App\Repository\AiPromptTemplateRepository;
+use App\Repository\ArticleRepository;
 use App\Service\Ai\AiMercureService;
 use App\Service\Ai\AiOrchestratorService;
 use App\Service\Ai\MockAnthropicClient;
@@ -23,6 +24,7 @@ use App\Service\Search\SearchService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\Uuid;
 
 class AiOrchestratorServiceTest extends TestCase
@@ -64,6 +66,9 @@ class AiOrchestratorServiceTest extends TestCase
 
         $registry = new AiProviderRegistry([$anthropicProvider, $geminiProvider]);
 
+        $articleRepo = $this->createStub(ArticleRepository::class);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+
         $this->orchestrator = new AiOrchestratorService(
             $this->client,
             $registry,
@@ -72,9 +77,11 @@ class AiOrchestratorServiceTest extends TestCase
             $logger,
             $this->convRepo,
             $this->tplRepo,
+            $articleRepo,
             $search,
             $briefing,
             $weekly,
+            $messageBus,
         );
 
         $this->user = $this->createMock(User::class);
