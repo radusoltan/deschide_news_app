@@ -326,6 +326,11 @@ services:
         arguments:
             $vaultPath: '%env(default::VAULT_PATH)%'
 
+    # Internal Summary Service (Sprint 20 — TL;DR agent)
+    App\Service\Editorial\InternalSummaryService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
     # Translation Evaluator Service (Sprint 18 — Evaluator-Optimizer loop)
     App\Service\Translation\TranslationEvaluatorService:
         arguments:
