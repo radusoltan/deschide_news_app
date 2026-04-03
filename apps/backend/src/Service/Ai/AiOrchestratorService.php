@@ -287,9 +287,16 @@ final class AiOrchestratorService
 
     private function dispatchArticleTranslation(int $articleId, string $localesStr): string
     {
-        $article = $this->articleRepository->find($articleId);
+        // Use DQL with translatable hint to get title in default locale (ro)
+        $article = $this->articleRepository->createQueryBuilder('a')
+            ->where('a.id = :id')
+            ->setParameter('id', $articleId)
+            ->getQuery()
+            ->setHint(\Gedmo\Translatable\TranslatableListener::HINT_TRANSLATABLE_LOCALE, 'ro')
+            ->getOneOrNullResult();
+
         if ($article === null) {
-            return sprintf('Articolul cu ID %d nu a fost găsit în baza de date.', $articleId);
+            return sprintf('Articolul cu ID %d nu a fost gasit in baza de date.', $articleId);
         }
 
         $locales = array_map('trim', explode(',', $localesStr));
