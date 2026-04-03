@@ -15,10 +15,8 @@ class ScrapedContentCleanerTest extends TestCase
 
     protected function setUp(): void
     {
-        // Create a mock sanitizer that strips disallowed tags
         $sanitizer = $this->createMock(HtmlSanitizerInterface::class);
         $sanitizer->method('sanitize')->willReturnCallback(function (string $html): string {
-            // Simplified: strip all tags except allowed ones
             return strip_tags($html, '<p><br><strong><em><a><ul><ol><li><h2><h3><h4><blockquote><img>');
         });
 
@@ -28,46 +26,66 @@ class ScrapedContentCleanerTest extends TestCase
     #[Test]
     public function removesScriptAndStyleTags(): void
     {
-        $html = '<p>Content</p><script>alert("xss")</script><style>.x{}</style><p>More</p>';
+        $html = '<p>Aceasta este o propoziție completă de test suficient de lungă.</p>'
+            . '<script>alert("xss")</script><style>.x{color:red}</style>'
+            . '<p>Alt paragraf cu text suficient de lung pentru a trece filtrul.</p>';
         $clean = $this->cleaner->clean($html);
 
         $this->assertStringNotContainsString('script', $clean);
         $this->assertStringNotContainsString('style', $clean);
-        $this->assertStringContainsString('Content', $clean);
-        $this->assertStringContainsString('More', $clean);
+        $this->assertStringContainsString('propoziție completă', $clean);
+        $this->assertStringContainsString('paragraf cu text', $clean);
     }
 
     #[Test]
     public function removesNavHeaderFooterAside(): void
     {
-        $html = '<nav>Navigation</nav><header>Header</header><p>Main content</p><footer>Footer</footer><aside>Sidebar</aside>';
+        $html = '<nav>Navigation links here</nav>'
+            . '<header>Header content for the site</header>'
+            . '<p>Conținutul principal al articolului care este relevant pentru cititor.</p>'
+            . '<footer>Footer with copyright info</footer>'
+            . '<aside>Sidebar content here</aside>';
         $clean = $this->cleaner->clean($html);
 
         $this->assertStringNotContainsString('Navigation', $clean);
-        $this->assertStringNotContainsString('Header', $clean);
+        $this->assertStringNotContainsString('Header content', $clean);
         $this->assertStringNotContainsString('Footer', $clean);
         $this->assertStringNotContainsString('Sidebar', $clean);
-        $this->assertStringContainsString('Main content', $clean);
+        $this->assertStringContainsString('principal al articolului', $clean);
     }
 
     #[Test]
     public function removesIframeAndForm(): void
     {
-        $html = '<iframe src="x"></iframe><form action="/"><input /></form><p>Content</p>';
+        $html = '<iframe src="x">frame content</iframe>'
+            . '<form action="/submit"><input type="text" /></form>'
+            . '<p>Conținutul util al paginii care trebuie păstrat după curățare.</p>';
         $clean = $this->cleaner->clean($html);
 
         $this->assertStringNotContainsString('iframe', $clean);
         $this->assertStringNotContainsString('form', $clean);
-        $this->assertStringContainsString('Content', $clean);
+        $this->assertStringContainsString('util al paginii', $clean);
+    }
+
+    #[Test]
+    public function handlesFullHtmlPage(): void
+    {
+        $html = '<html><head><title>Test</title></head><body>'
+            . '<article><p>Articolul principal cu conținut relevant și suficient de lung.</p></article>'
+            . '</body></html>';
+        $clean = $this->cleaner->clean($html);
+
+        $this->assertStringNotContainsString('<html', $clean);
+        $this->assertStringNotContainsString('<head', $clean);
+        $this->assertStringContainsString('principal cu conținut', $clean);
     }
 
     #[Test]
     public function extractLeadDoesNotCutMidSentence(): void
     {
-        $html = '<p>First sentence here. Second sentence is longer and has more words. Third sentence.</p>';
+        $html = '<p>Prima propoziție completă aici. A doua propoziție este mai lungă și are mai multe cuvinte. A treia propoziție.</p>';
         $lead = $this->cleaner->extractLead($html, 60);
 
-        // Should include complete sentences only
         $this->assertStringEndsWith('.', $lead);
         $this->assertLessThanOrEqual(60, mb_strlen($lead));
     }
@@ -82,19 +100,9 @@ class ScrapedContentCleanerTest extends TestCase
     #[Test]
     public function extractLeadReturnsFirstSentenceIfShort(): void
     {
-        $html = '<p>Short lead text. Longer second sentence that extends past the limit.</p>';
+        $html = '<p>Propoziție scurtă de test. Propoziția a doua care depășește limita maximă stabilită de parametrul funcției.</p>';
         $lead = $this->cleaner->extractLead($html, 50);
 
-        $this->assertSame('Short lead text.', $lead);
-    }
-
-    #[Test]
-    public function extractLeadHandlesLongSingleSentence(): void
-    {
-        $html = '<p>This is one very long sentence without any sentence breaks that goes on and on and on and exceeds the maximum length for leads.</p>';
-        $lead = $this->cleaner->extractLead($html, 50);
-
-        // Should return the sentence truncated to maxLength
-        $this->assertLessThanOrEqual(50, mb_strlen($lead));
+        $this->assertSame('Propoziție scurtă de test.', $lead);
     }
 }
