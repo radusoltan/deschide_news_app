@@ -13,6 +13,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use App\Enum\PressReleaseStatus;
+use App\Enum\SourceType;
 use App\Repository\PressReleaseRepository;
 use App\State\PressReleaseApproveProcessor;
 use Doctrine\DBAL\Types\Types;
@@ -24,9 +25,12 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Table(name: 'press_releases')]
 #[ORM\Index(name: 'idx_press_release_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_press_release_received', columns: ['received_at'])]
+#[ORM\Index(name: 'idx_press_release_content_hash', columns: ['content_hash'])]
+#[ORM\Index(name: 'idx_press_release_source_type', columns: ['source_type'])]
+#[ORM\UniqueConstraint(name: 'uniq_content_hash_source_type', columns: ['content_hash', 'source_type'])]
 #[UniqueEntity('sourceEmailId', message: 'This email has already been imported.')]
 #[ORM\HasLifecycleCallbacks]
-#[ApiFilter(SearchFilter::class, properties: ['status' => 'exact', 'categorySlug' => 'exact', 'senderAddress' => 'partial'])]
+#[ApiFilter(SearchFilter::class, properties: ['status' => 'exact', 'categorySlug' => 'exact', 'senderAddress' => 'partial', 'sourceType' => 'exact'])]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -70,17 +74,17 @@ class PressRelease
     #[Groups(['press:read', 'press:detail'])]
     private string $content;
 
-    #[ORM\Column(length: 64, unique: true)]
+    #[ORM\Column(length: 64, unique: true, nullable: true)]
     #[Groups(['press:read'])]
-    private string $sourceEmailId;
+    private ?string $sourceEmailId = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['press:read'])]
-    private string $senderAddress;
+    private ?string $senderAddress = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['press:read'])]
-    private string $senderName;
+    private ?string $senderName = null;
 
     #[ORM\Column(length: 500, nullable: true)]
     #[Groups(['press:read'])]
@@ -90,13 +94,33 @@ class PressRelease
     #[Groups(['press:read', 'press:write'])]
     private string $categorySlug;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['press:read'])]
-    private string $emailSubject;
+    private ?string $emailSubject = null;
 
     #[ORM\Column(enumType: PressReleaseStatus::class)]
     #[Groups(['press:read', 'press:write'])]
     private PressReleaseStatus $status = PressReleaseStatus::PENDING;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $contentHash = null;
+
+    #[ORM\Column(enumType: SourceType::class, options: ['default' => 'email'])]
+    #[Groups(['press:read'])]
+    private SourceType $sourceType = SourceType::EMAIL;
+
+    #[ORM\Column(length: 5, nullable: true, options: ['default' => 'ro'])]
+    #[Groups(['press:read'])]
+    private ?string $originalLanguage = 'ro';
+
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $sourceName = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['press:read', 'press:write'])]
+    private ?string $rejectionReason = null;
 
     #[ORM\Column]
     #[Groups(['press:read'])]
@@ -172,14 +196,14 @@ class PressRelease
         return $this;
     }
 
-    public function getSourceEmailId(): string { return $this->sourceEmailId; }
-    public function setSourceEmailId(string $sourceEmailId): static { $this->sourceEmailId = $sourceEmailId; return $this; }
+    public function getSourceEmailId(): ?string { return $this->sourceEmailId; }
+    public function setSourceEmailId(?string $sourceEmailId): static { $this->sourceEmailId = $sourceEmailId; return $this; }
 
-    public function getSenderAddress(): string { return $this->senderAddress; }
-    public function setSenderAddress(string $senderAddress): static { $this->senderAddress = $senderAddress; return $this; }
+    public function getSenderAddress(): ?string { return $this->senderAddress; }
+    public function setSenderAddress(?string $senderAddress): static { $this->senderAddress = $senderAddress; return $this; }
 
-    public function getSenderName(): string { return $this->senderName; }
-    public function setSenderName(string $senderName): static { $this->senderName = $senderName; return $this; }
+    public function getSenderName(): ?string { return $this->senderName; }
+    public function setSenderName(?string $senderName): static { $this->senderName = $senderName; return $this; }
 
     public function getSourceUrl(): ?string { return $this->sourceUrl; }
     public function setSourceUrl(?string $sourceUrl): static { $this->sourceUrl = $sourceUrl; return $this; }
@@ -187,8 +211,8 @@ class PressRelease
     public function getCategorySlug(): string { return $this->categorySlug; }
     public function setCategorySlug(string $categorySlug): static { $this->categorySlug = $categorySlug; return $this; }
 
-    public function getEmailSubject(): string { return $this->emailSubject; }
-    public function setEmailSubject(string $emailSubject): static { $this->emailSubject = $emailSubject; return $this; }
+    public function getEmailSubject(): ?string { return $this->emailSubject; }
+    public function setEmailSubject(?string $emailSubject): static { $this->emailSubject = $emailSubject; return $this; }
 
     public function getStatus(): PressReleaseStatus { return $this->status; }
     public function setStatus(PressReleaseStatus $status): static { $this->status = $status; return $this; }
@@ -208,6 +232,21 @@ class PressRelease
     public function setArticle(?Article $article): static { $this->article = $article; return $this; }
 
     public function getContentLength(): int { return $this->contentLength; }
+
+    public function getContentHash(): ?string { return $this->contentHash; }
+    public function setContentHash(?string $contentHash): static { $this->contentHash = $contentHash; return $this; }
+
+    public function getSourceType(): SourceType { return $this->sourceType; }
+    public function setSourceType(SourceType $sourceType): static { $this->sourceType = $sourceType; return $this; }
+
+    public function getOriginalLanguage(): ?string { return $this->originalLanguage; }
+    public function setOriginalLanguage(?string $originalLanguage): static { $this->originalLanguage = $originalLanguage; return $this; }
+
+    public function getSourceName(): ?string { return $this->sourceName; }
+    public function setSourceName(?string $sourceName): static { $this->sourceName = $sourceName; return $this; }
+
+    public function getRejectionReason(): ?string { return $this->rejectionReason; }
+    public function setRejectionReason(?string $rejectionReason): static { $this->rejectionReason = $rejectionReason; return $this; }
 
     public function getAttachmentFilename(): ?string { return $this->attachmentFilename; }
     public function setAttachmentFilename(?string $attachmentFilename): static { $this->attachmentFilename = $attachmentFilename; return $this; }

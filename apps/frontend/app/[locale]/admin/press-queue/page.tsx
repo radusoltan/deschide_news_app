@@ -5,9 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   fetchPressReleases,
   fetchPressEmails,
+  fetchPressReleaseCounts,
   approvePressRelease,
   rejectPressRelease,
   type PressReleaseItem,
+  type SourceTypeCounts,
 } from '@/app/actions/press-releases';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -29,8 +31,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   justitie: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
 };
 
+const SOURCE_TYPE_BADGE: Record<string, { label: string; className: string }> = {
+  email: { label: 'Email', className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800' },
+  scrape: { label: 'Scrape', className: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' },
+  manual: { label: 'Manual', className: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-700/30 dark:text-gray-300 dark:border-gray-600' },
+};
+
 const STATUS_LABELS: Record<string, string> = {
-  pending: 'In așteptare',
+  pending: 'In asteptare',
   approved: 'Aprobate',
   rejected: 'Respinse',
 };
@@ -43,6 +51,7 @@ export default function PressQueuePage() {
   const [items, setItems] = useState<PressReleaseItem[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [filter, setFilter] = useState<'pending' | 'approved' | 'rejected'>('pending');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,22 +60,33 @@ export default function PressQueuePage() {
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [fetchingEmails, setFetchingEmails] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [counts, setCounts] = useState<SourceTypeCounts | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const result = await fetchPressReleases(filter, page);
+    const sourceParam = sourceFilter === 'all' ? undefined : sourceFilter;
+    const result = await fetchPressReleases(filter, page, sourceParam);
     if (result.error) {
       setError(result.error);
     }
     setItems(result.items);
     setTotalItems(result.totalItems);
     setLoading(false);
-  }, [filter, page]);
+  }, [filter, page, sourceFilter]);
+
+  const loadCounts = useCallback(async () => {
+    const c = await fetchPressReleaseCounts();
+    setCounts(c);
+  }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    loadCounts();
+  }, [loadCounts]);
 
   const handleApprove = (id: number) => {
     setProcessingId(id);
@@ -77,6 +97,7 @@ export default function PressQueuePage() {
       }
       setProcessingId(null);
       await loadData();
+      await loadCounts();
     });
   };
 
@@ -89,6 +110,7 @@ export default function PressQueuePage() {
       }
       setProcessingId(null);
       await loadData();
+      await loadCounts();
     });
   };
 
@@ -101,6 +123,7 @@ export default function PressQueuePage() {
         if (result.queued > 0) {
           setToast({ message: `${result.queued} comunicate noi importate`, type: 'success' });
           await loadData();
+          await loadCounts();
         } else {
           setToast({ message: 'Niciun email nou', type: 'success' });
         }
@@ -108,7 +131,7 @@ export default function PressQueuePage() {
         setToast({ message: result.error || 'Eroare la preluare', type: 'error' });
       }
     } catch {
-      setToast({ message: 'Eroare de rețea', type: 'error' });
+      setToast({ message: 'Eroare de retea', type: 'error' });
     } finally {
       setFetchingEmails(false);
     }
@@ -127,6 +150,12 @@ export default function PressQueuePage() {
     setExpandedId(null);
   };
 
+  const changeSourceFilter = (s: string) => {
+    setSourceFilter(s);
+    setPage(1);
+    setExpandedId(null);
+  };
+
   const formatDate = (dateStr: string) => {
     try {
       return new Date(dateStr).toLocaleDateString('ro-RO', {
@@ -138,6 +167,12 @@ export default function PressQueuePage() {
     }
   };
 
+  const getSourceLabel = (pr: PressReleaseItem): string => {
+    if (pr.sourceType === 'email') return pr.senderName || pr.senderAddress || 'Email';
+    if (pr.sourceType === 'scrape') return pr.sourceName?.replace('scrape:', '') || 'Scrape';
+    return pr.sourceName || 'Manual';
+  };
+
   const totalPages = Math.ceil(totalItems / 20);
 
   return (
@@ -146,11 +181,19 @@ export default function PressQueuePage() {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-primary dark:text-primary-dark">
-            Coadă Comunicate de Presă
+            Coada Editoriala Unificata
           </h1>
           <p className="mt-1 text-sm text-secondary dark:text-gray-400">
-            Revizuiește și aprobă comunicatele de presă primite automat din Zoho Mail
+            Revizuieste si aproba comunicatele din toate sursele (email, scraping, manual)
           </p>
+          {counts && counts.total > 0 && (
+            <p className="mt-1 text-sm font-medium text-primary dark:text-primary-dark">
+              {counts.total} in asteptare
+              {counts.email > 0 && <span className="ml-2 text-blue-600 dark:text-blue-400">{counts.email} email</span>}
+              {counts.scrape > 0 && <span className="ml-2 text-green-600 dark:text-green-400">{counts.scrape} scrape</span>}
+              {counts.manual > 0 && <span className="ml-2 text-gray-600 dark:text-gray-400">{counts.manual} manual</span>}
+            </p>
+          )}
         </div>
         <button
           onClick={handleFetchEmails}
@@ -183,40 +226,64 @@ export default function PressQueuePage() {
         </div>
       )}
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 mb-6">
-        {(['pending', 'approved', 'rejected'] as const).map((s) => (
-          <button
-            key={s}
-            onClick={() => changeFilter(s)}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
-              filter === s
-                ? 'bg-blue-600 text-white'
-                : 'bg-surface text-primary border border-gray-300 hover:bg-surface-sunken dark:bg-surface-dark dark:text-primary-dark dark:border-gray-600 dark:hover:bg-gray-700'
-            }`}
-          >
-            {STATUS_LABELS[s]}
-            {filter === s && !loading && (
-              <span className="ml-2 px-1.5 py-0.5 text-xs bg-surface/20 rounded">
-                {totalItems}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* Filter Tabs + Source Filter */}
+      <div className="flex items-center gap-4 mb-6 flex-wrap">
+        <div className="flex gap-2">
+          {(['pending', 'approved', 'rejected'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => changeFilter(s)}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
+                filter === s
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-surface text-primary border border-gray-300 hover:bg-surface-sunken dark:bg-surface-dark dark:text-primary-dark dark:border-gray-600 dark:hover:bg-gray-700'
+              }`}
+            >
+              {STATUS_LABELS[s]}
+              {filter === s && !loading && (
+                <span className="ml-2 px-1.5 py-0.5 text-xs bg-surface/20 rounded">
+                  {totalItems}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Source Type Filter */}
+        <div className="flex gap-1 ml-auto">
+          {[
+            { key: 'all', label: 'Toate' },
+            { key: 'email', label: 'Email' },
+            { key: 'scrape', label: 'Scrape' },
+            { key: 'manual', label: 'Manual' },
+          ].map((s) => (
+            <button
+              key={s.key}
+              onClick={() => changeSourceFilter(s.key)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
+                sourceFilter === s.key
+                  ? 'bg-gray-800 text-white dark:bg-gray-200 dark:text-gray-900'
+                  : 'bg-surface text-secondary border border-gray-200 hover:bg-surface-sunken dark:bg-surface-dark dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700'
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Error */}
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
           {error}
-          <button onClick={() => setError(null)} className="ml-2 font-bold hover:text-red-900">×</button>
+          <button onClick={() => setError(null)} className="ml-2 font-bold hover:text-red-900">&times;</button>
         </div>
       )}
 
       {/* Loading */}
       {loading && (
         <div className="text-center py-12 text-secondary dark:text-gray-400">
-          Se încarcă...
+          Se incarca...
         </div>
       )}
 
@@ -251,11 +318,17 @@ export default function PressQueuePage() {
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded ${STATUS_COLORS[pr.status]}`}>
                         {STATUS_LABELS[pr.status] || pr.status}
                       </span>
+                      {/* Source Type Badge */}
+                      {SOURCE_TYPE_BADGE[pr.sourceType] && (
+                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded border ${SOURCE_TYPE_BADGE[pr.sourceType].className}`}>
+                          {SOURCE_TYPE_BADGE[pr.sourceType].label}
+                        </span>
+                      )}
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded ${CATEGORY_COLORS[pr.categorySlug] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-primary-dark'}`}>
                         {pr.categorySlug}
                       </span>
                       <span className="text-xs text-secondary dark:text-gray-400">
-                        {pr.senderName}
+                        {getSourceLabel(pr)}
                       </span>
                       <span className="text-xs text-gray-400 dark:text-secondary">
                         {formatDate(pr.receivedAt)}
@@ -282,7 +355,7 @@ export default function PressQueuePage() {
                         disabled={processingId === pr.id || isPending}
                         className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg disabled:opacity-50 transition"
                       >
-                        {processingId === pr.id ? '...' : 'Aprobă'}
+                        {processingId === pr.id ? '...' : 'Aproba'}
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleReject(pr.id); }}
@@ -300,7 +373,7 @@ export default function PressQueuePage() {
                       onClick={(e) => e.stopPropagation()}
                       className="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg dark:text-blue-300 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 transition flex-shrink-0"
                     >
-                      Editează Articol #{pr.articleId}
+                      Editeaza Articol #{pr.articleId}
                     </a>
                   )}
                 </div>
@@ -309,19 +382,49 @@ export default function PressQueuePage() {
               {/* Expanded Content */}
               {expandedId === pr.id && (
                 <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-surface-sunken dark:bg-surface-dark/50">
-                  {pr.sourceUrl && (
-                    <div className="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
-                      <span className="text-xs font-medium text-secondary dark:text-gray-400">Sursă originală: </span>
-                      <a
-                        href={pr.sourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-blue-600 hover:underline dark:text-blue-400"
-                      >
-                        {pr.sourceUrl}
-                      </a>
-                    </div>
-                  )}
+                  {/* Source metadata */}
+                  <div className="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700 space-y-1">
+                    {pr.sourceType === 'email' && pr.emailSubject && (
+                      <div>
+                        <span className="text-xs font-medium text-secondary dark:text-gray-400">Subiect: </span>
+                        <span className="text-xs text-primary dark:text-primary-dark">{pr.emailSubject}</span>
+                      </div>
+                    )}
+                    {pr.sourceType === 'email' && pr.senderAddress && (
+                      <div>
+                        <span className="text-xs font-medium text-secondary dark:text-gray-400">De la: </span>
+                        <span className="text-xs text-primary dark:text-primary-dark">{pr.senderName || pr.senderAddress}</span>
+                        {pr.senderName && (
+                          <span className="text-xs text-gray-400 dark:text-secondary ml-1">({pr.senderAddress})</span>
+                        )}
+                      </div>
+                    )}
+                    {pr.sourceUrl && (
+                      <div>
+                        <span className="text-xs font-medium text-secondary dark:text-gray-400">Sursa originala: </span>
+                        <a
+                          href={pr.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                          {pr.sourceUrl}
+                        </a>
+                      </div>
+                    )}
+                    {pr.sourceType === 'scrape' && pr.sourceName && (
+                      <div>
+                        <span className="text-xs font-medium text-secondary dark:text-gray-400">Sursa scraping: </span>
+                        <span className="text-xs text-primary dark:text-primary-dark">{pr.sourceName}</span>
+                      </div>
+                    )}
+                    {pr.rejectionReason && (
+                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded dark:bg-red-900/10 dark:border-red-800">
+                        <span className="text-xs font-medium text-red-700 dark:text-red-300">Motiv respingere: </span>
+                        <span className="text-xs text-red-600 dark:text-red-400">{pr.rejectionReason}</span>
+                      </div>
+                    )}
+                  </div>
                   <div
                     className="prose prose-sm max-w-none dark:prose-invert"
                     dangerouslySetInnerHTML={{ __html: pr.content }}
@@ -351,7 +454,7 @@ export default function PressQueuePage() {
             disabled={page >= totalPages}
             className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-primary-dark"
           >
-            Următor
+            Urmator
           </button>
         </div>
       )}

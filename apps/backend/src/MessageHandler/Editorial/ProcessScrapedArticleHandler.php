@@ -4,159 +4,115 @@ declare(strict_types=1);
 
 namespace App\MessageHandler\Editorial;
 
-use App\Dto\Scraping\ScrapedContent;
-use App\Entity\Article;
-use App\Enum\ArticleStatus;
-use App\Message\Editorial\EvaluateTranslationMessage;
-use App\Message\Editorial\IngestArticleMessage;
+use App\Entity\PressRelease;
+use App\Enum\NotificationImportance;
+use App\Enum\NotificationType;
+use App\Enum\PressReleaseStatus;
+use App\Enum\SourceType;
 use App\Message\Editorial\ProcessScrapedArticleMessage;
-use App\Message\TranslateArticleMessage;
-use App\Service\Editorial\InternalSummaryService;
-use App\Service\Scraping\FrontmatterGenerator;
+use App\Service\CategoryDetectorService;
+use App\Service\ContentDeduplicator;
+use App\Service\ContentHasher;
+use App\Service\NotificationService;
+use App\Service\ScrapedContentCleaner;
+use App\Service\SourceAuthorResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsMessageHandler]
 final readonly class ProcessScrapedArticleHandler
 {
     public function __construct(
-        private FrontmatterGenerator $frontmatterGenerator,
-        private InternalSummaryService $summaryService,
+        private ScrapedContentCleaner $contentCleaner,
+        private ContentHasher $contentHasher,
+        private ContentDeduplicator $deduplicator,
+        private CategoryDetectorService $categoryDetector,
+        private SourceAuthorResolver $authorResolver,
+        private NotificationService $notificationService,
         private EntityManagerInterface $em,
-        private MessageBusInterface $messageBus,
         private LoggerInterface $logger,
-        private ?string $vaultPath = null,
     ) {}
 
     public function __invoke(ProcessScrapedArticleMessage $message): void
     {
-        // Check if article with this hash already exists (race condition guard)
-        $existing = $this->em->getRepository(Article::class)->findOneBy([
-            'contentHash' => $message->contentHash,
-        ]);
+        // 1. Clean HTML content
+        $cleanHtml = $this->contentCleaner->clean($message->bodyMarkdown);
 
-        if ($existing !== null) {
-            $this->logger->debug('ProcessScrapedArticleHandler: duplicate hash, skipping', [
-                'hash' => $message->contentHash,
+        // 2. Hash for deduplication
+        $hash = $this->contentHasher->hash($cleanHtml);
+
+        // 3. Check for duplicates across PressRelease + Article tables
+        $dupCheck = $this->deduplicator->isDuplicate($hash);
+        if ($dupCheck->isDuplicate) {
+            $this->logger->debug('ProcessScrapedArticleHandler: duplicate content, skipping', [
+                'hash' => $hash,
+                'existingEntity' => $dupCheck->existingEntityType,
+                'existingId' => $dupCheck->existingEntityId,
             ]);
 
             return;
         }
 
-        // Create article entity directly in PostgreSQL
-        $article = new Article();
-        $article->setTranslatableLocale($message->originalLanguage);
-        $article->setTitle($message->title);
-        $article->setContent($message->bodyMarkdown);
-        $article->setLead(mb_substr(strip_tags($message->bodyMarkdown), 0, 300) ?: null);
-        $article->setStatus(ArticleStatus::NEW);
-        $article->setContentHash($message->contentHash);
+        // 4. Extract lead from cleaned HTML
+        $lead = $this->contentCleaner->extractLead($cleanHtml);
 
-        // Store source URL as sourceEmail field (used for vault ID / source tracking)
-        $sourceId = 'scrape-' . mb_substr($message->contentHash, 0, 50);
-        $article->setSourceEmail($sourceId);
+        // 5. Detect category
+        $categorySlug = $this->categoryDetector->detectSlug($message->title . ' ' . $lead);
+
+        // 6. Build source name slug
+        $sourceName = 'scrape:' . $this->toSourceSlug($message->sourceName);
+
+        // 7. Create PressRelease (NOT Article)
+        $pr = new PressRelease();
+        $pr->setTitle(mb_substr($message->title, 0, 255));
+        $pr->setContent($cleanHtml);
+        $pr->setLead(mb_substr($lead, 0, 300) ?: null);
+        $pr->setStatus(PressReleaseStatus::PENDING);
+        $pr->setSourceType(SourceType::SCRAPE);
+        $pr->setSourceName($sourceName);
+        $pr->setSourceUrl($message->sourceUrl);
+        $pr->setContentHash($hash);
+        $pr->setOriginalLanguage($message->originalLanguage);
+        $pr->setCategorySlug($categorySlug);
 
         if ($message->publishedAt !== null) {
-            $article->setPublishedAt($message->publishedAt);
+            $pr->setReceivedAt($message->publishedAt);
         }
 
-        // Generate AI summary (TL;DR) before persisting
-        $summary = $this->summaryService->generateSummary(
-            $message->title,
-            strip_tags($message->bodyMarkdown),
-            $message->sourceName,
-        );
-
-        if ($summary !== null) {
-            $article->setInternalSummary($summary);
-        }
-
-        $this->em->persist($article);
+        // 8. Persist
+        $this->em->persist($pr);
         $this->em->flush();
 
-        $this->logger->info('ProcessScrapedArticleHandler: article created', [
-            'articleId' => $article->getId(),
+        $this->logger->info('ProcessScrapedArticleHandler: PressRelease created (pending review)', [
+            'pressReleaseId' => $pr->getId(),
             'title' => mb_substr($message->title, 0, 80),
-            'source' => $message->sourceName,
-            'hasSummary' => $summary !== null,
+            'source' => $sourceName,
+            'sourceType' => 'scrape',
         ]);
 
-        // Write vault file if vault path is configured
-        $this->writeVaultFile($message);
-
-        // Dispatch translation for non-original locales
-        $targetLocales = array_values(array_diff(['ro', 'en', 'ru'], [$message->originalLanguage]));
-        if ($targetLocales !== []) {
-            $this->messageBus->dispatch(new TranslateArticleMessage(
-                articleId: $article->getId(),
-                locales: $targetLocales,
-            ));
-
-            // Dispatch evaluation for each target locale (runs after translation completes)
-            foreach ($targetLocales as $locale) {
-                $this->messageBus->dispatch(new EvaluateTranslationMessage(
-                    articleId: $article->getId(),
-                    targetLang: $locale,
-                ));
-            }
+        // 9. Notify editors
+        try {
+            $this->notificationService->notify(
+                type: NotificationType::PRESS_QUEUE_NEW,
+                title: 'Articol scrapat nou în coadă',
+                message: sprintf('"%s" de la %s', mb_substr($message->title, 0, 80), $message->sourceName),
+                importance: NotificationImportance::MEDIUM,
+                relatedEntityType: 'PressRelease',
+                relatedEntityId: $pr->getId(),
+                actionUrl: '/admin/press-queue',
+            );
+        } catch (\Throwable $e) {
+            $this->logger->warning('Failed to send scrape notification', ['error' => $e->getMessage()]);
         }
-
-        // Dispatch AI ingestion (entity extraction, atomic notes, MOC, NotebookLM)
-        $this->messageBus->dispatch(new IngestArticleMessage(
-            articleId: $article->getId(),
-        ));
     }
 
-    private function writeVaultFile(ProcessScrapedArticleMessage $message): void
+    private function toSourceSlug(string $sourceName): string
     {
-        if ($this->vaultPath === null || $this->vaultPath === '') {
-            return;
-        }
+        $slug = mb_strtolower($sourceName);
+        $slug = str_replace([' ', '.', '-'], '_', $slug);
+        $slug = preg_replace('/[^a-z0-9_]/', '', $slug) ?? $slug;
 
-        $date = $message->publishedAt ?? new \DateTimeImmutable();
-        $dirPath = sprintf('%s/articles/%s/%s', $this->vaultPath, $date->format('Y'), $date->format('m'));
-
-        if (!is_dir($dirPath) && !mkdir($dirPath, 0o755, true)) {
-            $this->logger->warning('ProcessScrapedArticleHandler: cannot create vault directory', [
-                'path' => $dirPath,
-            ]);
-
-            return;
-        }
-
-        // Build a simple frontmatter + body document
-        $scraped = new ScrapedContent(
-            url: $message->sourceUrl,
-            title: $message->title,
-            bodyHtml: '',
-            bodyText: $message->bodyMarkdown,
-            language: $message->originalLanguage,
-            sourceName: $message->sourceName,
-            publishedAt: $message->publishedAt,
-        );
-
-        $content = $this->frontmatterGenerator->generate($scraped, $message->bodyMarkdown);
-
-        $slug = $this->slugify($message->title);
-        $filePath = "{$dirPath}/{$slug}.md";
-
-        file_put_contents($filePath, $content);
-    }
-
-    private function slugify(string $text): string
-    {
-        $text = mb_strtolower($text);
-        $text = str_replace(
-            ['ă', 'â', 'î', 'ș', 'ț', 'ş', 'ţ', ' '],
-            ['a', 'a', 'i', 's', 't', 's', 't', '-'],
-            $text,
-        );
-        $text = preg_replace('/[^a-z0-9\-]/', '', $text);
-        $text = preg_replace('/-+/', '-', trim($text, '-'));
-
-        // Limit slug length
-        return mb_substr($text, 0, 80);
+        return mb_substr($slug, 0, 50);
     }
 }
