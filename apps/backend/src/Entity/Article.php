@@ -53,6 +53,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_article_category_status_published', columns: ['category_id', 'status', 'published_at'])]
 #[ORM\Index(name: 'idx_article_status_archived', columns: ['status', 'archived_at'])]
 #[ORM\Index(name: 'idx_article_content_hash', columns: ['content_hash'])]
+#[ORM\Index(name: 'idx_article_ingested_at', columns: ['ingested_at'])]
 #[ApiResource(
     operations: [
         new Get(
@@ -305,6 +306,11 @@ class Article implements Translatable
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['article:read', 'article:detail'])]
     private ?string $internalSummary = null;
+
+    // Timestamp when AI ingestion pipeline completed (entity extraction, MOC update, etc.)
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['article:read'])]
+    private ?DateTimeImmutable $ingestedAt = null;
 
     /**
      * Non-persisted field populated by ArticleProvider / SlugController.
@@ -777,6 +783,18 @@ class Article implements Translatable
     public function setInternalSummary(?string $internalSummary): self
     {
         $this->internalSummary = $internalSummary;
+
+        return $this;
+    }
+
+    public function getIngestedAt(): ?DateTimeImmutable
+    {
+        return $this->ingestedAt;
+    }
+
+    public function setIngestedAt(?DateTimeImmutable $ingestedAt): self
+    {
+        $this->ingestedAt = $ingestedAt;
 
         return $this;
     }

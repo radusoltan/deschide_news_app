@@ -35,6 +35,15 @@ final readonly class IngestArticleHandler
             return;
         }
 
+        // Skip if already ingested (prevents double-processing)
+        if ($article->getIngestedAt() !== null) {
+            $this->logger->debug('IngestArticleHandler: already ingested, skipping', [
+                'articleId' => $article->getId(),
+            ]);
+
+            return;
+        }
+
         $this->logger->info('IngestArticleHandler: starting ingestion', [
             'articleId' => $article->getId(),
             'title' => mb_substr($article->getTitle() ?? '', 0, 80),
@@ -69,6 +78,10 @@ final readonly class IngestArticleHandler
 
         // Step 5: Feed to NotebookLM (graceful — skipped if unavailable)
         $this->ingestionService->feedNotebookLM($article);
+
+        // Mark as ingested
+        $article->setIngestedAt(new \DateTimeImmutable());
+        $this->em->flush();
 
         $this->logger->info('IngestArticleHandler: ingestion complete', [
             'articleId' => $article->getId(),
