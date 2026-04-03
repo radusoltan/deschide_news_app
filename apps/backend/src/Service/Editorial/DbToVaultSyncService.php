@@ -297,6 +297,7 @@ class DbToVaultSyncService
                     'en' => isset($translations['en']['title']) ? 'complete' : 'pending',
                     'ru' => isset($translations['ru']['title']) ? 'complete' : 'pending',
                 ],
+                'summary' => $article->getInternalSummary(),
                 'auto_generated' => false,
                 'reviewed' => true,
             ],
