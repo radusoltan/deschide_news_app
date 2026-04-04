@@ -239,6 +239,7 @@ class DbToVaultSyncService
 
         return [
             'id' => $id,
+            'article_id' => $article->getId(),
             'type' => $this->mapArticleType($article),
             'language' => 'ro',
 
@@ -283,6 +284,11 @@ class DbToVaultSyncService
 
             'categories' => $article->getCategory() ? [$article->getCategory()->getSlug()] : [],
             'tags' => array_map(fn ($t) => $t->getSlug(), $article->getTags()->toArray()),
+            'topics' => array_map(fn ($t) => [
+                'id' => $t->getId(),
+                'title' => $t->getTitle(),
+                'slug' => $t->getSlug(),
+            ], $article->getTopics()->toArray()),
 
             'source' => [
                 'name' => 'Deschide News',
