@@ -233,7 +233,7 @@ class CategoryProcessorTest extends TestCase
     #[Test]
     public function itUpdatesExistingCategory(): void
     {
-        $this->setupRequest('ro');
+        $this->setupRequestWithContent('ro', json_encode(['title' => 'Updated Title']));
 
         $existingCategory = $this->createMock(Category::class);
         $existingCategory->method('getId')->willReturn(5);
@@ -398,6 +398,13 @@ class CategoryProcessorTest extends TestCase
     private function setupRequest(string $locale): void
     {
         $request = new Request();
+        $request->headers = new HeaderBag(['Accept-Language' => $locale]);
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+    }
+
+    private function setupRequestWithContent(string $locale, string $content): void
+    {
+        $request = new Request([], [], [], [], [], [], $content);
         $request->headers = new HeaderBag(['Accept-Language' => $locale]);
         $this->requestStack->method('getCurrentRequest')->willReturn($request);
     }

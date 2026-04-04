@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service;
 
 use App\Entity\Article;
+use App\Entity\User;
+use App\Service\NotificationFilterService;
 use App\Service\NotificationService;
 use App\Service\ProcessResult;
 use App\Service\TranslationResultProcessor;
@@ -13,6 +15,9 @@ use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 #[CoversClass(TranslationResultProcessor::class)]
 #[CoversClass(ProcessResult::class)]
@@ -22,15 +27,34 @@ class TranslationResultProcessorTest extends TestCase
     private NotificationService $notificationService;
     private TranslationResultProcessor $processor;
     private TranslationRepository $translationRepo;
+    private HttpClientInterface $httpClient;
+    private NotificationFilterService $filterService;
 
     protected function setUp(): void
     {
         $this->em = $this->createMock(EntityManagerInterface::class);
-        $this->notificationService = $this->createMock(NotificationService::class);
         $this->translationRepo = $this->createMock(TranslationRepository::class);
 
         $this->em->method('getRepository')
             ->willReturn($this->translationRepo);
+
+        // NotificationService is final — build a real instance with mocked deps
+        $notifEm = $this->createMock(EntityManagerInterface::class);
+        $this->httpClient = $this->createMock(HttpClientInterface::class);
+        $serializer = $this->createMock(SerializerInterface::class);
+        $serializer->method('serialize')->willReturn('{}');
+        $this->filterService = $this->createMock(NotificationFilterService::class);
+        $this->filterService->method('getRecipients')->willReturn([]);
+
+        $this->notificationService = new NotificationService(
+            $notifEm,
+            $this->httpClient,
+            $serializer,
+            $this->filterService,
+            new NullLogger(),
+            'http://localhost:3000/.well-known/mercure',
+            'fake-jwt-token',
+        );
 
         $this->processor = new TranslationResultProcessor(
             $this->em,
@@ -251,6 +275,8 @@ class TranslationResultProcessorTest extends TestCase
 
     public function testFinalizeCompletedSendsNotification(): void
     {
+        // Build a processor with a filterService that returns a recipient
+        $processor = $this->buildProcessorWithRecipient();
         $article = $this->createArticleStub();
 
         $article->expects($this->once())
@@ -262,10 +288,14 @@ class TranslationResultProcessorTest extends TestCase
             ->method('setTranslatedBy')
             ->with('gemini-agent');
 
-        $this->notificationService->expects($this->once())
-            ->method('notify');
+        // Verify notification is sent by checking the httpClient is called (Mercure publish)
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->willReturn($response);
 
-        $this->processor->finalize($article, 'completed', ['ru', 'en'], false);
+        $processor->finalize($article, 'completed', ['ru', 'en'], false);
     }
 
     public function testFinalizeFailedNoNotification(): void
@@ -276,24 +306,63 @@ class TranslationResultProcessorTest extends TestCase
             ->method('setTranslationStatus')
             ->with('failed');
 
-        $this->notificationService->expects($this->never())
-            ->method('notify');
+        // finalize with empty locales returns early — no notification, no httpClient call
+        $this->httpClient->expects($this->never())
+            ->method('request');
 
         $this->processor->finalize($article, 'failed', [], false);
     }
 
     public function testFinalizeNeedsReviewSendsNotification(): void
     {
+        // Build a processor with a filterService that returns a recipient
+        $processor = $this->buildProcessorWithRecipient();
         $article = $this->createArticleStub();
 
         $article->expects($this->once())
             ->method('setTranslationStatus')
             ->with('needs_review');
 
-        $this->notificationService->expects($this->once())
-            ->method('notify');
+        // Verify notification is sent by checking the httpClient is called (Mercure publish)
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn(200);
+        $this->httpClient->expects($this->once())
+            ->method('request')
+            ->willReturn($response);
 
-        $this->processor->finalize($article, 'needs_review', ['ru'], true);
+        $processor->finalize($article, 'needs_review', ['ru'], true);
+    }
+
+    /**
+     * Build a processor whose NotificationService has a recipient so notify() actually publishes.
+     */
+    private function buildProcessorWithRecipient(): TranslationResultProcessor
+    {
+        $notifEm = $this->createMock(EntityManagerInterface::class);
+        $serializer = $this->createMock(SerializerInterface::class);
+        $serializer->method('serialize')->willReturn('{}');
+
+        $user = $this->createStub(User::class);
+        $user->method('getUsername')->willReturn('editor');
+
+        $filterService = $this->createMock(NotificationFilterService::class);
+        $filterService->method('getRecipients')->willReturn([$user]);
+
+        $notificationService = new NotificationService(
+            $notifEm,
+            $this->httpClient,
+            $serializer,
+            $filterService,
+            new NullLogger(),
+            'http://localhost:3000/.well-known/mercure',
+            'fake-jwt-token',
+        );
+
+        return new TranslationResultProcessor(
+            $this->em,
+            $notificationService,
+            new NullLogger(),
+        );
     }
 
     private function createArticleStub(string $content = '<p>Conținut</p>'): Article

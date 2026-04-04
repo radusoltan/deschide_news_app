@@ -17,11 +17,11 @@ use PHPUnit\Framework\TestCase;
 class AuthorTypeTest extends TestCase
 {
     #[Test]
-    public function itHasExactlyThreeCases(): void
+    public function itHasExactlyFourCases(): void
     {
         $cases = AuthorType::cases();
 
-        $this->assertCount(3, $cases);
+        $this->assertCount(4, $cases);
     }
 
     #[Test]
@@ -37,6 +37,12 @@ class AuthorTypeTest extends TestCase
     }
 
     #[Test]
+    public function itHasEditorialistCase(): void
+    {
+        $this->assertSame('editorialist', AuthorType::EDITORIALIST->value);
+    }
+
+    #[Test]
     public function itHasPressOfficeCase(): void
     {
         $this->assertSame('press_office', AuthorType::PRESS_OFFICE->value);
@@ -46,6 +52,12 @@ class AuthorTypeTest extends TestCase
     public function labelReturnsCorrectRomanianForJournalist(): void
     {
         $this->assertSame('Jurnalist', AuthorType::JOURNALIST->label());
+    }
+
+    #[Test]
+    public function labelReturnsCorrectRomanianForEditorialist(): void
+    {
+        $this->assertSame('Editorialist', AuthorType::EDITORIALIST->label());
     }
 
     #[Test]
@@ -71,6 +83,7 @@ class AuthorTypeTest extends TestCase
     {
         return [
             'journalist' => ['journalist', AuthorType::JOURNALIST],
+            'editorialist' => ['editorialist', AuthorType::EDITORIALIST],
             'agency' => ['agency', AuthorType::AGENCY],
             'press_office' => ['press_office', AuthorType::PRESS_OFFICE],
         ];

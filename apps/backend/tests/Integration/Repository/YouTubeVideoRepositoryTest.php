@@ -38,7 +38,9 @@ class YouTubeVideoRepositoryTest extends KernelTestCase
         $visible->setYoutubeId('vis' . $suffix);
         $visible->setTitle('Visible Video ' . $suffix);
         $visible->setIsHidden(false);
-        $visible->setPublishedAt(new DateTimeImmutable());
+        $visible->setIsFeatured(true);
+        $visible->setPosition(0);
+        $visible->setPublishedAt(new DateTimeImmutable('+1 year'));
         $this->em->persist($visible);
 
         $hidden = new YouTubeVideo();
@@ -104,6 +106,7 @@ class YouTubeVideoRepositoryTest extends KernelTestCase
         $featured->setTitle('Featured ' . $suffix);
         $featured->setIsFeatured(true);
         $featured->setIsHidden(false);
+        $featured->setPosition(0);
         $this->em->persist($featured);
 
         $notFeatured = new YouTubeVideo();
@@ -115,7 +118,8 @@ class YouTubeVideoRepositoryTest extends KernelTestCase
 
         $this->em->flush();
 
-        $results = $this->repository->findFeatured(100);
+        // Use a large enough limit to include our test video
+        $results = $this->repository->findFeatured(1000);
 
         $ids = array_map(fn (YouTubeVideo $v) => $v->getId(), $results);
         $this->assertContains($featured->getId(), $ids);
@@ -202,7 +206,8 @@ class YouTubeVideoRepositoryTest extends KernelTestCase
 
         $this->em->flush();
 
-        $results = $this->repository->findNeedingStatsUpdate(new DateTimeImmutable('-1 day'), 100);
+        // Use a large enough limit to include all stale videos
+        $results = $this->repository->findNeedingStatsUpdate(new DateTimeImmutable('-1 day'), 10000);
 
         $ids = array_map(fn (YouTubeVideo $v) => $v->getId(), $results);
         $this->assertContains($stale->getId(), $ids);

@@ -18,7 +18,7 @@ class ApiEndpointsSmokeTest extends WebTestCase
 {
     private const TIMEOUT_MS = 500;
 
-    public function testApiEntrypointRequiresAuthentication(): void
+    public function testApiEntrypointIsAccessible(): void
     {
         $client = static::createClient();
 
@@ -26,8 +26,8 @@ class ApiEndpointsSmokeTest extends WebTestCase
         $client->request('GET', '/api');
         $duration = (microtime(true) - $startTime) * 1000;
 
-        // API entrypoint requires authentication in this application
-        $this->assertResponseStatusCodeSame(401);
+        // API entrypoint is publicly accessible (returns Hydra entrypoint)
+        $this->assertResponseIsSuccessful();
         // Relax timing for first test (container warmup)
         $this->assertLessThan(
             5000,
@@ -36,7 +36,7 @@ class ApiEndpointsSmokeTest extends WebTestCase
         );
     }
 
-    public function testApiEntrypointReturns401WithoutToken(): void
+    public function testApiEntrypointReturnsValidJsonLd(): void
     {
         $client = static::createClient();
 
@@ -44,12 +44,15 @@ class ApiEndpointsSmokeTest extends WebTestCase
             'HTTP_ACCEPT' => 'application/ld+json',
         ]);
 
-        // API requires JWT token for access
-        $this->assertResponseStatusCodeSame(401);
+        // API entrypoint is publicly accessible and returns valid JSON-LD
+        $this->assertResponseIsSuccessful();
 
         $data = json_decode($client->getResponse()->getContent(), true);
         $this->assertIsArray($data);
-        $this->assertArrayHasKey('message', $data);
+        $this->assertArrayHasKey('@context', $data);
+        $this->assertArrayHasKey('@id', $data);
+        $this->assertArrayHasKey('@type', $data);
+        $this->assertSame('Entrypoint', $data['@type']);
     }
 
     public function testArticlesEndpointIsAccessible(): void

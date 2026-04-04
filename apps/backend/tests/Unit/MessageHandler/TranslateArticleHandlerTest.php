@@ -9,6 +9,7 @@ use App\Entity\Category;
 use App\Message\TranslateArticleMessage;
 use App\MessageHandler\TranslateArticleHandler;
 use App\Repository\ArticleRepository;
+use App\Service\NotificationFilterService;
 use App\Service\NotificationService;
 use App\Service\ProcessResult;
 use App\Service\TranslationResultProcessor;
@@ -19,6 +20,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[CoversClass(TranslateArticleHandler::class)]
 class TranslateArticleHandlerTest extends TestCase
@@ -34,9 +37,25 @@ class TranslateArticleHandlerTest extends TestCase
         $this->em = $this->createMock(EntityManagerInterface::class);
 
         // TranslationResultProcessor is final — build a real one with mocked deps
+        // NotificationService is also final — build a real instance
+        $notifEm = $this->createMock(EntityManagerInterface::class);
+        $httpClient = $this->createMock(HttpClientInterface::class);
+        $serializer = $this->createMock(SerializerInterface::class);
+        $filterService = $this->createMock(NotificationFilterService::class);
+        $filterService->method('getRecipients')->willReturn([]);
+        $notificationService = new NotificationService(
+            $notifEm,
+            $httpClient,
+            $serializer,
+            $filterService,
+            new NullLogger(),
+            'http://localhost:3000/.well-known/mercure',
+            'fake-jwt-token',
+        );
+
         $this->resultProcessor = new TranslationResultProcessor(
             $this->em,
-            $this->createStub(NotificationService::class),
+            $notificationService,
             new NullLogger(),
         );
 

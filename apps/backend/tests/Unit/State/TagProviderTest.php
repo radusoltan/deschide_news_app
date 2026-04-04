@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\Entity\Tag;
 use App\State\TagProvider;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
@@ -264,5 +265,17 @@ class TagProviderTest extends TestCase
         $this->queryBuilder->method('getQuery')->willReturn($this->query);
         $this->query->method('setHint')->willReturnSelf();
         $this->query->method('enableResultCache')->willReturnSelf();
+
+        // Support DoctrinePaginator iteration (cloneQuery + getIterator)
+        $this->query->method('getParameters')->willReturn(new ArrayCollection());
+        $this->query->method('getHints')->willReturn([]);
+        $this->query->method('isCacheable')->willReturn(false);
+        $this->query->method('setCacheable')->willReturnSelf();
+        $this->query->method('getHydrationMode')->willReturn(Query::HYDRATE_OBJECT);
+        $this->query->method('getFirstResult')->willReturn(0);
+        $this->query->method('getMaxResults')->willReturn(null);
+        $this->query->method('setFirstResult')->willReturnSelf();
+        $this->query->method('setMaxResults')->willReturnSelf();
+        $this->query->method('getResult')->willReturn([]);
     }
 }

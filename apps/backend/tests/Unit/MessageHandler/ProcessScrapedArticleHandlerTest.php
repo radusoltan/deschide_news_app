@@ -23,8 +23,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class ProcessScrapedArticleHandlerTest extends TestCase
 {
@@ -50,11 +50,19 @@ class ProcessScrapedArticleHandlerTest extends TestCase
 
         // Build a real NotificationService with mocked deps (it's final, can't mock it)
         $notifEm = $this->createMock(EntityManagerInterface::class);
-        $hub = $this->createMock(HubInterface::class);
+        $httpClient = $this->createMock(HttpClientInterface::class);
         $serializer = $this->createMock(SerializerInterface::class);
         $filterService = $this->createMock(NotificationFilterService::class);
         $filterService->method('getRecipients')->willReturn([]);
-        $notificationService = new NotificationService($notifEm, $hub, $serializer, $filterService, new NullLogger());
+        $notificationService = new NotificationService(
+            $notifEm,
+            $httpClient,
+            $serializer,
+            $filterService,
+            new NullLogger(),
+            'http://localhost:3000/.well-known/mercure',
+            'fake-jwt-token',
+        );
 
         $this->em = $this->createMock(EntityManagerInterface::class);
 

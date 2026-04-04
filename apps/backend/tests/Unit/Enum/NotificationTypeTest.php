@@ -12,7 +12,7 @@ class NotificationTypeTest extends TestCase
     public function testAllCases(): void
     {
         $cases = NotificationType::cases();
-        $this->assertCount(8, $cases);
+        $this->assertCount(9, $cases);
     }
 
     public function testValues(): void
@@ -25,6 +25,7 @@ class NotificationTypeTest extends TestCase
         $this->assertSame('job_failed', NotificationType::JOB_FAILED->value);
         $this->assertSame('article_auto_created', NotificationType::ARTICLE_AUTO_CREATED->value);
         $this->assertSame('article_translated', NotificationType::ARTICLE_TRANSLATED->value);
+        $this->assertSame('press_queue_new', NotificationType::PRESS_QUEUE_NEW->value);
     }
 
     public function testFromValidValue(): void
@@ -45,6 +46,7 @@ class NotificationTypeTest extends TestCase
         $this->assertSame(NotificationType::JOB_FAILED, NotificationType::tryFrom('job_failed'));
         $this->assertSame(NotificationType::ARTICLE_AUTO_CREATED, NotificationType::tryFrom('article_auto_created'));
         $this->assertSame(NotificationType::ARTICLE_TRANSLATED, NotificationType::tryFrom('article_translated'));
+        $this->assertSame(NotificationType::PRESS_QUEUE_NEW, NotificationType::tryFrom('press_queue_new'));
     }
 
     public function testFromInvalidValue(): void

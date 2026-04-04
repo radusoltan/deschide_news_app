@@ -10,6 +10,7 @@ use App\Entity\Article;
 use App\Entity\Author;
 use App\Entity\Category;
 use App\State\ArticleProvider;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
@@ -283,13 +284,10 @@ class ArticleProviderTest extends TestCase
 
         $this->setupCollectionQuery();
 
-        $paginator = $this->createMock(Paginator::class);
-        $this->query->method('getResult')->willReturn([$paginator]);
-
         $operation = new GetCollection();
         $result = $this->provider->provide($operation);
 
-        $this->assertInstanceOf(Paginator::class, $result);
+        $this->assertInstanceOf(\Doctrine\ORM\Tools\Pagination\Paginator::class, $result);
     }
 
     #[Test]
@@ -554,8 +552,16 @@ class ArticleProviderTest extends TestCase
         $this->queryBuilder->method('getQuery')->willReturn($this->query);
         $this->query->method('setHint')->willReturnSelf();
 
-        // Return a mock Paginator
-        $paginator = $this->createMock(Paginator::class);
-        $this->query->method('getResult')->willReturn($paginator);
+        // Support DoctrinePaginator iteration (cloneQuery + getIterator)
+        $this->query->method('getParameters')->willReturn(new ArrayCollection());
+        $this->query->method('getHints')->willReturn([]);
+        $this->query->method('isCacheable')->willReturn(false);
+        $this->query->method('setCacheable')->willReturnSelf();
+        $this->query->method('getHydrationMode')->willReturn(Query::HYDRATE_OBJECT);
+        $this->query->method('getFirstResult')->willReturn(0);
+        $this->query->method('getMaxResults')->willReturn(null);
+        $this->query->method('setFirstResult')->willReturnSelf();
+        $this->query->method('setMaxResults')->willReturnSelf();
+        $this->query->method('getResult')->willReturn([]);
     }
 }
