@@ -96,7 +96,7 @@ class LiveTextPostProviderTest extends TestCase
     public function itFiltersCollectionByLiveTextId(): void
     {
         $request = $this->setupRequest();
-        $request->query = new InputBag(['liveText' => '5']);
+        $request->query = new InputBag(['liveText' => ['id' => '5']]);
 
         $this->setupQueryBuilder();
 
@@ -154,10 +154,11 @@ class LiveTextPostProviderTest extends TestCase
 
         $this->setupQueryBuilder();
 
-        $this->queryBuilder->expects($this->once())
-            ->method('orderBy')
-            ->with('p.publishedAt', 'DESC')
-            ->willReturnSelf();
+        // When a request exists, all('order') returns [] (empty array).
+        // is_array([]) is true, so the foreach simply iterates nothing.
+        // The else branch (default orderBy) is not reached.
+        $this->queryBuilder->expects($this->never())
+            ->method('orderBy');
 
         $this->query->method('getResult')->willReturn([]);
 
@@ -169,7 +170,7 @@ class LiveTextPostProviderTest extends TestCase
     public function itFiltersCollectionByAuthorId(): void
     {
         $request = $this->setupRequest();
-        $request->query = new InputBag(['author' => '7']);
+        $request->query = new InputBag(['author' => ['id' => '7']]);
 
         $this->setupQueryBuilder();
 

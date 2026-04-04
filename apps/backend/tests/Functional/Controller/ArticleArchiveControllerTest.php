@@ -11,6 +11,7 @@ use App\Entity\User;
 use App\Enum\ArticleStatus;
 use App\Enum\ArchiveReason;
 use DateTimeImmutable;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -575,24 +576,12 @@ class ArticleArchiveControllerTest extends WebTestCase
             $user = $this->adminUser;
         }
 
-        // Login and get JWT token
-        $this->client->request('POST', '/api/login_check', [], [], [
-            'CONTENT_TYPE' => 'application/json',
-        ], json_encode([
-            'username' => $user->getUsername(),
-            'password' => 'password123',
-        ]));
+        // Generate JWT token directly via Lexik JWT Manager to avoid
+        // triggering SecurityNotificationSubscriber during login
+        /** @var JWTTokenManagerInterface $jwtManager */
+        $jwtManager = static::getContainer()->get('lexik_jwt_authentication.jwt_manager');
 
-        $response = json_decode($this->client->getResponse()->getContent(), true);
-
-        // Add null check and better error handling
-        if (!isset($response['token'])) {
-            throw new \RuntimeException(
-                'Failed to get auth token. Response: ' . $this->client->getResponse()->getContent()
-            );
-        }
-
-        return $response['token'];
+        return $jwtManager->create($user);
     }
 
     private function createTestArticle(): Article

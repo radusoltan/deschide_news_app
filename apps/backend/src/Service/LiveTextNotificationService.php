@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Dto\LiveText\LiveTextEventDto;
+use App\Dto\LiveText\SportLiveTextEventDto;
 use App\Entity\LiveText;
 use App\Entity\LiveTextMatchEvent;
 use App\Entity\LiveTextSportMatch;
@@ -96,7 +97,7 @@ class LiveTextNotificationService
      */
     public function publishSportScoreUpdate(LiveText $liveText, LiveTextSportMatch $sportMatch): void
     {
-        $event = new LiveTextEventDto(
+        $event = new SportLiveTextEventDto(
             type: 'sport.score.updated',
             liveTextId: $liveText->getId(),
             data: [
@@ -123,7 +124,7 @@ class LiveTextNotificationService
         string $oldStatus,
         string $newStatus
     ): void {
-        $event = new LiveTextEventDto(
+        $event = new SportLiveTextEventDto(
             type: 'sport.match.status_changed',
             liveTextId: $liveText->getId(),
             data: [
@@ -151,7 +152,7 @@ class LiveTextNotificationService
         LiveTextSportMatch $sportMatch,
         LiveTextMatchEvent $matchEvent
     ): void {
-        $event = new LiveTextEventDto(
+        $event = new SportLiveTextEventDto(
             type: 'sport.match.event',
             liveTextId: $liveText->getId(),
             data: [
@@ -181,7 +182,7 @@ class LiveTextNotificationService
      */
     public function publishSportMinuteUpdate(LiveText $liveText, LiveTextSportMatch $sportMatch): void
     {
-        $event = new LiveTextEventDto(
+        $event = new SportLiveTextEventDto(
             type: 'sport.minute.updated',
             liveTextId: $liveText->getId(),
             data: [
@@ -200,7 +201,7 @@ class LiveTextNotificationService
      */
     public function publishSportStatisticsUpdate(LiveText $liveText, LiveTextSportMatch $sportMatch): void
     {
-        $event = new LiveTextEventDto(
+        $event = new SportLiveTextEventDto(
             type: 'sport.statistics.updated',
             liveTextId: $liveText->getId(),
             data: [

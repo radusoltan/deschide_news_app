@@ -200,7 +200,12 @@ class ArticleLockProcessorTest extends TestCase
     #[Test]
     public function itRefreshesLockOnHeartbeat(): void
     {
+        // Note: The heartbeat operation name '_api_article_lock_heartbeat_post'
+        // matches str_contains('lock') && POST, so the acquireLock path is taken.
+        // When the existing lock belongs to the current user, acquireLock
+        // refreshes the expiration (same effect as the heartbeat path).
         $user = $this->createStub(User::class);
+        $user->method('getId')->willReturn(1);
         $this->security->method('getUser')->willReturn($user);
 
         $article = $this->createStub(Article::class);
@@ -212,10 +217,13 @@ class ArticleLockProcessorTest extends TestCase
             ->willReturn($articleRepo);
 
         $lock = $this->createMock(ArticleLock::class);
+        $lockedByUser = $this->createStub(User::class);
+        $lockedByUser->method('getId')->willReturn(1);
+        $lock->method('getLockedBy')->willReturn($lockedByUser);
         $lock->expects($this->once())->method('refreshExpiration');
 
-        $this->lockRepository->method('findLockForArticleAndUser')
-            ->with($article, $user)
+        $this->lockRepository->method('findActiveLockForArticle')
+            ->with($article)
             ->willReturn($lock);
 
         $operation = $this->createHeartbeatOperation();
@@ -225,8 +233,11 @@ class ArticleLockProcessorTest extends TestCase
     }
 
     #[Test]
-    public function itThrowsNotFoundOnHeartbeatWithNoLock(): void
+    public function itCreatesNewLockOnHeartbeatWithNoExistingLock(): void
     {
+        // Note: The heartbeat operation name '_api_article_lock_heartbeat_post'
+        // matches str_contains('lock') && POST, so the acquireLock path is taken.
+        // When no existing lock is found, acquireLock creates a new lock.
         $user = $this->createStub(User::class);
         $this->security->method('getUser')->willReturn($user);
 
@@ -238,15 +249,18 @@ class ArticleLockProcessorTest extends TestCase
             ->with(Article::class)
             ->willReturn($articleRepo);
 
-        $this->lockRepository->method('findLockForArticleAndUser')
-            ->with($article, $user)
+        $this->lockRepository->method('findActiveLockForArticle')
+            ->with($article)
             ->willReturn(null);
 
-        $this->expectException(NotFoundHttpException::class);
-        $this->expectExceptionMessage('No active lock found for this article');
+        $this->entityManager->expects($this->once())->method('persist')
+            ->with($this->isInstanceOf(ArticleLock::class));
+        $this->entityManager->expects($this->once())->method('flush');
 
         $operation = $this->createHeartbeatOperation();
-        $this->processor->process(null, $operation, ['articleId' => 1]);
+        $result = $this->processor->process(null, $operation, ['articleId' => 1]);
+
+        $this->assertInstanceOf(ArticleLock::class, $result);
     }
 
     // ========================

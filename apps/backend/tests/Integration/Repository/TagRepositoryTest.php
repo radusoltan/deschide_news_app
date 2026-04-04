@@ -29,16 +29,16 @@ class TagRepositoryTest extends KernelTestCase
     {
         $entityManager = static::getContainer()->get('doctrine')->getManager();
 
-        // Create test tags
+        // Use very high usage counts to ensure these tags rank above any existing ones
         $tag1 = new Tag();
         $tag1->setName('Very Popular');
         $tag1->setSlug('very-popular');
-        $tag1->setUsageCount(100);
+        $tag1->setUsageCount(999999);
 
         $tag2 = new Tag();
         $tag2->setName('Somewhat Popular');
         $tag2->setSlug('somewhat-popular');
-        $tag2->setUsageCount(50);
+        $tag2->setUsageCount(999998);
 
         $tag3 = new Tag();
         $tag3->setName('Not Popular');
