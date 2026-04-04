@@ -206,6 +206,11 @@ services:
             $elasticsearchUrl: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
 
+    # Topic Seed Command
+    App\Command\SeedTopicsCommand:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     # Topic Detector Service (Gemini CLI subprocess)
     App\Service\TopicDetectorService:
         arguments:
