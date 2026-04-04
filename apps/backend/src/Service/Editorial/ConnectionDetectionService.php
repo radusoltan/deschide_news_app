@@ -6,13 +6,16 @@ namespace App\Service\Editorial;
 
 use App\Dto\Editorial\EntityExtractionResult;
 use App\Entity\Article;
+use App\Entity\GeneratedContent;
 use App\Service\Search\SearchService;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 final class ConnectionDetectionService
 {
     public function __construct(
         private readonly SearchService $searchService,
+        private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -112,59 +115,43 @@ final class ConnectionDetectionService
     }
 
     /**
-     * Save connection alerts to the vault alerts file.
+     * Save connection alerts as a GeneratedContent entity.
      *
      * @param list<array{entity1: string, entity2: string, type: string, sourceArticleId: int|null, previousArticles: list<array{id: int, title: string}>, relevance: string}> $connections
      */
-    public function saveConnectionAlerts(array $connections, Article $article, string $vaultPath): int
+    public function saveConnectionAlerts(array $connections, Article $article): int
     {
-        if ($connections === [] || $vaultPath === '') {
+        if ($connections === []) {
             return 0;
         }
 
-        $alertsDir = "{$vaultPath}/alerts";
-        if (!is_dir($alertsDir) && !mkdir($alertsDir, 0o755, true)) {
-            return 0;
-        }
-
-        $alertsFile = "{$alertsDir}/connections.md";
-        $existing = file_exists($alertsFile) ? file_get_contents($alertsFile) : '';
-
-        if ($existing === false) {
-            $existing = '';
-        }
-
-        // Initialize file if empty
-        if ($existing === '') {
-            $existing = "---\ntype: alerts\ntopic: connections\n---\n\n# Alerte Conexiuni\n\nConexiuni noi detectate automat între entități.\n";
-        }
-
-        $date = date('Y-m-d');
         $articleTitle = mb_substr($article->getTitle() ?? '', 0, 80);
-        $articleSlug = $article->getSlug() ?? 'article-' . $article->getId();
-        $articleRef = "[[art-{$date}-{$articleSlug}]]";
 
-        $newAlerts = "\n## {$date} — Conexiuni din \"{$articleTitle}\"\n\n";
+        $content = "# Conexiuni din \"{$articleTitle}\"\n\n";
 
         foreach ($connections as $conn) {
             $prevArticles = array_map(
-                fn ($a) => "[[art-{$a['id']}|{$a['title']}]]",
+                fn ($a) => "#{$a['id']} {$a['title']}",
                 array_slice($conn['previousArticles'], 0, 5),
             );
 
-            $newAlerts .= "- **Entități**: {$conn['entity1']} ↔ {$conn['entity2']}\n"
-                . "- **Articol sursă**: {$articleRef}\n"
+            $content .= "- **Entități**: {$conn['entity1']} ↔ {$conn['entity2']}\n"
                 . "- **Articole anterioare**: " . implode(', ', $prevArticles) . "\n"
                 . "- **Tip**: {$conn['type']}\n"
                 . "- **Relevanță estimată**: {$conn['relevance']}\n\n";
         }
 
-        file_put_contents($alertsFile, $existing . $newAlerts);
+        $gc = new GeneratedContent();
+        $gc->setType('connection_alert');
+        $gc->setTitle('Conexiuni: ' . $articleTitle);
+        $gc->setContent($content);
+        $gc->setMetadata(['article_id' => $article->getId(), 'connection_count' => \count($connections)]);
+        $this->em->persist($gc);
+        $this->em->flush();
 
         $this->logger->info('ConnectionDetection: alerts saved', [
             'articleId' => $article->getId(),
             'alertCount' => \count($connections),
-            'file' => $alertsFile,
         ]);
 
         return \count($connections);

@@ -20,7 +20,6 @@ final readonly class IngestArticleHandler
         private ConnectionDetectionService $connectionService,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
-        private string $vaultPath = '',
     ) {}
 
     public function __invoke(IngestArticleMessage $message): void
@@ -60,23 +59,13 @@ final readonly class IngestArticleHandler
             return;
         }
 
-        // Step 2: Create atomic notes in vault
-        if ($this->vaultPath !== '') {
-            $this->ingestionService->createAtomicNotes($entities, $article, $this->vaultPath);
-        }
-
-        // Step 3: Update MOCs
-        if ($this->vaultPath !== '') {
-            $this->ingestionService->updateMOCs($article, $entities, $this->vaultPath);
-        }
-
-        // Step 4: Detect new entity connections via Elasticsearch
+        // Step 2: Detect new entity connections via Elasticsearch
         $connections = $this->connectionService->detectNewConnections($article, $entities);
-        if ($connections !== [] && $this->vaultPath !== '') {
-            $this->connectionService->saveConnectionAlerts($connections, $article, $this->vaultPath);
+        if ($connections !== []) {
+            $this->connectionService->saveConnectionAlerts($connections, $article);
         }
 
-        // Step 5: Feed to NotebookLM (graceful — skipped if unavailable)
+        // Step 3: Feed to NotebookLM (graceful — skipped if unavailable)
         $this->ingestionService->feedNotebookLM($article);
 
         // Mark as ingested

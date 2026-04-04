@@ -6,9 +6,11 @@ namespace App\Tests\Unit\Service\Editorial;
 
 use App\Dto\Editorial\EntityExtractionResult;
 use App\Entity\Article;
+use App\Entity\GeneratedContent;
 use App\Service\Editorial\ConnectionDetectionService;
 use App\Service\Search\ElasticsearchIndexManager;
 use App\Service\Search\SearchService;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -20,8 +22,11 @@ class ConnectionDetectionServiceTest extends TestCase
         $indexManager = new ElasticsearchIndexManager(elasticsearchHost: '');
         $searchService = new SearchService(indexManager: $indexManager, logger: new NullLogger());
 
+        $em = $this->createMock(EntityManagerInterface::class);
+
         return new ConnectionDetectionService(
             searchService: $searchService,
+            em: $em,
             logger: new NullLogger(),
         );
     }
@@ -57,11 +62,20 @@ class ConnectionDetectionServiceTest extends TestCase
         self::assertSame([], $connections);
     }
 
-    public function testSaveConnectionAlertsWritesFile(): void
+    public function testSaveConnectionAlertsPersistsGeneratedContent(): void
     {
-        $tmpDir = sys_get_temp_dir() . '/vault-conn-test-' . uniqid();
+        $indexManager = new ElasticsearchIndexManager(elasticsearchHost: '');
+        $searchService = new SearchService(indexManager: $indexManager, logger: new NullLogger());
 
-        $service = $this->createServiceWithDisabledSearch();
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->once())->method('persist')->with($this->isInstanceOf(GeneratedContent::class));
+        $em->expects($this->once())->method('flush');
+
+        $service = new ConnectionDetectionService(
+            searchService: $searchService,
+            em: $em,
+            logger: new NullLogger(),
+        );
 
         $article = new Article();
         $article->setTitle('Test article');
@@ -75,18 +89,9 @@ class ConnectionDetectionServiceTest extends TestCase
             'relevance' => 'HIGH',
         ]];
 
-        $count = $service->saveConnectionAlerts($connections, $article, $tmpDir);
+        $count = $service->saveConnectionAlerts($connections, $article);
 
         self::assertSame(1, $count);
-        self::assertFileExists($tmpDir . '/alerts/connections.md');
-
-        $content = file_get_contents($tmpDir . '/alerts/connections.md');
-        self::assertStringContainsString('Ion Popescu', $content);
-        self::assertStringContainsString('Ministerul Economiei', $content);
-        self::assertStringContainsString('HIGH', $content);
-        self::assertStringContainsString('# Alerte Conexiuni', $content);
-
-        $this->removeDir($tmpDir);
     }
 
     public function testSaveConnectionAlertsReturnsZeroForEmptyConnections(): void
@@ -94,45 +99,8 @@ class ConnectionDetectionServiceTest extends TestCase
         $service = $this->createServiceWithDisabledSearch();
 
         $article = new Article();
-        $count = $service->saveConnectionAlerts([], $article, '/tmp');
+        $count = $service->saveConnectionAlerts([], $article);
 
         self::assertSame(0, $count);
-    }
-
-    public function testSaveConnectionAlertsReturnsZeroForEmptyVaultPath(): void
-    {
-        $service = $this->createServiceWithDisabledSearch();
-
-        $article = new Article();
-        $connections = [[
-            'entity1' => 'A',
-            'entity2' => 'B',
-            'type' => 'test',
-            'sourceArticleId' => 1,
-            'previousArticles' => [],
-            'relevance' => 'LOW',
-        ]];
-
-        $count = $service->saveConnectionAlerts($connections, $article, '');
-
-        self::assertSame(0, $count);
-    }
-
-    private function removeDir(string $dir): void
-    {
-        if (!is_dir($dir)) {
-            return;
-        }
-
-        $items = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST,
-        );
-
-        foreach ($items as $item) {
-            $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
-        }
-
-        rmdir($dir);
     }
 }

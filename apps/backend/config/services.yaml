@@ -277,31 +277,16 @@ services:
         arguments:
             $vaultPath: '%env(default::VAULT_PATH)%'
 
-    # Article Ingestion Service (Sprint 17 — entity extraction, atomic notes, MOC)
+    # Article Ingestion Service (Sprint 17 — entity extraction)
     App\Service\Editorial\ArticleIngestionService:
         arguments:
             $geminiCliPath: '%gemini_cli_path%'
             $notebooks: '%notebooklm.notebooks%'
 
-    # Ingest Article Handler (Sprint 17 — async AI ingestion pipeline)
-    App\MessageHandler\Editorial\IngestArticleHandler:
-        arguments:
-            $vaultPath: '%env(default::VAULT_PATH)%'
-
-    # Ingest Article Command (Sprint 17 — manual ingestion)
-    App\Command\Editorial\IngestArticleCommand:
-        arguments:
-            $vaultPath: '%env(default::VAULT_PATH)%'
-
     # Dossier Generation Service (Sprint 17 — automated dossiers)
     App\Service\Editorial\DossierGenerationService:
         arguments:
             $geminiCliPath: '%gemini_cli_path%'
-
-    # Generate Dossiers Command (Sprint 17)
-    App\Command\Editorial\GenerateDossiersCommand:
-        arguments:
-            $vaultPath: '%env(default::VAULT_PATH)%'
 
     # Weekly Summary Service (Sprint 17 — sinteză săptămânală)
     App\Service\Editorial\WeeklySummaryService:
@@ -309,26 +294,11 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $weeklyNotebookId: '%notebooklm.weekly_notebook_id%'
 
-    # Weekly Summary Command (Sprint 17)
-    App\Command\Editorial\WeeklySummaryCommand:
-        arguments:
-            $vaultPath: '%env(default::VAULT_PATH)%'
-
     # Daily Briefing Service (Sprint 17 — briefing zilnic)
     App\Service\Editorial\DailyBriefingService:
         arguments:
             $geminiCliPath: '%gemini_cli_path%'
             $briefingNotebookId: '%notebooklm.briefing_notebook_id%'
-
-    # Daily Briefing Command (Sprint 17)
-    App\Command\Editorial\DailyBriefingCommand:
-        arguments:
-            $vaultPath: '%env(default::VAULT_PATH)%'
-
-    # Editorial Metrics Service (Sprint 18 — dashboard + vault snapshot)
-    App\Service\Metrics\EditorialMetricsService:
-        arguments:
-            $vaultPath: '%env(default::VAULT_PATH)%'
 
     # AI Newsroom: Anthropic API Client (for production with API key)
     App\Service\Ai\AnthropicApiClient:
@@ -376,14 +346,12 @@ services:
     App\Command\Editorial\DevResetCommand:
         arguments:
             $appEnv: '%kernel.environment%'
-            $vaultPath: '%env(default::VAULT_PATH)%'
             $em: '@doctrine.orm.entity_manager'
 
     # Background Generator Service (Sprint 20 — context istoric automat)
     App\Service\Editorial\BackgroundGeneratorService:
         arguments:
             $geminiCliPath: '%gemini_cli_path%'
-            $vaultPath: '%env(default::VAULT_PATH)%'
 
     # Translation Evaluator Service (Sprint 18 — Evaluator-Optimizer loop)
     App\Service\Translation\TranslationEvaluatorService:

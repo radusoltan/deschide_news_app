@@ -7,7 +7,6 @@ namespace App\MessageHandler\Editorial;
 use App\Message\Editorial\GenerateWeeklySummaryMessage;
 use App\Service\Editorial\WeeklySummaryService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
@@ -16,17 +15,10 @@ final readonly class GenerateWeeklySummaryHandler
     public function __construct(
         private WeeklySummaryService $summaryService,
         private LoggerInterface $logger,
-        #[Autowire('%env(default::VAULT_PATH)%')] private string $vaultPath = '',
     ) {}
 
     public function __invoke(GenerateWeeklySummaryMessage $message): void
     {
-        if ($this->vaultPath === '') {
-            $this->logger->warning('GenerateWeeklySummaryHandler: VAULT_PATH not configured, skipping');
-
-            return;
-        }
-
         $weekEnd = $message->weekEnd !== null
             ? new \DateTimeImmutable($message->weekEnd)
             : new \DateTimeImmutable('Sunday this week');
@@ -44,7 +36,9 @@ final readonly class GenerateWeeklySummaryHandler
         }
 
         $weekStart = $weekEnd->modify('-6 days');
-        $this->summaryService->saveSummary($content, $weekStart, $weekEnd, $this->vaultPath);
+        $articles = $this->summaryService->getArticlesForPeriod($weekStart, $weekEnd);
+
+        $this->summaryService->saveSummary($content, $weekStart, $weekEnd, \count($articles));
 
         $this->logger->info('GenerateWeeklySummaryHandler: summary saved', [
             'week' => $weekEnd->format('Y-\WW'),

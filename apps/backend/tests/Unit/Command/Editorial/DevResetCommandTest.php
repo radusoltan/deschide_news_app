@@ -15,26 +15,17 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class DevResetCommandTest extends TestCase
 {
-    private string $vaultPath;
     private EntityManagerInterface $em;
 
     protected function setUp(): void
     {
-        $this->vaultPath = sys_get_temp_dir() . '/vault_reset_test_' . uniqid();
-        mkdir($this->vaultPath . '/articles', 0o755, true);
-
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->em->method('isOpen')->willReturn(true);
     }
 
-    protected function tearDown(): void
-    {
-        $this->removeDirectory($this->vaultPath);
-    }
-
     public function testRefusesInProd(): void
     {
-        $command = new DevResetCommand('prod', $this->vaultPath, $this->em);
+        $command = new DevResetCommand('prod', $this->em);
         $app = new Application();
         $app->addCommand($command);
 
@@ -47,7 +38,7 @@ class DevResetCommandTest extends TestCase
 
     public function testRefusesInStaging(): void
     {
-        $command = new DevResetCommand('staging', $this->vaultPath, $this->em);
+        $command = new DevResetCommand('staging', $this->em);
         $app = new Application();
         $app->addCommand($command);
 
@@ -59,7 +50,7 @@ class DevResetCommandTest extends TestCase
 
     public function testAllowsDevEnvironment(): void
     {
-        $command = new DevResetCommand('dev', $this->vaultPath, $this->em);
+        $command = new DevResetCommand('dev', $this->em);
         $app = $this->createAppWithStubs($command);
 
         $tester = new CommandTester($command);
@@ -71,7 +62,7 @@ class DevResetCommandTest extends TestCase
 
     public function testAllowsTestEnvironment(): void
     {
-        $command = new DevResetCommand('test', $this->vaultPath, $this->em);
+        $command = new DevResetCommand('test', $this->em);
         $app = $this->createAppWithStubs($command);
 
         $tester = new CommandTester($command);
@@ -85,7 +76,7 @@ class DevResetCommandTest extends TestCase
     {
         $executedCommands = [];
 
-        $command = new DevResetCommand('dev', $this->vaultPath, $this->em);
+        $command = new DevResetCommand('dev', $this->em);
         $app = $this->createAppWithTrackingStubs($command, $executedCommands);
 
         $tester = new CommandTester($command);
@@ -95,35 +86,28 @@ class DevResetCommandTest extends TestCase
         $display = $tester->getDisplay();
 
         // Verify all steps reported
-        $this->assertStringContainsString('Purge vault orphans', $display);
-        $this->assertStringContainsString('Clear vault articles/', $display);
         $this->assertStringContainsString('Drop database schema', $display);
         $this->assertStringContainsString('Run migrations', $display);
         $this->assertStringContainsString('Load fixtures', $display);
         $this->assertStringContainsString('Import RSS', $display);
-        $this->assertStringContainsString('Sync vault from DB', $display);
         $this->assertStringContainsString('Clear cache pools', $display);
         $this->assertStringContainsString('Reindex Elasticsearch', $display);
-        $this->assertStringContainsString('Verify vault consistency', $display);
         $this->assertStringContainsString('Raport final', $display);
 
         // Verify sub-commands were called
-        $this->assertContains('app:vault:purge', $executedCommands);
         $this->assertContains('doctrine:schema:drop', $executedCommands);
         $this->assertContains('doctrine:migrations:migrate', $executedCommands);
         $this->assertContains('doctrine:fixtures:load', $executedCommands);
         $this->assertContains('app:import:rss-feed', $executedCommands);
-        $this->assertContains('app:vault:sync-from-db', $executedCommands);
         $this->assertContains('cache:pool:clear', $executedCommands);
         $this->assertContains('app:elasticsearch:index-articles', $executedCommands);
-        $this->assertContains('app:vault:verify', $executedCommands);
     }
 
     public function testSkipOptionsRespected(): void
     {
         $executedCommands = [];
 
-        $command = new DevResetCommand('dev', $this->vaultPath, $this->em);
+        $command = new DevResetCommand('dev', $this->em);
         $app = $this->createAppWithTrackingStubs($command, $executedCommands);
 
         $tester = new CommandTester($command);
@@ -131,7 +115,6 @@ class DevResetCommandTest extends TestCase
             '--skip-fixtures' => true,
             '--skip-import' => true,
             '--skip-elasticsearch' => true,
-            '--skip-vault-sync' => true,
         ], ['interactive' => false]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
@@ -139,9 +122,6 @@ class DevResetCommandTest extends TestCase
         $this->assertNotContains('doctrine:fixtures:load', $executedCommands);
         $this->assertNotContains('app:import:rss-feed', $executedCommands);
         $this->assertNotContains('app:elasticsearch:index-articles', $executedCommands);
-        $this->assertNotContains('app:vault:purge', $executedCommands);
-        $this->assertNotContains('app:vault:sync-from-db', $executedCommands);
-        $this->assertNotContains('app:vault:verify', $executedCommands);
 
         $display = $tester->getDisplay();
         $this->assertStringContainsString('SKIPPED', $display);
@@ -151,7 +131,7 @@ class DevResetCommandTest extends TestCase
     {
         $executedCommands = [];
 
-        $command = new DevResetCommand('dev', $this->vaultPath, $this->em);
+        $command = new DevResetCommand('dev', $this->em);
         $app = $this->createAppWithTrackingStubs($command, $executedCommands);
 
         $tester = new CommandTester($command);
@@ -164,17 +144,13 @@ class DevResetCommandTest extends TestCase
         // Fixtures should run, import should not
         $this->assertContains('doctrine:fixtures:load', $executedCommands);
         $this->assertNotContains('app:import:rss-feed', $executedCommands);
-
-        // Vault sync + verify should still run
-        $this->assertContains('app:vault:sync-from-db', $executedCommands);
-        $this->assertContains('app:vault:verify', $executedCommands);
     }
 
     public function testImportSkippedWhenFixturesSkipped(): void
     {
         $executedCommands = [];
 
-        $command = new DevResetCommand('dev', $this->vaultPath, $this->em);
+        $command = new DevResetCommand('dev', $this->em);
         $app = $this->createAppWithTrackingStubs($command, $executedCommands);
 
         $tester = new CommandTester($command);
@@ -193,7 +169,7 @@ class DevResetCommandTest extends TestCase
     {
         $executedCommands = [];
 
-        $command = new DevResetCommand('dev', $this->vaultPath, $this->em);
+        $command = new DevResetCommand('dev', $this->em);
         $app = $this->createAppWithTrackingStubs($command, $executedCommands);
 
         $tester = new CommandTester($command);
@@ -212,7 +188,7 @@ class DevResetCommandTest extends TestCase
     {
         $executedCommands = [];
 
-        $command = new DevResetCommand('dev', $this->vaultPath, $this->em);
+        $command = new DevResetCommand('dev', $this->em);
         $app = $this->createAppWithTrackingStubs($command, $executedCommands);
 
         $tester = new CommandTester($command);
@@ -225,27 +201,12 @@ class DevResetCommandTest extends TestCase
         $this->assertStringContainsString('SKIPPED', $display);
     }
 
-    public function testClearsVaultArticlesDirectory(): void
-    {
-        file_put_contents($this->vaultPath . '/articles/test.md', 'content');
-
-        $command = new DevResetCommand('dev', $this->vaultPath, $this->em);
-        $app = $this->createAppWithStubs($command);
-
-        $tester = new CommandTester($command);
-        $tester->execute(['--skip-fixtures' => true, '--skip-elasticsearch' => true, '--skip-import' => true], ['interactive' => false]);
-
-        $files = glob($this->vaultPath . '/articles/*');
-        $this->assertEmpty($files);
-    }
-
     public function testImportLimitOption(): void
     {
         $executedCommands = [];
-        $commandArgs = [];
 
-        $command = new DevResetCommand('dev', $this->vaultPath, $this->em);
-        $app = $this->createAppWithArgTrackingStubs($command, $executedCommands, $commandArgs);
+        $command = new DevResetCommand('dev', $this->em);
+        $app = $this->createAppWithTrackingStubs($command, $executedCommands);
 
         $tester = new CommandTester($command);
         $tester->execute(['--import-limit' => '50'], ['interactive' => false]);
@@ -273,16 +234,13 @@ class DevResetCommandTest extends TestCase
         $app->addCommand($command);
 
         $stubNames = [
-            'app:vault:purge',
             'doctrine:schema:drop',
             'doctrine:migrations:migrate',
             'doctrine:fixtures:load',
             'app:import:rss-feed',
-            'app:vault:sync-from-db',
             'cache:pool:clear',
             'app:elasticsearch:index-articles',
             'app:editorial:batch-ingest',
-            'app:vault:verify',
         ];
 
         foreach ($stubNames as $name) {
@@ -305,72 +263,5 @@ class DevResetCommandTest extends TestCase
         }
 
         return $app;
-    }
-
-    /**
-     * @param list<string> $executedCommands
-     * @param array<string, array<string, mixed>> $commandArgs
-     */
-    private function createAppWithArgTrackingStubs(DevResetCommand $command, array &$executedCommands, array &$commandArgs): Application
-    {
-        $app = new Application();
-        $app->addCommand($command);
-
-        $stubNames = [
-            'app:vault:purge',
-            'doctrine:schema:drop',
-            'doctrine:migrations:migrate',
-            'doctrine:fixtures:load',
-            'app:import:rss-feed',
-            'app:vault:sync-from-db',
-            'cache:pool:clear',
-            'app:elasticsearch:index-articles',
-            'app:editorial:batch-ingest',
-            'app:vault:verify',
-        ];
-
-        foreach ($stubNames as $name) {
-            $stub = new class($name, $executedCommands, $commandArgs) extends Command {
-                /** @param list<string> $tracker */
-                public function __construct(string $name, private array &$tracker, private array &$argTracker)
-                {
-                    parent::__construct($name);
-                    $this->ignoreValidationErrors();
-                }
-
-                protected function execute(InputInterface $input, OutputInterface $output): int
-                {
-                    $cmdName = $this->getName();
-                    $this->tracker[] = $cmdName;
-
-                    return Command::SUCCESS;
-                }
-            };
-            $app->addCommand($stub);
-        }
-
-        return $app;
-    }
-
-    private function removeDirectory(string $path): void
-    {
-        if (!is_dir($path)) {
-            return;
-        }
-
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST,
-        );
-
-        foreach ($iterator as $file) {
-            if ($file->isDir()) {
-                rmdir($file->getPathname());
-            } else {
-                unlink($file->getPathname());
-            }
-        }
-
-        rmdir($path);
     }
 }

@@ -15,7 +15,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:dev:reset',
-    description: 'Reset complet dev: drop DB + purge vault + fixtures + RSS import + vault sync',
+    description: 'Reset complet dev: drop DB + fixtures + RSS import + reindex',
 )]
 final class DevResetCommand extends Command
 {
@@ -24,7 +24,6 @@ final class DevResetCommand extends Command
 
     public function __construct(
         private readonly string $appEnv,
-        private readonly string $vaultPath,
         private readonly EntityManagerInterface $em,
     ) {
         parent::__construct();
@@ -37,7 +36,6 @@ final class DevResetCommand extends Command
             ->addOption('skip-import', null, InputOption::VALUE_NONE, 'Sare peste importul RSS (Supabase)')
             ->addOption('import-limit', null, InputOption::VALUE_REQUIRED, 'Limită articole pentru import RSS', '200')
             ->addOption('skip-elasticsearch', null, InputOption::VALUE_NONE, 'Sare peste reindexare Elasticsearch')
-            ->addOption('skip-vault-sync', null, InputOption::VALUE_NONE, 'Sare peste sincronizarea vault (doar DB reset)')
             ->addOption('enrich', null, InputOption::VALUE_NONE, 'Dispatch AI ingestion pentru toate articolele (async, necesită worker)');
     }
 
@@ -57,7 +55,7 @@ final class DevResetCommand extends Command
 
         if ($input->isInteractive()) {
             $confirm = $io->confirm(
-                'Ești sigur? Aceasta va ȘTERGE toate datele din DB și vault.',
+                'Ești sigur? Aceasta va ȘTERGE toate datele din DB.',
                 false,
             );
 
@@ -72,40 +70,24 @@ final class DevResetCommand extends Command
         $skipImport = $input->getOption('skip-import');
         $importLimit = (int) $input->getOption('import-limit');
         $skipEs = $input->getOption('skip-elasticsearch');
-        $skipVault = $input->getOption('skip-vault-sync');
 
-        // Step 1: Purge vault orphans
-        if (!$skipVault) {
-            $this->runStep($io, 'Purge vault orphans', fn () => $this->runSubCommand($output, 'app:vault:purge', ['--force' => true]));
-        } else {
-            $this->report[] = ['step' => 'Purge vault orphans', 'status' => 'SKIPPED'];
-        }
-
-        // Step 2: Clear vault articles directory
-        if (!$skipVault) {
-            $this->runStep($io, 'Clear vault articles/', fn () => $this->clearVaultArticles());
-        } else {
-            $this->report[] = ['step' => 'Clear vault articles/', 'status' => 'SKIPPED'];
-        }
-
-        // Step 3: Drop database schema
+        // Step 1: Drop database schema
         $this->runStep($io, 'Drop database schema', fn () => $this->runSubCommand($output, 'doctrine:schema:drop', [
             '--force' => true,
             '--full-database' => true,
         ]));
 
-        // Clear EM identity map after schema drop (stale entities from vault:purge)
+        // Clear EM identity map after schema drop
         $this->em->clear();
 
-        // Step 4: Run migrations
+        // Step 2: Run migrations
         $this->runStep($io, 'Run migrations', fn () => $this->runSubCommand($output, 'doctrine:migrations:migrate'));
 
-        // Step 5: Load fixtures
+        // Step 3: Load fixtures
         if (!$skipFixtures) {
-            // Reset EM identity map (stale entities from vault:purge or previous runs)
+            // Reset EM identity map
             $this->em->clear();
             if (!$this->em->isOpen()) {
-                // EM closed by a prior exception — nothing we can do in-process
                 $io->warning('EntityManager is closed, fixtures may fail.');
             }
             $this->runStep($io, 'Load fixtures', fn () => $this->runSubCommand($output, 'doctrine:fixtures:load'));
@@ -115,7 +97,7 @@ final class DevResetCommand extends Command
             $this->report[] = ['step' => 'Load fixtures', 'status' => 'SKIPPED'];
         }
 
-        // Step 6: Import articles from deschide.md via Supabase
+        // Step 4: Import articles from deschide.md via Supabase
         if (!$skipImport && !$skipFixtures) {
             $this->runStep($io, sprintf('Import RSS (%d articles)', $importLimit), fn () => $this->runSubCommand($output, 'app:import:rss-feed', [
                 '--limit' => (string) $importLimit,
@@ -125,41 +107,25 @@ final class DevResetCommand extends Command
             $this->report[] = ['step' => 'Import RSS', 'status' => 'SKIPPED'];
         }
 
-        // Step 7: Sync vault from DB
-        if (!$skipVault) {
-            $this->runStep($io, 'Sync vault from DB', fn () => $this->runSubCommand($output, 'app:vault:sync-from-db', [
-                '--all' => true,
-            ]));
-        } else {
-            $this->report[] = ['step' => 'Sync vault from DB', 'status' => 'SKIPPED'];
-        }
-
-        // Step 8: Clear Redis cache
+        // Step 5: Clear Redis cache
         $this->runStep($io, 'Clear cache pools', fn () => $this->runSubCommand($output, 'cache:pool:clear', [
             'pools' => ['cache.global_clearer'],
         ]));
 
-        // Step 9: Reindex Elasticsearch
+        // Step 6: Reindex Elasticsearch
         if (!$skipEs) {
             $this->runStep($io, 'Reindex Elasticsearch', fn () => $this->runSubCommand($output, 'app:elasticsearch:index-articles'));
         } else {
             $this->report[] = ['step' => 'Reindex Elasticsearch', 'status' => 'SKIPPED'];
         }
 
-        // Step 10: Dispatch AI ingestion (async, requires messenger worker)
-        if ($input->getOption('enrich') && !$skipVault) {
+        // Step 7: Dispatch AI ingestion (async, requires messenger worker)
+        if ($input->getOption('enrich')) {
             $this->runStep($io, 'Dispatch AI ingestion (async)', fn () => $this->runSubCommand($output, 'app:editorial:batch-ingest', [
                 '--batch' => (string) $importLimit,
             ]));
         } else {
             $this->report[] = ['step' => 'AI ingestion', 'status' => 'SKIPPED'];
-        }
-
-        // Step 11: Verify vault consistency
-        if (!$skipVault) {
-            $this->runStep($io, 'Verify vault consistency', fn () => $this->runSubCommand($output, 'app:vault:verify'));
-        } else {
-            $this->report[] = ['step' => 'Verify vault consistency', 'status' => 'SKIPPED'];
         }
 
         // Summary
@@ -217,34 +183,5 @@ final class DevResetCommand extends Command
         $input->setInteractive(false);
 
         return $command->run($input, $output);
-    }
-
-    private function clearVaultArticles(): int
-    {
-        $articlesDir = $this->vaultPath . '/articles';
-
-        if (!is_dir($articlesDir)) {
-            return Command::SUCCESS;
-        }
-
-        $this->removeDirectoryContents($articlesDir);
-
-        return Command::SUCCESS;
-    }
-
-    private function removeDirectoryContents(string $directory): void
-    {
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST,
-        );
-
-        foreach ($iterator as $file) {
-            if ($file->isDir()) {
-                rmdir($file->getPathname());
-            } else {
-                unlink($file->getPathname());
-            }
-        }
     }
 }

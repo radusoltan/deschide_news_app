@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Command\Editorial;
 
+use App\Entity\Topic;
 use App\Service\Editorial\DossierGenerationService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -14,13 +16,13 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:editorial:generate-dossiers',
-    description: 'Generate narrative dossiers for MOCs with enough recent articles',
+    description: 'Generate narrative dossiers for topics with enough recent articles',
 )]
 final class GenerateDossiersCommand extends Command
 {
     public function __construct(
         private readonly DossierGenerationService $dossierService,
-        private readonly string $vaultPath = '',
+        private readonly EntityManagerInterface $em,
     ) {
         parent::__construct();
     }
@@ -28,8 +30,8 @@ final class GenerateDossiersCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('moc', null, InputOption::VALUE_REQUIRED, 'Specific MOC file (e.g., MOC-Integrare-UE.md)')
-            ->addOption('all', null, InputOption::VALUE_NONE, 'Process all MOCs above threshold')
+            ->addOption('topic', null, InputOption::VALUE_REQUIRED, 'Specific topic name')
+            ->addOption('all', null, InputOption::VALUE_NONE, 'Process all topics above threshold')
             ->addOption('threshold', 't', InputOption::VALUE_REQUIRED, 'Minimum articles for dossier', '5')
             ->addOption('days', 'd', InputOption::VALUE_REQUIRED, 'Look back N days for articles', '30')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be done without writing');
@@ -39,54 +41,45 @@ final class GenerateDossiersCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        if ($this->vaultPath === '') {
-            $io->error('VAULT_PATH environment variable not configured');
-
-            return Command::FAILURE;
-        }
-
         $threshold = (int) $input->getOption('threshold');
         $days = (int) $input->getOption('days');
         $dryRun = $input->getOption('dry-run');
-        $specificMoc = $input->getOption('moc');
+        $specificTopic = $input->getOption('topic');
 
         $io->title('Dossier Generation');
 
-        if ($specificMoc !== null) {
-            $io->info("Processing specific MOC: {$specificMoc}");
-            $mocs = [[
-                'moc' => $specificMoc,
-                'path' => "{$this->vaultPath}/mocs/{$specificMoc}",
-                'articleCount' => 0,
-            ]];
+        if ($specificTopic !== null) {
+            $io->info("Processing specific topic: {$specificTopic}");
+            $topicNames = [$specificTopic];
         } elseif ($input->getOption('all')) {
-            $mocs = $this->dossierService->detectMOCsNeedingDossier($this->vaultPath, $threshold);
-            $io->info(\count($mocs) . " MOCs detected above threshold ({$threshold} articles)");
+            $topics = $this->em->getRepository(Topic::class)->findAll();
+            $topicNames = array_map(fn (Topic $t) => $t->getName(), $topics);
+            $io->info(\count($topicNames) . ' topics found');
         } else {
-            $io->error('Provide --moc=FILE or --all');
+            $io->error('Provide --topic=NAME or --all');
 
             return Command::FAILURE;
         }
 
-        if ($mocs === []) {
-            $io->note('No MOCs need dossier generation');
+        if ($topicNames === []) {
+            $io->note('No topics found');
 
             return Command::SUCCESS;
         }
 
-        $io->table(
-            ['MOC', 'Article Refs'],
-            array_map(fn ($m) => [$m['moc'], $m['articleCount']], $mocs),
-        );
-
         $generated = 0;
 
-        foreach ($mocs as $moc) {
-            $topicName = str_replace(['MOC-', '.md', '-'], ['', '', ' '], $moc['moc']);
+        foreach ($topicNames as $topicName) {
             $io->section("Generating dossier: {$topicName}");
 
             $articles = $this->dossierService->getRecentArticlesForTopic($topicName, $days);
             $io->info(\count($articles) . ' articles found in DB');
+
+            if (\count($articles) < $threshold) {
+                $io->note("Only {$articles} articles (threshold: {$threshold}), skipping");
+
+                continue;
+            }
 
             if ($articles === []) {
                 $io->note('No articles found for this topic, skipping');
@@ -100,10 +93,10 @@ final class GenerateDossiersCommand extends Command
                 continue;
             }
 
-            $path = $this->dossierService->generateDossier($moc['path'], $articles, $this->vaultPath);
+            $gc = $this->dossierService->generateDossier($topicName, $articles);
 
-            if ($path !== null) {
-                $io->success("Dossier saved: {$path}");
+            if ($gc !== null) {
+                $io->success("Dossier saved as GeneratedContent #{$gc->getId()}");
                 $generated++;
             } else {
                 $io->warning("Failed to generate dossier for {$topicName}");

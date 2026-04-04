@@ -14,13 +14,12 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:editorial:weekly-summary',
-    description: 'Generate the weekly editorial summary with optional Audio Overview',
+    description: 'Generate the weekly editorial summary and persist as GeneratedContent',
 )]
 final class WeeklySummaryCommand extends Command
 {
     public function __construct(
         private readonly WeeklySummaryService $summaryService,
-        private readonly string $vaultPath = '',
     ) {
         parent::__construct();
     }
@@ -29,19 +28,12 @@ final class WeeklySummaryCommand extends Command
     {
         $this
             ->addOption('week', 'w', InputOption::VALUE_REQUIRED, 'Specific week (e.g., 2026-W14). Defaults to current week')
-            ->addOption('with-audio', null, InputOption::VALUE_NONE, 'Generate Audio Overview via NotebookLM')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be done without writing');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-
-        if ($this->vaultPath === '') {
-            $io->error('VAULT_PATH environment variable not configured');
-
-            return Command::FAILURE;
-        }
 
         $weekStr = $input->getOption('week');
         if ($weekStr !== null) {
@@ -85,29 +77,15 @@ final class WeeklySummaryCommand extends Command
             return Command::FAILURE;
         }
 
-        // Generate audio if requested
-        $audioPath = null;
-        if ($input->getOption('with-audio')) {
-            $io->section('Generating Audio Overview via NotebookLM...');
-            $audioPath = $this->summaryService->generateAudioBriefing($weekEnd, $this->vaultPath);
-
-            if ($audioPath !== null) {
-                $io->info("Audio saved: {$audioPath}");
-            } else {
-                $io->note('Audio generation skipped (NotebookLM unavailable)');
-            }
-        }
-
-        // Save to vault
-        $filePath = $this->summaryService->saveSummary(
+        // Persist to DB
+        $gc = $this->summaryService->saveSummary(
             $summaryContent,
+            $weekStart,
             $weekEnd,
             \count($articles),
-            $this->vaultPath,
-            $audioPath,
         );
 
-        $io->success("Weekly summary saved: {$filePath}");
+        $io->success("Weekly summary saved as GeneratedContent #{$gc->getId()}");
 
         return Command::SUCCESS;
     }

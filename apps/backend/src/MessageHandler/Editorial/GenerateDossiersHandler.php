@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\MessageHandler\Editorial;
 
-use App\Entity\Article;
-use App\Enum\ArticleStatus;
+use App\Entity\Topic;
 use App\Message\Editorial\GenerateDossiersMessage;
 use App\Service\Editorial\DossierGenerationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 #[AsMessageHandler]
@@ -20,44 +18,34 @@ final readonly class GenerateDossiersHandler
         private DossierGenerationService $dossierService,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
-        #[Autowire('%env(default::VAULT_PATH)%')] private string $vaultPath = '',
     ) {}
 
     public function __invoke(GenerateDossiersMessage $message): void
     {
-        if ($this->vaultPath === '') {
-            $this->logger->warning('GenerateDossiersHandler: VAULT_PATH not configured, skipping');
-
-            return;
-        }
-
-        $this->logger->info('GenerateDossiersHandler: detecting MOCs needing dossiers', [
+        $this->logger->info('GenerateDossiersHandler: detecting topics needing dossiers', [
             'threshold' => $message->threshold,
         ]);
 
-        $mocs = $this->dossierService->detectMOCsNeedingDossier($this->vaultPath, $message->threshold);
+        // Get topics from DB
+        $topics = $this->em->getRepository(Topic::class)->findAll();
 
-        if ($mocs === []) {
-            $this->logger->info('GenerateDossiersHandler: no MOCs above threshold');
+        if ($topics === []) {
+            $this->logger->info('GenerateDossiersHandler: no topics found');
 
             return;
         }
 
-        $since = new \DateTimeImmutable("-{$message->days} days");
         $generated = 0;
 
-        foreach ($mocs as $moc) {
-            $articles = $this->em->getRepository(Article::class)->createQueryBuilder('a')
-                ->where('a.status = :status')
-                ->andWhere('a.publishedAt >= :since')
-                ->setParameter('status', ArticleStatus::PUBLISHED)
-                ->setParameter('since', $since)
-                ->orderBy('a.publishedAt', 'DESC')
-                ->setMaxResults(50)
-                ->getQuery()
-                ->getResult();
+        foreach ($topics as $topic) {
+            $topicName = $topic->getName();
+            $articles = $this->dossierService->getRecentArticlesForTopic($topicName, $message->days);
 
-            $result = $this->dossierService->generateDossier($moc['path'], $articles, $this->vaultPath);
+            if (\count($articles) < $message->threshold) {
+                continue;
+            }
+
+            $result = $this->dossierService->generateDossier($topicName, $articles);
 
             if ($result !== null) {
                 ++$generated;
@@ -65,7 +53,7 @@ final readonly class GenerateDossiersHandler
         }
 
         $this->logger->info('GenerateDossiersHandler: dossier generation complete', [
-            'mocsProcessed' => \count($mocs),
+            'topicsProcessed' => \count($topics),
             'dossiersGenerated' => $generated,
         ]);
     }
