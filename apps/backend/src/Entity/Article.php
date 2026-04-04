@@ -219,6 +219,11 @@ class Article implements Translatable
     #[MaxDepth(2)]
     private Collection $tags;
 
+    #[ORM\ManyToMany(targetEntity: Topic::class, mappedBy: 'articles')]
+    #[Groups(['article:read', 'article:write'])]
+    #[MaxDepth(2)]
+    private Collection $topics;
+
     // Non-translatable fields
     #[ORM\Column(type: Types::STRING, length: 20, enumType: ArticleStatus::class)]
     #[Groups(['article:read', 'article:write'])]
@@ -327,6 +332,7 @@ class Article implements Translatable
         $this->articleImages = new ArrayCollection();
         $this->relatedArticles = new ArrayCollection();
         $this->tags = new ArrayCollection();
+        $this->topics = new ArrayCollection();
     }
 
     // Getters and setters
@@ -652,6 +658,33 @@ class Article implements Translatable
     public function removeTag(Tag $tag): self
     {
         $this->tags->removeElement($tag);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Topic>
+     */
+    public function getTopics(): Collection
+    {
+        return $this->topics;
+    }
+
+    public function addTopic(Topic $topic): self
+    {
+        if (!$this->topics->contains($topic)) {
+            $this->topics->add($topic);
+            $topic->addArticle($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTopic(Topic $topic): self
+    {
+        if ($this->topics->removeElement($topic)) {
+            $topic->removeArticle($this);
+        }
 
         return $this;
     }
