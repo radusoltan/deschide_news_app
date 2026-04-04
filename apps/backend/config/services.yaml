@@ -151,6 +151,12 @@ services:
             $mercureUrl: '%env(MERCURE_URL)%'
             $mercurePublisherJwt: '%env(MERCURE_JWT_SECRET)%'
 
+    # Admin Notification Service (Mercure)
+    App\Service\NotificationService:
+        arguments:
+            $mercureUrl: '%env(MERCURE_URL)%'
+            $mercurePublisherJwt: '%env(MERCURE_JWT_SECRET)%'
+
     # Embed Controller
     App\Controller\EmbedController:
         arguments:
