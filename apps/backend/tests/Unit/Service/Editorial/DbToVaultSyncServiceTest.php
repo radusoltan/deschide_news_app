@@ -220,6 +220,7 @@ class DbToVaultSyncServiceTest extends TestCase
         $article->method('getCategory')->willReturn($category);
         $article->method('getAuthors')->willReturn(new ArrayCollection());
         $article->method('getTags')->willReturn(new ArrayCollection($tags));
+        $article->method('getTopics')->willReturn(new ArrayCollection());
         $article->method('getSourceEmail')->willReturn(null);
         $article->method('getContentHash')->willReturn(null);
         $article->method('getWebcode')->willReturn(null);
