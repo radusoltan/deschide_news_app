@@ -68,6 +68,7 @@ export async function createArticleAction(
   const metaTitle = formData.get('metaTitle') as string;
   const metaDescription = formData.get('metaDescription') as string;
   const tagsJson = formData.get('tags') as string;
+  const topicsJson = formData.get('topics') as string;
 
   // Validate required fields
   const errors: ArticleFormState['errors'] = {};
@@ -116,6 +117,19 @@ export async function createArticleAction(
     }
   }
 
+  // Parse topics (optional)
+  let topics: string[] = [];
+  if (topicsJson) {
+    try {
+      topics = JSON.parse(topicsJson);
+      if (!Array.isArray(topics)) {
+        topics = [];
+      }
+    } catch {
+      topics = [];
+    }
+  }
+
   if (Object.keys(errors).length > 0) {
     return { errors };
   }
@@ -145,6 +159,9 @@ export async function createArticleAction(
 
     // Add tags (array of IRIs)
     articleData.tags = tags;
+
+    // Add topics (array of IRIs)
+    articleData.topics = topics;
 
     // Add publishAt only when scheduling (status=submitted)
     if (status === 'submitted' && publishAt && publishAt.trim() !== '') {
@@ -198,6 +215,7 @@ export async function updateArticleAction(
   const metaTitle = formData.get('metaTitle') as string;
   const metaDescription = formData.get('metaDescription') as string;
   const tagsJson = formData.get('tags') as string;
+  const topicsJson = formData.get('topics') as string;
 
   // Validate required fields
   const errors: ArticleFormState['errors'] = {};
@@ -246,6 +264,19 @@ export async function updateArticleAction(
     }
   }
 
+  // Parse topics (optional)
+  let topics: string[] = [];
+  if (topicsJson) {
+    try {
+      topics = JSON.parse(topicsJson);
+      if (!Array.isArray(topics)) {
+        topics = [];
+      }
+    } catch {
+      topics = [];
+    }
+  }
+
   if (Object.keys(errors).length > 0) {
     return { errors };
   }
@@ -275,6 +306,9 @@ export async function updateArticleAction(
 
     // Add tags (array of IRIs)
     articleData.tags = tags;
+
+    // Add topics (array of IRIs)
+    articleData.topics = topics;
 
     // Add publishAt only when scheduling (status=submitted)
     if (status === 'submitted' && publishAt && publishAt.trim() !== '') {
