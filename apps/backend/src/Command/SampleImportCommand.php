@@ -27,7 +27,7 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 
 #[AsCommand(
     name: 'app:sample-import',
-    description: 'Import sample data from Newscoop database (6 categories, 300 articles with translations)'
+    description: '[DEPRECATED] Import sample data from Newscoop — use app:dev:reset instead',
 )]
 class SampleImportCommand extends Command
 {
@@ -81,6 +81,11 @@ class SampleImportCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+
+        trigger_deprecation('deschide/backend', '1.0', 'Command "app:sample-import" is deprecated. Use "app:dev:reset" instead.');
+
+        $io->warning('DEPRECATED: Folosește app:dev:reset care include fixtures + import RSS + cache clear.');
+
         $startTime = microtime(true);
 
         $io->title('Sample Import from Newscoop');

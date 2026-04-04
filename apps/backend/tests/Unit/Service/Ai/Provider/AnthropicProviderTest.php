@@ -30,7 +30,7 @@ class AnthropicProviderTest extends TestCase
 
     public function testSupportsVault(): void
     {
-        $this->assertTrue($this->provider->supports(AiAgentType::VAULT));
+        $this->assertTrue($this->provider->supports(AiAgentType::RESEARCH));
     }
 
     public function testSupportsContent(): void
@@ -60,7 +60,7 @@ class AnthropicProviderTest extends TestCase
 
     public function testGetModelForVault(): void
     {
-        $this->assertSame('claude-haiku-4-5-20251001', $this->provider->getModelForAgent(AiAgentType::VAULT));
+        $this->assertSame('claude-haiku-4-5-20251001', $this->provider->getModelForAgent(AiAgentType::RESEARCH));
     }
 
     public function testGetModelForBriefing(): void

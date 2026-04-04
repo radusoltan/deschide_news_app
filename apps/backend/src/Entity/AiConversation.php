@@ -66,7 +66,7 @@ class AiConversation
     private ?string $title = null;
 
     #[ORM\Column(length: 50, nullable: true)]
-    #[Assert\Choice(choices: ['vault', 'content', 'translation', 'briefing'])]
+    #[Assert\Choice(choices: ['research', 'content', 'translation', 'briefing'])]
     #[Groups(['ai_conv:read'])]
     private ?string $agentType = null;
 

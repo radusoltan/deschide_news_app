@@ -148,7 +148,7 @@ class AiOrchestratorServiceTest extends TestCase
     {
         $result = $this->orchestrator->processMessage($this->user, 'Caută dosare despre Sandu');
 
-        $this->assertSame('vault', $result->getAgentType());
+        $this->assertSame('research', $result->getAgentType());
     }
 
     public function testClassifiesTranslationQuery(): void
@@ -282,7 +282,7 @@ class AiOrchestratorServiceTest extends TestCase
         $result = $this->orchestrator->processMessage($this->user, 'Caută dosare despre Sandu');
 
         $lastMessage = $result->getMessages()->last();
-        $this->assertSame('vault', $lastMessage->getAgentType());
+        $this->assertSame('research', $lastMessage->getAgentType());
         $this->assertSame('claude-haiku-4-5-20251001', $lastMessage->getModel());
     }
 

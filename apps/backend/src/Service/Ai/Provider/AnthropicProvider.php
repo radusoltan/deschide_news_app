@@ -11,7 +11,7 @@ use Psr\Log\LoggerInterface;
 final class AnthropicProvider implements AiProviderInterface
 {
     public function __construct(
-        private readonly AnthropicClientInterface $anthropicClient,
+        private readonly AnthropicClientInterface $client,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -22,21 +22,27 @@ final class AnthropicProvider implements AiProviderInterface
 
     public function chat(string $prompt, ?string $systemPrompt = null): string
     {
-        $model = 'claude-sonnet-4-20250514';
-        $messages = [['role' => 'user', 'content' => $prompt]];
+        $startTime = microtime(true);
 
-        $this->logger->debug('AnthropicProvider: sending chat request', [
-            'model' => $model,
-            'promptLength' => mb_strlen($prompt),
+        $messages = [['role' => 'user', 'content' => $prompt]];
+        $model = $this->getModelForAgent(AiAgentType::RESEARCH);
+
+        $result = $this->client->chat($messages, $model, $systemPrompt);
+
+        $duration = (int) round((microtime(true) - $startTime) * 1000);
+
+        $this->logger->info('AnthropicProvider: request completed', [
+            'duration_ms' => $duration,
+            'outputLength' => mb_strlen($result),
         ]);
 
-        return $this->anthropicClient->chat($messages, $model, $systemPrompt);
+        return $result;
     }
 
     public function supports(AiAgentType $agentType): bool
     {
         return \in_array($agentType, [
-            AiAgentType::VAULT,
+            AiAgentType::RESEARCH,
             AiAgentType::CONTENT,
             AiAgentType::BRIEFING,
         ], true);
@@ -46,8 +52,8 @@ final class AnthropicProvider implements AiProviderInterface
     {
         return match ($agentType) {
             AiAgentType::CONTENT => 'claude-sonnet-4-20250514',
-            AiAgentType::VAULT, AiAgentType::BRIEFING => 'claude-haiku-4-5-20251001',
-            default => 'claude-sonnet-4-20250514',
+            AiAgentType::RESEARCH, AiAgentType::BRIEFING => 'claude-haiku-4-5-20251001',
+            default => 'claude-haiku-4-5-20251001',
         };
     }
 }

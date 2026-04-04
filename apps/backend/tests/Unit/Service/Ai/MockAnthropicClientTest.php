@@ -39,7 +39,7 @@ class MockAnthropicClientTest extends TestCase
 
         $data = json_decode($response, true);
         $this->assertIsArray($data);
-        $this->assertSame('vault', $data['agentType']);
+        $this->assertSame('research', $data['agentType']);
     }
 
     public function testClassificationReturnsTranslation(): void

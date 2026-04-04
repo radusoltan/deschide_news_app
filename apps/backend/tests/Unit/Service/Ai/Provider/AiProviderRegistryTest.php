@@ -21,7 +21,7 @@ class AiProviderRegistryTest extends TestCase
         $this->anthropicProvider->method('getName')->willReturn('anthropic');
         $this->anthropicProvider->method('supports')->willReturnCallback(
             fn (AiAgentType $type) => \in_array($type, [
-                AiAgentType::VAULT,
+                AiAgentType::RESEARCH,
                 AiAgentType::CONTENT,
                 AiAgentType::BRIEFING,
             ], true),
@@ -39,9 +39,9 @@ class AiProviderRegistryTest extends TestCase
         $this->registry = new AiProviderRegistry([$this->anthropicProvider, $this->geminiProvider]);
     }
 
-    public function testReturnsAnthropicForVault(): void
+    public function testReturnsAnthropicForResearch(): void
     {
-        $provider = $this->registry->getProvider(AiAgentType::VAULT);
+        $provider = $this->registry->getProvider(AiAgentType::RESEARCH);
         $this->assertSame('anthropic', $provider->getName());
     }
 
@@ -75,8 +75,8 @@ class AiProviderRegistryTest extends TestCase
         $emptyRegistry = new AiProviderRegistry([]);
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('No AI provider registered for agent type "vault"');
+        $this->expectExceptionMessage('No AI provider registered for agent type "research"');
 
-        $emptyRegistry->getProvider(AiAgentType::VAULT);
+        $emptyRegistry->getProvider(AiAgentType::RESEARCH);
     }
 }
