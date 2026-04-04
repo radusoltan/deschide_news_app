@@ -117,9 +117,6 @@ framework:
             # Translation evaluation pipeline (Sprint 18)
             'App\Message\Editorial\EvaluateTranslationMessage': editorial
 
-            # DB→Vault sync pipeline (Sprint 19)
-            'App\Message\Editorial\SyncArticleToVaultMessage': editorial
-
             # Editorial scheduler (Sprint 22 — daily briefing, weekly summary, dossiers)
             'App\Message\Editorial\GenerateDailyBriefingMessage': editorial
             'App\Message\Editorial\GenerateWeeklySummaryMessage': editorial

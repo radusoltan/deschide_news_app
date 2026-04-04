@@ -272,11 +272,6 @@ services:
             $enabled: '%notebooklm.enabled%'
             $cliPath: '%notebooklm.cli_path%'
 
-    # DB→Vault Sync Service (Sprint 19 — unidirectional DB→Vault sync)
-    App\Service\Editorial\DbToVaultSyncService:
-        arguments:
-            $vaultPath: '%env(default::VAULT_PATH)%'
-
     # Article Ingestion Service (Sprint 17 — entity extraction)
     App\Service\Editorial\ArticleIngestionService:
         arguments:
@@ -332,16 +327,6 @@ services:
         arguments:
             $geminiCliPath: '%gemini_cli_path%'
 
-    # Vault Purge Command (cleanup orphan vault files)
-    App\Command\Editorial\VaultPurgeCommand:
-        arguments:
-            $vaultPath: '%env(default::VAULT_PATH)%'
-
-    # Vault Verify Command (DB↔Vault consistency check)
-    App\Command\Editorial\VaultVerifyCommand:
-        arguments:
-            $vaultPath: '%env(default::VAULT_PATH)%'
-
     # Dev Reset Command (full dev environment reset)
     App\Command\Editorial\DevResetCommand:
         arguments:
@@ -381,7 +366,3 @@ when@test:
             alias: 'security.user_password_hasher'
             public: true
 
-        # Make editorial services public for integration tests
-        App\Service\Editorial\VaultSyncService:
-            autowire: true
-            public: true

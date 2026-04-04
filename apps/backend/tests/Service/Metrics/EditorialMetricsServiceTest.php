@@ -28,7 +28,6 @@ class EditorialMetricsServiceTest extends TestCase
             $this->em,
             $this->esManager,
             new NullLogger(),
-            null,
         );
     }
 

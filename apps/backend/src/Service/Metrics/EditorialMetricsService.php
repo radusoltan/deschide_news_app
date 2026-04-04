@@ -16,7 +16,6 @@ final readonly class EditorialMetricsService
         private EntityManagerInterface $em,
         private ElasticsearchIndexManager $esManager,
         private LoggerInterface $logger,
-        private ?string $vaultPath = null,
     ) {}
 
     /**
@@ -43,11 +42,6 @@ final readonly class EditorialMetricsService
             'elasticsearch' => $this->collectElasticsearchMetrics(),
             'pipeline' => $this->collectPipelineMetrics(),
         ];
-
-        // Vault metrics (if path is configured)
-        if ($this->vaultPath !== null && $this->vaultPath !== '' && is_dir($this->vaultPath)) {
-            $metrics['vault'] = $this->collectVaultMetrics();
-        }
 
         return $metrics;
     }
@@ -257,136 +251,4 @@ final readonly class EditorialMetricsService
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function collectVaultMetrics(): array
-    {
-        $totalNotes = 0;
-        $byType = [];
-        $orphans = 0;
-
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($this->vaultPath, \FilesystemIterator::SKIP_DOTS),
-        );
-
-        $allLinks = [];
-        $allFiles = [];
-
-        foreach ($iterator as $file) {
-            if (!$file->isFile() || $file->getExtension() !== 'md') {
-                continue;
-            }
-
-            $totalNotes++;
-            $relativePath = str_replace($this->vaultPath . '/', '', $file->getPathname());
-            $allFiles[] = $relativePath;
-
-            // Detect type from frontmatter
-            $content = file_get_contents($file->getPathname());
-            if ($content !== false && preg_match('/^---\s*\n.*?type:\s*(\S+)/s', $content, $m)) {
-                $type = $m[1];
-                $byType[$type] = ($byType[$type] ?? 0) + 1;
-            }
-
-            // Collect wikilinks
-            if ($content !== false && preg_match_all('/\[\[([^\]|]+)/', $content, $links)) {
-                foreach ($links[1] as $link) {
-                    $allLinks[] = $link;
-                }
-            }
-        }
-
-        // Orphan detection: notes not linked from any other note
-        $linkedFiles = array_unique($allLinks);
-        foreach ($allFiles as $filePath) {
-            $basename = pathinfo($filePath, PATHINFO_FILENAME);
-            $isLinked = false;
-            foreach ($linkedFiles as $link) {
-                if (str_contains($link, $basename)) {
-                    $isLinked = true;
-                    break;
-                }
-            }
-            if (!$isLinked) {
-                $orphans++;
-            }
-        }
-
-        $orphanPct = $totalNotes > 0 ? round(($orphans / $totalNotes) * 100, 1) : 0.0;
-
-        return [
-            'total_notes' => $totalNotes,
-            'by_type' => $byType,
-            'orphans' => $orphans,
-            'orphan_pct' => $orphanPct,
-        ];
-    }
-
-    /**
-     * Write a metrics snapshot to the vault dashboards folder.
-     */
-    public function writeVaultSnapshot(array $metrics): void
-    {
-        if ($this->vaultPath === null || $this->vaultPath === '') {
-            return;
-        }
-
-        $dashboardDir = $this->vaultPath . '/dashboards';
-        if (!is_dir($dashboardDir) && !mkdir($dashboardDir, 0o755, true)) {
-            return;
-        }
-
-        $date = date('Y-m-d H:i');
-        $vol = $metrics['volume'] ?? [];
-        $trans = $metrics['translations'] ?? [];
-        $qual = $metrics['quality'] ?? [];
-        $es = $metrics['elasticsearch'] ?? [];
-        $pipe = $metrics['pipeline'] ?? [];
-        $vault = $metrics['vault'] ?? [];
-
-        $content = <<<MD
----
-type: dashboard
-title: "Metrici editoriale — Snapshot"
-date_modified: {$date}
----
-
-# Metrici editoriale — {$date}
-
-## Volum
-- **Total articole**: {$vol['total']}
-- **În perioadă**: {$vol['in_period']} ({$vol['per_day']}/zi)
-
-## Traduceri
-- **Trilingve complete**: {$trans['trilingual_pct']}%
-- **Necesită revizie**: {$trans['needs_review']}
-
-## Calitate AI
-- **Auto-generate**: {$qual['auto_generated']}
-- **Revizuite**: {$qual['reviewed']} ({$qual['reviewed_pct']}%)
-
-## Elasticsearch
-- **Indexate**: {$es['indexed']}
-- **Latență**: {$es['latency_ms']}ms
-
-## Pipeline azi
-- **Create**: {$pipe['created_today']}
-- **Traduse**: {$pipe['translated_today']}
-- **Erori**: {$pipe['failed_today']}
-
-MD;
-
-        if ($vault !== []) {
-            $content .= <<<MD
-
-## Vault
-- **Total note**: {$vault['total_notes']}
-- **Orfane**: {$vault['orphans']} ({$vault['orphan_pct']}%)
-
-MD;
-        }
-
-        file_put_contents($dashboardDir . '/metrics-summary.md', $content);
-    }
 }

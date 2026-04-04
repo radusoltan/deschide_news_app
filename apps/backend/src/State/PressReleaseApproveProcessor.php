@@ -15,7 +15,6 @@ use App\Enum\ArticleStatus;
 use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use App\Message\Editorial\IngestArticleMessage;
-use App\Message\Editorial\SyncArticleToVaultMessage;
 use App\Message\TranslateArticleMessage;
 use App\Repository\ArticleRepository;
 use App\Repository\AuthorRepository;
@@ -145,11 +144,6 @@ class PressReleaseApproveProcessor implements ProcessorInterface
 
         // AI ingestion
         $this->messageBus->dispatch(new IngestArticleMessage(
-            articleId: $articleId,
-        ));
-
-        // Vault sync
-        $this->messageBus->dispatch(new SyncArticleToVaultMessage(
             articleId: $articleId,
         ));
 

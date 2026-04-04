@@ -13,7 +13,7 @@ use Symfony\Component\Yaml\Yaml;
 
 /**
  * Builds structured context (Markdown/JSON) from Article entities — zero disk I/O.
- * Extracted from DbToVaultSyncService (Sprint 23) for reuse by CLI, AI agents, and GeneratedContent.
+ * Reusable by CLI commands, AI agents, and GeneratedContent (Sprint 23).
  */
 class ArticleContextService
 {
