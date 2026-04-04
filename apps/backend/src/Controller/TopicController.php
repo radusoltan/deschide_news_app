@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Topic;
 use App\Repository\TopicRepository;
+use App\Service\TopicDetectorService;
 use App\Service\TopicService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,6 +22,7 @@ class TopicController extends AbstractController
     public function __construct(
         private readonly TopicService $topicService,
         private readonly TopicRepository $topicRepository,
+        private readonly TopicDetectorService $topicDetectorService,
         private readonly TagAwareCacheInterface $cache,
     ) {}
 
@@ -223,6 +225,53 @@ class TopicController extends AbstractController
             'message' => 'Topic moved successfully.',
             'topic' => $this->serializeTopic($topic),
         ]);
+    }
+
+    /**
+     * AI-powered topic detection from article content.
+     */
+    #[Route('/detect', name: 'detect', methods: ['POST'], priority: 2)]
+    public function detect(Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('ROLE_EDITOR');
+
+        $body = json_decode($request->getContent(), true);
+        $title = $body['title'] ?? '';
+        $lead = $body['lead'] ?? '';
+        $content = $body['content'] ?? '';
+
+        if ($title === '' && $lead === '') {
+            return $this->json([
+                '@type' => 'hydra:Error',
+                'hydra:title' => 'Invalid request',
+                'hydra:description' => 'At least "title" or "lead" is required.',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $suggestions = $this->topicDetectorService->detectTopics($title, $lead, $content);
+
+        // Enrich suggestions with topic path
+        $enriched = [];
+        foreach ($suggestions as $suggestion) {
+            $topic = $this->topicRepository->find($suggestion['topicId']);
+            if ($topic) {
+                $path = $this->topicService->getPath($topic);
+                $pathString = implode(' > ', array_map(fn (Topic $t) => $t->getTitle(), $path));
+
+                $enriched[] = [
+                    'topic' => [
+                        'id' => $topic->getId(),
+                        'title' => $topic->getTitle(),
+                        'slug' => $topic->getSlug(),
+                        'path' => $pathString,
+                    ],
+                    'confidence' => $suggestion['confidence'],
+                    'reason' => $suggestion['reason'],
+                ];
+            }
+        }
+
+        return $this->json(['suggestions' => $enriched]);
     }
 
     /**

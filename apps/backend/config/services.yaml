@@ -206,6 +206,12 @@ services:
             $elasticsearchUrl: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
 
+    # Topic Detector Service (Gemini CLI subprocess)
+    App\Service\TopicDetectorService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $projectDir: '%kernel.project_dir%'
+
     # Translation Handler (Gemini CLI subprocess)
     App\MessageHandler\TranslateArticleHandler:
         arguments:
@@ -350,6 +356,23 @@ services:
     App\Service\Editorial\InternalSummaryService:
         arguments:
             $geminiCliPath: '%gemini_cli_path%'
+
+    # Vault Purge Command (cleanup orphan vault files)
+    App\Command\Editorial\VaultPurgeCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Vault Verify Command (DB↔Vault consistency check)
+    App\Command\Editorial\VaultVerifyCommand:
+        arguments:
+            $vaultPath: '%env(default::VAULT_PATH)%'
+
+    # Dev Reset Command (full dev environment reset)
+    App\Command\Editorial\DevResetCommand:
+        arguments:
+            $appEnv: '%kernel.environment%'
+            $vaultPath: '%env(default::VAULT_PATH)%'
+            $em: '@doctrine.orm.entity_manager'
 
     # Background Generator Service (Sprint 20 — context istoric automat)
     App\Service\Editorial\BackgroundGeneratorService:
