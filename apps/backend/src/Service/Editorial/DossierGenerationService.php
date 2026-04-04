@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Editorial;
 
 use App\Entity\Article;
+use App\Entity\GeneratedContent;
 use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -22,57 +23,12 @@ final class DossierGenerationService
     ) {}
 
     /**
-     * Detect MOC files that have accumulated enough new articles for a dossier.
-     *
-     * @param int $threshold Minimum new articles since last dossier
-     * @return list<array{moc: string, path: string, articleCount: int}>
-     */
-    public function detectMOCsNeedingDossier(string $vaultPath, int $threshold = 5): array
-    {
-        $mocsDir = "{$vaultPath}/mocs";
-        if (!is_dir($mocsDir)) {
-            return [];
-        }
-
-        $results = [];
-        $files = glob("{$mocsDir}/MOC-*.md");
-
-        foreach ($files as $filePath) {
-            $content = file_get_contents($filePath);
-            if ($content === false) {
-                continue;
-            }
-
-            // Count article references in the chronology section
-            $articleCount = $this->countRecentArticles($content);
-
-            if ($articleCount >= $threshold) {
-                $results[] = [
-                    'moc' => basename($filePath),
-                    'path' => $filePath,
-                    'articleCount' => $articleCount,
-                ];
-            }
-        }
-
-        return $results;
-    }
-
-    /**
-     * Generate a narrative dossier from a MOC and its recent articles.
+     * Generate a narrative dossier for a topic and persist as GeneratedContent.
      *
      * @param list<Article> $recentArticles
      */
-    public function generateDossier(string $mocPath, array $recentArticles, string $vaultPath): ?string
+    public function generateDossier(string $topicName, array $recentArticles): ?GeneratedContent
     {
-        $mocContent = file_get_contents($mocPath);
-        if ($mocContent === false) {
-            return null;
-        }
-
-        $mocName = basename($mocPath, '.md');
-        $topicName = str_replace(['MOC-', '-'], ['', ' '], $mocName);
-
         // Build article summaries for the prompt
         $articleSummaries = $this->buildArticleSummaries($recentArticles);
 
@@ -81,7 +37,7 @@ final class DossierGenerationService
 
         if ($dossierContent === null) {
             $this->logger->warning('DossierGeneration: Gemini failed for dossier', [
-                'moc' => $mocName,
+                'topic' => $topicName,
             ]);
 
             return null;
@@ -90,33 +46,31 @@ final class DossierGenerationService
         // Enrich with NotebookLM insights if available
         $insights = $this->enrichWithNotebookLM($topicName, $recentArticles);
 
-        // Build final dossier markdown
-        $date = date('Y-m-d');
-        $slug = $this->slugify($topicName);
-        $frontmatter = $this->buildDossierFrontmatter($topicName, $date, $recentArticles);
-
-        $markdown = "---\n{$frontmatter}---\n\n{$dossierContent}";
-
+        $fullContent = $dossierContent;
         if ($insights !== null) {
-            $markdown .= "\n\n## Insight-uri NotebookLM\n\n{$insights}\n";
+            $fullContent .= "\n\n## Insight-uri NotebookLM\n\n{$insights}";
         }
 
-        // Save to vault
-        $dossierDir = "{$vaultPath}/dossiers";
-        if (!is_dir($dossierDir) && !mkdir($dossierDir, 0o755, true)) {
-            return null;
-        }
+        $articleIds = array_map(fn (Article $a) => $a->getId(), $recentArticles);
 
-        $filePath = "{$dossierDir}/{$slug}-dossier-{$date}.md";
-        file_put_contents($filePath, $markdown);
+        $gc = new GeneratedContent();
+        $gc->setType('dossier');
+        $gc->setTitle('Dosar: ' . mb_substr($topicName, 0, 200));
+        $gc->setContent($fullContent);
+        $gc->setMetadata([
+            'topic' => $topicName,
+            'article_count' => \count($recentArticles),
+            'article_ids' => $articleIds,
+        ]);
+        $this->em->persist($gc);
+        $this->em->flush();
 
         $this->logger->info('DossierGeneration: dossier created', [
-            'moc' => $mocName,
-            'path' => $filePath,
+            'topic' => $topicName,
             'articles' => \count($recentArticles),
         ]);
 
-        return $filePath;
+        return $gc;
     }
 
     /**
@@ -259,14 +213,6 @@ PROMPT;
             . "  reviewed: false\n"
             . "  processed_by: gemini-cli\n"
             . "  processed_at: {$date}\n";
-    }
-
-    private function countRecentArticles(string $mocContent): int
-    {
-        // Count [[art-*]] references in the content
-        preg_match_all('/\[\[art-[^\]]+\]\]/', $mocContent, $matches);
-
-        return \count($matches[0] ?? []);
     }
 
     private function callGemini(string $prompt): ?string

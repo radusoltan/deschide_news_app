@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Editorial;
 
 use App\Entity\Article;
+use App\Entity\GeneratedContent;
 use App\Enum\ArticleStatus;
 use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -59,99 +60,22 @@ class DailyBriefingService
     }
 
     /**
-     * Save the daily briefing to the vault.
+     * Save the daily briefing as a GeneratedContent entity.
      */
     public function saveBriefing(
         string $briefingContent,
         \DateTimeImmutable $date,
         int $articleCount,
-        string $vaultPath,
-        ?string $audioPath = null,
-    ): string {
-        $dateStr = $date->format('Y-m-d');
+    ): GeneratedContent {
+        $gc = new GeneratedContent();
+        $gc->setType('daily_briefing');
+        $gc->setTitle('Briefing zilnic: ' . $date->format('d.m.Y'));
+        $gc->setContent($briefingContent);
+        $gc->setMetadata(['article_count' => $articleCount]);
+        $this->em->persist($gc);
+        $this->em->flush();
 
-        $frontmatter = "type: daily-briefing\n"
-            . "date: {$dateStr}\n"
-            . "article_count: {$articleCount}\n";
-
-        if ($audioPath !== null) {
-            $frontmatter .= "audio_path: {$audioPath}\n";
-        }
-
-        $frontmatter .= "ai:\n"
-            . "  auto_generated: true\n"
-            . "  reviewed: false\n"
-            . "  processed_by: gemini-cli\n"
-            . "  processed_at: {$dateStr}\n";
-
-        $markdown = "---\n{$frontmatter}---\n\n{$briefingContent}\n";
-
-        $dir = "{$vaultPath}/dossiers/daily";
-        if (!is_dir($dir) && !mkdir($dir, 0o755, true)) {
-            return '';
-        }
-
-        $filePath = "{$dir}/briefing-{$dateStr}.md";
-        file_put_contents($filePath, $markdown);
-
-        return $filePath;
-    }
-
-    /**
-     * Generate audio briefing via NotebookLM.
-     */
-    public function generateAudioBriefing(
-        \DateTimeImmutable $date,
-        string $vaultPath,
-    ): ?string {
-        if (!$this->notebookLMService->isAvailable() || $this->briefingNotebookId === '') {
-            return null;
-        }
-
-        $nextDay = $date->modify('+1 day');
-        $articles = $this->getArticlesForDate($date, $nextDay);
-
-        if ($articles === []) {
-            return null;
-        }
-
-        // Feed articles to the briefing notebook
-        foreach (array_slice($articles, 0, 15) as $article) {
-            $this->notebookLMService->addTextSource(
-                $this->briefingNotebookId,
-                $article->getTitle() ?? 'Article',
-                mb_substr($article->getContent() ?? '', 0, 3000),
-            );
-        }
-
-        $dateStr = $date->format('d.m.Y');
-        $instructions = "Briefing zilnic Deschide News {$dateStr}, rezumat scurt al principalelor știri";
-
-        $this->notebookLMService->generateAudio(
-            $this->briefingNotebookId,
-            $instructions,
-            'brief',
-            'ro',
-        );
-
-        $audioDir = "{$vaultPath}/dossiers/audio";
-        if (!is_dir($audioDir) && !mkdir($audioDir, 0o755, true)) {
-            return null;
-        }
-
-        $audioPath = "{$audioDir}/daily-{$date->format('Y-m-d')}.mp3";
-        $success = $this->notebookLMService->downloadAudio($this->briefingNotebookId, $audioPath);
-
-        if (!$success) {
-            return null;
-        }
-
-        $this->logger->info('DailyBriefing: audio generated', [
-            'date' => $date->format('Y-m-d'),
-            'path' => $audioPath,
-        ]);
-
-        return $audioPath;
+        return $gc;
     }
 
     /**

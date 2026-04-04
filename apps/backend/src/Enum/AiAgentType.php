@@ -6,7 +6,7 @@ namespace App\Enum;
 
 enum AiAgentType: string
 {
-    case VAULT = 'vault';
+    case RESEARCH = 'research';
     case CONTENT = 'content';
     case TRANSLATION = 'translation';
     case BRIEFING = 'briefing';
@@ -15,7 +15,7 @@ enum AiAgentType: string
     public function getSystemPrompt(): string
     {
         return match ($this) {
-            self::VAULT => <<<'PROMPT'
+            self::RESEARCH => <<<'PROMPT'
                 Ești asistentul de cercetare al redacției Deschide.md. Ai acces la arhiva de articole, dosarele tematice și grafurile de conexiuni între persoane, companii și instituții din Republica Moldova.
 
                 Reguli:
@@ -76,7 +76,7 @@ enum AiAgentType: string
     {
         return match ($this) {
             self::CONTENT => 'claude-sonnet-4-20250514',
-            self::VAULT, self::BRIEFING => 'claude-haiku-4-5-20251001',
+            self::RESEARCH, self::BRIEFING => 'claude-haiku-4-5-20251001',
             self::TRANSLATION, self::SEO => 'gemini-2.5-flash',
         };
     }
@@ -84,7 +84,7 @@ enum AiAgentType: string
     public function getProvider(): string
     {
         return match ($this) {
-            self::VAULT, self::CONTENT, self::BRIEFING => 'anthropic',
+            self::RESEARCH, self::CONTENT, self::BRIEFING => 'anthropic',
             self::TRANSLATION, self::SEO => 'gemini',
         };
     }
@@ -92,7 +92,7 @@ enum AiAgentType: string
     public function getDescription(): string
     {
         return match ($this) {
-            self::VAULT => 'Cercetare dosare, conexiuni între entități, analiză vault editorial',
+            self::RESEARCH => 'Cercetare dosare, conexiuni între entități, analiză editorială',
             self::CONTENT => 'Generare și editare conținut jurnalistic, lead-uri, titluri',
             self::TRANSLATION => 'Traduceri ro/en/ru, evaluare calitate traduceri',
             self::BRIEFING => 'Briefing-uri zilnice, rezumate săptămânale, analize tendințe',

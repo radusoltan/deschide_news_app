@@ -26,12 +26,14 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\HeaderBag;
 use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[\PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations]
 class ArticleProcessorTest extends TestCase
@@ -43,6 +45,8 @@ class ArticleProcessorTest extends TestCase
     private PerformanceService $performanceService;
     private CacheItemPoolInterface $cachePool;
     private EventDispatcherInterface $eventDispatcher;
+    private HttpClientInterface $httpClient;
+    private LoggerInterface $logger;
 
     protected function setUp(): void
     {
@@ -52,6 +56,8 @@ class ArticleProcessorTest extends TestCase
         $this->performanceService = $this->createMock(PerformanceService::class);
         $this->cachePool = $this->createStub(CacheItemPoolInterface::class);
         $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->httpClient = $this->createStub(HttpClientInterface::class);
+        $this->logger = $this->createStub(LoggerInterface::class);
 
         $this->processor = new ArticleProcessor(
             $this->entityManager,
@@ -60,6 +66,10 @@ class ArticleProcessorTest extends TestCase
             $this->performanceService,
             $this->cachePool,
             $this->eventDispatcher,
+            $this->httpClient,
+            $this->logger,
+            '',
+            '',
         );
     }
 
@@ -74,6 +84,7 @@ class ArticleProcessorTest extends TestCase
 
         $article = $this->createArticleMock(10);
         $article->method('getTags')->willReturn(new ArrayCollection());
+        $article->method('getTopics')->willReturn(new ArrayCollection());
 
         $this->entityManager->expects($this->once())->method('remove')->with($article);
         $this->entityManager->expects($this->once())->method('flush');
@@ -103,6 +114,7 @@ class ArticleProcessorTest extends TestCase
 
         $article = $this->createArticleMock(10);
         $article->method('getTags')->willReturn(new ArrayCollection([$tag1, $tag2]));
+        $article->method('getTopics')->willReturn(new ArrayCollection());
 
         $this->messageBus->expects($this->once())
             ->method('dispatch')
@@ -255,6 +267,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
 
         $existingArticle->expects($this->once())->method('setTitle')->with('Updated Title');
         $existingArticle->expects($this->once())->method('setStatus')->with(ArticleStatus::PUBLISHED);
@@ -282,6 +295,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $this->performanceService->expects($this->once())->method('invalidateArticle')->with(10);
 
@@ -329,6 +343,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
 
         $articleRepo = $this->createStub(EntityRepository::class);
         $articleRepo->method('find')->with(10)->willReturn($existingArticle);
@@ -353,6 +368,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $this->eventDispatcher->expects($this->once())
             ->method('dispatch')
@@ -373,6 +389,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
 
         $articleRepo = $this->createStub(EntityRepository::class);
         $articleRepo->method('find')->with(10)->willReturn($existingArticle);
@@ -397,6 +414,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $this->eventDispatcher->expects($this->once())
             ->method('dispatch')
@@ -522,6 +540,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection([$existingTag]));
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
 
         $managedNewTag = $newTag;
 
@@ -561,6 +580,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection([$incomingTag1, $incomingTag2]));
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $result = $this->processor->process($data, $operation, ['id' => 10]);
@@ -588,6 +608,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection([$tag1, $tag2]));
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
         // removeTag should be called for tag2 (which is not in incoming)
         $existingArticle->expects($this->once())->method('removeTag')->with($tag2);
 
@@ -618,6 +639,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection([$incomingTag1]));
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $this->processor->process($data, $operation, ['id' => 10]);
@@ -638,6 +660,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
         $existingArticle->method('getTitle')->willReturn('English Title');
         $existingArticle->method('getLead')->willReturn('English Lead');
         $existingArticle->method('getContent')->willReturn('English Content');
@@ -672,6 +695,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $result = $this->processor->process($data, $operation, ['id' => 10]);
@@ -721,6 +745,7 @@ class ArticleProcessorTest extends TestCase
 
         $article = $this->createArticleMock(10);
         $article->method('getTags')->willReturn(new ArrayCollection());
+        $article->method('getTopics')->willReturn(new ArrayCollection());
 
         $this->messageBus->expects($this->never())->method('dispatch');
 
@@ -751,6 +776,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
 
         $articleRepo = $this->createStub(EntityRepository::class);
         $articleRepo->method('find')->with(10)->willReturn($existingArticle);
@@ -775,6 +801,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $this->eventDispatcher->expects($this->never())->method('dispatch');
 
@@ -876,6 +903,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
         $existingArticle->expects($this->once())->method('setCategory')->with($managedCategory);
 
         $articleRepo = $this->createStub(EntityRepository::class);
@@ -907,6 +935,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $result = $this->processor->process($data, $operation, ['id' => 10]);
@@ -979,6 +1008,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
         $existingArticle->method('getTitle')->willReturn('English Title');
         $existingArticle->method('getLead')->willReturn('English Lead');
         $existingArticle->method('getContent')->willReturn('English Content');
@@ -1012,6 +1042,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $result = $this->processor->process($data, $operation, ['id' => 20]);
@@ -1034,6 +1065,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
 
         $existingArticle->expects($this->once())->method('setLead')->with('New lead');
         $existingArticle->expects($this->once())->method('setContent')->with('New content');
@@ -1061,6 +1093,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $result = $this->processor->process($data, $operation, ['id' => 15]);
@@ -1085,6 +1118,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
         $existingArticle->expects($this->once())->method('setPublishAt')->with($publishAt);
 
         $articleRepo = $this->createStub(EntityRepository::class);
@@ -1110,6 +1144,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $result = $this->processor->process($data, $operation, ['id' => 11]);
@@ -1128,6 +1163,7 @@ class ArticleProcessorTest extends TestCase
 
         $article = $this->createArticleMock(10);
         $article->method('getTags')->willReturn(new ArrayCollection());
+        $article->method('getTopics')->willReturn(new ArrayCollection());
 
         $this->messageBus->expects($this->never())->method('dispatch');
         $this->entityManager->expects($this->once())->method('remove');
@@ -1181,6 +1217,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection([$existingAuthor]));
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
         $existingArticle->expects($this->once())->method('addAuthor')->with($managedNewAuthor);
 
         $articleRepo = $this->createStub(EntityRepository::class);
@@ -1219,6 +1256,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection([$incomingAuthor1, $incomingAuthor2]));
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $result = $this->processor->process($data, $operation, ['id' => 10]);
@@ -1243,6 +1281,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection([$author1, $author2]));
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
         // Should remove author2
         $existingArticle->expects($this->once())->method('removeAuthor')->with($author2);
 
@@ -1272,6 +1311,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection([$incomingAuthor1]));
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $this->processor->process($data, $operation, ['id' => 10]);
@@ -1371,6 +1411,7 @@ class ArticleProcessorTest extends TestCase
         // existing related: [100, 200]; incoming: [100, 300] => remove 200, add 300
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection([$relatedArticle1, $relatedArticle2]));
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
         $existingArticle->expects($this->once())->method('removeRelatedArticle')->with($relatedArticle2);
         $existingArticle->expects($this->once())->method('addRelatedArticle')->with($newRelatedArticle);
 
@@ -1397,6 +1438,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection([$relatedArticle1, $newRelatedArticle]));
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $result = $this->processor->process($data, $operation, ['id' => 10]);
@@ -1452,6 +1494,7 @@ class ArticleProcessorTest extends TestCase
         $existingArticle->method('getAuthors')->willReturn(new ArrayCollection());
         $existingArticle->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $existingArticle->method('getTags')->willReturn(new ArrayCollection());
+        $existingArticle->method('getTopics')->willReturn(new ArrayCollection());
 
         $existingArticle->expects($this->once())->method('setBadge')->with(ArticleBadge::BREAKING);
         $existingArticle->expects($this->once())->method('setIsFeatured')->with(true);
@@ -1479,6 +1522,7 @@ class ArticleProcessorTest extends TestCase
         $data->method('getAuthors')->willReturn(new ArrayCollection());
         $data->method('getRelatedArticles')->willReturn(new ArrayCollection());
         $data->method('getTags')->willReturn(new ArrayCollection());
+        $data->method('getTopics')->willReturn(new ArrayCollection());
 
         $operation = new Put();
         $this->processor->process($data, $operation, ['id' => 10]);
@@ -1496,6 +1540,7 @@ class ArticleProcessorTest extends TestCase
         $article = $this->createStub(Article::class);
         $article->method('getId')->willReturn(null);
         $article->method('getTags')->willReturn(new ArrayCollection());
+        $article->method('getTopics')->willReturn(new ArrayCollection());
 
         $this->entityManager->expects($this->once())->method('remove');
 

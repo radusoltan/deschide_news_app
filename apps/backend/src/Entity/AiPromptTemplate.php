@@ -66,7 +66,7 @@ class AiPromptTemplate implements Translatable
 
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank]
-    #[Assert\Choice(choices: ['vault', 'content', 'translation', 'briefing'])]
+    #[Assert\Choice(choices: ['research', 'content', 'translation', 'briefing'])]
     #[Groups(['ai_tpl:read'])]
     private string $agentType;
 

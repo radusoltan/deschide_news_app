@@ -53,6 +53,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_article_category_status_published', columns: ['category_id', 'status', 'published_at'])]
 #[ORM\Index(name: 'idx_article_status_archived', columns: ['status', 'archived_at'])]
 #[ORM\Index(name: 'idx_article_content_hash', columns: ['content_hash'])]
+#[ORM\Index(name: 'idx_article_ingested_at', columns: ['ingested_at'])]
 #[ApiResource(
     operations: [
         new Get(
@@ -218,6 +219,11 @@ class Article implements Translatable
     #[MaxDepth(2)]
     private Collection $tags;
 
+    #[ORM\ManyToMany(targetEntity: Topic::class, mappedBy: 'articles')]
+    #[Groups(['article:read', 'article:write'])]
+    #[MaxDepth(2)]
+    private Collection $topics;
+
     // Non-translatable fields
     #[ORM\Column(type: Types::STRING, length: 20, enumType: ArticleStatus::class)]
     #[Groups(['article:read', 'article:write'])]
@@ -306,6 +312,11 @@ class Article implements Translatable
     #[Groups(['article:read', 'article:detail'])]
     private ?string $internalSummary = null;
 
+    // Timestamp when AI ingestion pipeline completed (entity extraction, MOC update, etc.)
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['article:read'])]
+    private ?DateTimeImmutable $ingestedAt = null;
+
     /**
      * Non-persisted field populated by ArticleProvider / SlugController.
      * Contains slug translations for all locales: {"ro": "slug-ro", "en": "slug-en", "ru": "slug-ru"}
@@ -321,6 +332,7 @@ class Article implements Translatable
         $this->articleImages = new ArrayCollection();
         $this->relatedArticles = new ArrayCollection();
         $this->tags = new ArrayCollection();
+        $this->topics = new ArrayCollection();
     }
 
     // Getters and setters
@@ -650,6 +662,33 @@ class Article implements Translatable
         return $this;
     }
 
+    /**
+     * @return Collection<int, Topic>
+     */
+    public function getTopics(): Collection
+    {
+        return $this->topics;
+    }
+
+    public function addTopic(Topic $topic): self
+    {
+        if (!$this->topics->contains($topic)) {
+            $this->topics->add($topic);
+            $topic->addArticle($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTopic(Topic $topic): self
+    {
+        if ($this->topics->removeElement($topic)) {
+            $topic->removeArticle($this);
+        }
+
+        return $this;
+    }
+
     public function getArchivedAt(): ?DateTimeImmutable
     {
         return $this->archivedAt;
@@ -777,6 +816,18 @@ class Article implements Translatable
     public function setInternalSummary(?string $internalSummary): self
     {
         $this->internalSummary = $internalSummary;
+
+        return $this;
+    }
+
+    public function getIngestedAt(): ?DateTimeImmutable
+    {
+        return $this->ingestedAt;
+    }
+
+    public function setIngestedAt(?DateTimeImmutable $ingestedAt): self
+    {
+        $this->ingestedAt = $ingestedAt;
 
         return $this;
     }

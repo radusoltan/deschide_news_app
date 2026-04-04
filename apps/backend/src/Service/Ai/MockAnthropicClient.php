@@ -42,8 +42,8 @@ final class MockAnthropicClient implements AnthropicClientInterface
     {
         $lower = mb_strtolower($message);
 
-        if (preg_match('/dosar|conexiun|vault|cercet|investig|entit[aă][țt]i|anali[zs]/u', $lower)) {
-            return 'vault';
+        if (preg_match('/dosar|conexiun|research|cercet|investig|entit[aă][țt]i|anali[zs]/u', $lower)) {
+            return 'research';
         }
         if (preg_match('/traduc|translat|evalueaz[aă].*traduc|limba/u', $lower)) {
             return 'translation';

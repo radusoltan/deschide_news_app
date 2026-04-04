@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\MessageHandler\Editorial;
 
+use App\Enum\NotificationImportance;
+use App\Enum\NotificationType;
 use App\Message\Editorial\EvaluateTranslationMessage;
-use App\Message\Editorial\SyncArticleToVaultMessage;
+use App\Repository\ArticleRepository;
+use App\Service\NotificationService;
 use App\Service\Translation\TranslationEvaluatorService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -17,6 +20,8 @@ final readonly class EvaluateTranslationHandler
     public function __construct(
         private TranslationEvaluatorService $evaluator,
         private MessageBusInterface $messageBus,
+        private ArticleRepository $articleRepository,
+        private NotificationService $notificationService,
         private LoggerInterface $logger,
     ) {}
 
@@ -29,12 +34,6 @@ final readonly class EvaluateTranslationHandler
                 $message->maxIterations,
             );
 
-            // Trigger vault sync after translation evaluation/optimization (Sprint 19)
-            $this->messageBus->dispatch(new SyncArticleToVaultMessage(
-                articleId: $message->articleId,
-                action: 'sync',
-            ));
-
             $this->logger->info('EvaluateTranslationHandler: completed', [
                 'articleId' => $result->articleId,
                 'lang' => $result->targetLang,
@@ -43,6 +42,30 @@ final readonly class EvaluateTranslationHandler
                 'iterations' => $result->iterations,
                 'status' => $result->finalStatus,
             ]);
+
+            // Notify editors about evaluation result
+            $article = $this->articleRepository->find($message->articleId);
+            $articleTitle = $article?->getTitle() ?? 'Articol #' . $message->articleId;
+            $lang = strtoupper($result->targetLang);
+            $score = round($result->finalScore * 100);
+
+            $importance = $result->finalStatus === 'complete'
+                ? NotificationImportance::LOW
+                : NotificationImportance::MEDIUM;
+
+            $title = $result->finalStatus === 'complete'
+                ? \sprintf('Evaluare traducere %s finalizată', $lang)
+                : \sprintf('Evaluare traducere %s — revizie necesară', $lang);
+
+            $this->notificationService->notify(
+                type: NotificationType::ARTICLE_TRANSLATED,
+                title: $title,
+                message: \sprintf('„%s" — scor calitate: %d%% (%s)', $articleTitle, $score, $result->finalStatus),
+                importance: $importance,
+                relatedEntityType: 'article',
+                relatedEntityId: $message->articleId,
+                actionUrl: \sprintf('/admin/articles/%d/edit', $message->articleId),
+            );
         } catch (\Throwable $e) {
             $this->logger->error('EvaluateTranslationHandler: failed', [
                 'articleId' => $message->articleId,

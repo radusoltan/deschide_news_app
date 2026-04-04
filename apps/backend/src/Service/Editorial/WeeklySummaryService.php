@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Editorial;
 
 use App\Entity\Article;
+use App\Entity\GeneratedContent;
 use App\Enum\ArticleStatus;
 use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -61,109 +62,23 @@ class WeeklySummaryService
     }
 
     /**
-     * Save the weekly summary to the vault.
+     * Save the weekly summary as a GeneratedContent entity.
      */
     public function saveSummary(
         string $summaryContent,
+        \DateTimeImmutable $weekStart,
         \DateTimeImmutable $weekEnd,
         int $articleCount,
-        string $vaultPath,
-        ?string $audioPath = null,
-    ): string {
-        $weekNumber = $weekEnd->format('Y-\WW');
-        $date = $weekEnd->format('Y-m-d');
+    ): GeneratedContent {
+        $gc = new GeneratedContent();
+        $gc->setType('weekly_summary');
+        $gc->setTitle('Sinteză săptămânală: ' . $weekStart->format('d.m') . ' — ' . $weekEnd->format('d.m.Y'));
+        $gc->setContent($summaryContent);
+        $gc->setMetadata(['week' => $weekEnd->format('Y-\WW'), 'article_count' => $articleCount]);
+        $this->em->persist($gc);
+        $this->em->flush();
 
-        $frontmatter = "type: weekly-summary\n"
-            . "week: {$weekNumber}\n"
-            . "date_created: {$date}\n"
-            . "article_count: {$articleCount}\n";
-
-        if ($audioPath !== null) {
-            $frontmatter .= "audio_path: {$audioPath}\n";
-        }
-
-        $frontmatter .= "ai:\n"
-            . "  auto_generated: true\n"
-            . "  reviewed: false\n"
-            . "  processed_by: gemini-cli\n"
-            . "  processed_at: {$date}\n";
-
-        $markdown = "---\n{$frontmatter}---\n\n{$summaryContent}\n";
-
-        if ($vaultPath === '') {
-            return '';
-        }
-
-        $dir = "{$vaultPath}/dossiers";
-        if (!is_dir($dir) && !mkdir($dir, 0o755, true)) {
-            return '';
-        }
-
-        $filePath = "{$dir}/weekly-summary-{$weekNumber}.md";
-        file_put_contents($filePath, $markdown);
-
-        return $filePath;
-    }
-
-    /**
-     * Generate Audio Overview via NotebookLM for the weekly summary.
-     */
-    public function generateAudioBriefing(
-        \DateTimeImmutable $weekEnd,
-        string $vaultPath,
-    ): ?string {
-        if (!$this->notebookLMService->isAvailable() || $this->weeklyNotebookId === '') {
-            return null;
-        }
-
-        $weekStart = $weekEnd->modify('-6 days');
-        $articles = $this->getArticlesForPeriod($weekStart, $weekEnd);
-
-        if ($articles === []) {
-            return null;
-        }
-
-        // Feed articles to the weekly notebook
-        foreach (array_slice($articles, 0, 20) as $article) {
-            $this->notebookLMService->addTextSource(
-                $this->weeklyNotebookId,
-                $article->getTitle() ?? 'Article',
-                mb_substr($article->getContent() ?? '', 0, 5000),
-            );
-        }
-
-        $weekNumber = $weekEnd->format('Y-\WW');
-        $instructions = "Briefing săptămânal Deschide News {$weekNumber}, rezumat concis al evenimentelor principale";
-
-        // Generate audio
-        $this->notebookLMService->generateAudio(
-            $this->weeklyNotebookId,
-            $instructions,
-            'brief',
-            'ro',
-        );
-
-        // Download audio
-        $audioDir = "{$vaultPath}/dossiers/audio";
-        if (!is_dir($audioDir) && !mkdir($audioDir, 0o755, true)) {
-            return null;
-        }
-
-        $audioPath = "{$audioDir}/weekly-{$weekNumber}.mp3";
-        $success = $this->notebookLMService->downloadAudio($this->weeklyNotebookId, $audioPath);
-
-        if (!$success) {
-            $this->logger->warning('WeeklySummary: audio download failed');
-
-            return null;
-        }
-
-        $this->logger->info('WeeklySummary: audio generated', [
-            'week' => $weekNumber,
-            'path' => $audioPath,
-        ]);
-
-        return $audioPath;
+        return $gc;
     }
 
     /**

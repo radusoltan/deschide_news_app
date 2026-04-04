@@ -40,7 +40,7 @@ class GeminiCliProviderTest extends TestCase
 
     public function testNotSupportsVault(): void
     {
-        $this->assertFalse($this->provider->supports(AiAgentType::VAULT));
+        $this->assertFalse($this->provider->supports(AiAgentType::RESEARCH));
     }
 
     public function testNotSupportsBriefing(): void

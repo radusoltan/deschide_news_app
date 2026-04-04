@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial;
 
+use App\Entity\GeneratedContent;
 use App\Service\Editorial\WeeklySummaryService;
 use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -12,11 +13,12 @@ use Psr\Log\NullLogger;
 
 class WeeklySummaryServiceTest extends TestCase
 {
-    public function testSaveSummaryWritesCorrectFrontmatter(): void
+    public function testSaveSummaryPersistsGeneratedContent(): void
     {
-        $tmpDir = sys_get_temp_dir() . '/vault-weekly-test-' . uniqid();
-
         $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects($this->once())->method('persist')->with($this->isInstanceOf(GeneratedContent::class));
+        $em->expects($this->once())->method('flush');
+
         $nlm = new NotebookLMService(enabled: false, cliPath: '/nonexistent', logger: new NullLogger());
 
         $service = new WeeklySummaryService(
@@ -26,31 +28,27 @@ class WeeklySummaryServiceTest extends TestCase
             logger: new NullLogger(),
         );
 
+        $weekStart = new \DateTimeImmutable('2026-03-30');
         $weekEnd = new \DateTimeImmutable('2026-04-05');
-        $filePath = $service->saveSummary(
+
+        $gc = $service->saveSummary(
             '# Test Summary Content',
+            $weekStart,
             $weekEnd,
             42,
-            $tmpDir,
         );
 
-        self::assertNotEmpty($filePath);
-        self::assertFileExists($filePath);
-
-        $content = file_get_contents($filePath);
-        self::assertStringContainsString('type: weekly-summary', $content);
-        self::assertStringContainsString('article_count: 42', $content);
-        self::assertStringContainsString('auto_generated: true', $content);
-        self::assertStringContainsString('reviewed: false', $content);
-        self::assertStringContainsString('# Test Summary Content', $content);
-
-        $this->removeDir($tmpDir);
+        self::assertInstanceOf(GeneratedContent::class, $gc);
+        self::assertSame('weekly_summary', $gc->getType());
+        self::assertStringContainsString('30.03', $gc->getTitle());
+        self::assertStringContainsString('05.04.2026', $gc->getTitle());
+        self::assertSame('# Test Summary Content', $gc->getContent());
+        self::assertSame(42, $gc->getMetadata()['article_count']);
+        self::assertSame('2026-W14', $gc->getMetadata()['week']);
     }
 
-    public function testSaveSummaryWithAudioPath(): void
+    public function testSaveSummaryReturnsGeneratedContent(): void
     {
-        $tmpDir = sys_get_temp_dir() . '/vault-weekly-test-' . uniqid();
-
         $em = $this->createMock(EntityManagerInterface::class);
         $nlm = new NotebookLMService(enabled: false, cliPath: '/nonexistent', logger: new NullLogger());
 
@@ -61,54 +59,12 @@ class WeeklySummaryServiceTest extends TestCase
             logger: new NullLogger(),
         );
 
+        $weekStart = new \DateTimeImmutable('2026-03-30');
         $weekEnd = new \DateTimeImmutable('2026-04-05');
-        $filePath = $service->saveSummary(
-            'Summary text',
-            $weekEnd,
-            10,
-            $tmpDir,
-            '/path/to/audio.mp3',
-        );
 
-        $content = file_get_contents($filePath);
-        self::assertStringContainsString('audio_path: /path/to/audio.mp3', $content);
+        $gc = $service->saveSummary('Summary text', $weekStart, $weekEnd, 10);
 
-        $this->removeDir($tmpDir);
-    }
-
-    public function testSaveSummaryReturnsEmptyStringForInvalidPath(): void
-    {
-        $em = $this->createMock(EntityManagerInterface::class);
-        $nlm = new NotebookLMService(enabled: false, cliPath: '/nonexistent', logger: new NullLogger());
-
-        $service = new WeeklySummaryService(
-            geminiCliPath: '/usr/bin/gemini',
-            em: $em,
-            notebookLMService: $nlm,
-            logger: new NullLogger(),
-        );
-
-        // Use a non-writable path
-        $filePath = $service->saveSummary('test', new \DateTimeImmutable(), 0, '');
-
-        self::assertSame('', $filePath);
-    }
-
-    private function removeDir(string $dir): void
-    {
-        if (!is_dir($dir)) {
-            return;
-        }
-
-        $items = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST,
-        );
-
-        foreach ($items as $item) {
-            $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
-        }
-
-        rmdir($dir);
+        self::assertSame('weekly_summary', $gc->getType());
+        self::assertSame('Summary text', $gc->getContent());
     }
 }

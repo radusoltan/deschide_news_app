@@ -15,31 +15,10 @@ final class BackgroundGeneratorService
 {
     private const GEMINI_TIMEOUT = 60;
     private const MAX_ES_RESULTS = 5;
-    private const MAX_MOC_LENGTH = 1500;
-    private const MAX_ATOMIC_NOTE_LENGTH = 500;
-    private const MAX_ENTITIES_FOR_NOTES = 3;
-
-    /** @var array<string, string> Category slug → MOC filename */
-    private const MOC_MAPPING = [
-        'politica' => 'MOC-Politica-Interna.md',
-        'politică' => 'MOC-Politica-Interna.md',
-        'economie' => 'MOC-Economie.md',
-        'integrare-ue' => 'MOC-Integrare-UE.md',
-        'justitie' => 'MOC-Justitie-Anticoruptie.md',
-        'justiție' => 'MOC-Justitie-Anticoruptie.md',
-        'transnistria' => 'MOC-Transnistria.md',
-        'extern' => 'MOC-Relatii-Externe.md',
-        'societate' => 'MOC-Societate.md',
-        'sport' => 'MOC-Sport.md',
-        'cultura' => 'MOC-Cultura.md',
-        'cultură' => 'MOC-Cultura.md',
-        'energie' => 'MOC-Energie.md',
-    ];
 
     public function __construct(
         private readonly SearchService $searchService,
         private readonly string $geminiCliPath,
-        private readonly string $vaultPath,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -62,20 +41,14 @@ final class BackgroundGeneratorService
     }
 
     /**
-     * Colectează context din 3 surse: Elasticsearch, MOC-uri, note atomice.
+     * Colectează context din Elasticsearch.
      */
     private function gatherContext(Article $article): ContextData
     {
         $contextData = new ContextData();
 
-        // SURSA 1: Articole anterioare din Elasticsearch
+        // SURSA: Articole anterioare din Elasticsearch
         $this->gatherFromElasticsearch($article, $contextData);
-
-        // SURSA 2: MOC-uri relevante din vault
-        $this->gatherFromMOCs($article, $contextData);
-
-        // SURSA 3: Note atomice din vault (persoane, instituții)
-        $this->gatherFromAtomicNotes($article, $contextData);
 
         return $contextData;
     }
@@ -107,76 +80,6 @@ final class BackgroundGeneratorService
             $this->logger->warning('BackgroundGenerator: ES search failed', [
                 'error' => $e->getMessage(),
             ]);
-        }
-    }
-
-    private function gatherFromMOCs(Article $article, ContextData $contextData): void
-    {
-        if ($this->vaultPath === '') {
-            return;
-        }
-
-        $categoryTitle = $article->getCategory()?->getTitle();
-        if ($categoryTitle === null) {
-            return;
-        }
-
-        $catSlug = mb_strtolower($categoryTitle);
-        if (!isset(self::MOC_MAPPING[$catSlug])) {
-            return;
-        }
-
-        $mocPath = $this->vaultPath . '/mocs/' . self::MOC_MAPPING[$catSlug];
-        if (!is_file($mocPath)) {
-            return;
-        }
-
-        $content = file_get_contents($mocPath);
-        if ($content === false) {
-            return;
-        }
-
-        $contextData->mocContent = mb_substr($content, 0, self::MAX_MOC_LENGTH);
-        $contextData->mocName = self::MOC_MAPPING[$catSlug];
-    }
-
-    private function gatherFromAtomicNotes(Article $article, ContextData $contextData): void
-    {
-        if ($this->vaultPath === '') {
-            return;
-        }
-
-        // Extract entity names from article title (simple heuristic: capitalized words of 3+ chars)
-        $title = $article->getTitle() ?? '';
-        preg_match_all('/\b[A-ZĂÂÎȘȚ][a-zăâîșț]{2,}(?:\s+[A-ZĂÂÎȘȚ][a-zăâîșț]{2,})*/u', $title, $matches);
-
-        $entities = array_slice($matches[0] ?? [], 0, self::MAX_ENTITIES_FOR_NOTES);
-
-        foreach ($entities as $entity) {
-            $slug = $this->slugify($entity);
-
-            $paths = [
-                $this->vaultPath . "/knowledge/persons/PER-{$slug}.md",
-                $this->vaultPath . "/knowledge/institutions/INST-{$slug}.md",
-            ];
-
-            foreach ($paths as $path) {
-                if (!is_file($path)) {
-                    continue;
-                }
-
-                $content = file_get_contents($path);
-                if ($content === false) {
-                    continue;
-                }
-
-                $contextData->atomicNotes[] = [
-                    'entity' => $entity,
-                    'content' => mb_substr($content, 0, self::MAX_ATOMIC_NOTE_LENGTH),
-                ];
-
-                break; // Found note for this entity, move to next
-            }
         }
     }
 
@@ -233,19 +136,6 @@ final class BackgroundGeneratorService
             ? implode("\n", $previousTitles)
             : 'Nu există articole anterioare relevante.';
 
-        // MOC content
-        $mocSection = $context->mocContent ?? 'Nu există dosar tematic disponibil.';
-        $mocLabel = $context->mocName ?? 'N/A';
-
-        // Atomic notes
-        $atomicInfo = [];
-        foreach ($context->atomicNotes as $note) {
-            $atomicInfo[] = "- {$note['entity']}: {$note['content']}";
-        }
-        $atomicSection = $atomicInfo !== []
-            ? implode("\n", $atomicInfo)
-            : 'Nu există note despre entitățile menționate.';
-
         return <<<PROMPT
 Ești un editor senior la portalul Deschide News din Republica Moldova.
 Generează un paragraf de CONTEXT ISTORIC (background) pentru un articol de știri.
@@ -256,12 +146,6 @@ Categorie: {$categoryTitle}
 
 Articole anterioare pe același subiect:
 {$previousSection}
-
-Informații din dosarul tematic ({$mocLabel}):
-{$mocSection}
-
-Entități relevante:
-{$atomicSection}
 
 Reguli:
 - Exact 1 paragraf, 3-5 propoziții
@@ -301,19 +185,5 @@ PROMPT;
 
             return null;
         }
-    }
-
-    private function slugify(string $text): string
-    {
-        $text = mb_strtolower($text);
-        $text = str_replace(
-            ['ă', 'â', 'î', 'ș', 'ț', 'ş', 'ţ', ' '],
-            ['a', 'a', 'i', 's', 't', 's', 't', '-'],
-            $text,
-        );
-        $text = preg_replace('/[^a-z0-9\-]/', '', $text);
-        $text = preg_replace('/-+/', '-', trim($text, '-'));
-
-        return mb_substr($text, 0, 60);
     }
 }

@@ -147,8 +147,8 @@ symfony console app:import:translations
 # Generate thumbnails after image import
 symfony console app:import:generate-thumbnails
 
-# Quick sample import (6 categories, 300 articles with translations for testing)
-symfony console app:sample-import
+# DEPRECATED: use app:dev:reset instead (fixtures + RSS import)
+# symfony console app:sample-import
 ```
 
 **Elasticsearch:**
@@ -169,6 +169,34 @@ symfony console app:cleanup-expired-locks
 
 # Publish scheduled articles (run via cron or scheduler)
 symfony console app:publish-scheduled-articles
+```
+
+**Editorial Context (AI Agent Access):**
+```bash
+# Export single article as Markdown (pipe-friendly for AI agents)
+symfony console app:context:export article {ID} --format=markdown --locale=ro
+
+# Export article as JSON
+symfony console app:context:export article {ID} --format=json --locale=en
+
+# Batch export recent articles
+symfony console app:context:export articles --limit=20 --category=politica
+
+# Export topics list
+symfony console app:context:export topics --format=json
+
+# Pipe to Gemini CLI
+symfony console app:context:export article 42 | gemini -p "Evaluează"
+
+# Write to file
+symfony console app:context:export article 42 --output=/tmp/article.md
+```
+
+**Dev Reset:**
+```bash
+# ⚠️ DOAR DEV: Reset complet DB + Cache
+symfony console app:dev:reset
+symfony console app:dev:reset --skip-fixtures --skip-elasticsearch
 ```
 
 **Code Quality:**

@@ -29,7 +29,6 @@ final class MetricsDashboardCommand extends Command
         $this
             ->addOption('period', 'p', InputOption::VALUE_REQUIRED, 'Ultimele N zile', '30')
             ->addOption('json', null, InputOption::VALUE_NONE, 'Output JSON pentru integrare')
-            ->addOption('vault', null, InputOption::VALUE_NONE, 'Scrie snapshot în vault')
         ;
     }
 
@@ -38,7 +37,6 @@ final class MetricsDashboardCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $days = (int) $input->getOption('period');
         $jsonOutput = $input->getOption('json');
-        $writeVault = $input->getOption('vault');
 
         $to = new \DateTimeImmutable('now');
         $from = $to->modify("-{$days} days");
@@ -57,8 +55,6 @@ final class MetricsDashboardCommand extends Command
         $qual = $metrics['quality'];
         $es = $metrics['elasticsearch'];
         $pipe = $metrics['pipeline'];
-        $vault = $metrics['vault'] ?? null;
-
         $io->writeln('');
         $io->writeln('<fg=cyan>═══════════════════════════════════════════</>');
         $io->writeln('<fg=cyan>  DESCHIDE NEWS — Dashboard Metrici</>');
@@ -97,13 +93,6 @@ final class MetricsDashboardCommand extends Command
                 : '<fg=green>0 erori</>',
         ));
 
-        if ($vault !== null) {
-            $io->writeln(\sprintf('  <fg=white>VAULT</> ............ <info>%d</info> note (<info>%s%%</info> orfane)',
-                $vault['total_notes'],
-                $vault['orphan_pct'],
-            ));
-        }
-
         $io->writeln('');
 
         // Top categories table
@@ -118,12 +107,6 @@ final class MetricsDashboardCommand extends Command
             $io->section('Status traduceri');
             $statusRows = array_map(fn ($k, $v) => [$k, $v], array_keys($trans['status_breakdown']), $trans['status_breakdown']);
             $io->table(['Status', 'Articole'], $statusRows);
-        }
-
-        // Write vault snapshot if requested
-        if ($writeVault) {
-            $this->metricsService->writeVaultSnapshot($metrics);
-            $io->success('Snapshot metrici scris în vault.');
         }
 
         return Command::SUCCESS;

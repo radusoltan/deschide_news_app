@@ -18,7 +18,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsCommand(
     name: 'app:editorial:ingest-article',
-    description: 'Run AI ingestion on an article (entity extraction, atomic notes, MOC update)',
+    description: 'Run AI ingestion on an article (entity extraction, connection detection)',
 )]
 final class IngestArticleCommand extends Command
 {
@@ -26,7 +26,6 @@ final class IngestArticleCommand extends Command
         private readonly ArticleIngestionService $ingestionService,
         private readonly EntityManagerInterface $em,
         private readonly MessageBusInterface $messageBus,
-        private readonly string $vaultPath = '',
     ) {
         parent::__construct();
     }
@@ -95,19 +94,11 @@ final class IngestArticleCommand extends Command
             return Command::SUCCESS;
         }
 
-        $io->section('Step 2: Atomic notes');
-        $created = $this->ingestionService->createAtomicNotes($entities, $article, $this->vaultPath);
-        $io->info("{$created} new notes created");
-
-        $io->section('Step 3: MOC updates');
-        $updated = $this->ingestionService->updateMOCs($article, $entities, $this->vaultPath);
-        $io->info("{$updated} MOCs updated");
-
-        $io->section('Step 4: NotebookLM feed');
+        $io->section('Step 2: NotebookLM feed');
         $fed = $this->ingestionService->feedNotebookLM($article);
         $io->info($fed ? 'Article fed to NotebookLM' : 'NotebookLM skipped (unavailable or no mapping)');
 
-        $io->success("Ingestion complete: {$entities->totalCount()} entities, {$created} notes, {$updated} MOCs");
+        $io->success("Ingestion complete: {$entities->totalCount()} entities extracted");
 
         return Command::SUCCESS;
     }

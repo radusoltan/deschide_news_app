@@ -11,6 +11,7 @@ use App\Entity\Article;
 use App\Entity\Author;
 use App\Entity\Category;
 use App\Entity\Tag;
+use App\Entity\Topic;
 use App\Enum\ArticleStatus;
 use App\Event\ArticleAutoCreatedEvent;
 use App\Event\ArticlePublishedEvent;
@@ -220,6 +221,31 @@ final class ArticleProcessor implements ProcessorInterface
                     }
                 }
 
+                // Sync topics collection (using managed entities)
+                $incomingTopicIds = [];
+                foreach ($data->getTopics() as $topic) {
+                    if ($topic->getId()) {
+                        $incomingTopicIds[] = $topic->getId();
+                    }
+                }
+                foreach ($existingEntity->getTopics()->toArray() as $topic) {
+                    if (!\in_array($topic->getId(), $incomingTopicIds, true)) {
+                        $existingEntity->removeTopic($topic);
+                    }
+                }
+                $existingTopicIds = [];
+                foreach ($existingEntity->getTopics() as $topic) {
+                    $existingTopicIds[] = $topic->getId();
+                }
+                foreach ($data->getTopics() as $topic) {
+                    if (!\in_array($topic->getId(), $existingTopicIds, true)) {
+                        $managedTopic = $this->getManagedTopic($topic);
+                        if ($managedTopic) {
+                            $existingEntity->addTopic($managedTopic);
+                        }
+                    }
+                }
+
                 // Use existing entity instead of deserialized one
                 $data = $existingEntity;
             }
@@ -264,6 +290,20 @@ final class ArticleProcessor implements ProcessorInterface
                 foreach ($managedTags as $managedTag) {
                     if ($managedTag) {
                         $data->addTag($managedTag);
+                    }
+                }
+
+                // Handle topics collection
+                $managedTopics = [];
+                foreach ($data->getTopics() as $topic) {
+                    $managedTopics[] = $this->getManagedTopic($topic);
+                }
+                foreach ($data->getTopics()->toArray() as $topic) {
+                    $data->removeTopic($topic);
+                }
+                foreach ($managedTopics as $managedTopic) {
+                    if ($managedTopic) {
+                        $data->addTopic($managedTopic);
                     }
                 }
 
@@ -455,6 +495,18 @@ final class ArticleProcessor implements ProcessorInterface
         }
 
         return $this->entityManager->getRepository(Tag::class)->find($tag->getId());
+    }
+
+    /**
+     * Get managed Topic entity from database.
+     */
+    private function getManagedTopic(Topic $topic): ?Topic
+    {
+        if (!$topic->getId()) {
+            return null;
+        }
+
+        return $this->entityManager->getRepository(Topic::class)->find($topic->getId());
     }
 
     /**

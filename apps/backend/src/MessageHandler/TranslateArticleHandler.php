@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\MessageHandler;
 
-use App\Message\Editorial\SyncArticleToVaultMessage;
 use App\Message\TranslateArticleMessage;
 use App\Repository\ArticleRepository;
 use App\Service\TranslationResultProcessor;
@@ -127,15 +126,6 @@ final readonly class TranslateArticleHandler
         if ($message->forceRetranslate) {
             $article->setRequestTranslation(false);
             $this->em->flush();
-        }
-
-        // Trigger vault sync to update .md with new translations (Sprint 19)
-        // Gedmo writes to ext_translations, so Article postUpdate won't fire
-        if ($successes !== []) {
-            $this->messageBus->dispatch(new SyncArticleToVaultMessage(
-                articleId: $message->articleId,
-                action: 'sync',
-            ));
         }
 
         $this->logger->info('TranslateArticleHandler: completed', [

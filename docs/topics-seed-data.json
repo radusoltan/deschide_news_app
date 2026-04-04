@@ -1,0 +1,358 @@
+[
+  {
+    "title_ro": "Politica",
+    "title_en": "Politics",
+    "title_ru": "Политика",
+    "description_ro": "Stiri si analize politice din Republica Moldova",
+    "children": [
+      {
+        "title_ro": "Alegeri",
+        "title_en": "Elections",
+        "title_ru": "Выборы",
+        "description_ro": "Procese electorale si campanii",
+        "children": [
+          {
+            "title_ro": "Alegeri Parlamentare",
+            "title_en": "Parliamentary Elections",
+            "title_ru": "Парламентские выборы",
+            "description_ro": null,
+            "children": []
+          },
+          {
+            "title_ro": "Alegeri Locale",
+            "title_en": "Local Elections",
+            "title_ru": "Местные выборы",
+            "description_ro": null,
+            "children": []
+          },
+          {
+            "title_ro": "Alegeri Prezidentiale",
+            "title_en": "Presidential Elections",
+            "title_ru": "Президентские выборы",
+            "description_ro": null,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title_ro": "Relatii Externe",
+        "title_en": "Foreign Relations",
+        "title_ru": "Внешние отношения",
+        "description_ro": "Diplomatia si relatiile internationale",
+        "children": [
+          {
+            "title_ro": "UE",
+            "title_en": "EU",
+            "title_ru": "ЕС",
+            "description_ro": "Integrarea europeana",
+            "children": []
+          },
+          {
+            "title_ro": "CSI",
+            "title_en": "CIS",
+            "title_ru": "СНГ",
+            "description_ro": null,
+            "children": []
+          },
+          {
+            "title_ro": "NATO",
+            "title_en": "NATO",
+            "title_ru": "НАТО",
+            "description_ro": null,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title_ro": "Partide Politice",
+        "title_en": "Political Parties",
+        "title_ru": "Политические партии",
+        "description_ro": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title_ro": "Economie",
+    "title_en": "Economy",
+    "title_ru": "Экономика",
+    "description_ro": "Stiri economice si financiare",
+    "children": [
+      {
+        "title_ro": "Energie",
+        "title_en": "Energy",
+        "title_ru": "Энергетика",
+        "description_ro": "Sectorul energetic",
+        "children": [
+          {
+            "title_ro": "Gaze Naturale",
+            "title_en": "Natural Gas",
+            "title_ru": "Природный газ",
+            "description_ro": null,
+            "children": []
+          },
+          {
+            "title_ro": "Electricitate",
+            "title_en": "Electricity",
+            "title_ru": "Электричество",
+            "description_ro": null,
+            "children": []
+          }
+        ]
+      },
+      {
+        "title_ro": "Agricultura",
+        "title_en": "Agriculture",
+        "title_ru": "Сельское хозяйство",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Bancar",
+        "title_en": "Banking",
+        "title_ru": "Банковское дело",
+        "description_ro": "Sistemul bancar si financiar",
+        "children": []
+      },
+      {
+        "title_ro": "IT & Tehnologie",
+        "title_en": "IT & Technology",
+        "title_ru": "ИТ и технологии",
+        "description_ro": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title_ro": "Social",
+    "title_en": "Social",
+    "title_ru": "Общество",
+    "description_ro": "Probleme sociale si comunitare",
+    "children": [
+      {
+        "title_ro": "Educatie",
+        "title_en": "Education",
+        "title_ru": "Образование",
+        "description_ro": "Sistemul educational",
+        "children": []
+      },
+      {
+        "title_ro": "Sanatate",
+        "title_en": "Healthcare",
+        "title_ru": "Здравоохранение",
+        "description_ro": "Sistemul de sanatate",
+        "children": []
+      },
+      {
+        "title_ro": "Munca si Migratie",
+        "title_en": "Labor & Migration",
+        "title_ru": "Труд и миграция",
+        "description_ro": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title_ro": "Justitie",
+    "title_en": "Justice",
+    "title_ru": "Юстиция",
+    "description_ro": "Sistemul judiciar si statul de drept",
+    "children": [
+      {
+        "title_ro": "Coruptie",
+        "title_en": "Corruption",
+        "title_ru": "Коррупция",
+        "description_ro": "Combaterea coruptiei",
+        "children": []
+      },
+      {
+        "title_ro": "Reforma Judiciara",
+        "title_en": "Judicial Reform",
+        "title_ru": "Судебная реформа",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Dosare de Profil Inalt",
+        "title_en": "High-Profile Cases",
+        "title_ru": "Громкие дела",
+        "description_ro": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title_ro": "Cultura si Societate",
+    "title_en": "Culture & Society",
+    "title_ru": "Культура и общество",
+    "description_ro": "Viata culturala si sociala",
+    "children": [
+      {
+        "title_ro": "Media",
+        "title_en": "Media",
+        "title_ru": "СМИ",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Religie",
+        "title_en": "Religion",
+        "title_ru": "Религия",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Sport",
+        "title_en": "Sports",
+        "title_ru": "Спорт",
+        "description_ro": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title_ro": "Securitate",
+    "title_en": "Security",
+    "title_ru": "Безопасность",
+    "description_ro": "Securitatea nationala si aparare",
+    "children": [
+      {
+        "title_ro": "Armata",
+        "title_en": "Military",
+        "title_ru": "Армия",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Servicii Secrete",
+        "title_en": "Intelligence Services",
+        "title_ru": "Спецслужбы",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Transnistria",
+        "title_en": "Transnistria",
+        "title_ru": "Приднестровье",
+        "description_ro": "Conflictul transnistrean",
+        "children": []
+      }
+    ]
+  },
+  {
+    "title_ro": "Mediu",
+    "title_en": "Environment",
+    "title_ru": "Экология",
+    "description_ro": "Protectia mediului si ecologie",
+    "children": [
+      {
+        "title_ro": "Schimbari Climatice",
+        "title_en": "Climate Change",
+        "title_ru": "Изменение климата",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Poluare",
+        "title_en": "Pollution",
+        "title_ru": "Загрязнение",
+        "description_ro": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title_ro": "Infrastructura",
+    "title_en": "Infrastructure",
+    "title_ru": "Инфраструктура",
+    "description_ro": "Dezvoltarea infrastructurii",
+    "children": [
+      {
+        "title_ro": "Transport",
+        "title_en": "Transport",
+        "title_ru": "Транспорт",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Constructii",
+        "title_en": "Construction",
+        "title_ru": "Строительство",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Digitalizare",
+        "title_en": "Digitalization",
+        "title_ru": "Цифровизация",
+        "description_ro": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title_ro": "Diaspora",
+    "title_en": "Diaspora",
+    "title_ru": "Диаспора",
+    "description_ro": "Moldovenii din strainatate",
+    "children": [
+      {
+        "title_ro": "Romania",
+        "title_en": "Romania",
+        "title_ru": "Румыния",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Europa de Vest",
+        "title_en": "Western Europe",
+        "title_ru": "Западная Европа",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Rusia",
+        "title_en": "Russia",
+        "title_ru": "Россия",
+        "description_ro": null,
+        "children": []
+      }
+    ]
+  },
+  {
+    "title_ro": "Regional",
+    "title_en": "Regional",
+    "title_ru": "Регион",
+    "description_ro": "Stiri din regiunile Moldovei",
+    "children": [
+      {
+        "title_ro": "Chisinau",
+        "title_en": "Chisinau",
+        "title_ru": "Кишинев",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Balti",
+        "title_en": "Balti",
+        "title_ru": "Бельцы",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Gagauzia",
+        "title_en": "Gagauzia",
+        "title_ru": "Гагаузия",
+        "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "UTA Gagauzia",
+        "title_en": "ATU Gagauzia",
+        "title_ru": "АТО Гагаузия",
+        "description_ro": "Autonomia teritoriala",
+        "children": []
+      }
+    ]
+  }
+]
