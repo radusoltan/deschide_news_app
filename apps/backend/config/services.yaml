@@ -365,6 +365,17 @@ services:
             $zohoAccountsUrl: '%env(ZOHO_ACCOUNTS_URL)%'
 
     # Aggregator Services (Sprint 24)
+    App\Service\Aggregator\ElasticsearchSimilarityService:
+        arguments:
+            $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
+            $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
+            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
+
+    App\Service\Aggregator\SemanticDeduplicatorService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
     App\Service\Aggregator\GoogleNewsRssAggregator:
         arguments:
             $keywords: '%aggregator.google_news_rss.keywords%'
