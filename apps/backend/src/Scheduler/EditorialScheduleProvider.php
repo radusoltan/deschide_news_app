@@ -7,15 +7,16 @@ namespace App\Scheduler;
 use App\Message\Editorial\GenerateDailyBriefingMessage;
 use App\Message\Editorial\GenerateDossiersMessage;
 use App\Message\Editorial\GenerateWeeklySummaryMessage;
+use App\Message\Editorial\ScrapeSourceMessage;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
 use Symfony\Component\Scheduler\Schedule;
 use Symfony\Component\Scheduler\ScheduleProviderInterface;
 
 /**
- * Schedules automated editorial content generation.
+ * Schedules automated editorial content generation and scraping.
  *
- * To run: php bin/console messenger:consume scheduler_editorial -vv
+ * To run: symfony console messenger:consume scheduler_editorial -vv
  */
 #[AsSchedule('editorial')]
 class EditorialScheduleProvider implements ScheduleProviderInterface
@@ -23,6 +24,8 @@ class EditorialScheduleProvider implements ScheduleProviderInterface
     public function getSchedule(): Schedule
     {
         return (new Schedule())
+            // === Content Generation ===
+
             // Daily briefing at 20:00 (after day's articles are published)
             ->add(RecurringMessage::cron(
                 '0 20 * * *',
@@ -37,6 +40,21 @@ class EditorialScheduleProvider implements ScheduleProviderInterface
             ->add(RecurringMessage::cron(
                 '0 22 1,15 * *',
                 new GenerateDossiersMessage(threshold: 5, days: 30),
+            ))
+
+            // === Scraping Schedules (priority-based) ===
+
+            // Priority 5: Local sources (Moldpres, IPN, Gov.md) — every 30 min
+            ->add(RecurringMessage::every('30 minutes',
+                new ScrapeSourceMessage(priorityGroup: 'local'),
+            ))
+            // Priority 3: High-priority international (Reuters, AP, UNIAN, Ukrinform) — every 2 hours
+            ->add(RecurringMessage::every('2 hours',
+                new ScrapeSourceMessage(priorityGroup: 'international_high'),
+            ))
+            // Priority 4: Medium-priority international (Agerpres, EC, Consilium, Europarl) — every 4 hours
+            ->add(RecurringMessage::every('4 hours',
+                new ScrapeSourceMessage(priorityGroup: 'international_medium'),
             ));
     }
 }
