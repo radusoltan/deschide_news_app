@@ -12,7 +12,10 @@ parameters:
             is_international: false
             priority_weight: 5
             relevance_filter: false
-        # ipn:  # DISABLED 2026-04-06 — WAF blocks all bot User-Agents with 403
+        # ipn:
+        #   DISABLED 2026-04-06: RSS blocat cu WAF 403.
+        #   IPN se preia EXCLUSIV din email via Zoho Mail (FetchPressEmailsCommand).
+        #   NU reactiva RSS pentru a evita duplicări email/RSS.
         #     name: 'IPN Press'
         #     base_url: 'https://www.ipn.md'
         #     feed_urls:
@@ -26,7 +29,7 @@ parameters:
         #     priority_weight: 5
         #     relevance_filter: false
         gov_md:
-            name: 'Gov.md'
+            name: 'Guvernul Republicii Moldova'
             base_url: 'https://gov.md'
             feed_urls:
                 ro: 'https://gov.md/ro/rss.xml'
@@ -35,7 +38,7 @@ parameters:
             original_language: 'ro'
             is_international: false
             priority_weight: 5
-            relevance_filter: false
+            relevance_filter: false  # 100% Moldova content, no relevance filter needed
 
         # === SURSE INTERNAȚIONALE ===
         # reuters_world:  # DISABLED 2026-04-06 — Reuters killed public RSS (404)
