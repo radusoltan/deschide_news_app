@@ -3,8 +3,11 @@ parameters:
     portal.guardian.keywords: ['Moldovan', 'Moldova', 'Transnistria']
 
     portal.ansa.enabled: true
-    portal.ansa.keywords: ['moldavo', 'moldava', 'Moldova']
-    portal.ansa.rate_limit_ms: 120000  # 2 min between keywords
+    portal.ansa.feed_urls:
+        mondo: 'https://www.ansa.it/sito/notizie/mondo/mondo_rss.xml'
+        cronaca: 'https://www.ansa.it/sito/notizie/cronaca/cronaca_rss.xml'
+        topnews: 'https://www.ansa.it/sito/notizie/topnews/topnews_rss.xml'
+    portal.ansa.rate_limit_ms: 60000  # 1 min between feeds (RSS is more tolerant than scraping)
 
     portal.corriere.enabled: true
     portal.corriere.keywords: ['moldavo', 'Moldova']
