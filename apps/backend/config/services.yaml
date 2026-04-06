@@ -364,6 +364,14 @@ services:
             $zohoInboxFolderId: '%env(ZOHO_INBOX_FOLDER_ID)%'
             $zohoAccountsUrl: '%env(ZOHO_ACCOUNTS_URL)%'
 
+    # Aggregator Services (Sprint 24)
+    App\Service\Aggregator\GoogleNewsRssAggregator:
+        arguments:
+            $keywords: '%aggregator.google_news_rss.keywords%'
+            $locales: '%aggregator.google_news_rss.locales%'
+            $userAgents: '%aggregator.google_news_rss.user_agents%'
+            $enabled: '%aggregator.google_news_rss.enabled%'
+
 # Test environment specific configuration
 when@test:
     services:
