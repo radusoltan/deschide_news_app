@@ -150,4 +150,48 @@ class RelevanceFilterServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $result->tier1Count);
         $this->assertGreaterThanOrEqual(1, $result->tier3Count);
     }
+
+    #[Test]
+    public function dynamicKeywordsAddScore(): void
+    {
+        $result = $this->service->evaluate(
+            'Ukraine peace talks continue',
+            'Negotiations in Geneva entered their third day.',
+            'Reuters',
+            dynamicKeywords: ['Ukraine peace', 'Geneva'],
+        );
+
+        $this->assertTrue($result->isRelevant);
+        // Dynamic keywords match: +1 each
+        $this->assertGreaterThanOrEqual(2, $result->score);
+    }
+
+    #[Test]
+    public function dynamicKeywordsAloneCanPassThreshold(): void
+    {
+        $result = $this->service->evaluate(
+            'Transnistria energy crisis deepens',
+            'The Transnistria region faces severe energy shortages.',
+            'Reuters',
+            dynamicKeywords: ['energy crisis'],
+        );
+
+        $this->assertTrue($result->isRelevant);
+        // Transnistria (tier1, +3) + dynamic (+1) = 4
+        $this->assertGreaterThanOrEqual(4, $result->score);
+    }
+
+    #[Test]
+    public function yamlFallbackWorksWhenNoDatabaseConfigured(): void
+    {
+        // The default setUp creates service without DB repository — it should use YAML keywords
+        $result = $this->service->evaluate(
+            'Moldova joins EU partnership program',
+            'The Republic of Moldova signed a new framework.',
+            'AP News',
+        );
+
+        $this->assertTrue($result->isRelevant);
+        $this->assertGreaterThanOrEqual(3, $result->score);
+    }
 }

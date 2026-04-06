@@ -1,0 +1,42 @@
+{
+  "response": {
+    "status": "ok",
+    "userTier": "developer",
+    "total": 2,
+    "startIndex": 1,
+    "pageSize": 20,
+    "currentPage": 1,
+    "pages": 1,
+    "orderBy": "newest",
+    "results": [
+      {
+        "id": "world/2026/apr/06/moldova-eu-integration-progress",
+        "type": "article",
+        "sectionId": "world",
+        "sectionName": "World news",
+        "webPublicationDate": "2026-04-06T08:00:00Z",
+        "webTitle": "Moldova makes significant progress on EU integration path",
+        "webUrl": "https://www.theguardian.com/world/2026/apr/06/moldova-eu-integration-progress",
+        "apiUrl": "https://content.guardianapis.com/world/2026/apr/06/moldova-eu-integration-progress",
+        "fields": {
+          "headline": "Moldova makes significant progress on EU integration path",
+          "trailText": "Moldovan government implements key reforms required for EU accession talks, with Brussels expressing cautious optimism about the country's trajectory."
+        }
+      },
+      {
+        "id": "world/2026/apr/05/transnistria-energy-crisis",
+        "type": "article",
+        "sectionId": "world",
+        "sectionName": "World news",
+        "webPublicationDate": "2026-04-05T14:30:00Z",
+        "webTitle": "Transnistria faces renewed energy concerns as gas supplies dwindle",
+        "webUrl": "https://www.theguardian.com/world/2026/apr/05/transnistria-energy-crisis",
+        "apiUrl": "https://content.guardianapis.com/world/2026/apr/05/transnistria-energy-crisis",
+        "fields": {
+          "headline": "Transnistria faces renewed energy concerns as gas supplies dwindle",
+          "trailText": "The breakaway region struggles with diminishing energy supplies amid ongoing geopolitical tensions in the region."
+        }
+      }
+    ]
+  }
+}

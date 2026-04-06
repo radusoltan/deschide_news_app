@@ -18,7 +18,9 @@ use App\Service\ContentHasher;
 use App\Service\NotificationFilterService;
 use App\Service\NotificationService;
 use App\Service\ScrapedContentCleaner;
+use App\Service\Scraping\RelevanceFilterService;
 use App\Service\SourceAuthorResolver;
+use App\Service\TopicDetectorService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -66,6 +68,19 @@ class ProcessScrapedArticleHandlerTest extends TestCase
 
         $this->em = $this->createMock(EntityManagerInterface::class);
 
+        $topicDetector = $this->createMock(TopicDetectorService::class);
+        $topicDetector->method('detectTopics')->willReturn([
+            ['topicId' => 1, 'confidence' => 'high', 'reason' => 'Direct mention'],
+        ]);
+
+        $relevanceFilter = new RelevanceFilterService(
+            tier1Keywords: ['Moldova', 'Gov.md'],
+            tier2Keywords: [],
+            tier3Keywords: [],
+            minScore: 1,
+            logger: new NullLogger(),
+        );
+
         $this->handler = new ProcessScrapedArticleHandler(
             $contentCleaner,
             $contentHasher,
@@ -73,6 +88,8 @@ class ProcessScrapedArticleHandlerTest extends TestCase
             $categoryDetector,
             $authorResolver,
             $notificationService,
+            $topicDetector,
+            $relevanceFilter,
             $this->em,
             new NullLogger(),
         );
@@ -94,6 +111,8 @@ class ProcessScrapedArticleHandlerTest extends TestCase
                 $this->assertSame('abc123hash', $entity->getContentHash());
                 $this->assertSame('politica', $entity->getCategorySlug());
                 $this->assertStringStartsWith('scrape:', $entity->getSourceName());
+                $this->assertIsArray($entity->getSuggestedTopics());
+                $this->assertNotNull($entity->getRelevanceScore());
 
                 return true;
             }));

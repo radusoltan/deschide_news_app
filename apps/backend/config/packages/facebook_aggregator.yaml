@@ -1,0 +1,10 @@
+parameters:
+    facebook.rss_bridge.enabled: true
+    facebook.rss_bridge.base_url: '%env(default:facebook.rss_bridge.default_url:FACEBOOK_RSS_BRIDGE_URL)%'
+    facebook.rss_bridge.default_url: ''
+    facebook.rss_bridge.rate_limit_seconds: 600  # 10 min between pages — Facebook blocks aggressively
+    facebook.rss_bridge.pages:
+        # ONLY public pages work via RSS-Bridge
+        - { name: 'Moldoveni în Italia', page_id: 'moldoveniitalia', language: 'ro' }
+        - { name: 'Moldoveni în Germania', page_id: 'moldovenigermania', language: 'ro' }
+        # Add manually after identification

@@ -16,6 +16,7 @@ class SourceTypeTest extends TestCase
         $this->assertSame('email', SourceType::EMAIL->value);
         $this->assertSame('scrape', SourceType::SCRAPE->value);
         $this->assertSame('manual', SourceType::MANUAL->value);
+        $this->assertSame('aggregator', SourceType::AGGREGATOR->value);
     }
 
     #[Test]
@@ -30,6 +31,6 @@ class SourceTypeTest extends TestCase
     public function casesReturnsAllValues(): void
     {
         $cases = SourceType::cases();
-        $this->assertCount(3, $cases);
+        $this->assertCount(4, $cases);
     }
 }

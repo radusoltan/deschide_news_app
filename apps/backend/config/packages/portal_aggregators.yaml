@@ -1,0 +1,24 @@
+parameters:
+    portal.guardian.enabled: true
+    portal.guardian.keywords: ['Moldovan', 'Moldova', 'Transnistria']
+
+    portal.ansa.enabled: true
+    portal.ansa.keywords: ['moldavo', 'moldava', 'Moldova']
+    portal.ansa.rate_limit_ms: 120000  # 2 min between keywords
+
+    portal.corriere.enabled: true
+    portal.corriere.keywords: ['moldavo', 'Moldova']
+    portal.corriere.rate_limit_ms: 300000  # 5 min between keywords
+
+    portal.lemonde.enabled: true
+    portal.lemonde.keywords: ['moldave', 'Moldavie']
+    portal.lemonde.rate_limit_ms: 300000  # 5 min between keywords
+
+    portal.bild_alternative.enabled: true
+    portal.bild_alternative.german_domains:
+        - 'bild.de'
+        - 'spiegel.de'
+        - 'faz.net'
+        - 'welt.de'
+        - 'sueddeutsche.de'
+        - 'focus.de'

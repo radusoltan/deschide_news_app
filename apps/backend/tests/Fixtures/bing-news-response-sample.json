@@ -1,0 +1,34 @@
+{
+  "_type": "News",
+  "readLink": "https://api.bing.microsoft.com/api/v7/news/search",
+  "queryContext": {
+    "originalQuery": "Transnistria"
+  },
+  "totalEstimatedMatches": 15,
+  "value": [
+    {
+      "name": "Transnistria region faces energy crisis amid winter",
+      "url": "https://example.com/transnistria-energy-2026",
+      "description": "The breakaway region of Transnistria is experiencing severe energy shortages as winter sets in.",
+      "provider": [
+        {
+          "name": "BBC News"
+        }
+      ],
+      "datePublished": "2026-04-05T14:00:00.0000000Z",
+      "category": "World"
+    },
+    {
+      "name": "EU sends humanitarian aid to Transnistria",
+      "url": "https://example.com/eu-aid-transnistria",
+      "description": "The European Union announced a humanitarian aid package for the Transnistria region.",
+      "provider": [
+        {
+          "name": "DW News"
+        }
+      ],
+      "datePublished": "2026-04-04T09:30:00.0000000Z",
+      "category": "World"
+    }
+  ]
+}

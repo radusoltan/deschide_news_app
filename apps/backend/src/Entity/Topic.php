@@ -145,6 +145,10 @@ class Topic implements Translatable
     #[Groups(['topic:read', 'topic:write'])]
     private bool $isActive = true;
 
+    #[ORM\Column(length: 20, options: ['default' => 'approved'])]
+    #[Groups(['topic:read', 'topic:write'])]
+    private string $reviewStatus = 'approved';
+
     /** @var Collection<int, Article> */
     #[ORM\ManyToMany(targetEntity: Article::class, inversedBy: 'topics')]
     #[ORM\JoinTable(name: 'article_topics')]
@@ -340,6 +344,18 @@ class Topic implements Translatable
     public function getUpdatedAt(): ?DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    public function getReviewStatus(): string
+    {
+        return $this->reviewStatus;
+    }
+
+    public function setReviewStatus(string $reviewStatus): self
+    {
+        $this->reviewStatus = $reviewStatus;
+
+        return $this;
     }
 
     public function setTranslatableLocale(?string $locale): void
