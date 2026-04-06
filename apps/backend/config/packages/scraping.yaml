@@ -112,6 +112,30 @@ parameters:
             priority_weight: 3
             relevance_filter: true
 
+        consilium_eu:
+            name: 'Consiliul European'
+            base_url: 'https://www.consilium.europa.eu'
+            feed_urls:
+                en: 'https://www.consilium.europa.eu/en/press/press-releases/rss/'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'en'
+            is_international: true
+            priority_weight: 4
+            relevance_filter: true
+
+        europarl:
+            name: 'Parlamentul European'
+            base_url: 'https://www.europarl.europa.eu'
+            feed_urls:
+                en: 'https://www.europarl.europa.eu/rss/doc/top-stories/en.xml'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'en'
+            is_international: true
+            priority_weight: 4
+            relevance_filter: true
+
     scraping.rate_limit_default: 1
     scraping.user_agent: 'DeschideNewsBot/1.0 (+https://deschide.md/bot)'
     scraping.timeout: 30

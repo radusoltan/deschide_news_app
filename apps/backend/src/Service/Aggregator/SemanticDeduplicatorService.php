@@ -13,8 +13,8 @@ use Symfony\Component\Process\Process;
 class SemanticDeduplicatorService
 {
     private const GEMINI_TIMEOUT = 30;
-    private const ES_DUPLICATE_THRESHOLD = 0.8;
-    private const ES_REVIEW_THRESHOLD = 0.6;
+    private const ES_DUPLICATE_THRESHOLD = 0.82;
+    private const ES_REVIEW_THRESHOLD = 0.55;
     private const GEMINI_CONFIDENCE_THRESHOLD = 0.7;
 
     public function __construct(

@@ -9,6 +9,7 @@ use App\Dto\Scraping\ScrapedContent;
 use App\Message\Editorial\ScrapeSourceMessage;
 use App\MessageHandler\Editorial\ScrapeSourceHandler;
 use App\Repository\ArticleRepository;
+use App\Service\Aggregator\TrendQueryGeneratorService;
 use App\Service\Scraping\ContentDeduplicator;
 use App\Service\Scraping\HtmlToMarkdownConverter;
 use App\Service\Scraping\RelevanceFilterService;
@@ -200,12 +201,16 @@ class ScrapeSourceHandlerFilterTest extends TestCase
                 ],
             ];
 
+        $trendQueryGenerator = $this->createMock(TrendQueryGeneratorService::class);
+        $trendQueryGenerator->method('getRelevanceKeywords')->willReturn([]);
+
         return new ScrapeSourceHandler(
             feedParser: $feedParser,
             scraper: $scraper,
             markdownConverter: $markdownConverter,
             deduplicator: $deduplicator,
             relevanceFilter: $relevanceFilter,
+            trendQueryGenerator: $trendQueryGenerator,
             messageBus: $bus,
             logger: $logger,
             sources: $sources,
