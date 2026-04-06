@@ -10,8 +10,11 @@ parameters:
     portal.ansa.rate_limit_ms: 60000  # 1 min between feeds (RSS is more tolerant than scraping)
 
     portal.corriere.enabled: true
-    portal.corriere.keywords: ['moldavo', 'Moldova']
-    portal.corriere.rate_limit_ms: 300000  # 5 min between keywords
+    portal.corriere.feed_urls:
+        esteri: 'https://www.corriere.it/dynamic-feed/rss/section/Esteri.xml'
+        cronache: 'https://www.corriere.it/dynamic-feed/rss/section/Cronache.xml'
+        homepage: 'https://xml2.corriereobjects.it/feed-hp/homepage.xml'
+    portal.corriere.rate_limit_ms: 60000  # 1 min between feeds (RSS is more tolerant than scraping)
 
     portal.lemonde.enabled: true
     portal.lemonde.keywords: ['moldave', 'Moldavie']
