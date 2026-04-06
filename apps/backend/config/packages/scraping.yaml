@@ -5,28 +5,26 @@ parameters:
             name: 'Moldpres'
             base_url: 'https://www.moldpres.md'
             feed_urls:
-                ro: 'https://www.moldpres.md/ro/rss'
-                en: 'https://www.moldpres.md/en/rss'
-                ru: 'https://www.moldpres.md/ru/rss'
-            type: 'rss'
+                ro: 'https://www.moldpres.md/rss'
+            type: 'scrape'  # No real RSS — /rss returns HTML listing page
             rate_limit: 1
             original_language: 'ro'
             is_international: false
             priority_weight: 5
             relevance_filter: false
-        ipn:
-            name: 'IPN Press'
-            base_url: 'https://www.ipn.md'
-            feed_urls:
-                ro: 'https://www.ipn.md/ro/rss'
-                en: 'https://www.ipn.md/en/rss'
-                ru: 'https://www.ipn.md/ru/rss'
-            type: 'rss'
-            rate_limit: 1
-            original_language: 'ro'
-            is_international: false
-            priority_weight: 5
-            relevance_filter: false
+        # ipn:  # DISABLED 2026-04-06 — WAF blocks all bot User-Agents with 403
+        #     name: 'IPN Press'
+        #     base_url: 'https://www.ipn.md'
+        #     feed_urls:
+        #         ro: 'https://www.ipn.md/ro/rss'
+        #         en: 'https://www.ipn.md/en/rss'
+        #         ru: 'https://www.ipn.md/ru/rss'
+        #     type: 'rss'
+        #     rate_limit: 1
+        #     original_language: 'ro'
+        #     is_international: false
+        #     priority_weight: 5
+        #     relevance_filter: false
         gov_md:
             name: 'Gov.md'
             base_url: 'https://gov.md'
@@ -40,23 +38,23 @@ parameters:
             relevance_filter: false
 
         # === SURSE INTERNAȚIONALE ===
-        reuters_world:
-            name: 'Reuters'
-            base_url: 'https://www.reuters.com'
-            feed_urls:
-                en: 'https://www.reuters.com/arc/outboundfeeds/v3/all/rss.xml'
-            type: 'rss'
-            rate_limit: 1
-            original_language: 'en'
-            is_international: true
-            priority_weight: 3
-            relevance_filter: true
+        # reuters_world:  # DISABLED 2026-04-06 — Reuters killed public RSS (404)
+        #     name: 'Reuters'
+        #     base_url: 'https://www.reuters.com'
+        #     feed_urls:
+        #         en: 'https://www.reuters.com/arc/outboundfeeds/v3/all/rss.xml'
+        #     type: 'rss'
+        #     rate_limit: 1
+        #     original_language: 'en'
+        #     is_international: true
+        #     priority_weight: 3
+        #     relevance_filter: true
 
         ap_news:
             name: 'AP News'
             base_url: 'https://apnews.com'
             feed_urls:
-                en: 'https://rsshub.app/apnews/topics/world-news'
+                en: 'https://feedx.net/rss/ap.xml'
             type: 'rss'
             rate_limit: 1
             original_language: 'en'
@@ -64,17 +62,17 @@ parameters:
             priority_weight: 3
             relevance_filter: true
 
-        agerpres:
-            name: 'Agerpres'
-            base_url: 'https://www.agerpres.ro'
-            feed_urls:
-                ro: 'https://www.agerpres.ro/rss/externe.xml'
-            type: 'rss'
-            rate_limit: 1
-            original_language: 'ro'
-            is_international: true
-            priority_weight: 4
-            relevance_filter: true
+        # agerpres:  # DISABLED 2026-04-06 — RSS redirects to dead proxy (allorigins.win → 522)
+        #     name: 'Agerpres'
+        #     base_url: 'https://www.agerpres.ro'
+        #     feed_urls:
+        #         ro: 'https://www.agerpres.ro/rss/externe.xml'
+        #     type: 'rss'
+        #     rate_limit: 1
+        #     original_language: 'ro'
+        #     is_international: true
+        #     priority_weight: 4
+        #     relevance_filter: true
 
         ec_press:
             name: 'Comisia Europeană'
@@ -92,7 +90,7 @@ parameters:
             name: 'UNIAN'
             base_url: 'https://www.unian.net'
             feed_urls:
-                en: 'https://www.unian.net/rss/index.xml'
+                en: 'https://rss.unian.net/site/news_eng.rss'
             type: 'rss'
             rate_limit: 1
             original_language: 'en'
@@ -112,17 +110,17 @@ parameters:
             priority_weight: 3
             relevance_filter: true
 
-        consilium_eu:
-            name: 'Consiliul European'
-            base_url: 'https://www.consilium.europa.eu'
-            feed_urls:
-                en: 'https://www.consilium.europa.eu/en/press/press-releases/rss/'
-            type: 'rss'
-            rate_limit: 1
-            original_language: 'en'
-            is_international: true
-            priority_weight: 4
-            relevance_filter: true
+        # consilium_eu:  # DISABLED 2026-04-06 — RSS endpoint returns 403
+        #     name: 'Consiliul European'
+        #     base_url: 'https://www.consilium.europa.eu'
+        #     feed_urls:
+        #         en: 'https://www.consilium.europa.eu/en/press/press-releases/rss/'
+        #     type: 'rss'
+        #     rate_limit: 1
+        #     original_language: 'en'
+        #     is_international: true
+        #     priority_weight: 4
+        #     relevance_filter: true
 
         europarl:
             name: 'Parlamentul European'
