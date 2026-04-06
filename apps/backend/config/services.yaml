@@ -369,6 +369,10 @@ services:
         arguments:
             $geminiCliPath: '%gemini_cli_path%'
 
+    App\Service\Aggregator\AggregatorRateLimiter:
+        arguments:
+            $aggregatorGoogleNewsLimiter: '@limiter.aggregator_google_news'
+
     App\Service\Aggregator\ElasticsearchSimilarityService:
         arguments:
             $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'

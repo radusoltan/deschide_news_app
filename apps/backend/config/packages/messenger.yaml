@@ -122,6 +122,9 @@ framework:
             'App\Message\Editorial\GenerateWeeklySummaryMessage': editorial
             'App\Message\Editorial\GenerateDossiersMessage': editorial
 
+            # Aggregator pipeline (Sprint 24)
+            'App\Message\Aggregator\ProcessAggregatorResultMessage': editorial
+
             # Mercure real-time updates (Sprint 20)
             'Symfony\Component\Mercure\Update': async
 
