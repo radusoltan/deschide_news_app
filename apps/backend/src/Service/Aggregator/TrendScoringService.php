@@ -85,8 +85,8 @@ readonly class TrendScoringService
             $ageHours = ($now - $createdAt->getTimestamp()) / 3600;
             $weight = $this->getSourceWeight($row['sourceEmail']);
 
-            // Newton's Law of Cooling decay
-            $topicScores[$topicId]['score'] += $weight / pow($ageHours + 2, 1.5);
+            // Newton's Law of Cooling decay (exponent 1.6 for stronger recency bias)
+            $topicScores[$topicId]['score'] += $weight / pow($ageHours + 2, 1.6);
             $topicScores[$topicId]['articleCount']++;
 
             if ($topicScores[$topicId]['latestArticleAt'] === null || $createdAt > $topicScores[$topicId]['latestArticleAt']) {
