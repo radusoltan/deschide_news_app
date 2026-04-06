@@ -1,0 +1,15 @@
+parameters:
+    telegram.enabled: true
+    telegram.rate_limit_seconds: 5
+    telegram.channels:
+        # Surse media VERIFICATE
+        - { name: 'Deschide.md', username: 'deschidemd', type: 'media' }
+        - { name: 'NewsMaker MD', username: 'newsmaker_md', type: 'media' }
+        - { name: 'NewsMaker RO', username: 'newsmakerromania', type: 'media' }
+        - { name: 'Ziarul de Gardă', username: 'zdgmd', type: 'media' }
+        # Surse Transnistria/Găgăuzia — CRITICE
+        - { name: 'TSV Pridnestrovie', username: 'tsv_pmr', type: 'regional' }
+        - { name: 'Novosti Pridnestrovya', username: 'novostipridn', type: 'regional' }
+        - { name: 'Nokta.md', username: 'noktamd', type: 'regional' }
+        # Grupuri diaspora — adăugate manual de Radu după identificare
+        # - { name: 'Moldoveni în Italia', username: 'moldoveni_in_italia', type: 'diaspora' }
