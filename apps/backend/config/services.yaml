@@ -365,6 +365,10 @@ services:
             $zohoAccountsUrl: '%env(ZOHO_ACCOUNTS_URL)%'
 
     # Aggregator Services (Sprint 24)
+    App\Service\Translation\AggregatorTranslationService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
     App\Service\Aggregator\ElasticsearchSimilarityService:
         arguments:
             $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
