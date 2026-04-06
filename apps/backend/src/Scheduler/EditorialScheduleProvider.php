@@ -26,10 +26,15 @@ class EditorialScheduleProvider implements ScheduleProviderInterface
         return (new Schedule())
             // === Content Generation ===
 
-            // Daily briefing at 20:00 (after day's articles are published)
+            // Morning briefing at 06:00 (overnight PressRelease sources)
+            ->add(RecurringMessage::cron(
+                '0 6 * * *',
+                new GenerateDailyBriefingMessage(type: 'morning'),
+            ))
+            // Evening briefing at 20:00 (after day's articles are published)
             ->add(RecurringMessage::cron(
                 '0 20 * * *',
-                new GenerateDailyBriefingMessage(),
+                new GenerateDailyBriefingMessage(type: 'evening'),
             ))
             // Weekly summary on Sunday at 21:00
             ->add(RecurringMessage::cron(

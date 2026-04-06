@@ -7,6 +7,7 @@ namespace App\Message\Editorial;
 final readonly class GenerateDailyBriefingMessage
 {
     public function __construct(
+        public string $type = 'evening',
         public ?string $date = null,
     ) {}
 }
