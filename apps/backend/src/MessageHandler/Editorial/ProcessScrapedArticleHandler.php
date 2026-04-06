@@ -15,7 +15,9 @@ use App\Service\ContentDeduplicator;
 use App\Service\ContentHasher;
 use App\Service\NotificationService;
 use App\Service\ScrapedContentCleaner;
+use App\Service\Scraping\RelevanceFilterService;
 use App\Service\SourceAuthorResolver;
+use App\Service\TopicDetectorService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -30,6 +32,8 @@ final readonly class ProcessScrapedArticleHandler
         private CategoryDetectorService $categoryDetector,
         private SourceAuthorResolver $authorResolver,
         private NotificationService $notificationService,
+        private TopicDetectorService $topicDetector,
+        private RelevanceFilterService $relevanceFilter,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
     ) {}
@@ -78,6 +82,30 @@ final readonly class ProcessScrapedArticleHandler
 
         if ($message->publishedAt !== null) {
             $pr->setReceivedAt($message->publishedAt);
+        }
+
+        // 7b. Calculate relevance score
+        $relevance = $this->relevanceFilter->evaluate(
+            $message->title,
+            strip_tags($cleanHtml),
+            $message->sourceName,
+        );
+        $pr->setRelevanceScore((float) $relevance->score);
+
+        // 7c. Detect topics via Gemini CLI (non-blocking)
+        try {
+            $topics = $this->topicDetector->detectTopics(
+                title: $message->title,
+                lead: $lead,
+                content: $cleanHtml,
+            );
+            $pr->setSuggestedTopics($topics);
+        } catch (\Throwable $e) {
+            $this->logger->warning('TopicDetector failed for scraped article: {error}', [
+                'error' => $e->getMessage(),
+                'title' => mb_substr($message->title, 0, 80),
+            ]);
+            $pr->setSuggestedTopics(null);
         }
 
         // 8. Persist

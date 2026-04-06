@@ -174,6 +174,16 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?int $attachmentSize = null;
 
+    /** AI-suggested topics from TopicDetectorService */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?array $suggestedTopics = null;
+
+    /** Relevance score from RelevanceFilterService */
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?float $relevanceScore = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -261,4 +271,10 @@ class PressRelease
     public function setAttachmentSize(?int $attachmentSize): static { $this->attachmentSize = $attachmentSize; return $this; }
 
     public function hasAttachment(): bool { return $this->attachmentPath !== null; }
+
+    public function getSuggestedTopics(): ?array { return $this->suggestedTopics; }
+    public function setSuggestedTopics(?array $suggestedTopics): static { $this->suggestedTopics = $suggestedTopics; return $this; }
+
+    public function getRelevanceScore(): ?float { return $this->relevanceScore; }
+    public function setRelevanceScore(?float $relevanceScore): static { $this->relevanceScore = $relevanceScore; return $this; }
 }
