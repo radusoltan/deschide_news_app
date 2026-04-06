@@ -146,12 +146,9 @@ PROMPT;
 
         try {
             $process = new Process(
-                [$this->geminiCliPath, '-p'],
-                null,
-                null,
-                $prompt,
-                self::GEMINI_TIMEOUT,
+                [$this->geminiCliPath, '-p', $prompt],
             );
+            $process->setTimeout(self::GEMINI_TIMEOUT);
             $process->run();
 
             if (!$process->isSuccessful()) {
