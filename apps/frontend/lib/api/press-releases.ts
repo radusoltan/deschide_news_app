@@ -25,7 +25,7 @@ export interface PressRelease {
   article: { '@id': string; id: number; title: string } | null;
   contentLength: number;
   contentHash: string | null;
-  sourceType: 'email' | 'scrape' | 'manual';
+  sourceType: 'email' | 'scrape' | 'manual' | 'aggregator';
   originalLanguage: string | null;
   sourceName: string | null;
   rejectionReason: string | null;
