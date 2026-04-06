@@ -35,6 +35,15 @@ const SOURCE_TYPE_BADGE: Record<string, { label: string; className: string }> = 
   email: { label: 'Email', className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800' },
   scrape: { label: 'Scrape', className: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' },
   manual: { label: 'Manual', className: 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-700/30 dark:text-gray-300 dark:border-gray-600' },
+  aggregator: { label: 'Agregator', className: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800' },
+};
+
+const LANGUAGE_BADGE: Record<string, { label: string; className: string }> = {
+  en: { label: 'EN', className: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-800' },
+  ru: { label: 'RU', className: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800' },
+  it: { label: 'IT', className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800' },
+  de: { label: 'DE', className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800' },
+  fr: { label: 'FR', className: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-300 dark:border-indigo-800' },
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -52,6 +61,7 @@ export default function PressQueuePage() {
   const [totalItems, setTotalItems] = useState(0);
   const [filter, setFilter] = useState<'pending' | 'approved' | 'rejected'>('pending');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const [languageFilter, setLanguageFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,14 +76,15 @@ export default function PressQueuePage() {
     setLoading(true);
     setError(null);
     const sourceParam = sourceFilter === 'all' ? undefined : sourceFilter;
-    const result = await fetchPressReleases(filter, page, sourceParam);
+    const langParam = languageFilter === 'all' ? undefined : languageFilter;
+    const result = await fetchPressReleases(filter, page, sourceParam, langParam);
     if (result.error) {
       setError(result.error);
     }
     setItems(result.items);
     setTotalItems(result.totalItems);
     setLoading(false);
-  }, [filter, page, sourceFilter]);
+  }, [filter, page, sourceFilter, languageFilter]);
 
   const loadCounts = useCallback(async () => {
     const c = await fetchPressReleaseCounts();
@@ -156,6 +167,12 @@ export default function PressQueuePage() {
     setExpandedId(null);
   };
 
+  const changeLanguageFilter = (l: string) => {
+    setLanguageFilter(l);
+    setPage(1);
+    setExpandedId(null);
+  };
+
   const formatDate = (dateStr: string) => {
     try {
       return new Date(dateStr).toLocaleDateString('ro-RO', {
@@ -170,6 +187,7 @@ export default function PressQueuePage() {
   const getSourceLabel = (pr: PressReleaseItem): string => {
     if (pr.sourceType === 'email') return pr.senderName || pr.senderAddress || 'Email';
     if (pr.sourceType === 'scrape') return pr.sourceName?.replace('scrape:', '') || 'Scrape';
+    if (pr.sourceType === 'aggregator') return pr.sourceName?.replace('aggregator:', '') || 'Agregator';
     return pr.sourceName || 'Manual';
   };
 
@@ -192,6 +210,7 @@ export default function PressQueuePage() {
               {counts.email > 0 && <span className="ml-2 text-blue-600 dark:text-blue-400">{counts.email} email</span>}
               {counts.scrape > 0 && <span className="ml-2 text-green-600 dark:text-green-400">{counts.scrape} scrape</span>}
               {counts.manual > 0 && <span className="ml-2 text-gray-600 dark:text-gray-400">{counts.manual} manual</span>}
+              {counts.aggregator > 0 && <span className="ml-2 text-violet-600 dark:text-violet-400">{counts.aggregator} agregator</span>}
             </p>
           )}
         </div>
@@ -256,6 +275,7 @@ export default function PressQueuePage() {
             { key: 'email', label: 'Email' },
             { key: 'scrape', label: 'Scrape' },
             { key: 'manual', label: 'Manual' },
+            { key: 'aggregator', label: 'Agregator' },
           ].map((s) => (
             <button
               key={s.key}
@@ -270,6 +290,21 @@ export default function PressQueuePage() {
             </button>
           ))}
         </div>
+
+        {/* Language Filter */}
+        <select
+          value={languageFilter}
+          onChange={(e) => changeLanguageFilter(e.target.value)}
+          className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-200 bg-surface text-secondary dark:bg-surface-dark dark:text-gray-400 dark:border-gray-600"
+        >
+          <option value="all">Toate limbile</option>
+          <option value="ro">RO</option>
+          <option value="en">EN</option>
+          <option value="ru">RU</option>
+          <option value="it">IT</option>
+          <option value="de">DE</option>
+          <option value="fr">FR</option>
+        </select>
       </div>
 
       {/* Error */}
@@ -322,6 +357,12 @@ export default function PressQueuePage() {
                       {SOURCE_TYPE_BADGE[pr.sourceType] && (
                         <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded border ${SOURCE_TYPE_BADGE[pr.sourceType].className}`}>
                           {SOURCE_TYPE_BADGE[pr.sourceType].label}
+                        </span>
+                      )}
+                      {/* Language Badge (show only for non-Romanian) */}
+                      {pr.originalLanguage && pr.originalLanguage !== 'ro' && LANGUAGE_BADGE[pr.originalLanguage] && (
+                        <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded border ${LANGUAGE_BADGE[pr.originalLanguage].className}`}>
+                          {LANGUAGE_BADGE[pr.originalLanguage].label}
                         </span>
                       )}
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded ${CATEGORY_COLORS[pr.categorySlug] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-primary-dark'}`}>
@@ -416,6 +457,19 @@ export default function PressQueuePage() {
                       <div>
                         <span className="text-xs font-medium text-secondary dark:text-gray-400">Sursa scraping: </span>
                         <span className="text-xs text-primary dark:text-primary-dark">{pr.sourceName}</span>
+                      </div>
+                    )}
+                    {pr.sourceType === 'aggregator' && pr.sourceName && (
+                      <div>
+                        <span className="text-xs font-medium text-secondary dark:text-gray-400">Sursa agregator: </span>
+                        <span className="text-xs text-primary dark:text-primary-dark">{pr.sourceName.replace('aggregator:', '')}</span>
+                      </div>
+                    )}
+                    {pr.originalLanguage && pr.originalLanguage !== 'ro' && (
+                      <div>
+                        <span className="text-xs font-medium text-secondary dark:text-gray-400">Limba originala: </span>
+                        <span className="text-xs text-primary dark:text-primary-dark">{pr.originalLanguage.toUpperCase()}</span>
+                        <span className="text-xs text-amber-600 dark:text-amber-400 ml-1">(tradus automat in RO)</span>
                       </div>
                     )}
                     {pr.rejectionReason && (

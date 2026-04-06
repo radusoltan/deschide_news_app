@@ -1,0 +1,30 @@
+parameters:
+    aggregator.google_news_rss.enabled: true
+    aggregator.google_news_rss.rate_limit_seconds: 300
+    aggregator.google_news_rss.keywords:
+        ro: ['moldovean', 'moldoveancă', 'moldoveni', 'Republica Moldova']
+        en: ['Moldovan citizen', 'Moldovan national', 'from Moldova']
+        ru: ['гражданин Молдовы', 'молдаванин']
+        it: ['moldavo', 'moldava', 'moldavi']
+        de: ['Moldauer', 'moldauisch']
+        fr: ['moldave', 'citoyen moldave']
+    aggregator.google_news_rss.locales:
+        ro: { hl: 'ro', gl: 'RO', ceid: 'RO:ro' }
+        en: { hl: 'en-US', gl: 'US', ceid: 'US:en' }
+        ru: { hl: 'ru', gl: 'RU', ceid: 'RU:ru' }
+        it: { hl: 'it', gl: 'IT', ceid: 'IT:it' }
+        de: { hl: 'de', gl: 'DE', ceid: 'DE:de' }
+        fr: { hl: 'fr', gl: 'FR', ceid: 'FR:fr' }
+    aggregator.google_news_rss.user_agents:
+        - 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+        - 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15'
+        - 'Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0'
+        - 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0'
+        - 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+
+framework:
+    rate_limiter:
+        aggregator_google_news:
+            policy: 'token_bucket'
+            limit: 1
+            rate: { interval: '5 minutes', amount: 1 }

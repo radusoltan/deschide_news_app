@@ -22,8 +22,9 @@ export interface PressReleaseItem {
   article: { id: number; title: string } | null;
   articleId: number | null;
   contentLength: number;
-  sourceType: 'email' | 'scrape' | 'manual';
+  sourceType: 'email' | 'scrape' | 'manual' | 'aggregator';
   sourceName: string | null;
+  originalLanguage: string | null;
   rejectionReason: string | null;
 }
 
@@ -37,6 +38,7 @@ export async function fetchPressReleases(
   status?: string,
   page: number = 1,
   sourceType?: string,
+  originalLanguage?: string,
 ): Promise<PressReleaseListResult> {
   const token = await getAccessToken();
   if (!token) {
@@ -47,6 +49,7 @@ export async function fetchPressReleases(
   if (status) params.set('status', status);
   if (page > 1) params.set('page', String(page));
   if (sourceType) params.set('sourceType', sourceType);
+  if (originalLanguage) params.set('originalLanguage', originalLanguage);
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/press_releases?${params}`, {
@@ -143,12 +146,13 @@ export interface SourceTypeCounts {
   email: number;
   scrape: number;
   manual: number;
+  aggregator: number;
   total: number;
 }
 
 export async function fetchPressReleaseCounts(): Promise<SourceTypeCounts> {
   const token = await getAccessToken();
-  if (!token) return { email: 0, scrape: 0, manual: 0, total: 0 };
+  if (!token) return { email: 0, scrape: 0, manual: 0, aggregator: 0, total: 0 };
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/press_releases/counts`, {
@@ -159,10 +163,10 @@ export async function fetchPressReleaseCounts(): Promise<SourceTypeCounts> {
       cache: 'no-store',
     });
 
-    if (!res.ok) return { email: 0, scrape: 0, manual: 0, total: 0 };
+    if (!res.ok) return { email: 0, scrape: 0, manual: 0, aggregator: 0, total: 0 };
     return await res.json();
   } catch {
-    return { email: 0, scrape: 0, manual: 0, total: 0 };
+    return { email: 0, scrape: 0, manual: 0, aggregator: 0, total: 0 };
   }
 }
 

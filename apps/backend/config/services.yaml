@@ -364,6 +364,33 @@ services:
             $zohoInboxFolderId: '%env(ZOHO_INBOX_FOLDER_ID)%'
             $zohoAccountsUrl: '%env(ZOHO_ACCOUNTS_URL)%'
 
+    # Aggregator Services (Sprint 24)
+    App\Service\Translation\AggregatorTranslationService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
+    App\Service\Aggregator\AggregatorRateLimiter:
+        arguments:
+            $aggregatorGoogleNewsLimiter: '@limiter.aggregator_google_news'
+
+    App\Service\Aggregator\ElasticsearchSimilarityService:
+        arguments:
+            $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
+            $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
+            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
+
+    App\Service\Aggregator\SemanticDeduplicatorService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
+    App\Service\Aggregator\GoogleNewsRssAggregator:
+        arguments:
+            $keywords: '%aggregator.google_news_rss.keywords%'
+            $locales: '%aggregator.google_news_rss.locales%'
+            $userAgents: '%aggregator.google_news_rss.user_agents%'
+            $enabled: '%aggregator.google_news_rss.enabled%'
+
 # Test environment specific configuration
 when@test:
     services:
