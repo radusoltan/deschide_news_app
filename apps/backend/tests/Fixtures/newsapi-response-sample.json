@@ -1,0 +1,32 @@
+{
+  "status": "ok",
+  "totalResults": 2,
+  "articles": [
+    {
+      "source": {
+        "id": "reuters",
+        "name": "Reuters"
+      },
+      "author": "Reuters Staff",
+      "title": "Moldova signs EU integration agreement",
+      "description": "The Republic of Moldova today signed a landmark EU integration agreement in Brussels.",
+      "url": "https://www.reuters.com/world/europe/moldova-eu-agreement-2026-04-06",
+      "urlToImage": "https://images.reuters.com/moldova-eu.jpg",
+      "publishedAt": "2026-04-06T10:00:00Z",
+      "content": "BRUSSELS (Reuters) - Moldova signed a comprehensive EU integration agreement on Monday, marking a significant step toward European membership. The agreement covers trade, judicial reform, and visa liberalization."
+    },
+    {
+      "source": {
+        "id": null,
+        "name": "Associated Press"
+      },
+      "author": "AP Staff",
+      "title": "Transnistria talks resume after months of stalemate",
+      "description": "Negotiations over Transnistria's status resumed in Vienna after a six-month pause.",
+      "url": "https://apnews.com/article/transnistria-talks-2026",
+      "urlToImage": null,
+      "publishedAt": "2026-04-06T08:30:00Z",
+      "content": "VIENNA (AP) - Talks over the status of Transnistria resumed in Vienna on Monday, with diplomats expressing cautious optimism about progress."
+    }
+  ]
+}
