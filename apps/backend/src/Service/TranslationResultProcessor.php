@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Entity\Article;
 use App\Enum\NotificationImportance;
 use App\Enum\NotificationType;
+use App\Service\Translation\ArticleTranslationCompletenessChecker;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use Psr\Log\LoggerInterface;
@@ -17,6 +18,7 @@ final class TranslationResultProcessor
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly NotificationService $notificationService,
+        private readonly ArticleTranslationCompletenessChecker $completenessChecker,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -167,6 +169,25 @@ final class TranslationResultProcessor
         $article->setTranslationStatus($status);
         $article->setTranslatedAt(new \DateTimeImmutable());
         $article->setTranslatedBy('gemini-agent');
+
+        // Auto-publish locales with complete translations (only if not needs_review)
+        if (!$needsReview) {
+            foreach ($allSavedLocales as $locale) {
+                if ($this->completenessChecker->isComplete($article, $locale)) {
+                    $article->addPublishedLocale($locale);
+                    $this->logger->info('Auto-published article in locale', [
+                        'articleId' => $article->getId(),
+                        'locale' => $locale,
+                    ]);
+                }
+            }
+        } else {
+            $this->logger->info('Article translated but needs review — locales not auto-published', [
+                'articleId' => $article->getId(),
+                'locales' => $allSavedLocales,
+            ]);
+        }
+
         $this->entityManager->flush();
 
         if ($allSavedLocales === []) {
