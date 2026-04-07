@@ -31,8 +31,8 @@ class EditorialScheduleProviderTest extends TestCase
         $schedule = $this->provider->getSchedule();
         $messages = $schedule->getRecurringMessages();
 
-        // 4 content generation + 3 scraping + 1 aggregator = 8
-        $this->assertCount(8, $messages);
+        // 4 content generation + 3 scraping + 1 aggregator + 2 clustering = 10
+        $this->assertCount(10, $messages);
     }
 
     public function testScheduleContainsTriggerAggregatorRunMessage(): void

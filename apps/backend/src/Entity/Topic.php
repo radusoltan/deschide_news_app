@@ -149,6 +149,11 @@ class Topic implements Translatable
     #[Groups(['topic:read', 'topic:write'])]
     private string $reviewStatus = 'approved';
 
+    /** Weight for importance scoring in StoryCluster calculations */
+    #[ORM\Column(type: Types::FLOAT, options: ['default' => 0.5])]
+    #[Groups(['topic:read', 'topic:write'])]
+    private float $weight = 0.5;
+
     /** @var Collection<int, Article> */
     #[ORM\ManyToMany(targetEntity: Article::class, inversedBy: 'topics')]
     #[ORM\JoinTable(name: 'article_topics')]
@@ -354,6 +359,18 @@ class Topic implements Translatable
     public function setReviewStatus(string $reviewStatus): self
     {
         $this->reviewStatus = $reviewStatus;
+
+        return $this;
+    }
+
+    public function getWeight(): float
+    {
+        return $this->weight;
+    }
+
+    public function setWeight(float $weight): self
+    {
+        $this->weight = $weight;
 
         return $this;
     }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Scheduler;
 
 use App\Message\Aggregator\TriggerAggregatorRunMessage;
+use App\Message\Clustering\TriggerClusterRunMessage;
+use App\Message\Clustering\TriggerClusterScoringMessage;
 use App\Message\Editorial\GenerateDailyBriefingMessage;
 use App\Message\Editorial\GenerateDossiersMessage;
 use App\Message\Editorial\GenerateWeeklySummaryMessage;
@@ -68,6 +70,17 @@ class EditorialScheduleProvider implements ScheduleProviderInterface
             // Aggregator run every 2 hours (Sprint 27)
             ->add(RecurringMessage::every('2 hours',
                 new TriggerAggregatorRunMessage(source: null, triggeredBy: 'scheduler'),
+            ))
+
+            // === Clustering Schedules (Sprint 30) ===
+
+            // Cluster unclustered PressReleases every 30 minutes
+            ->add(RecurringMessage::every('30 minutes',
+                new TriggerClusterRunMessage(since: '24h'),
+            ))
+            // Recalculate importance scores every 15 minutes
+            ->add(RecurringMessage::every('15 minutes',
+                new TriggerClusterScoringMessage(since: '48h', autoPromote: true),
             ));
     }
 }

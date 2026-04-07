@@ -16,6 +16,8 @@ use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use App\Repository\PressReleaseRepository;
 use App\State\PressReleaseApproveProcessor;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -86,7 +88,7 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?string $senderName = null;
 
-    #[ORM\Column(length: 500, nullable: true)]
+    #[ORM\Column(length: 2048, nullable: true)]
     #[Groups(['press:read'])]
     private ?string $sourceUrl = null;
 
@@ -196,10 +198,25 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?string $sourceImageUrl = null;
 
+    /** Publisher domain extracted from RSS <source> tag (e.g., "moldova1.md") */
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $sourcePublisherDomain = null;
+
+    /** Detected language of the content (ISO 639-1, e.g., "en", "ro", "fr") */
+    #[ORM\Column(length: 5, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $detectedLanguage = null;
+
+    /** @var Collection<int, StoryCluster> */
+    #[ORM\ManyToMany(targetEntity: StoryCluster::class, mappedBy: 'pressReleases')]
+    private Collection $storyClusters;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->receivedAt = new \DateTimeImmutable();
+        $this->storyClusters = new ArrayCollection();
     }
 
     public function getId(): ?int { return $this->id; }
@@ -298,4 +315,43 @@ class PressRelease
 
     public function getSourceImageUrl(): ?string { return $this->sourceImageUrl; }
     public function setSourceImageUrl(?string $sourceImageUrl): static { $this->sourceImageUrl = $sourceImageUrl; return $this; }
+
+    public function getSourcePublisherDomain(): ?string { return $this->sourcePublisherDomain; }
+    public function setSourcePublisherDomain(?string $sourcePublisherDomain): static { $this->sourcePublisherDomain = $sourcePublisherDomain; return $this; }
+
+    public function getDetectedLanguage(): ?string { return $this->detectedLanguage; }
+    public function setDetectedLanguage(?string $detectedLanguage): static { $this->detectedLanguage = $detectedLanguage; return $this; }
+
+    /** @return Collection<int, StoryCluster> */
+    public function getStoryClusters(): Collection { return $this->storyClusters; }
+
+    /**
+     * Computed field: returns the publisher hostname.
+     * Priority: sourcePublisherDomain (from RSS <source> tag) > parsed sourceUrl hostname.
+     */
+    #[Groups(['press:read'])]
+    public function getSourceHostname(): ?string
+    {
+        // Prefer explicit publisher domain (set from RSS <source> tag for aggregator articles)
+        if ($this->sourcePublisherDomain !== null) {
+            return $this->sourcePublisherDomain;
+        }
+
+        if ($this->sourceUrl === null) {
+            return null;
+        }
+
+        $host = parse_url($this->sourceUrl, \PHP_URL_HOST);
+
+        if ($host === null || $host === false) {
+            return null;
+        }
+
+        // Strip "www." prefix
+        if (str_starts_with($host, 'www.')) {
+            $host = substr($host, 4);
+        }
+
+        return $host;
+    }
 }
