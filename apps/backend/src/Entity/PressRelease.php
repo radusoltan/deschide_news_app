@@ -114,6 +114,13 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?string $originalLanguage = 'ro';
 
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $originalTitle = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $originalContent = null;
+
     #[ORM\Column(length: 100, nullable: true)]
     #[Groups(['press:read'])]
     private ?string $sourceName = null;
@@ -251,6 +258,12 @@ class PressRelease
 
     public function getOriginalLanguage(): ?string { return $this->originalLanguage; }
     public function setOriginalLanguage(?string $originalLanguage): static { $this->originalLanguage = $originalLanguage; return $this; }
+
+    public function getOriginalTitle(): ?string { return $this->originalTitle; }
+    public function setOriginalTitle(?string $originalTitle): static { $this->originalTitle = $originalTitle; return $this; }
+
+    public function getOriginalContent(): ?string { return $this->originalContent; }
+    public function setOriginalContent(?string $originalContent): static { $this->originalContent = $originalContent; return $this; }
 
     public function getSourceName(): ?string { return $this->sourceName; }
     public function setSourceName(?string $sourceName): static { $this->sourceName = $sourceName; return $this; }
