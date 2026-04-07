@@ -189,13 +189,15 @@ final readonly class RssFeedParser
         if (isset($namespaces['media'])) {
             $media = $item->children($namespaces['media']);
             if (isset($media->content)) {
-                $url = (string) $media->content['url'];
+                $attrs = $media->content->attributes();
+                $url = (string) ($attrs['url'] ?? '');
                 if ($url !== '') {
                     return $url;
                 }
             }
             if (isset($media->thumbnail)) {
-                $url = (string) $media->thumbnail['url'];
+                $attrs = $media->thumbnail->attributes();
+                $url = (string) ($attrs['url'] ?? '');
                 if ($url !== '') {
                     return $url;
                 }

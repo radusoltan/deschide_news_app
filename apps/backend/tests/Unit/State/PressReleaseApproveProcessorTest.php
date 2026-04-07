@@ -8,6 +8,7 @@ use App\Entity\Author;
 use App\Repository\ArticleRepository;
 use App\Repository\AuthorRepository;
 use App\Repository\CategoryRepository;
+use App\Service\RemoteImageDownloader;
 use App\Service\SourceAuthorResolver;
 use App\State\PressReleaseApproveProcessor;
 use Doctrine\ORM\EntityManagerInterface;
@@ -51,12 +52,15 @@ class PressReleaseApproveProcessorTest extends TestCase
         $messageBus = $this->createMock(MessageBusInterface::class);
         $messageBus->method('dispatch')->willReturnCallback(fn ($msg) => new Envelope($msg));
 
+        $imageDownloader = $this->createMock(RemoteImageDownloader::class);
+
         $this->processor = new PressReleaseApproveProcessor(
             $this->em,
             $this->categoryRepository,
             $this->articleRepository,
             $this->authorRepository,
             $sourceAuthorResolver,
+            $imageDownloader,
             $this->security,
             $messageBus,
             new NullLogger(),
