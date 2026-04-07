@@ -122,6 +122,7 @@ class ElasticService
                         'badge' => ['type' => 'keyword'],
                         'is_featured' => ['type' => 'boolean'],
                         'status' => ['type' => 'keyword'],
+                        'published_locales' => ['type' => 'keyword'],
                         'related_ids' => ['type' => 'integer'],
                         // Tags fields for enhanced search
                         'tags' => [

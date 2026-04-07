@@ -82,6 +82,7 @@ final readonly class ArticleIndexer
             'body_ro' => strip_tags($article->getContent() ?? ''),
             'description_ro' => $article->getLead() ?? '',
             'status' => $article->getStatus()->value,
+            'published_locales' => $article->getPublishedLocales(),
             'content_hash' => $article->getContentHash(),
             'date_created' => $article->getCreatedAt()?->format('c'),
             'date_published' => $article->getPublishedAt()?->format('c'),
