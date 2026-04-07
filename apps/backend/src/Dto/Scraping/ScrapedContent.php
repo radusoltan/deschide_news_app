@@ -14,5 +14,6 @@ final readonly class ScrapedContent
         public string $language,
         public string $sourceName,
         public ?\DateTimeImmutable $publishedAt = null,
+        public ?string $imageUrl = null,
     ) {}
 }

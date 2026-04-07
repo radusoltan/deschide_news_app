@@ -191,6 +191,11 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?float $relevanceScore = null;
 
+    /** Image URL extracted from source (RSS feed, article page) */
+    #[ORM\Column(length: 500, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $sourceImageUrl = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -290,4 +295,7 @@ class PressRelease
 
     public function getRelevanceScore(): ?float { return $this->relevanceScore; }
     public function setRelevanceScore(?float $relevanceScore): static { $this->relevanceScore = $relevanceScore; return $this; }
+
+    public function getSourceImageUrl(): ?string { return $this->sourceImageUrl; }
+    public function setSourceImageUrl(?string $sourceImageUrl): static { $this->sourceImageUrl = $sourceImageUrl; return $this; }
 }
