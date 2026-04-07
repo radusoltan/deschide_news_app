@@ -381,6 +381,14 @@ export default function PressQueuePage() {
                     <h3 className="text-sm font-semibold text-primary dark:text-primary-dark">
                       {pr.title}
                     </h3>
+                    {pr.originalTitle && pr.originalTitle !== pr.title && (
+                      <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500 italic">
+                        <span className="inline-flex items-center rounded bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 text-[10px] font-medium uppercase mr-1.5 not-italic">
+                          {pr.originalLanguage || 'EN'}
+                        </span>
+                        {pr.originalTitle}
+                      </p>
+                    )}
                     {pr.lead && (
                       <p className="mt-1 text-xs text-secondary dark:text-gray-400 line-clamp-2">
                         {pr.lead}

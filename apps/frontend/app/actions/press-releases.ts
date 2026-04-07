@@ -25,6 +25,7 @@ export interface PressReleaseItem {
   sourceType: 'email' | 'scrape' | 'manual' | 'aggregator';
   sourceName: string | null;
   originalLanguage: string | null;
+  originalTitle: string | null;
   rejectionReason: string | null;
 }
 
