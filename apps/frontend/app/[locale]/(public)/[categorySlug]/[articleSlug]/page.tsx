@@ -178,7 +178,9 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
     locale
   );
 
-  // Per-locale fallback: if not found in current locale, try RO and redirect
+  // Per-locale fallback: if not found in current locale, try RO and redirect.
+  // Note: works when RO and non-RO slugs match; if slugs differ per locale,
+  // the RO lookup won't find a match and we fall through to notFound().
   if (!article && locale !== 'ro') {
     const roArticle = await fetchArticleBySlug(categorySlug, articleSlug, 'ro');
     if (roArticle) {
