@@ -10,7 +10,7 @@
  * - SEO optimization
  */
 
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/api/important-articles';
 import { fetchRelatedArticles } from '@/lib/api/articles';
@@ -49,6 +49,7 @@ interface ArticlePageProps {
     categorySlug: string;
     articleSlug: string;
   }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 /**
@@ -160,8 +161,10 @@ export async function generateMetadata({
   }
 }
 
-export default async function ArticlePage({ params }: ArticlePageProps) {
+export default async function ArticlePage({ params, searchParams }: ArticlePageProps) {
   const { locale, categorySlug, articleSlug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const isLangFallback = resolvedSearchParams?.lang_fallback === 'true';
 
   // Validate locale to prevent Intl API errors
   if (!isValidLocale(locale)) {
@@ -169,11 +172,22 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   }
 
   // Fetch article from API with category validation
-  const article = await fetchArticleBySlug(
+  let article = await fetchArticleBySlug(
     categorySlug, // category slug
     articleSlug, // article slug
     locale
   );
+
+  // Per-locale fallback: if not found in current locale, try RO and redirect.
+  // Note: works when RO and non-RO slugs match; if slugs differ per locale,
+  // the RO lookup won't find a match and we fall through to notFound().
+  if (!article && locale !== 'ro') {
+    const roArticle = await fetchArticleBySlug(categorySlug, articleSlug, 'ro');
+    if (roArticle) {
+      redirect(`/ro/${categorySlug}/${articleSlug}?lang_fallback=true`);
+    }
+    notFound();
+  }
 
   if (!article) {
     notFound();
@@ -223,6 +237,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       >
         {/* Breadcrumb Navigation */}
         <Breadcrumb items={breadcrumbItems} locale={locale} className="mb-6" />
+
+        {/* Language fallback banner */}
+        {isLangFallback && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
+            Acest articol nu este disponibil în limba selectată. Afișăm versiunea în română.
+          </div>
+        )}
 
         {/* Article Header */}
         <ArticleHeader article={article} locale={locale} />

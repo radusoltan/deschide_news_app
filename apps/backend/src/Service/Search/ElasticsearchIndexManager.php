@@ -236,6 +236,7 @@ class ElasticsearchIndexManager
                 'categories' => ['type' => 'keyword'],
                 'tags' => ['type' => 'keyword'],
                 'status' => ['type' => 'keyword'],
+                'published_locales' => ['type' => 'keyword'],
                 'type' => ['type' => 'keyword'],
                 'source_name' => ['type' => 'keyword'],
                 'author' => ['type' => 'keyword'],

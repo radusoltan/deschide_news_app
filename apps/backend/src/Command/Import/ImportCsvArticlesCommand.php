@@ -358,6 +358,7 @@ class ImportCsvArticlesCommand extends Command
 
             // Status
             $article->setStatus(ArticleStatus::PUBLISHED);
+            $article->setPublishedLocales(['ro']);
 
             // Badges
             if (isset($record['Is Breaking News?']) && $record['Is Breaking News?'] === 'true') {

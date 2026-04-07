@@ -43,6 +43,7 @@ final class ArticleFactory extends PersistentObjectFactory
             'lead' => self::faker()->optional(0.8)->paragraph(),
             'content' => self::faker()->optional(0.9)->paragraphs(5, true),
             'status' => ArticleStatus::PUBLISHED,
+            'publishedLocales' => ['ro'],
             'isFeatured' => self::faker()->boolean(20), // 20% chance of being featured
             'viewCount' => self::faker()->numberBetween(0, 10000),
             'category' => CategoryFactory::new(),

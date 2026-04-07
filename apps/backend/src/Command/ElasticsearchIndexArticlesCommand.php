@@ -170,6 +170,7 @@ class ElasticsearchIndexArticlesCommand extends Command
                         'badge' => $article->getBadge()?->value,
                         'is_featured' => $article->isFeatured(),
                         'status' => $article->getStatus()->value,
+                        'published_locales' => $article->getPublishedLocales(),
                         'related_ids' => $relatedIds,
                         'tags' => $tags,
                         'tag_names' => implode(' ', $tagNames),

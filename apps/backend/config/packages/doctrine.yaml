@@ -1,6 +1,8 @@
 doctrine:
     dbal:
         default_connection: default
+        types:
+            text_array: App\Doctrine\Type\TextArrayType
         connections:
             default:
                 url: '%env(resolve:DATABASE_URL)%'
@@ -36,6 +38,9 @@ doctrine:
                 identity_generation_preferences:
                     Doctrine\DBAL\Platforms\PostgreSQLPlatform: identity
                 validate_xml_mapping: true
+                dql:
+                    string_functions:
+                        ARRAY_CONTAINS: App\Doctrine\DQL\ArrayContainsFunction
                 metadata_cache_driver:
                     type: pool
                     pool: doctrine.system_cache_pool

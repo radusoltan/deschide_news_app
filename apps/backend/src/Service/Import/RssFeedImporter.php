@@ -284,6 +284,7 @@ final class RssFeedImporter
         $article->setLead($lead !== '' ? $lead : null);
         $article->setContent($content);
         $article->setStatus(ArticleStatus::PUBLISHED);
+        $article->setPublishedLocales(['ro']);
         $article->setPublishedAt($pubDate);
         $article->setCategory($category);
         $article->addAuthor($author);

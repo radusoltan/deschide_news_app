@@ -11,6 +11,12 @@ const LOCALE_OPTIONS: Array<{ code: Locale; label: string; lang: string }> = [
   { code: 'en', label: 'English', lang: 'en' },
 ];
 
+const UNAVAILABLE_TOOLTIP: Record<string, string> = {
+  ro: 'Traducerea nu este disponibilă',
+  en: 'Translation not available',
+  ru: 'Перевод недоступен',
+};
+
 function buildLocaleHref(pathname: string, locale: Locale): string {
   const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
   const segments = normalizedPath.split('/').filter(Boolean);
@@ -25,7 +31,12 @@ function buildLocaleHref(pathname: string, locale: Locale): string {
   return `/${segments.join('/')}`;
 }
 
-export default function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  /** When set, locales not in this list are shown as disabled */
+  publishedLocales?: string[];
+}
+
+export default function LanguageSwitcher({ publishedLocales }: LanguageSwitcherProps = {}) {
   const pathname = usePathname() || '/';
   const intl = useIntl();
   const currentLocale = (intl.locale as Locale) || 'ro';
@@ -37,23 +48,34 @@ export default function LanguageSwitcher() {
     >
       {LOCALE_OPTIONS.map((option, index) => {
         const isCurrent = option.code === currentLocale;
+        const isAvailable = !publishedLocales || publishedLocales.includes(option.code);
 
         return (
           <span key={option.code} className="flex items-center">
-            <Link
-              href={buildLocaleHref(pathname, option.code)}
-              aria-current={isCurrent ? 'true' : undefined}
-              aria-label={`Switch to ${option.label}`}
-              lang={option.lang}
-              className={[
-                'rounded-sm px-1.5 py-1 transition-colors',
-                isCurrent
-                  ? 'font-semibold text-[var(--color-text-primary)] underline underline-offset-4 dark:text-[var(--color-text-primary-dark)]'
-                  : 'hover:text-[var(--color-accent)]',
-              ].join(' ')}
-            >
-              {option.label}
-            </Link>
+            {isAvailable ? (
+              <Link
+                href={buildLocaleHref(pathname, option.code)}
+                aria-current={isCurrent ? 'true' : undefined}
+                aria-label={`Switch to ${option.label}`}
+                lang={option.lang}
+                className={[
+                  'rounded-sm px-1.5 py-1 transition-colors',
+                  isCurrent
+                    ? 'font-semibold text-[var(--color-text-primary)] underline underline-offset-4 dark:text-[var(--color-text-primary-dark)]'
+                    : 'hover:text-[var(--color-accent)]',
+                ].join(' ')}
+              >
+                {option.label}
+              </Link>
+            ) : (
+              <span
+                title={UNAVAILABLE_TOOLTIP[currentLocale] || UNAVAILABLE_TOOLTIP.en}
+                lang={option.lang}
+                className="cursor-not-allowed rounded-sm px-1.5 py-1 opacity-40"
+              >
+                {option.label}
+              </span>
+            )}
             {index < LOCALE_OPTIONS.length - 1 && (
               <span
                 aria-hidden="true"

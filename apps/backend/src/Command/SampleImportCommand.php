@@ -462,6 +462,7 @@ class SampleImportCommand extends Command
 
                 $article->setPublishedAt(new DateTimeImmutable($articleData['PublishDate']));
                 $article->setStatus(ArticleStatus::PUBLISHED);
+                $article->setPublishedLocales(['ro']);
                 $article->setViewCount(rand(100, 5000)); // Random for demo
 
                 // Assign category

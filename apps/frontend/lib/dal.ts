@@ -201,6 +201,7 @@ export interface Article {
   relatedArticles?: Array<string | object>; // Array of related article IRIs or objects
   metaTitle?: string | null;
   metaDescription?: string | null;
+  publishedLocales?: string[];
 }
 
 export interface ArticlesCollection {

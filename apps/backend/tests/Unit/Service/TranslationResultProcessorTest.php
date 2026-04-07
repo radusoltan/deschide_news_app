@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Service\NotificationFilterService;
 use App\Service\NotificationService;
 use App\Service\ProcessResult;
+use App\Service\Translation\ArticleTranslationCompletenessChecker;
 use App\Service\TranslationResultProcessor;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
@@ -56,9 +57,13 @@ class TranslationResultProcessorTest extends TestCase
             'fake-jwt-token',
         );
 
+        // ArticleTranslationCompletenessChecker is final — build a real instance
+        $completenessChecker = new ArticleTranslationCompletenessChecker($this->em);
+
         $this->processor = new TranslationResultProcessor(
             $this->em,
             $this->notificationService,
+            $completenessChecker,
             new NullLogger(),
         );
     }
@@ -361,6 +366,7 @@ class TranslationResultProcessorTest extends TestCase
         return new TranslationResultProcessor(
             $this->em,
             $notificationService,
+            new ArticleTranslationCompletenessChecker($this->em),
             new NullLogger(),
         );
     }

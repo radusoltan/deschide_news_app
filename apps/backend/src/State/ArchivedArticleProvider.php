@@ -70,7 +70,14 @@ final class ArchivedArticleProvider implements ProviderInterface
 
             // Gedmo HINT_TRANSLATABLE_LOCALE already loads translations at query time
             // No refresh() calls needed - they cause N+1 queries
-            return $query->getOneOrNullResult();
+            $result = $query->getOneOrNullResult();
+
+            // Per-locale publishing: return 404 if article not published in requested locale
+            if ($result instanceof Article && !$result->isPublishedInLocale($locale)) {
+                return null;
+            }
+
+            return $result;
         }
 
         // Handle collection retrieval - only archived articles
@@ -82,7 +89,9 @@ final class ArchivedArticleProvider implements ProviderInterface
             ->leftJoin('a.tags', 't')
             ->addSelect('t')
             ->andWhere('a.status = :archived_status')
-            ->setParameter('archived_status', 'archived');
+            ->setParameter('archived_status', 'archived')
+            ->andWhere('ARRAY_CONTAINS(a.publishedLocales, :currentLocale) = true')
+            ->setParameter('currentLocale', $locale);
 
         // Apply filters from query parameters
         if ($request) {

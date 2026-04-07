@@ -12,6 +12,7 @@ use App\Repository\ArticleRepository;
 use App\Service\NotificationFilterService;
 use App\Service\NotificationService;
 use App\Service\ProcessResult;
+use App\Service\Translation\ArticleTranslationCompletenessChecker;
 use App\Service\TranslationResultProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -56,6 +57,7 @@ class TranslateArticleHandlerTest extends TestCase
         $this->resultProcessor = new TranslationResultProcessor(
             $this->em,
             $notificationService,
+            new ArticleTranslationCompletenessChecker($this->em),
             new NullLogger(),
         );
 

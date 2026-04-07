@@ -118,7 +118,8 @@ class SlugController extends AbstractController
             $this->populateArticleTranslatedSlugs($article);
         }
 
-        if (!$article) {
+        // Per-locale publishing: return 404 if article not published in requested locale
+        if (!$article || !$article->isPublishedInLocale($locale)) {
             return new JsonResponse([
                 '@context' => '/api/contexts/Error',
                 '@type' => 'hydra:Error',
