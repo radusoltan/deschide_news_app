@@ -8,6 +8,7 @@ use App\Entity\PressRelease;
 use App\Enum\DeduplicationResult;
 use App\Message\Aggregator\ProcessAggregatorResultMessage;
 use App\MessageHandler\Aggregator\ProcessAggregatorResultHandler;
+use App\Service\Aggregator\AggregatorStatsCollector;
 use App\Service\Aggregator\PressReleaseAggregatorFactory;
 use App\Service\Aggregator\SemanticDeduplicatorService;
 use App\Service\Translation\AggregatorTranslationService;
@@ -32,7 +33,10 @@ class ProcessAggregatorResultHandlerTest extends TestCase
 
         $translation = $this->createMock(AggregatorTranslationService::class);
 
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $em, new NullLogger());
+        $statsCollector = $this->createMock(AggregatorStatsCollector::class);
+        $statsCollector->expects(self::never())->method('invalidateCache');
+
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $em, new NullLogger(), $statsCollector);
         $handler($this->createMessage());
     }
 
@@ -54,7 +58,10 @@ class ProcessAggregatorResultHandlerTest extends TestCase
         $translation = $this->createMock(AggregatorTranslationService::class);
         $translation->expects(self::once())->method('translateToRomanian');
 
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $em, new NullLogger());
+        $statsCollector = $this->createMock(AggregatorStatsCollector::class);
+        $statsCollector->expects(self::once())->method('invalidateCache');
+
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $em, new NullLogger(), $statsCollector);
         $handler($this->createMessage(sourceLanguage: 'en'));
     }
 
@@ -76,7 +83,10 @@ class ProcessAggregatorResultHandlerTest extends TestCase
         $translation = $this->createMock(AggregatorTranslationService::class);
         $translation->expects(self::never())->method('translateToRomanian');
 
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $em, new NullLogger());
+        $statsCollector = $this->createMock(AggregatorStatsCollector::class);
+        $statsCollector->expects(self::once())->method('invalidateCache');
+
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $em, new NullLogger(), $statsCollector);
         $handler($this->createMessage(sourceLanguage: 'ro'));
     }
 
@@ -97,7 +107,10 @@ class ProcessAggregatorResultHandlerTest extends TestCase
 
         $translation = $this->createMock(AggregatorTranslationService::class);
 
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $em, new NullLogger());
+        $statsCollector = $this->createMock(AggregatorStatsCollector::class);
+        $statsCollector->expects(self::once())->method('invalidateCache');
+
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $em, new NullLogger(), $statsCollector);
         $handler($this->createMessage());
     }
 

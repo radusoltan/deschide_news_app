@@ -8,6 +8,7 @@ use App\Dto\Aggregator\AggregatorResult;
 use App\Enum\AggregatorSourceType;
 use App\Enum\DeduplicationResult;
 use App\Message\Aggregator\ProcessAggregatorResultMessage;
+use App\Service\Aggregator\AggregatorStatsCollector;
 use App\Service\Aggregator\PressReleaseAggregatorFactory;
 use App\Service\Aggregator\SemanticDeduplicatorService;
 use App\Service\Translation\AggregatorTranslationService;
@@ -24,6 +25,7 @@ final readonly class ProcessAggregatorResultHandler
         private AggregatorTranslationService $translationService,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
+        private AggregatorStatsCollector $statsCollector,
     ) {}
 
     public function __invoke(ProcessAggregatorResultMessage $message): void
@@ -68,6 +70,8 @@ final readonly class ProcessAggregatorResultHandler
 
         $this->em->persist($pressRelease);
         $this->em->flush();
+
+        $this->statsCollector->invalidateCache();
 
         $this->logger->info('ProcessAggregatorResultHandler: saved PressRelease #{id}', [
             'id' => $pressRelease->getId(),

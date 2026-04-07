@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Scheduler;
 
+use App\Message\Aggregator\TriggerAggregatorRunMessage;
 use App\Message\Editorial\GenerateDailyBriefingMessage;
 use App\Message\Editorial\GenerateDossiersMessage;
 use App\Message\Editorial\GenerateWeeklySummaryMessage;
@@ -60,6 +61,13 @@ class EditorialScheduleProvider implements ScheduleProviderInterface
             // Priority 4: Medium-priority international (Agerpres, EC, Consilium, Europarl) — every 4 hours
             ->add(RecurringMessage::every('4 hours',
                 new ScrapeSourceMessage(priorityGroup: 'international_medium'),
+            ))
+
+            // === Aggregator Schedules ===
+
+            // Aggregator run every 2 hours (Sprint 27)
+            ->add(RecurringMessage::every('2 hours',
+                new TriggerAggregatorRunMessage(source: null, triggeredBy: 'scheduler'),
             ));
     }
 }

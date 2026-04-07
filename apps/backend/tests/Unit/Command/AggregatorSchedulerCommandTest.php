@@ -8,6 +8,7 @@ use App\Command\AggregatorSchedulerCommand;
 use App\Dto\Aggregator\AggregatorResult;
 use App\Enum\AggregatorSourceType;
 use App\Service\Aggregator\AggregatorInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -37,7 +38,9 @@ class AggregatorSchedulerCommandTest extends TestCase
         $bus = $this->createMock(MessageBusInterface::class);
         $bus->expects(self::never())->method('dispatch');
 
-        $command = new AggregatorSchedulerCommand([$aggregator], $bus);
+        $em = $this->createMock(EntityManagerInterface::class);
+
+        $command = new AggregatorSchedulerCommand([$aggregator], $bus, $em);
         $tester = new CommandTester($command);
         $tester->execute(['--dry-run' => true]);
 
@@ -78,7 +81,11 @@ class AggregatorSchedulerCommandTest extends TestCase
             ->method('dispatch')
             ->willReturn(new Envelope(new \stdClass()));
 
-        $command = new AggregatorSchedulerCommand([$aggregator], $bus);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::atLeastOnce())->method('persist');
+        $em->expects(self::atLeastOnce())->method('flush');
+
+        $command = new AggregatorSchedulerCommand([$aggregator], $bus, $em);
         $tester = new CommandTester($command);
         $tester->execute([]);
 
@@ -111,7 +118,11 @@ class AggregatorSchedulerCommandTest extends TestCase
         $bus = $this->createMock(MessageBusInterface::class);
         $bus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
 
-        $command = new AggregatorSchedulerCommand([$googleNews, $alerts], $bus);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::atLeastOnce())->method('persist');
+        $em->expects(self::atLeastOnce())->method('flush');
+
+        $command = new AggregatorSchedulerCommand([$googleNews, $alerts], $bus, $em);
         $tester = new CommandTester($command);
         $tester->execute(['--source' => 'google_news_rss']);
 
@@ -142,7 +153,11 @@ class AggregatorSchedulerCommandTest extends TestCase
             ->method('dispatch')
             ->willReturn(new Envelope(new \stdClass()));
 
-        $command = new AggregatorSchedulerCommand([$aggregator], $bus);
+        $em = $this->createMock(EntityManagerInterface::class);
+        $em->expects(self::atLeastOnce())->method('persist');
+        $em->expects(self::atLeastOnce())->method('flush');
+
+        $command = new AggregatorSchedulerCommand([$aggregator], $bus, $em);
         $tester = new CommandTester($command);
         $tester->execute(['--limit' => '3']);
 
