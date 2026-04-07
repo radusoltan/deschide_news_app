@@ -258,6 +258,7 @@ class SeedDemoDataCommand extends Command
 
                     // All archive articles are published
                     $article->setStatus(ArticleStatus::PUBLISHED);
+                    $article->setPublishedLocales(['ro']);
 
                     // Random day in the month
                     $day = rand(1, 28);

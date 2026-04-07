@@ -209,6 +209,7 @@ class ImportArticlesByCategoryCommand extends Command
                 }
 
                 $article->setStatus(ArticleStatus::PUBLISHED);
+                $article->setPublishedLocales(['ro']);
 
                 // Set badge
                 $badge = null;
