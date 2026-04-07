@@ -67,6 +67,7 @@ export interface Article {
   translatableLocale?: string | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
+  publishedLocales?: string[];
   translatedSlugs?: { ro?: string; en?: string; ru?: string };
 }
 
