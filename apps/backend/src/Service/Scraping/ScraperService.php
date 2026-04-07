@@ -60,6 +60,7 @@ final class ScraperService
             language: $feedItem->language,
             sourceName: $feedItem->sourceName,
             publishedAt: $feedItem->publishedAt,
+            imageUrl: $feedItem->imageUrl,
         );
     }
 

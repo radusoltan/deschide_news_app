@@ -81,6 +81,7 @@ final readonly class ProcessScrapedArticleHandler
         $pr->setContentHash($hash);
         $pr->setOriginalLanguage($message->originalLanguage);
         $pr->setCategorySlug($categorySlug);
+        $pr->setSourceImageUrl($message->imageUrl);
 
         if ($message->publishedAt !== null) {
             $pr->setReceivedAt($message->publishedAt);

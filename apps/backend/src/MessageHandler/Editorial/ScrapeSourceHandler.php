@@ -224,6 +224,7 @@ final readonly class ScrapeSourceHandler
                         originalLanguage: $scraped->language,
                         contentHash: $contentHash,
                         publishedAt: $scraped->publishedAt,
+                        imageUrl: $scraped->imageUrl,
                     ));
 
                     $stats['accepted']++;
