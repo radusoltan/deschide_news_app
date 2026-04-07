@@ -1,6 +1,8 @@
 doctrine:
     dbal:
         default_connection: default
+        types:
+            text_array: App\Doctrine\Type\TextArrayType
         connections:
             default:
                 url: '%env(resolve:DATABASE_URL)%'
