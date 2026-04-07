@@ -83,12 +83,22 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
             $viewCount = rand(1, 100) <= 70 ? rand(50, 500) : rand(500, 10000);
             $article->setViewCount($viewCount);
 
-            // Published date for PUBLISHED articles (last 30 days)
+            // Published date and publishedLocales for PUBLISHED articles (last 30 days)
             if ($status === ArticleStatus::PUBLISHED) {
                 $daysAgo = $this->getRandomDaysAgo();
                 $publishedAt = new DateTimeImmutable("-$daysAgo days");
                 $article->setPublishedAt($publishedAt);
                 $publishedArticles[] = $i;
+
+                // Per-locale publishing: 60% RO only, 25% RO+EN+RU, 15% RO+EN
+                $localeRand = rand(1, 100);
+                if ($localeRand <= 60) {
+                    $article->setPublishedLocales(['ro']);
+                } elseif ($localeRand <= 85) {
+                    $article->setPublishedLocales(['ro', 'en', 'ru']);
+                } else {
+                    $article->setPublishedLocales(['ro', 'en']);
+                }
             }
 
             // Publish at for SUBMITTED/NEW (30% have future dates)
