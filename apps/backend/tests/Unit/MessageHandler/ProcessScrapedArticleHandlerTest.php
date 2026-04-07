@@ -33,6 +33,7 @@ class ProcessScrapedArticleHandlerTest extends TestCase
 {
     private EntityManagerInterface $em;
     private ContentDeduplicator $deduplicator;
+    private AggregatorTranslationService $translationService;
     private ProcessScrapedArticleHandler $handler;
 
     protected function setUp(): void
@@ -82,7 +83,7 @@ class ProcessScrapedArticleHandlerTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $translationService = $this->createMock(AggregatorTranslationService::class);
+        $this->translationService = $this->createMock(AggregatorTranslationService::class);
 
         $this->handler = new ProcessScrapedArticleHandler(
             $contentCleaner,
@@ -93,7 +94,7 @@ class ProcessScrapedArticleHandlerTest extends TestCase
             $notificationService,
             $topicDetector,
             $relevanceFilter,
-            $translationService,
+            $this->translationService,
             $this->em,
             new NullLogger(),
         );
@@ -157,6 +158,106 @@ class ProcessScrapedArticleHandlerTest extends TestCase
             sourceName: 'Gov.md',
             originalLanguage: 'ro',
             contentHash: 'dup_hash',
+        );
+
+        ($this->handler)($message);
+    }
+
+    #[Test]
+    public function translatesEnglishScrapedArticleAndPreservesOriginal(): void
+    {
+        $this->deduplicator->method('isDuplicate')->willReturn(
+            new DuplicateCheckResult(isDuplicate: false)
+        );
+
+        $this->translationService->expects($this->once())
+            ->method('translateToRomanian');
+
+        $this->em->expects($this->once())
+            ->method('persist')
+            ->with($this->callback(function ($entity) {
+                $this->assertInstanceOf(PressRelease::class, $entity);
+                // Original should be preserved before translation overwrites
+                $this->assertSame('EU announces new trade deal', $entity->getOriginalTitle());
+                $this->assertSame('<p>Clean content</p>', $entity->getOriginalContent());
+                $this->assertSame('en', $entity->getOriginalLanguage());
+
+                return true;
+            }));
+
+        $message = new ProcessScrapedArticleMessage(
+            title: 'EU announces new trade deal',
+            bodyMarkdown: '<p>Raw EU content</p>',
+            sourceUrl: 'https://reuters.com/article/123',
+            sourceName: 'Reuters',
+            originalLanguage: 'en',
+            contentHash: 'en_hash',
+        );
+
+        ($this->handler)($message);
+    }
+
+    #[Test]
+    public function doesNotTranslateRomanianScrapedArticle(): void
+    {
+        $this->deduplicator->method('isDuplicate')->willReturn(
+            new DuplicateCheckResult(isDuplicate: false)
+        );
+
+        $this->translationService->expects($this->never())
+            ->method('translateToRomanian');
+
+        $this->em->expects($this->once())
+            ->method('persist')
+            ->with($this->callback(function ($entity) {
+                $this->assertInstanceOf(PressRelease::class, $entity);
+                $this->assertNull($entity->getOriginalTitle());
+                $this->assertNull($entity->getOriginalContent());
+                $this->assertSame('ro', $entity->getOriginalLanguage());
+
+                return true;
+            }));
+
+        $message = new ProcessScrapedArticleMessage(
+            title: 'Articol moldovenesc',
+            bodyMarkdown: '<p>Conținut românesc</p>',
+            sourceUrl: 'https://moldpres.md/article/123',
+            sourceName: 'Moldpres',
+            originalLanguage: 'ro',
+            contentHash: 'ro_hash',
+        );
+
+        ($this->handler)($message);
+    }
+
+    #[Test]
+    public function translatesGermanScrapedArticleAndPreservesOriginal(): void
+    {
+        $this->deduplicator->method('isDuplicate')->willReturn(
+            new DuplicateCheckResult(isDuplicate: false)
+        );
+
+        $this->translationService->expects($this->once())
+            ->method('translateToRomanian');
+
+        $this->em->expects($this->once())
+            ->method('persist')
+            ->with($this->callback(function ($entity) {
+                $this->assertInstanceOf(PressRelease::class, $entity);
+                $this->assertSame('Deutschland beschließt neues Gesetz', $entity->getOriginalTitle());
+                $this->assertNotNull($entity->getOriginalContent());
+                $this->assertSame('de', $entity->getOriginalLanguage());
+
+                return true;
+            }));
+
+        $message = new ProcessScrapedArticleMessage(
+            title: 'Deutschland beschließt neues Gesetz',
+            bodyMarkdown: '<p>German content</p>',
+            sourceUrl: 'https://example.de/article/123',
+            sourceName: 'German Source',
+            originalLanguage: 'de',
+            contentHash: 'de_hash',
         );
 
         ($this->handler)($message);
