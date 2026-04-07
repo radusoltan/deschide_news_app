@@ -21,6 +21,7 @@ use App\Service\ScrapedContentCleaner;
 use App\Service\Scraping\RelevanceFilterService;
 use App\Service\SourceAuthorResolver;
 use App\Service\TopicDetectorService;
+use App\Service\Translation\AggregatorTranslationService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -81,6 +82,8 @@ class ProcessScrapedArticleHandlerTest extends TestCase
             logger: new NullLogger(),
         );
 
+        $translationService = $this->createMock(AggregatorTranslationService::class);
+
         $this->handler = new ProcessScrapedArticleHandler(
             $contentCleaner,
             $contentHasher,
@@ -90,6 +93,7 @@ class ProcessScrapedArticleHandlerTest extends TestCase
             $notificationService,
             $topicDetector,
             $relevanceFilter,
+            $translationService,
             $this->em,
             new NullLogger(),
         );

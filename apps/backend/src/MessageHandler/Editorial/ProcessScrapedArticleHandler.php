@@ -18,6 +18,7 @@ use App\Service\ScrapedContentCleaner;
 use App\Service\Scraping\RelevanceFilterService;
 use App\Service\SourceAuthorResolver;
 use App\Service\TopicDetectorService;
+use App\Service\Translation\AggregatorTranslationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -34,6 +35,7 @@ final readonly class ProcessScrapedArticleHandler
         private NotificationService $notificationService,
         private TopicDetectorService $topicDetector,
         private RelevanceFilterService $relevanceFilter,
+        private AggregatorTranslationService $translationService,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
     ) {}
@@ -108,7 +110,14 @@ final readonly class ProcessScrapedArticleHandler
             $pr->setSuggestedTopics(null);
         }
 
-        // 8. Persist
+        // 8. Translate non-Romanian content, preserving originals
+        if ($pr->getOriginalLanguage() !== null && $pr->getOriginalLanguage() !== 'ro') {
+            $pr->setOriginalTitle($pr->getTitle());
+            $pr->setOriginalContent($pr->getContent());
+            $this->translationService->translateToRomanian($pr);
+        }
+
+        // 9. Persist
         $this->em->persist($pr);
         $this->em->flush();
 
@@ -119,7 +128,7 @@ final readonly class ProcessScrapedArticleHandler
             'sourceType' => 'scrape',
         ]);
 
-        // 9. Notify editors
+        // 10. Notify editors
         try {
             $this->notificationService->notify(
                 type: NotificationType::PRESS_QUEUE_NEW,

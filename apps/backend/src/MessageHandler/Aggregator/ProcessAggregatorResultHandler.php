@@ -65,6 +65,8 @@ final readonly class ProcessAggregatorResultHandler
 
         // Translate to Romanian if not already in Romanian
         if ($message->sourceLanguage !== 'ro') {
+            $pressRelease->setOriginalTitle($pressRelease->getTitle());
+            $pressRelease->setOriginalContent($pressRelease->getContent());
             $this->translationService->translateToRomanian($pressRelease);
         }
 
