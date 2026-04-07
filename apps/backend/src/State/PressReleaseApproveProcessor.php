@@ -19,6 +19,7 @@ use App\Message\TranslateArticleMessage;
 use App\Repository\ArticleRepository;
 use App\Repository\AuthorRepository;
 use App\Repository\CategoryRepository;
+use App\Service\RemoteImageDownloader;
 use App\Service\SourceAuthorResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -35,6 +36,7 @@ class PressReleaseApproveProcessor implements ProcessorInterface
         private readonly ArticleRepository $articleRepository,
         private readonly AuthorRepository $authorRepository,
         private readonly SourceAuthorResolver $sourceAuthorResolver,
+        private readonly RemoteImageDownloader $imageDownloader,
         private readonly Security $security,
         private readonly MessageBusInterface $messageBus,
         private readonly LoggerInterface $logger,
@@ -85,9 +87,37 @@ class PressReleaseApproveProcessor implements ProcessorInterface
 
         $this->em->persist($article);
 
-        // Attach image if press release has one
+        // Attach image if press release has one (email attachment)
         if ($data->hasAttachment()) {
             $this->attachImage($article, $data);
+        }
+
+        // Download remote image from scraping/aggregator source
+        if ($data->getSourceImageUrl() && $article->getArticleImages()->isEmpty()) {
+            try {
+                $image = $this->imageDownloader->download($data->getSourceImageUrl());
+                if ($image !== null) {
+                    $image->setAlt($article->getTitle());
+                    $this->em->persist($image);
+
+                    $articleImage = new ArticleImage();
+                    $articleImage->setArticle($article);
+                    $articleImage->setImage($image);
+                    $articleImage->setPosition(0);
+                    $articleImage->setIsFeatured(true);
+                    $this->em->persist($articleImage);
+
+                    $this->logger->info('Remote image attached to article', [
+                        'articleId' => $article->getId(),
+                        'sourceUrl' => mb_substr($data->getSourceImageUrl(), 0, 100),
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                $this->logger->warning('Failed to download remote image', [
+                    'url' => $data->getSourceImageUrl(),
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         // Update press release status
