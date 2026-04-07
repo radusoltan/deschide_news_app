@@ -131,6 +131,11 @@ final class TextArrayType extends Type
         return '{' . implode(',', $escaped) . '}';
     }
 
+    public function getMappedDatabaseTypes(AbstractPlatform $platform): array
+    {
+        return ['_text'];
+    }
+
     public function requiresSQLCommentHint(AbstractPlatform $platform): bool
     {
         return true;

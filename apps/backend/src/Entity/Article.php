@@ -307,6 +307,12 @@ class Article implements Translatable
     #[Groups(['article:read'])]
     private ?string $translatedBy = null;
 
+    // Per-locale publishing: locales where article is visible on frontend
+    /** @var string[] */
+    #[ORM\Column(type: 'text_array', options: ['default' => '{ro}'])]
+    #[Groups(['article:read', 'article:list'])]
+    private array $publishedLocales = ['ro'];
+
     // AI-generated internal summary (TL;DR for editorial workflow)
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['article:read', 'article:detail'])]
@@ -848,5 +854,47 @@ class Article implements Translatable
         $this->translatedSlugs = $translatedSlugs;
 
         return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getPublishedLocales(): array
+    {
+        return $this->publishedLocales;
+    }
+
+    /**
+     * @param string[] $locales
+     */
+    public function setPublishedLocales(array $locales): self
+    {
+        $this->publishedLocales = array_values(array_unique($locales));
+
+        return $this;
+    }
+
+    public function addPublishedLocale(string $locale): self
+    {
+        if (!\in_array($locale, $this->publishedLocales, true)) {
+            $this->publishedLocales[] = $locale;
+        }
+
+        return $this;
+    }
+
+    public function removePublishedLocale(string $locale): self
+    {
+        $this->publishedLocales = array_values(array_filter(
+            $this->publishedLocales,
+            static fn (string $l): bool => $l !== $locale,
+        ));
+
+        return $this;
+    }
+
+    public function isPublishedInLocale(string $locale): bool
+    {
+        return \in_array($locale, $this->publishedLocales, true);
     }
 }
