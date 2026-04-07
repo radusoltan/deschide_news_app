@@ -83,6 +83,10 @@ final class ArticleProvider implements ProviderInterface
             $result = $query->getOneOrNullResult();
 
             if ($result instanceof Article) {
+                // Per-locale publishing: return 404 if article not published in requested locale
+                if (!$result->isPublishedInLocale($locale)) {
+                    return null;
+                }
                 $this->populateTranslatedSlugs([$result]);
             }
 
@@ -103,7 +107,9 @@ final class ArticleProvider implements ProviderInterface
             ->leftJoin('ai.image', 'img')
             ->addSelect('img')
             ->andWhere('a.status != :archived_status')
-            ->setParameter('archived_status', 'archived');
+            ->setParameter('archived_status', 'archived')
+            ->andWhere('ARRAY_CONTAINS(a.publishedLocales, :currentLocale) = true')
+            ->setParameter('currentLocale', $locale);
 
         // Apply filters from query parameters
         if ($request) {
