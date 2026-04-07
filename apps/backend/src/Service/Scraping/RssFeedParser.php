@@ -120,6 +120,7 @@ final readonly class RssFeedParser
             language: $language,
             description: trim((string) ($item->description ?? '')) ?: null,
             publishedAt: $publishedAt,
+            imageUrl: $this->extractImageUrl($item),
         );
     }
 
@@ -162,6 +163,51 @@ final readonly class RssFeedParser
             language: $language,
             description: $description ?: null,
             publishedAt: $publishedAt,
+            imageUrl: $this->extractImageUrl($entry),
         );
+    }
+
+    /**
+     * Extract image URL from an RSS/Atom item with priority:
+     * 1. <enclosure type="image/*">
+     * 2. <media:content> or <media:thumbnail>
+     * 3. First <img src> in <description> HTML
+     */
+    private function extractImageUrl(\SimpleXMLElement $item): ?string
+    {
+        // Priority 1: <enclosure type="image/*">
+        if (isset($item->enclosure)) {
+            $type = (string) $item->enclosure['type'];
+            $url = (string) $item->enclosure['url'];
+            if ($url !== '' && str_starts_with($type, 'image/')) {
+                return $url;
+            }
+        }
+
+        // Priority 2: <media:content> or <media:thumbnail>
+        $namespaces = $item->getNamespaces(true);
+        if (isset($namespaces['media'])) {
+            $media = $item->children($namespaces['media']);
+            if (isset($media->content)) {
+                $url = (string) $media->content['url'];
+                if ($url !== '') {
+                    return $url;
+                }
+            }
+            if (isset($media->thumbnail)) {
+                $url = (string) $media->thumbnail['url'];
+                if ($url !== '') {
+                    return $url;
+                }
+            }
+        }
+
+        // Priority 3: First <img src> in <description> HTML (e.g., Gov.md)
+        $description = (string) ($item->description ?? '');
+        if ($description !== '' && preg_match('/<img[^>]+src=["\']([^"\']+)["\']/', $description, $matches)) {
+            return html_entity_decode($matches[1]);
+        }
+
+        return null;
     }
 }
