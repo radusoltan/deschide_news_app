@@ -7,6 +7,7 @@ import {
   updateClusterStatus,
   updateClusterBoost,
   promoteCluster,
+  regenerateSummary,
   type StoryClusterItem,
   type StoryClusterDetail,
 } from '@/app/actions/story-clusters';
@@ -140,6 +141,17 @@ export default function StoryClustersPage() {
       loadData();
     } else {
       setToast({ message: result.error || 'Eroare la promovare', type: 'error' });
+    }
+    setProcessingId(null);
+  };
+
+  const handleRegenerateSummary = async (id: number) => {
+    setProcessingId(id);
+    const result = await regenerateSummary(id);
+    if (result.success) {
+      setToast({ message: 'Rezumat AI solicitat — se generează...', type: 'success' });
+    } else {
+      setToast({ message: result.error || 'Eroare la regenerare', type: 'error' });
     }
     setProcessingId(null);
   };
@@ -285,18 +297,54 @@ export default function StoryClustersPage() {
                       <td colSpan={7} className="px-4 py-4 bg-gray-50 dark:bg-gray-900/30">
                         {expandedDetail ? (
                           <div className="space-y-4">
-                            {/* Summary */}
+                            {/* AI Summary Badge */}
+                            <div className="flex items-center gap-2">
+                              {expandedDetail.summaryShort ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                  AI Generated
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-700/30 dark:text-gray-400">
+                                  No Summary
+                                </span>
+                              )}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleRegenerateSummary(item.id); }}
+                                disabled={processingId === item.id}
+                                className="text-xs text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+                              >
+                                {processingId === item.id ? 'Se generează...' : 'Regenerează rezumat AI'}
+                              </button>
+                            </div>
+
+                            {/* Summary Short */}
                             {expandedDetail.summaryShort && (
                               <div>
-                                <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Summary</h4>
-                                <p className="text-sm text-gray-700 dark:text-gray-300">{expandedDetail.summaryShort}</p>
+                                <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Rezumat</h4>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">{expandedDetail.summaryShort}</p>
+                              </div>
+                            )}
+
+                            {/* Summary Medium */}
+                            {expandedDetail.summaryMedium && (
+                              <div>
+                                <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Context</h4>
+                                <p className="text-sm text-gray-700 dark:text-gray-300">{expandedDetail.summaryMedium}</p>
+                              </div>
+                            )}
+
+                            {/* Why It Matters */}
+                            {expandedDetail.whyItMatters && (
+                              <div className="border-l-4 border-blue-400 dark:border-blue-500 pl-3 bg-blue-50/50 dark:bg-blue-900/10 py-2 rounded-r">
+                                <h4 className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase mb-1">De ce contează</h4>
+                                <p className="text-sm text-gray-700 dark:text-gray-300">{expandedDetail.whyItMatters}</p>
                               </div>
                             )}
 
                             {/* Key Facts */}
                             {expandedDetail.keyFacts && expandedDetail.keyFacts.length > 0 && (
                               <div>
-                                <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Key Facts</h4>
+                                <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Fapte cheie</h4>
                                 <ul className="list-disc list-inside text-sm text-gray-700 dark:text-gray-300 space-y-1">
                                   {expandedDetail.keyFacts.map((f, i) => (
                                     <li key={i}>{f}</li>

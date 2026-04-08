@@ -190,3 +190,25 @@ export async function promoteCluster(
 
   return { success: true };
 }
+
+export async function regenerateSummary(
+  id: number,
+): Promise<{ success: boolean; error?: string }> {
+  const token = await getAccessToken();
+  if (!token) return { success: false, error: 'Nu ești autentificat' };
+
+  const res = await fetch(`${API_BASE_URL}/api/story-clusters/${id}/regenerate-summary`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    return { success: false, error: data.error ?? `API error: ${res.status}` };
+  }
+
+  return { success: true };
+}
