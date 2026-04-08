@@ -116,6 +116,19 @@ final readonly class ArticleIndexer
         }
         $doc['author'] = $authorNames;
 
+        // Topics
+        $topicIds = [];
+        $topicTitles = [];
+        $topicSlugs = [];
+        foreach ($article->getTopics() as $topic) {
+            $topicIds[] = $topic->getId();
+            $topicTitles[] = $topic->getTitle();
+            $topicSlugs[] = $topic->getSlug();
+        }
+        $doc['topic_ids'] = $topicIds;
+        $doc['topic_titles'] = $topicTitles;
+        $doc['topic_slugs'] = $topicSlugs;
+
         // Source name from sourceEmail field prefix
         $sourceEmail = $article->getSourceEmail();
         if ($sourceEmail !== null && str_starts_with($sourceEmail, 'scrape-')) {

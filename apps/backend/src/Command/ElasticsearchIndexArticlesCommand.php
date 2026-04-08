@@ -66,7 +66,8 @@ class ElasticsearchIndexArticlesCommand extends Command
                     ->leftJoin('a.category', 'category')
                     ->leftJoin('a.relatedArticles', 'related')
                     ->leftJoin('a.tags', 'tags')
-                    ->addSelect('authors', 'category', 'related', 'tags');
+                    ->leftJoin('a.topics', 'topics')
+                    ->addSelect('authors', 'category', 'related', 'tags', 'topics');
 
                 if ($status) {
                     $qb->where('a.status = :status')
@@ -133,8 +134,8 @@ class ElasticsearchIndexArticlesCommand extends Command
                         $suggestInput[] = $article->getCategory()->getTitle();
                     }
 
-                    // Add tag names to suggest input
-                    $suggestInput = array_merge($suggestInput, $tagNames);
+                    // Add tag names and topic titles to suggest input
+                    $suggestInput = array_merge($suggestInput, $tagNames, $topicTitles);
 
                     // Extract first few words from lead/content as additional keywords
                     $text = $article->getLead() ?? $article->getContent() ?? '';
@@ -142,6 +143,16 @@ class ElasticsearchIndexArticlesCommand extends Command
                         $contentWords = str_word_count(strip_tags($text), 1);
                         $keywords = \array_slice($contentWords, 0, 10);
                         $suggestInput = array_merge($suggestInput, $keywords);
+                    }
+
+                    // Build topics arrays
+                    $topicIds = [];
+                    $topicTitles = [];
+                    $topicSlugs = [];
+                    foreach ($article->getTopics() as $topic) {
+                        $topicIds[] = $topic->getId();
+                        $topicTitles[] = $topic->getTitle();
+                        $topicSlugs[] = $topic->getSlug();
                     }
 
                     $document = [
@@ -174,6 +185,9 @@ class ElasticsearchIndexArticlesCommand extends Command
                         'related_ids' => $relatedIds,
                         'tags' => $tags,
                         'tag_names' => implode(' ', $tagNames),
+                        'topic_ids' => $topicIds,
+                        'topic_titles' => $topicTitles,
+                        'topic_slugs' => $topicSlugs,
                     ];
 
                     $batch[] = $document;

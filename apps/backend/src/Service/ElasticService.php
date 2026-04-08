@@ -143,6 +143,10 @@ class ElasticService
                             'type' => 'text',
                             'analyzer' => 'article_analyzer',
                         ],
+                        // Topic fields for filtering and aggregation
+                        'topic_ids' => ['type' => 'integer'],
+                        'topic_titles' => ['type' => 'keyword'],
+                        'topic_slugs' => ['type' => 'keyword'],
                     ],
                 ],
             ],

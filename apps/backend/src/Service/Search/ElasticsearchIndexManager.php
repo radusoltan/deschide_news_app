@@ -249,6 +249,11 @@ class ElasticsearchIndexManager
                 'content_hash' => ['type' => 'keyword'],
                 'entities' => ['type' => 'keyword'],
                 'topics' => ['type' => 'keyword'],
+
+                // Topic classification fields (Sprint 34)
+                'topic_ids' => ['type' => 'integer'],
+                'topic_titles' => ['type' => 'keyword'],
+                'topic_slugs' => ['type' => 'keyword'],
             ],
         ];
     }
