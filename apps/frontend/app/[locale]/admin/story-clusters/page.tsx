@@ -8,6 +8,8 @@ import {
   updateClusterBoost,
   promoteCluster,
   regenerateSummary,
+  getAutoPromoteThreshold,
+  setAutoPromoteThreshold,
   type StoryClusterItem,
   type StoryClusterDetail,
 } from '@/app/actions/story-clusters';
@@ -82,6 +84,35 @@ export default function StoryClustersPage() {
   const [expandedDetail, setExpandedDetail] = useState<StoryClusterDetail | null>(null);
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [threshold, setThreshold] = useState<number>(0.7);
+  const [thresholdInput, setThresholdInput] = useState<string>('0.70');
+  const [showThresholdSettings, setShowThresholdSettings] = useState(false);
+  const [savingThreshold, setSavingThreshold] = useState(false);
+
+  useEffect(() => {
+    getAutoPromoteThreshold().then((t) => {
+      setThreshold(t);
+      setThresholdInput(t.toFixed(2));
+    });
+  }, []);
+
+  const handleSaveThreshold = async () => {
+    const value = parseFloat(thresholdInput);
+    if (isNaN(value) || value < 0 || value > 1) {
+      setToast({ message: 'Pragul trebuie să fie între 0.00 și 1.00', type: 'error' });
+      return;
+    }
+    setSavingThreshold(true);
+    const result = await setAutoPromoteThreshold(value);
+    if (result.success) {
+      setThreshold(result.threshold ?? value);
+      setToast({ message: `Prag auto-promote salvat: ${(result.threshold ?? value).toFixed(2)}`, type: 'success' });
+      setShowThresholdSettings(false);
+    } else {
+      setToast({ message: result.error || 'Eroare', type: 'error' });
+    }
+    setSavingThreshold(false);
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -175,10 +206,50 @@ export default function StoryClustersPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Story Clusters</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {totalItems} clustere detectate
+            {totalItems} clustere detectate &middot; Prag auto-promote: {threshold.toFixed(2)}
           </p>
         </div>
+        <button
+          onClick={() => setShowThresholdSettings(!showThresholdSettings)}
+          className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        >
+          Setări Threshold
+        </button>
       </div>
+
+      {/* Threshold Settings Panel */}
+      {showThresholdSettings && (
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Auto-Promote Threshold</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            Clusterele cu scor &ge; {threshold.toFixed(2)} vor fi promovate automat la PressRelease (pending review).
+          </p>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              min="0"
+              max="1"
+              step="0.05"
+              value={thresholdInput}
+              onChange={(e) => setThresholdInput(e.target.value)}
+              className="w-24 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+            />
+            <button
+              onClick={handleSaveThreshold}
+              disabled={savingThreshold}
+              className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {savingThreshold ? 'Se salvează...' : 'Salvează'}
+            </button>
+            <button
+              onClick={() => setShowThresholdSettings(false)}
+              className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              Anulează
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Toast */}
       {toast && (
@@ -281,6 +352,11 @@ export default function StoryClustersPage() {
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[item.status] ?? ''}`}>
                         {STATUS_LABELS[item.status] ?? item.status}
                       </span>
+                      {item.status === 'promoted' && item.importanceScore >= threshold && (
+                        <span className="ml-1 inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                          auto
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                       {formatDate(item.firstSeenAt)}

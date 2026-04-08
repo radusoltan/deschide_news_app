@@ -8,6 +8,7 @@ use App\Entity\StoryCluster;
 use App\Enum\StoryClusterStatus;
 use App\Message\Clustering\TriggerClusterScoringMessage;
 use App\Repository\StoryClusterRepository;
+use App\Service\Clustering\AutoPromoteService;
 use App\Service\Clustering\ImportanceScoreCalculator;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -16,12 +17,11 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 #[AsMessageHandler]
 final readonly class TriggerClusterScoringHandler
 {
-    private const AUTO_PROMOTE_THRESHOLD = 0.7;
-
     public function __construct(
         private EntityManagerInterface $em,
         private StoryClusterRepository $clusterRepository,
         private ImportanceScoreCalculator $calculator,
+        private AutoPromoteService $autoPromoteService,
         private LoggerInterface $logger,
     ) {}
 
@@ -38,14 +38,11 @@ final readonly class TriggerClusterScoringHandler
             $cluster->setImportanceScore($newScore);
             $scored++;
 
-            if ($message->autoPromote
-                && $newScore >= self::AUTO_PROMOTE_THRESHOLD
-                && $cluster->getStatus() === StoryClusterStatus::AUTO
-                && !$cluster->isPromotedToPressRelease()
-            ) {
-                $cluster->setStatus(StoryClusterStatus::PROMOTED);
-                $cluster->setPromotedToPressRelease(true);
-                $promoted++;
+            if ($message->autoPromote && $this->autoPromoteService->isEligible($cluster)) {
+                $pr = $this->autoPromoteService->promoteCluster($cluster);
+                if ($pr !== null) {
+                    $promoted++;
+                }
             }
         }
 

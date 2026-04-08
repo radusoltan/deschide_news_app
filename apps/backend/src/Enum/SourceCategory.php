@@ -14,4 +14,5 @@ enum SourceCategory: string
     case LOCAL = 'local';
     case INSTITUTIONAL = 'institutional';
     case DIASPORA = 'diaspora';
+    case ALERT = 'alert';
 }

@@ -7,6 +7,7 @@ namespace App\Command;
 use App\Entity\StoryCluster;
 use App\Enum\StoryClusterStatus;
 use App\Repository\StoryClusterRepository;
+use App\Service\Clustering\AutoPromoteService;
 use App\Service\Clustering\ImportanceScoreCalculator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -22,12 +23,11 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class ClusterScoreCommand extends Command
 {
-    private const AUTO_PROMOTE_THRESHOLD = 0.7;
-
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly StoryClusterRepository $clusterRepository,
         private readonly ImportanceScoreCalculator $calculator,
+        private readonly AutoPromoteService $autoPromoteService,
     ) {
         parent::__construct();
     }
@@ -72,22 +72,18 @@ class ClusterScoreCommand extends Command
             $cluster->setImportanceScore($newScore);
             $scored++;
 
-            // Auto-promote high-scoring clusters
-            if ($autoPromote
-                && $newScore >= self::AUTO_PROMOTE_THRESHOLD
-                && $cluster->getStatus() === StoryClusterStatus::AUTO
-                && !$cluster->isPromotedToPressRelease()
-            ) {
-                $cluster->setStatus(StoryClusterStatus::PROMOTED);
-                $cluster->setPromotedToPressRelease(true);
-                $promoted++;
-
-                $io->writeln(sprintf(
-                    '  [PROMOTED] #%d "%.60s" score=%.4f',
-                    $cluster->getId(),
-                    $cluster->getPrimaryHeadline(),
-                    $newScore,
-                ));
+            // Auto-promote high-scoring clusters via AutoPromoteService
+            if ($autoPromote && $this->autoPromoteService->isEligible($cluster)) {
+                $pr = $this->autoPromoteService->promoteCluster($cluster);
+                if ($pr !== null) {
+                    $promoted++;
+                    $io->writeln(sprintf(
+                        '  [PROMOTED] #%d "%.60s" score=%.4f',
+                        $cluster->getId(),
+                        $cluster->getPrimaryHeadline(),
+                        $newScore,
+                    ));
+                }
             }
 
             if ($output->isVerbose()) {

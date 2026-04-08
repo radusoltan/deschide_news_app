@@ -8,6 +8,7 @@ use App\Entity\StoryCluster;
 use App\Enum\StoryClusterStatus;
 use App\Message\Clustering\SummarizeClusterMessage;
 use App\Repository\StoryClusterRepository;
+use App\Service\Clustering\AutoPromoteService;
 use App\Service\Clustering\ImportanceScoreCalculator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -24,6 +25,7 @@ class StoryClusterController extends AbstractController
         private readonly StoryClusterRepository $clusterRepository,
         private readonly EntityManagerInterface $em,
         private readonly ImportanceScoreCalculator $calculator,
+        private readonly AutoPromoteService $autoPromoteService,
         private readonly SerializerInterface $serializer,
         private readonly MessageBusInterface $messageBus,
     ) {}
@@ -54,14 +56,14 @@ class StoryClusterController extends AbstractController
             return $this->json(['error' => 'Cluster already promoted'], 400);
         }
 
-        $cluster->setStatus(StoryClusterStatus::PROMOTED);
-        $cluster->setPromotedToPressRelease(true);
+        $pr = $this->autoPromoteService->promoteCluster($cluster);
         $this->em->flush();
 
         return $this->json([
             'id' => $cluster->getId(),
             'status' => $cluster->getStatus()->value,
             'promotedToPressRelease' => true,
+            'pressReleaseId' => $pr?->getId(),
         ]);
     }
 

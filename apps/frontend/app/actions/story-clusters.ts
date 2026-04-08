@@ -213,3 +213,45 @@ export async function regenerateSummary(
 
   return { success: true };
 }
+
+export async function getAutoPromoteThreshold(): Promise<number> {
+  const token = await getAccessToken();
+  if (!token) return 0.7;
+
+  const res = await fetch(`${API_BASE_URL}/api/settings/auto-promote-threshold`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+    cache: 'no-store',
+  });
+
+  if (!res.ok) return 0.7;
+
+  const data = await res.json();
+  return data.threshold ?? 0.7;
+}
+
+export async function setAutoPromoteThreshold(
+  threshold: number,
+): Promise<{ success: boolean; threshold?: number; error?: string }> {
+  const token = await getAccessToken();
+  if (!token) return { success: false, error: 'Nu ești autentificat' };
+
+  const res = await fetch(`${API_BASE_URL}/api/settings/auto-promote-threshold`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ threshold }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    return { success: false, error: data.error ?? `API error: ${res.status}` };
+  }
+
+  const data = await res.json();
+  return { success: true, threshold: data.threshold };
+}
