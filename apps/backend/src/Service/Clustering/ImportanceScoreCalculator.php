@@ -11,24 +11,42 @@ use Psr\Log\LoggerInterface;
 /**
  * Calculates importance score for a StoryCluster using 6 weighted factors.
  *
- * Formula:
- *   0.25 * sourceWeightedCount
- * + 0.20 * recency
- * + 0.15 * geoDiversity
- * + 0.15 * topicCriticality
- * + 0.15 * velocity
- * + 0.10 * editorialBoost (applied as multiplier)
+ * Formula (Sprint 32 calibrated):
+ *   0.25 * sourceWeightedCount  — credibility of unique sources / 3.0
+ *   0.15 * recency              — exp(-0.02 × hours) with floor 0.05
+ *   0.15 * geoDiversity         — distinct countries / 3.0
+ *   0.15 * topicCriticality     — avg topic weight (default 0.5)
+ *   0.15 * velocity             — PRs in last 12h / 5.0
+ *   0.15 * coverageDepth        — article_count / 5.0 (new factor)
+ *   × editorialBoost            — multiplier (default 1.0)
  *
- * All factors are normalized to 0.0–1.0 range before weighting.
+ * All factors normalized to 0.0–1.0 before weighting.
  */
 class ImportanceScoreCalculator
 {
     private const WEIGHT_SOURCE = 0.25;
-    private const WEIGHT_RECENCY = 0.20;
+    private const WEIGHT_RECENCY = 0.15;
     private const WEIGHT_GEO_DIVERSITY = 0.15;
-    private const WEIGHT_TOPIC_CRITICALITY = 0.15;
-    private const WEIGHT_VELOCITY = 0.15;
-    private const WEIGHT_EDITORIAL = 0.10;
+    private const WEIGHT_TOPIC_CRITICALITY = 0.10;
+    private const WEIGHT_VELOCITY = 0.10;
+    private const WEIGHT_COVERAGE_DEPTH = 0.25;
+
+    // Recency decay: exp(-λ × hours). λ=0.02 → 24h=0.62, 48h=0.38, 7d=0.04
+    private const RECENCY_LAMBDA = 0.02;
+    private const RECENCY_FLOOR = 0.05;
+
+    // Source: sum(credibility) / DIVISOR, capped at 1.0
+    private const SOURCE_DIVISOR = 3.0;
+
+    // Geo: distinct countries / DIVISOR, capped at 1.0
+    private const GEO_DIVISOR = 3.0;
+
+    // Velocity: PRs in window / DIVISOR
+    private const VELOCITY_WINDOW_HOURS = 12;
+    private const VELOCITY_DIVISOR = 5.0;
+
+    // Coverage depth: article_count / DIVISOR
+    private const COVERAGE_DIVISOR = 5.0;
 
     public function __construct(
         private readonly SourceRepository $sourceRepository,
@@ -45,12 +63,14 @@ class ImportanceScoreCalculator
         $geoDiversity = $this->calculateGeoDiversity($cluster);
         $topicCriticality = $this->calculateTopicCriticality($cluster);
         $velocity = $this->calculateVelocity($cluster);
+        $coverageDepth = $this->calculateCoverageDepth($cluster);
 
         $baseScore = self::WEIGHT_SOURCE * $sourceWeighted
             + self::WEIGHT_RECENCY * $recency
             + self::WEIGHT_GEO_DIVERSITY * $geoDiversity
             + self::WEIGHT_TOPIC_CRITICALITY * $topicCriticality
-            + self::WEIGHT_VELOCITY * $velocity;
+            + self::WEIGHT_VELOCITY * $velocity
+            + self::WEIGHT_COVERAGE_DEPTH * $coverageDepth;
 
         // Editorial boost is a multiplier (default 1.0)
         $editorialBoost = $cluster->getEditorialBoost();
@@ -63,6 +83,7 @@ class ImportanceScoreCalculator
             'geoDiversity' => round($geoDiversity, 3),
             'topicCriticality' => round($topicCriticality, 3),
             'velocity' => round($velocity, 3),
+            'coverageDepth' => round($coverageDepth, 3),
             'editorialBoost' => $editorialBoost,
             'finalScore' => round($finalScore, 4),
         ]);
@@ -71,14 +92,13 @@ class ImportanceScoreCalculator
     }
 
     /**
-     * Sum of unique sources' credibilityWeight / 5.0 (capped at 1.0).
-     * Uses Source FK when available, falls back to hostname-based lookup.
+     * Sum of unique sources' credibilityWeight / 3.0 (capped at 1.0).
+     * PRs without Source FK get default weight 0.50.
      */
     private function calculateSourceWeightedCount(StoryCluster $cluster): float
     {
         $uniqueSources = [];
         foreach ($cluster->getPressReleases() as $pr) {
-            // Prefer the Source FK for reliable credibility weight
             $source = $pr->getSource();
             if ($source !== null) {
                 $key = 'source_' . $source->getId();
@@ -88,11 +108,15 @@ class ImportanceScoreCalculator
                 continue;
             }
 
-            // Fallback to hostname-based lookup
+            // Fallback: hostname-based lookup, then default 0.50
             $hostname = $pr->getSourceHostname();
-            if ($hostname !== null && !isset($uniqueSources[$hostname])) {
-                $weight = $this->sourceRepository->getCredibilityWeight($hostname);
-                $uniqueSources[$hostname] = $weight;
+            $key = $hostname ?? ('pr_' . $pr->getId());
+            if (!isset($uniqueSources[$key])) {
+                if ($hostname !== null) {
+                    $uniqueSources[$key] = $this->sourceRepository->getCredibilityWeight($hostname);
+                } else {
+                    $uniqueSources[$key] = 0.50;
+                }
             }
         }
 
@@ -100,26 +124,23 @@ class ImportanceScoreCalculator
             return 0.0;
         }
 
-        $total = array_sum($uniqueSources);
-
-        return min(1.0, $total / 5.0);
+        return min(1.0, array_sum($uniqueSources) / self::SOURCE_DIVISOR);
     }
 
     /**
-     * Exponential decay: exp(-0.1 * hours_since_firstSeen).
-     * 1h=0.90, 12h=0.30, 24h=0.09.
+     * Exponential decay with floor: max(FLOOR, exp(-λ × hours)).
+     * λ=0.02: 1h=0.98, 24h=0.62, 48h=0.38, 7d=0.04, floor=0.05.
      */
     private function calculateRecency(StoryCluster $cluster): float
     {
         $hoursSince = (time() - $cluster->getFirstSeenAt()->getTimestamp()) / 3600;
         $hoursSince = max(0.0, $hoursSince);
 
-        return exp(-0.1 * $hoursSince);
+        return max(self::RECENCY_FLOOR, exp(-self::RECENCY_LAMBDA * $hoursSince));
     }
 
     /**
-     * Count of distinct countries / 5 (capped at 1.0).
-     * Uses Source FK when available for reliable country data.
+     * Count of distinct countries / 3 (capped at 1.0).
      */
     private function calculateGeoDiversity(StoryCluster $cluster): float
     {
@@ -131,7 +152,6 @@ class ImportanceScoreCalculator
                 continue;
             }
 
-            // Fallback to hostname-based lookup
             $hostname = $pr->getSourceHostname();
             if ($hostname !== null) {
                 $source = $this->sourceRepository->findByDomain($hostname);
@@ -141,9 +161,7 @@ class ImportanceScoreCalculator
             }
         }
 
-        $count = \count($countries);
-
-        return min(1.0, $count / 5.0);
+        return min(1.0, \count($countries) / self::GEO_DIVISOR);
     }
 
     /**
@@ -154,7 +172,7 @@ class ImportanceScoreCalculator
         $topics = $cluster->getTopics();
 
         if ($topics->isEmpty()) {
-            return 0.5; // default weight
+            return 0.5;
         }
 
         $totalWeight = 0.0;
@@ -166,19 +184,33 @@ class ImportanceScoreCalculator
     }
 
     /**
-     * Count of PressReleases created in last 4 hours / 10 (capped at 1.0).
+     * Count of PressReleases created in last 12 hours / 5 (capped at 1.0).
      */
     private function calculateVelocity(StoryCluster $cluster): float
     {
-        $fourHoursAgo = time() - (4 * 3600);
+        $windowStart = time() - (self::VELOCITY_WINDOW_HOURS * 3600);
         $recentCount = 0;
 
         foreach ($cluster->getPressReleases() as $pr) {
-            if ($pr->getCreatedAt()->getTimestamp() >= $fourHoursAgo) {
+            if ($pr->getCreatedAt()->getTimestamp() >= $windowStart) {
                 $recentCount++;
             }
         }
 
-        return min(1.0, $recentCount / 10.0);
+        return min(1.0, $recentCount / self::VELOCITY_DIVISOR);
+    }
+
+    /**
+     * How many articles cover this story / 5 (capped at 1.0).
+     * Rewards multi-article clusters that represent significant events.
+     */
+    private function calculateCoverageDepth(StoryCluster $cluster): float
+    {
+        $articleCount = $cluster->getArticleCount();
+        if ($articleCount <= 0) {
+            $articleCount = $cluster->getPressReleases()->count();
+        }
+
+        return min(1.0, $articleCount / self::COVERAGE_DIVISOR);
     }
 }
