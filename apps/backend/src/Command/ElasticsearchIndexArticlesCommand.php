@@ -127,24 +127,6 @@ class ElasticsearchIndexArticlesCommand extends Command
                         $tagNames[] = $tag->getName();
                     }
 
-                    // Build suggest input: title + category name + tag names + keywords
-                    $suggestInput = [$article->getTitle()];
-
-                    if ($article->getCategory()) {
-                        $suggestInput[] = $article->getCategory()->getTitle();
-                    }
-
-                    // Add tag names and topic titles to suggest input
-                    $suggestInput = array_merge($suggestInput, $tagNames, $topicTitles);
-
-                    // Extract first few words from lead/content as additional keywords
-                    $text = $article->getLead() ?? $article->getContent() ?? '';
-                    if ($text) {
-                        $contentWords = str_word_count(strip_tags($text), 1);
-                        $keywords = \array_slice($contentWords, 0, 10);
-                        $suggestInput = array_merge($suggestInput, $keywords);
-                    }
-
                     // Build topics arrays
                     $topicIds = [];
                     $topicTitles = [];
@@ -153,6 +135,23 @@ class ElasticsearchIndexArticlesCommand extends Command
                         $topicIds[] = $topic->getId();
                         $topicTitles[] = $topic->getTitle();
                         $topicSlugs[] = $topic->getSlug();
+                    }
+
+                    // Build suggest input: title + category name + tag names + topic titles + keywords
+                    $suggestInput = [$article->getTitle()];
+
+                    if ($article->getCategory()) {
+                        $suggestInput[] = $article->getCategory()->getTitle();
+                    }
+
+                    $suggestInput = array_merge($suggestInput, $tagNames, $topicTitles);
+
+                    // Extract first few words from lead/content as additional keywords
+                    $text = $article->getLead() ?? $article->getContent() ?? '';
+                    if ($text) {
+                        $contentWords = str_word_count(strip_tags($text), 1);
+                        $keywords = \array_slice($contentWords, 0, 10);
+                        $suggestInput = array_merge($suggestInput, $keywords);
                     }
 
                     $document = [
