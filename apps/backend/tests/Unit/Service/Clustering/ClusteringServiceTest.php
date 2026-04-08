@@ -9,6 +9,7 @@ use App\Entity\StoryCluster;
 use App\Repository\StoryClusterRepository;
 use App\Service\Clustering\ClusteringService;
 use App\Service\Clustering\ElasticsearchClusterFinder;
+use App\Service\Clustering\PressReleaseIndexer;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -20,6 +21,7 @@ class ClusteringServiceTest extends TestCase
     private EntityManagerInterface&MockObject $em;
     private StoryClusterRepository&MockObject $clusterRepo;
     private ElasticsearchClusterFinder&MockObject $clusterFinder;
+    private PressReleaseIndexer&MockObject $indexer;
     private ClusteringService $service;
 
     protected function setUp(): void
@@ -27,11 +29,13 @@ class ClusteringServiceTest extends TestCase
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->clusterRepo = $this->createMock(StoryClusterRepository::class);
         $this->clusterFinder = $this->createMock(ElasticsearchClusterFinder::class);
+        $this->indexer = $this->createMock(PressReleaseIndexer::class);
 
         $this->service = new ClusteringService(
             $this->em,
             $this->clusterRepo,
             $this->clusterFinder,
+            $this->indexer,
             new NullLogger(),
         );
     }
@@ -54,7 +58,6 @@ class ClusteringServiceTest extends TestCase
         $this->clusterRepo->method('findUnclusteredPressReleaseIds')->willReturn([1]);
         $this->em->method('find')->willReturn($pr);
         $this->clusterFinder->method('findSimilar')->willReturn([]);
-        $this->clusterRepo->method('findActiveClustersInWindow')->willReturn([]);
 
         $this->em->expects($this->once())->method('persist')
             ->with($this->isInstanceOf(StoryCluster::class));
@@ -79,9 +82,9 @@ class ClusteringServiceTest extends TestCase
         $this->clusterRepo->method('findUnclusteredPressReleaseIds')->willReturn([2]);
         $this->em->method('find')->willReturn($newPr);
         $this->clusterFinder->method('findSimilar')->willReturn([
-            ['score' => 0.85, 'articleId' => 1, 'title' => 'EU announces sanctions'],
+            ['score' => 0.85, 'pressReleaseId' => 1, 'title' => 'EU announces sanctions'],
         ]);
-        $this->clusterRepo->method('findActiveClustersInWindow')->willReturn([$cluster]);
+        $this->clusterRepo->method('findClustersContainingPressReleases')->willReturn([$cluster]);
 
         // Should NOT persist new cluster (adds to existing)
         $this->em->expects($this->never())->method('persist');
@@ -108,9 +111,9 @@ class ClusteringServiceTest extends TestCase
         $this->clusterRepo->method('findUnclusteredPressReleaseIds')->willReturn([2]);
         $this->em->method('find')->willReturn($newPr);
         $this->clusterFinder->method('findSimilar')->willReturn([
-            ['score' => 0.90, 'articleId' => 1, 'title' => 'EU sanctions update'],
+            ['score' => 0.90, 'pressReleaseId' => 1, 'title' => 'EU sanctions update'],
         ]);
-        $this->clusterRepo->method('findActiveClustersInWindow')->willReturn([$cluster]);
+        $this->clusterRepo->method('findClustersContainingPressReleases')->willReturn([$cluster]);
 
         // Should create NEW cluster since temporal window exceeded
         $this->em->expects($this->once())->method('persist');
@@ -135,7 +138,6 @@ class ClusteringServiceTest extends TestCase
             },
         );
         $this->clusterFinder->method('findSimilar')->willReturn([]);
-        $this->clusterRepo->method('findActiveClustersInWindow')->willReturn([]);
 
         // Two separate clusters should be persisted
         $this->em->expects($this->exactly(2))->method('persist');
@@ -181,7 +183,6 @@ class ClusteringServiceTest extends TestCase
         $this->clusterRepo->method('findUnclusteredPressReleaseIds')->willReturn([1]);
         $this->em->method('find')->willReturn($pr);
         $this->clusterFinder->method('findSimilar')->willReturn([]);
-        $this->clusterRepo->method('findActiveClustersInWindow')->willReturn([]);
 
         $this->em->expects($this->never())->method('persist');
         $this->em->expects($this->never())->method('flush');
@@ -200,6 +201,50 @@ class ClusteringServiceTest extends TestCase
         $result = $this->service->clusterNewPressReleases();
 
         $this->assertSame(0, $result);
+    }
+
+    #[Test]
+    public function indexerIsCalledForEachPressRelease(): void
+    {
+        $pr = $this->createPressRelease(1, 'Test', 'Content');
+
+        $this->clusterRepo->method('findUnclusteredPressReleaseIds')->willReturn([1]);
+        $this->em->method('find')->willReturn($pr);
+        $this->clusterFinder->method('findSimilar')->willReturn([]);
+
+        $this->indexer->expects($this->once())->method('index')->with($pr);
+
+        $this->service->clusterNewPressReleases();
+    }
+
+    #[Test]
+    public function emptyEsMatchesReturnNoCluster(): void
+    {
+        $pr = $this->createPressRelease(1, 'Test article', 'Content');
+
+        $this->clusterFinder->method('findSimilar')->willReturn([]);
+
+        $result = $this->service->clusterSinglePressRelease($pr);
+
+        // New cluster should be created
+        $this->assertInstanceOf(StoryCluster::class, $result);
+        $this->assertSame('Test article', $result->getPrimaryHeadline());
+    }
+
+    #[Test]
+    public function esMatchWithNoClusterCreatesNew(): void
+    {
+        $pr = $this->createPressRelease(1, 'Test article', 'Content');
+
+        $this->clusterFinder->method('findSimilar')->willReturn([
+            ['score' => 0.5, 'pressReleaseId' => 99, 'title' => 'Similar'],
+        ]);
+        $this->clusterRepo->method('findClustersContainingPressReleases')->willReturn([]);
+
+        $result = $this->service->clusterSinglePressRelease($pr);
+
+        // No cluster contains PR #99, so a new cluster should be created
+        $this->assertInstanceOf(StoryCluster::class, $result);
     }
 
     private function createPressRelease(int $id, string $title, string $content): PressRelease

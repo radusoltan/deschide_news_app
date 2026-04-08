@@ -121,6 +121,70 @@ XML;
         $this->assertSame('Valid', $items[0]->title);
     }
 
+    public function testParsesSourceTag(): void
+    {
+        $rssXml = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Google News</title>
+    <item>
+      <title>Breaking news - Moldova 1</title>
+      <link>https://news.google.com/rss/articles/CBMi123</link>
+      <description>Short description</description>
+      <pubDate>Mon, 07 Apr 2026 10:00:00 GMT</pubDate>
+      <source url="https://moldova1.md">Moldova 1</source>
+    </item>
+    <item>
+      <title>Economy update - G4Media</title>
+      <link>https://news.google.com/rss/articles/CBMi456</link>
+      <description>Economy news</description>
+      <source url="https://www.g4media.ro">G4Media</source>
+    </item>
+  </channel>
+</rss>
+XML;
+
+        $mockClient = new MockHttpClient([new MockResponse($rssXml)]);
+        $parser = new RssFeedParser($mockClient, new NullLogger(), 'TestBot/1.0', 30);
+
+        $items = $parser->parse('https://news.google.com/rss/search?q=test', 'Google News', 'ro');
+
+        $this->assertCount(2, $items);
+
+        // First item: source url without www
+        $this->assertSame('https://moldova1.md', $items[0]->sourcePublisherUrl);
+        $this->assertSame('Moldova 1', $items[0]->sourcePublisherName);
+
+        // Second item: source url with www
+        $this->assertSame('https://www.g4media.ro', $items[1]->sourcePublisherUrl);
+        $this->assertSame('G4Media', $items[1]->sourcePublisherName);
+    }
+
+    public function testSourceTagNullWhenMissing(): void
+    {
+        $rssXml = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <item>
+      <title>No source tag</title>
+      <link>https://test.md/article</link>
+    </item>
+  </channel>
+</rss>
+XML;
+
+        $mockClient = new MockHttpClient([new MockResponse($rssXml)]);
+        $parser = new RssFeedParser($mockClient, new NullLogger(), 'TestBot/1.0', 30);
+
+        $items = $parser->parse('https://test.md/rss', 'Test', 'ro');
+
+        $this->assertCount(1, $items);
+        $this->assertNull($items[0]->sourcePublisherUrl);
+        $this->assertNull($items[0]->sourcePublisherName);
+    }
+
     public function testReturnsEmptyOnHttpError(): void
     {
         $mockClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);

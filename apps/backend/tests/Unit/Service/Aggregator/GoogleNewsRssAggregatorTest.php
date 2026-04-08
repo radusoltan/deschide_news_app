@@ -24,16 +24,18 @@ class GoogleNewsRssAggregatorTest extends TestCase
   <channel>
     <title>Moldova - Google News</title>
     <item>
-      <title>Moldovan citizen wins international prize</title>
-      <link>https://example.com/article/1</link>
+      <title>Moldovan citizen wins international prize - Moldova 1</title>
+      <link>https://news.google.com/rss/articles/CBMiQEFV123</link>
       <description>A Moldovan citizen won an international prize today.</description>
       <pubDate>Sun, 06 Apr 2026 10:00:00 GMT</pubDate>
+      <source url="https://moldova1.md">Moldova 1</source>
     </item>
     <item>
-      <title>Moldova EU integration update</title>
-      <link>https://example.com/article/2</link>
+      <title>Moldova EU integration update - G4Media</title>
+      <link>https://news.google.com/rss/articles/CBMiQEFV456</link>
       <description>Latest updates on Moldova EU integration process.</description>
       <pubDate>Sun, 06 Apr 2026 09:00:00 GMT</pubDate>
+      <source url="https://www.g4media.ro">G4Media</source>
     </item>
   </channel>
 </rss>
@@ -46,9 +48,22 @@ XML;
 
         self::assertNotEmpty($results);
         self::assertContainsOnlyInstancesOf(AggregatorResult::class, $results);
-        self::assertSame('Moldovan citizen wins international prize', $results[0]->title);
+        self::assertSame('Moldovan citizen wins international prize - Moldova 1', $results[0]->title);
         self::assertSame('en', $results[0]->sourceLanguage);
         self::assertSame(AggregatorSourceType::GOOGLE_NEWS_RSS, $results[0]->aggregatorSourceType);
+        // Source tag fields
+        self::assertSame('Moldova 1', $results[0]->sourceName);
+        self::assertSame('moldova1.md', $results[0]->sourcePublisherDomain);
+    }
+
+    public function testSourcePublisherDomainStripsWww(): void
+    {
+        $aggregator = $this->createAggregator(self::RSS_FIXTURE);
+        $results = $aggregator->fetch();
+
+        // Second item has source url="https://www.g4media.ro" → domain "g4media.ro"
+        self::assertSame('g4media.ro', $results[1]->sourcePublisherDomain);
+        self::assertSame('G4Media', $results[1]->sourceName);
     }
 
     public function testFetchReturnsEmptyWhenDisabled(): void

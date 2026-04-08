@@ -11,7 +11,7 @@ use Psr\Log\LoggerInterface;
  * Indexes PressRelease entities into the deschide_press_releases ES index.
  * Used by: CLI command (bulk), Doctrine event listener (single), Messenger handler (async).
  */
-final readonly class PressReleaseIndexer
+readonly class PressReleaseIndexer
 {
     public function __construct(
         private PressReleaseIndexManager $indexManager,

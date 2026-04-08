@@ -52,6 +52,52 @@ class PressReleaseAggregatorFactoryTest extends TestCase
         self::assertSame($publishedAt, $pr->getReceivedAt());
     }
 
+    public function testSetsSourcePublisherDomain(): void
+    {
+        $catDetector = $this->createMock(CategoryDetectorService::class);
+        $catDetector->method('detectSlug')->willReturn('externe');
+
+        $factory = new PressReleaseAggregatorFactory($catDetector, new ContentHasher());
+
+        $result = new AggregatorResult(
+            title: 'Test article',
+            summary: 'Summary.',
+            sourceUrl: 'https://news.google.com/rss/articles/CBMi123',
+            sourceLanguage: 'ro',
+            sourceName: 'Moldova 1',
+            publishedAt: new \DateTimeImmutable(),
+            rawContent: 'Content',
+            sourcePublisherDomain: 'moldova1.md',
+        );
+
+        $pr = $factory->createFromAggregatorResult($result);
+
+        self::assertSame('moldova1.md', $pr->getSourcePublisherDomain());
+        self::assertSame('moldova1.md', $pr->getSourceHostname());
+    }
+
+    public function testSourcePublisherDomainNullWhenNotProvided(): void
+    {
+        $catDetector = $this->createMock(CategoryDetectorService::class);
+        $catDetector->method('detectSlug')->willReturn('externe');
+
+        $factory = new PressReleaseAggregatorFactory($catDetector, new ContentHasher());
+
+        $result = new AggregatorResult(
+            title: 'Test article',
+            summary: '',
+            sourceUrl: 'https://example.com/article',
+            sourceLanguage: 'en',
+            sourceName: 'Test Source',
+            publishedAt: new \DateTimeImmutable(),
+            rawContent: 'Content',
+        );
+
+        $pr = $factory->createFromAggregatorResult($result);
+
+        self::assertNull($pr->getSourcePublisherDomain());
+    }
+
     public function testTitleIsTruncated(): void
     {
         $catDetector = $this->createMock(CategoryDetectorService::class);
