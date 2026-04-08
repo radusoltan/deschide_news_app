@@ -17,8 +17,8 @@ use Symfony\Component\Process\Process;
  */
 class BatchTopicClassifier
 {
-    private const TIMEOUT = 120;
-    private const SLEEP_BETWEEN_BATCHES = 2;
+    private const TIMEOUT = 300;
+    private const SLEEP_BETWEEN_BATCHES = 10;
     private const MAX_TOPICS_PER_ARTICLE = 3;
 
     /** @var array<int, Topic> id → Topic entity cache */
@@ -193,7 +193,7 @@ PROMPT;
     private function callGemini(string $prompt): string
     {
         $process = new Process(
-            command: [$this->geminiCliPath, '-p', $prompt],
+            command: [$this->geminiCliPath, '-p', 'Classify these Moldovan news articles into topics. Return JSON array.'],
             cwd: $this->projectDir,
             env: [
                 'HOME' => '/home/radu',
@@ -202,6 +202,7 @@ PROMPT;
             timeout: self::TIMEOUT,
         );
 
+        $process->setInput($prompt);
         $process->run();
 
         if (!$process->isSuccessful()) {
