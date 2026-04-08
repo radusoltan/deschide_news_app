@@ -9,6 +9,7 @@ use App\Entity\GeneratedContent;
 use App\Entity\PressRelease;
 use App\Enum\ArticleStatus;
 use App\Enum\PressReleaseStatus;
+use App\Repository\StoryClusterRepository;
 use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -21,6 +22,7 @@ class DailyBriefingService
     public function __construct(
         private readonly string $geminiCliPath,
         private readonly EntityManagerInterface $em,
+        private readonly StoryClusterRepository $clusterRepository,
         private readonly NotebookLMService $notebookLMService,
         private readonly LoggerInterface $logger,
         private readonly string $briefingNotebookId = '',
@@ -205,21 +207,53 @@ class DailyBriefingService
             $articleList .= "- [{$category}] {$title}\n";
         }
 
+        $globalStories = $this->buildGlobalStoriesSection();
+
         return <<<PROMPT
 Generează un briefing zilnic de presă pentru {$dateStr}.
 {$count} articole procesate astăzi:
 
 {$articleList}
-
+{$globalStories}
 Format:
 # Briefing zilnic: {$dateStr}
 
 (3-5 puncte principale, fiecare în 2-3 propoziții maxim. Concentrează-te pe esența fiecărei știri importante.)
+Include secțiunea "Top Povești Globale" din cluster-uri (dacă există).
 
 Limba: română, diacritice comma-below (ș, ț).
 Maxim 500 de cuvinte total.
 Nu inventa informații — bazează-te strict pe titlurile furnizate.
 PROMPT;
+    }
+
+    /**
+     * Build the global stories section from top StoryCluster summaries.
+     */
+    private function buildGlobalStoriesSection(): string
+    {
+        $since = new \DateTimeImmutable('-24 hours');
+        $topClusters = $this->clusterRepository->findTopByScore(5, $since);
+
+        if ($topClusters === []) {
+            return '';
+        }
+
+        $section = "\n## Top 5 Global Stories (StoryCluster)\n";
+
+        foreach ($topClusters as $i => $cluster) {
+            $num = $i + 1;
+            $headline = $cluster->getPrimaryHeadline();
+            $score = round($cluster->getImportanceScore(), 2);
+            $sources = $cluster->getSourceCount();
+            $articles = $cluster->getArticleCount();
+            $summary = $cluster->getSummaryShort() ?? '(fără rezumat)';
+
+            $section .= "{$num}. **{$headline}** (scor: {$score}, {$sources} surse, {$articles} articole)\n";
+            $section .= "   {$summary}\n\n";
+        }
+
+        return $section;
     }
 
     /**
@@ -243,18 +277,22 @@ PROMPT;
 
         $n = \count($pressReleases) + \count($articles);
 
+        // Include global stories from StoryCluster
+        $globalStories = $this->buildGlobalStoriesSection();
+
         return <<<PROMPT
 Generează un briefing matinal pentru redacția Deschide.md. Rezumă cele mai importante {$n} articole primite overnight din surse internaționale.
 
 Articole primite:
 {$itemList}
-
+{$globalStories}
 Structură:
 # Briefing matinal: {$dateStr}
 
 - Titluri principale (3-5 puncte)
 - Context scurt pentru fiecare
 - Relevanță pentru Republica Moldova
+- Include secțiunea "Top Povești Globale" din cluster-uri (dacă există)
 
 Maxim 400 cuvinte, în limba română cu diacritice comma-below (ș, ț).
 Nu inventa informații — bazează-te strict pe titlurile furnizate.
