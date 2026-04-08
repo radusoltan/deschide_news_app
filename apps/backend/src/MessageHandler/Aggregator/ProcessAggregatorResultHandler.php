@@ -8,7 +8,9 @@ use App\Dto\Aggregator\AggregatorResult;
 use App\Enum\AggregatorSourceType;
 use App\Enum\DeduplicationResult;
 use App\Message\Aggregator\ProcessAggregatorResultMessage;
+use App\Repository\SourceRepository;
 use App\Service\Aggregator\AggregatorStatsCollector;
+use App\Service\Aggregator\GoogleNewsUrlResolver;
 use App\Service\Aggregator\PressReleaseAggregatorFactory;
 use App\Service\Aggregator\SemanticDeduplicatorService;
 use App\Service\Translation\AggregatorTranslationService;
@@ -23,6 +25,8 @@ final readonly class ProcessAggregatorResultHandler
         private SemanticDeduplicatorService $deduplicator,
         private PressReleaseAggregatorFactory $factory,
         private AggregatorTranslationService $translationService,
+        private GoogleNewsUrlResolver $urlResolver,
+        private SourceRepository $sourceRepository,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
         private AggregatorStatsCollector $statsCollector,
@@ -58,16 +62,37 @@ final readonly class ProcessAggregatorResultHandler
             rawContent: $message->rawContent,
             keywords: $message->keywords,
             aggregatorSourceType: AggregatorSourceType::tryFrom($message->aggregatorSourceType),
+            sourcePublisherDomain: $message->sourcePublisherDomain,
         );
 
         // Create PressRelease
         $pressRelease = $this->factory->createFromAggregatorResult($aggregatorResult);
+
+        // Resolve Google News redirect URLs to real article URLs
+        if (str_contains($message->sourceName, 'Google News') && $pressRelease->getSourceUrl() !== null) {
+            $resolvedUrl = $this->urlResolver->resolveUrl($pressRelease->getSourceUrl());
+            if ($resolvedUrl !== null) {
+                $pressRelease->setSourceUrl($resolvedUrl);
+            }
+        }
 
         // Translate to Romanian if not already in Romanian
         if ($message->sourceLanguage !== 'ro') {
             $pressRelease->setOriginalTitle($pressRelease->getTitle());
             $pressRelease->setOriginalContent($pressRelease->getContent());
             $this->translationService->translateToRomanian($pressRelease);
+        }
+
+        // Set detected_language from source language
+        $pressRelease->setDetectedLanguage($message->sourceLanguage);
+
+        // Link to Source entity via domain matching
+        $hostname = $pressRelease->getSourceHostname();
+        if ($hostname !== null) {
+            $source = $this->sourceRepository->findByDomain($hostname);
+            if ($source !== null) {
+                $pressRelease->setSource($source);
+            }
         }
 
         $this->em->persist($pressRelease);
