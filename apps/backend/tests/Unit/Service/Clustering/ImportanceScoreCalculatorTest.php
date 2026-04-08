@@ -163,6 +163,40 @@ class ImportanceScoreCalculatorTest extends TestCase
         $this->assertGreaterThan($singleScore, $multiScore);
     }
 
+    #[Test]
+    public function coverageDepthRewardsMultiArticleClusters(): void
+    {
+        $this->sourceRepo->method('getCredibilityWeight')->willReturn(0.5);
+        $this->sourceRepo->method('findByDomain')->willReturn(null);
+
+        $smallCluster = $this->createClusterWithSources(['reuters.com']);
+        $largeCluster = $this->createClusterWithSources([
+            'reuters.com', 'bbc.co.uk', 'nytimes.com', 'ft.com', 'dw.com',
+        ]);
+
+        $smallScore = $this->calculator->calculate($smallCluster);
+        $largeScore = $this->calculator->calculate($largeCluster);
+
+        // 5 articles vs 1 should produce notably higher score via coverageDepth
+        $this->assertGreaterThan($smallScore, $largeScore);
+    }
+
+    #[Test]
+    public function recencyHasFloor(): void
+    {
+        $this->sourceRepo->method('getCredibilityWeight')->willReturn(0.5);
+        $this->sourceRepo->method('findByDomain')->willReturn(null);
+
+        // Very old cluster (30 days)
+        $veryOldCluster = $this->createClusterWithSources(['reuters.com']);
+        $veryOldCluster->setFirstSeenAt(new \DateTimeImmutable('-30 days'));
+
+        $score = $this->calculator->calculate($veryOldCluster);
+
+        // Score should be > 0 due to recency floor + other factors
+        $this->assertGreaterThan(0.0, $score);
+    }
+
     /**
      * @param list<string> $domains
      */
