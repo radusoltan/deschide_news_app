@@ -403,6 +403,10 @@ services:
         arguments:
             $indexManager: '@App\Service\Clustering\PressReleaseIndexManager'
 
+    App\Service\Clustering\ClusterSummaryService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+
 # Test environment specific configuration
 when@test:
     services:

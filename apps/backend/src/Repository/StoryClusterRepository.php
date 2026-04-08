@@ -94,6 +94,27 @@ class StoryClusterRepository extends ServiceEntityRepository
     }
 
     /**
+     * Find top clusters without summaries (or all if force=true), ordered by score.
+     *
+     * @return list<StoryCluster>
+     */
+    public function findTopUnsummarized(int $limit, bool $includeExisting = false): array
+    {
+        $qb = $this->createQueryBuilder('sc')
+            ->andWhere('sc.status != :rejected')
+            ->andWhere('sc.articleCount > 1')
+            ->setParameter('rejected', StoryClusterStatus::REJECTED)
+            ->orderBy('sc.importanceScore', 'DESC')
+            ->setMaxResults($limit);
+
+        if (!$includeExisting) {
+            $qb->andWhere('sc.summaryShort IS NULL');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
      * Find clusters that contain any of the given PressRelease IDs.
      * Ordered by importance score DESC so the best cluster is returned first.
      *

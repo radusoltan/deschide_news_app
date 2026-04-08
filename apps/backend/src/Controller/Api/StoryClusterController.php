@@ -6,12 +6,14 @@ namespace App\Controller\Api;
 
 use App\Entity\StoryCluster;
 use App\Enum\StoryClusterStatus;
+use App\Message\Clustering\SummarizeClusterMessage;
 use App\Repository\StoryClusterRepository;
 use App\Service\Clustering\ImportanceScoreCalculator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -23,6 +25,7 @@ class StoryClusterController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly ImportanceScoreCalculator $calculator,
         private readonly SerializerInterface $serializer,
+        private readonly MessageBusInterface $messageBus,
     ) {}
 
     #[Route('/top', name: 'api_story_clusters_top', methods: ['GET'])]
@@ -75,5 +78,18 @@ class StoryClusterController extends AbstractController
             'id' => $cluster->getId(),
             'importanceScore' => $newScore,
         ]);
+    }
+
+    #[Route('/{id}/regenerate-summary', name: 'api_story_clusters_regenerate_summary', methods: ['POST'])]
+    public function regenerateSummary(StoryCluster $cluster): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('ROLE_EDITOR');
+
+        $this->messageBus->dispatch(new SummarizeClusterMessage($cluster->getId()));
+
+        return $this->json([
+            'id' => $cluster->getId(),
+            'message' => 'Summary regeneration dispatched',
+        ], 202);
     }
 }
