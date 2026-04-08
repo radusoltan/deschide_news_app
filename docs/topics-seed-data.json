@@ -60,6 +60,20 @@
             "title_ru": "НАТО",
             "description_ro": null,
             "children": []
+          },
+          {
+            "title_ro": "Orientul Mijlociu",
+            "title_en": "Middle East",
+            "title_ru": "Ближний Восток",
+            "description_ro": "Conflicte si politica din Orientul Mijlociu",
+            "children": []
+          },
+          {
+            "title_ro": "SUA",
+            "title_en": "USA",
+            "title_ru": "США",
+            "description_ro": "Politica si relatiile cu Statele Unite",
+            "children": []
           }
         ]
       },
@@ -120,6 +134,13 @@
         "title_ru": "ИТ и технологии",
         "description_ro": null,
         "children": []
+      },
+      {
+        "title_ro": "Prețuri și Inflație",
+        "title_en": "Prices & Inflation",
+        "title_ru": "Цены и инфляция",
+        "description_ro": "Evoluția prețurilor și inflația",
+        "children": []
       }
     ]
   },
@@ -148,6 +169,13 @@
         "title_en": "Labor & Migration",
         "title_ru": "Труд и миграция",
         "description_ro": null,
+        "children": []
+      },
+      {
+        "title_ro": "Drepturile Omului",
+        "title_en": "Human Rights",
+        "title_ru": "Права человека",
+        "description_ro": "Drepturile fundamentale ale omului",
         "children": []
       }
     ]
@@ -178,6 +206,13 @@
         "title_ru": "Громкие дела",
         "description_ro": null,
         "children": []
+      },
+      {
+        "title_ro": "Ordine Publică",
+        "title_en": "Public Order",
+        "title_ru": "Общественный порядок",
+        "description_ro": "Poliție, siguranță publică și criminalitate",
+        "children": []
       }
     ]
   },
@@ -207,6 +242,13 @@
         "title_ru": "Спорт",
         "description_ro": null,
         "children": []
+      },
+      {
+        "title_ro": "Știință și Spațiu",
+        "title_en": "Science & Space",
+        "title_ru": "Наука и космос",
+        "description_ro": "Descoperiri științifice și explorarea spațiului",
+        "children": []
       }
     ]
   },
@@ -235,6 +277,20 @@
         "title_en": "Transnistria",
         "title_ru": "Приднестровье",
         "description_ro": "Conflictul transnistrean",
+        "children": []
+      },
+      {
+        "title_ro": "Războiul din Ucraina",
+        "title_en": "War in Ukraine",
+        "title_ru": "Война в Украине",
+        "description_ro": "Conflictul militar din Ucraina",
+        "children": []
+      },
+      {
+        "title_ro": "Frontiere și Migrație",
+        "title_en": "Borders & Migration",
+        "title_ru": "Границы и миграция",
+        "description_ro": "Securitatea frontierelor și migrația",
         "children": []
       }
     ]

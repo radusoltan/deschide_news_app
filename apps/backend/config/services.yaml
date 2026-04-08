@@ -223,6 +223,12 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
+    # Batch Topic Classifier (Gemini CLI subprocess — Sprint 34)
+    App\Service\Topic\BatchTopicClassifier:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $projectDir: '%kernel.project_dir%'
+
     # Translation Handler (Gemini CLI subprocess)
     App\MessageHandler\TranslateArticleHandler:
         arguments:
