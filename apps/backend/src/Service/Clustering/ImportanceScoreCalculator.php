@@ -72,11 +72,23 @@ class ImportanceScoreCalculator
 
     /**
      * Sum of unique sources' credibilityWeight / 5.0 (capped at 1.0).
+     * Uses Source FK when available, falls back to hostname-based lookup.
      */
     private function calculateSourceWeightedCount(StoryCluster $cluster): float
     {
         $uniqueSources = [];
         foreach ($cluster->getPressReleases() as $pr) {
+            // Prefer the Source FK for reliable credibility weight
+            $source = $pr->getSource();
+            if ($source !== null) {
+                $key = 'source_' . $source->getId();
+                if (!isset($uniqueSources[$key])) {
+                    $uniqueSources[$key] = $source->getCredibilityWeight();
+                }
+                continue;
+            }
+
+            // Fallback to hostname-based lookup
             $hostname = $pr->getSourceHostname();
             if ($hostname !== null && !isset($uniqueSources[$hostname])) {
                 $weight = $this->sourceRepository->getCredibilityWeight($hostname);
@@ -107,11 +119,19 @@ class ImportanceScoreCalculator
 
     /**
      * Count of distinct countries / 5 (capped at 1.0).
+     * Uses Source FK when available for reliable country data.
      */
     private function calculateGeoDiversity(StoryCluster $cluster): float
     {
         $countries = [];
         foreach ($cluster->getPressReleases() as $pr) {
+            $source = $pr->getSource();
+            if ($source !== null && $source->getCountry() !== null) {
+                $countries[$source->getCountry()] = true;
+                continue;
+            }
+
+            // Fallback to hostname-based lookup
             $hostname = $pr->getSourceHostname();
             if ($hostname !== null) {
                 $source = $this->sourceRepository->findByDomain($hostname);

@@ -208,6 +208,12 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?string $detectedLanguage = null;
 
+    /** Link to the Source entity for credibility, country, and category metadata */
+    #[ORM\ManyToOne(targetEntity: Source::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['press:read'])]
+    private ?Source $source = null;
+
     /** @var Collection<int, StoryCluster> */
     #[ORM\ManyToMany(targetEntity: StoryCluster::class, mappedBy: 'pressReleases')]
     private Collection $storyClusters;
@@ -321,6 +327,9 @@ class PressRelease
 
     public function getDetectedLanguage(): ?string { return $this->detectedLanguage; }
     public function setDetectedLanguage(?string $detectedLanguage): static { $this->detectedLanguage = $detectedLanguage; return $this; }
+
+    public function getSource(): ?Source { return $this->source; }
+    public function setSource(?Source $source): static { $this->source = $source; return $this; }
 
     /** @return Collection<int, StoryCluster> */
     public function getStoryClusters(): Collection { return $this->storyClusters; }

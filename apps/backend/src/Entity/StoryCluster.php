@@ -228,6 +228,13 @@ class StoryCluster
 
         $uniqueSources = [];
         foreach ($this->pressReleases as $pr) {
+            // Prefer Source FK for unique identification
+            $source = $pr->getSource();
+            if ($source !== null) {
+                $uniqueSources['source_' . $source->getId()] = true;
+                continue;
+            }
+            // Fallback to hostname
             $hostname = $pr->getSourceHostname();
             if ($hostname !== null) {
                 $uniqueSources[$hostname] = true;
