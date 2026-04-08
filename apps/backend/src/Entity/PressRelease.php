@@ -61,11 +61,11 @@ class PressRelease
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['press:read'])]
+    #[Groups(['press:read', 'cluster:detail'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['press:read', 'press:write'])]
+    #[Groups(['press:read', 'press:write', 'cluster:detail'])]
     private string $title;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -89,7 +89,7 @@ class PressRelease
     private ?string $senderName = null;
 
     #[ORM\Column(length: 2048, nullable: true)]
-    #[Groups(['press:read'])]
+    #[Groups(['press:read', 'cluster:detail'])]
     private ?string $sourceUrl = null;
 
     #[ORM\Column(length: 50)]
@@ -101,7 +101,7 @@ class PressRelease
     private ?string $emailSubject = null;
 
     #[ORM\Column(enumType: PressReleaseStatus::class)]
-    #[Groups(['press:read', 'press:write'])]
+    #[Groups(['press:read', 'press:write', 'cluster:detail'])]
     private PressReleaseStatus $status = PressReleaseStatus::PENDING;
 
     #[ORM\Column(length: 64, nullable: true)]
@@ -124,7 +124,7 @@ class PressRelease
     private ?string $originalContent = null;
 
     #[ORM\Column(length: 100, nullable: true)]
-    #[Groups(['press:read'])]
+    #[Groups(['press:read', 'cluster:detail'])]
     private ?string $sourceName = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -132,7 +132,7 @@ class PressRelease
     private ?string $rejectionReason = null;
 
     #[ORM\Column]
-    #[Groups(['press:read'])]
+    #[Groups(['press:read', 'cluster:detail'])]
     private \DateTimeImmutable $receivedAt;
 
     #[ORM\Column]
@@ -338,7 +338,7 @@ class PressRelease
      * Computed field: returns the publisher hostname.
      * Priority: sourcePublisherDomain (from RSS <source> tag) > parsed sourceUrl hostname.
      */
-    #[Groups(['press:read'])]
+    #[Groups(['press:read', 'cluster:detail'])]
     public function getSourceHostname(): ?string
     {
         // Prefer explicit publisher domain (set from RSS <source> tag for aggregator articles)

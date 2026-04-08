@@ -30,6 +30,7 @@ export interface StoryClusterDetail extends StoryClusterItem {
     title: string;
     sourceUrl: string | null;
     sourceHostname: string | null;
+    sourceName: string | null;
     receivedAt: string;
     status: string;
   }[];

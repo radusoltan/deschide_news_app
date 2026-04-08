@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import {
   fetchStoryClusters,
   fetchStoryClusterDetail,
@@ -246,9 +246,8 @@ export default function StoryClustersPage() {
               </tr>
             ) : (
               items.map((item) => (
-                <>
+                <Fragment key={item.id}>
                   <tr
-                    key={item.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
                     onClick={() => handleExpand(item.id)}
                   >
@@ -369,7 +368,7 @@ export default function StoryClustersPage() {
                                         {pr.title}
                                       </div>
                                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                                        {pr.sourceHostname ?? 'Unknown'} &middot; {formatDate(pr.receivedAt)}
+                                        {pr.sourceName ?? pr.sourceHostname ?? 'Unknown'} &middot; {pr.receivedAt ? formatDate(pr.receivedAt) : '—'}
                                       </div>
                                     </div>
                                     {pr.sourceUrl && (
@@ -436,7 +435,7 @@ export default function StoryClustersPage() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))
             )}
           </tbody>
