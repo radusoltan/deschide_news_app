@@ -92,4 +92,28 @@ class StoryClusterRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Find clusters that contain any of the given PressRelease IDs.
+     * Ordered by importance score DESC so the best cluster is returned first.
+     *
+     * @param list<int> $pressReleaseIds
+     * @return list<StoryCluster>
+     */
+    public function findClustersContainingPressReleases(array $pressReleaseIds): array
+    {
+        if ($pressReleaseIds === []) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('sc')
+            ->innerJoin('sc.pressReleases', 'pr')
+            ->where('pr.id IN (:prIds)')
+            ->andWhere('sc.status != :rejected')
+            ->setParameter('prIds', $pressReleaseIds)
+            ->setParameter('rejected', StoryClusterStatus::REJECTED)
+            ->orderBy('sc.importanceScore', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

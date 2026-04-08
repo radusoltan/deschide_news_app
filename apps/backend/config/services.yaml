@@ -391,13 +391,17 @@ services:
             $userAgents: '%aggregator.google_news_rss.user_agents%'
             $enabled: '%aggregator.google_news_rss.enabled%'
 
-    # Clustering pipeline (Sprint 30)
-    App\Service\Clustering\ElasticsearchClusterFinder:
+    # Clustering pipeline (Sprint 30-31)
+    App\Service\Clustering\PressReleaseIndexManager:
         arguments:
             $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
             $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
+
+    App\Service\Clustering\ElasticsearchClusterFinder:
+        arguments:
+            $indexManager: '@App\Service\Clustering\PressReleaseIndexManager'
 
 # Test environment specific configuration
 when@test:

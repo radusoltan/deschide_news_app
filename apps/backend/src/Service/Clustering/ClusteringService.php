@@ -15,20 +15,22 @@ use Psr\Log\LoggerInterface;
  *
  * Algorithm:
  * 1. Find PressReleases not yet assigned to any cluster
- * 2. For each, search ES MLT against existing clustered articles
- * 3. Temporal validation: articles must be within 48h of each other
- * 4. If match → add to existing cluster
- * 5. If no match → create new StoryCluster
+ * 2. For each, search ES MLT against other indexed PressReleases
+ * 3. Map matched PR IDs to their existing StoryCluster
+ * 4. Temporal validation: articles must be within 48h of each other
+ * 5. If match → add to existing cluster
+ * 6. If no match → create new StoryCluster
  */
 class ClusteringService
 {
-    private const SIMILARITY_THRESHOLD = 0.75;
+    private const SIMILARITY_THRESHOLD = 0.40;
     private const TEMPORAL_WINDOW_HOURS = 48;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly StoryClusterRepository $clusterRepository,
         private readonly ElasticsearchClusterFinder $clusterFinder,
+        private readonly PressReleaseIndexer $indexer,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -60,6 +62,9 @@ class ClusteringService
                 continue;
             }
 
+            // Ensure the PR is indexed in ES before trying to cluster
+            $this->indexer->index($pr);
+
             $this->clusterSinglePressRelease($pr, $dryRun);
             $processed++;
 
@@ -85,10 +90,6 @@ class ClusteringService
      */
     public function clusterSinglePressRelease(PressRelease $pr, bool $dryRun = false): ?StoryCluster
     {
-        $title = $pr->getTitle();
-        $content = $pr->getContent();
-
-        // Search for similar articles in existing clusters
         $matchingCluster = $this->findMatchingCluster($pr);
 
         if ($matchingCluster !== null) {
@@ -110,22 +111,16 @@ class ClusteringService
         // No match — create new cluster
         $this->logger->info('ClusteringService: creating new cluster for PR #{id}', [
             'id' => $pr->getId(),
-            'title' => mb_substr($title, 0, 60),
+            'title' => mb_substr($pr->getTitle(), 0, 60),
         ]);
 
         if (!$dryRun) {
             $cluster = new StoryCluster();
-            $cluster->setPrimaryHeadline(mb_substr($title, 0, 500));
+            $cluster->setPrimaryHeadline(mb_substr($pr->getTitle(), 0, 500));
             $cluster->addPressRelease($pr);
             $cluster->recalculateCounts();
             $cluster->setFirstSeenAt($pr->getReceivedAt());
             $cluster->setLastUpdatedAt(new \DateTimeImmutable());
-
-            // Copy region tag from source country
-            $hostname = $pr->getSourceHostname();
-            if ($hostname !== null) {
-                $cluster->setRegionTags([$hostname]);
-            }
 
             $this->em->persist($cluster);
 
@@ -137,44 +132,40 @@ class ClusteringService
 
     /**
      * Find an existing StoryCluster that matches the given PressRelease.
+     *
+     * Strategy:
+     * 1. ES MLT finds similar PressReleases by content
+     * 2. Look up which clusters those similar PRs belong to
+     * 3. Return the best matching cluster (temporal validation)
      */
     private function findMatchingCluster(PressRelease $pr): ?StoryCluster
     {
-        // Use ES MLT to find similar articles
+        // Step 1: Find similar PressReleases via ES MLT
         $similar = $this->clusterFinder->findSimilar(
             $pr->getTitle(),
             $pr->getContent(),
             self::SIMILARITY_THRESHOLD,
+            $pr->getId(), // exclude self
         );
 
         if ($similar === []) {
             return null;
         }
 
-        // Find clusters containing any of the similar articles
-        $since = new \DateTimeImmutable(sprintf('-%d hours', self::TEMPORAL_WINDOW_HOURS));
-        $activeClusters = $this->clusterRepository->findActiveClustersInWindow($since);
+        // Step 2: Collect matched PR IDs and find their clusters
+        $matchedPrIds = array_map(fn (array $m) => $m['pressReleaseId'], $similar);
 
-        foreach ($similar as $match) {
-            foreach ($activeClusters as $cluster) {
-                // Check if any PressRelease in this cluster matches the similar article
-                foreach ($cluster->getPressReleases() as $clusteredPr) {
-                    if ($clusteredPr->getId() === $match['articleId']) {
-                        // Temporal validation — must be within 48h
-                        if ($this->isWithinTemporalWindow($pr, $cluster)) {
-                            return $cluster;
-                        }
-                    }
-                }
-            }
+        // Query clusters that contain any of the matched PRs
+        $clusters = $this->clusterRepository->findClustersContainingPressReleases($matchedPrIds);
+
+        if ($clusters === []) {
+            return null;
         }
 
-        // Also try matching by title against cluster headlines directly
-        foreach ($activeClusters as $cluster) {
-            if ($this->isTitleSimilar($pr->getTitle(), $cluster->getPrimaryHeadline())) {
-                if ($this->isWithinTemporalWindow($pr, $cluster)) {
-                    return $cluster;
-                }
+        // Step 3: Return the first cluster that passes temporal validation
+        foreach ($clusters as $cluster) {
+            if ($this->isWithinTemporalWindow($pr, $cluster)) {
+                return $cluster;
             }
         }
 
@@ -188,40 +179,5 @@ class ClusteringService
         $diffHours = abs($prTime - $clusterTime) / 3600;
 
         return $diffHours <= self::TEMPORAL_WINDOW_HOURS;
-    }
-
-    /**
-     * Simple title similarity check using normalized word overlap.
-     */
-    private function isTitleSimilar(string $title1, string $title2): bool
-    {
-        $words1 = $this->normalizeWords($title1);
-        $words2 = $this->normalizeWords($title2);
-
-        if ($words1 === [] || $words2 === []) {
-            return false;
-        }
-
-        $intersection = array_intersect($words1, $words2);
-        $union = array_unique(array_merge($words1, $words2));
-
-        $jaccard = \count($intersection) / \count($union);
-
-        return $jaccard >= 0.5;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function normalizeWords(string $text): array
-    {
-        $text = mb_strtolower(trim($text));
-        $words = preg_split('/\s+/', $text, -1, \PREG_SPLIT_NO_EMPTY);
-
-        // Filter out common stop words and short words
-        return array_values(array_filter(
-            $words ?: [],
-            fn (string $w) => mb_strlen($w) > 2,
-        ));
     }
 }
