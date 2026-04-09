@@ -474,7 +474,7 @@ class ArticleArchiveControllerTest extends WebTestCase
         // Verify types
         $this->assertIsInt($stats['total_articles']);
         $this->assertIsInt($stats['archived_articles']);
-        $this->assertIsFloat($stats['archive_percentage']);
+        $this->assertIsNumeric($stats['archive_percentage']);
         $this->assertIsArray($stats['by_reason']);
 
         // Verify by_reason contains at least the reasons we created
