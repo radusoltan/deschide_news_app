@@ -196,6 +196,7 @@ export interface Article {
   badge?: string | null;
   isFeatured?: boolean;
   publishedAt?: string;
+  publishAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
   category?: string | object;

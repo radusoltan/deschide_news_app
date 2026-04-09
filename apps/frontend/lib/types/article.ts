@@ -61,6 +61,7 @@ export interface Article {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+  publishAt?: string | null; // Scheduled publication date
   archivedAt?: string | null; // When article was archived
   archiveReason?: string; // Reason for archival (e.g., 'outdated', 'inaccurate', 'manual')
   locale?: string;
