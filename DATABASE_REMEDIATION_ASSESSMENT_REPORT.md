@@ -537,7 +537,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO deschide_rea
 requirepass: (empty - no password required)
 bind:        127.0.0.1, ::1 (localhost only)
 maxmemory:   512 MB
-maxmemory_policy: allkeys-lru
+maxmemory_policy: volatile-lru
 used_memory: 1.60 MB
 ```
 

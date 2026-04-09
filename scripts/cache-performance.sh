@@ -234,7 +234,7 @@ if [ "$ISSUES" -gt 0 ]; then
 
     if [ "$EVICTED" -gt 0 ]; then
         echo "• Increase Redis max memory limit"
-        echo "• Review cache eviction policy (current: allkeys-lru recommended)"
+        echo "• Review cache eviction policy (current: volatile-lru recommended)"
         echo "• Consider removing less important cached data"
     fi
 

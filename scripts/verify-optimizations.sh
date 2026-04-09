@@ -66,10 +66,10 @@ else
   check_fail "Redis maxmemory: $REDIS_MAXMEM (expected: 536870912)"
 fi
 
-if [ "$REDIS_POLICY" == "allkeys-lru" ]; then
-  check_pass "Redis eviction policy: allkeys-lru (optimal)"
+if [ "$REDIS_POLICY" == "volatile-lru" ]; then
+  check_pass "Redis eviction policy: volatile-lru (optimal)"
 else
-  check_fail "Redis eviction policy: $REDIS_POLICY (expected: allkeys-lru)"
+  check_fail "Redis eviction policy: $REDIS_POLICY (expected: volatile-lru)"
 fi
 
 if [ "$REDIS_SAMPLES" == "5" ]; then

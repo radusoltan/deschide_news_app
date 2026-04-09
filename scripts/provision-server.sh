@@ -467,18 +467,18 @@ if [ "$DRY_RUN" = false ]; then
         echo 'maxmemory 512mb' >> "$REDIS_CONF"
     fi
     # Set eviction policy
-    sed -i 's/^# maxmemory-policy .*/maxmemory-policy allkeys-lru/' "$REDIS_CONF"
-    if ! grep -q '^maxmemory-policy allkeys-lru' "$REDIS_CONF"; then
-        echo 'maxmemory-policy allkeys-lru' >> "$REDIS_CONF"
+    sed -i 's/^# maxmemory-policy .*/maxmemory-policy volatile-lru/' "$REDIS_CONF"
+    if ! grep -q '^maxmemory-policy volatile-lru' "$REDIS_CONF"; then
+        echo 'maxmemory-policy volatile-lru' >> "$REDIS_CONF"
     fi
     # Bind to localhost only
     sed -i 's/^bind .*/bind 127.0.0.1 ::1/' "$REDIS_CONF"
 
     systemctl enable redis-server
     systemctl restart redis-server
-    log_success "Redis configured (512 MB, allkeys-lru)"
+    log_success "Redis configured (512 MB, volatile-lru)"
 else
-    log_dry "Configure Redis: maxmemory 512mb, allkeys-lru"
+    log_dry "Configure Redis: maxmemory 512mb, volatile-lru"
 fi
 
 log_success "Redis installed and configured"
@@ -1079,7 +1079,7 @@ echo ""
 echo -e "  ${BOLD}Installed Services:${NC}"
 echo -e "    PHP:            ${PHP_VERSION}-fpm"
 echo -e "    PostgreSQL:     ${PG_VERSION}"
-echo -e "    Redis:          7.x (512 MB, allkeys-lru)"
+echo -e "    Redis:          7.x (512 MB, volatile-lru)"
 echo -e "    Elasticsearch:  9.x (2 GB heap, single-node)"
 echo -e "    RabbitMQ:       with management plugin"
 echo -e "    Node.js:        ${NODE_VERSION}.x + pnpm + PM2"

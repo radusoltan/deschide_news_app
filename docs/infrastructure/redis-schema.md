@@ -262,7 +262,7 @@ DEL deschide_news:cache:api:trending
 Configure Redis with:
 ```
 maxmemory 512mb
-maxmemory-policy allkeys-lru
+maxmemory-policy volatile-lru
 ```
 
 This ensures Least Recently Used (LRU) keys are evicted when memory limit is reached.

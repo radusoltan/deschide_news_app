@@ -101,7 +101,7 @@ Vary: Content-Type
 ### Missing Keys?
 - Keys expire based on TTL
 - Check expiration policy: `redis-cli -n 1 CONFIG GET maxmemory-policy`
-- Should be: `allkeys-lru`
+- Should be: `volatile-lru`
 
 ---
 

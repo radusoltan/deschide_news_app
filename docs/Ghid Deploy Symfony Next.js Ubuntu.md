@@ -132,7 +132,7 @@ Redis 8 nu este doar un cache, ci un component structural vital în arhitectura 
 
 Redis 8 introduce îmbunătățiri în replicare și eficiență 9, dar pe un singur nod, configurarea politicii de evacuare a memoriei (maxmemory-policy) este decizia arhitecturală principală.
 
-Pentru un cache partajat (Doctrine \+ API responses), politica recomandată este allkeys-lru (Evict Least Recently Used keys). Aceasta asigură că datele cele mai accesate rămân în memorie, în timp ce datele vechi sunt eliminate automat când memoria se umple.
+Pentru un cache partajat (Doctrine \+ API responses), politica recomandată este volatile-lru (Evict Least Recently Used keys). Aceasta asigură că datele cele mai accesate rămân în memorie, în timp ce datele vechi sunt eliminate automat când memoria se umple.
 
 În redis.conf:
 
@@ -142,7 +142,7 @@ bind 127.0.0.1 ::1
 protected-mode yes  
 port 6379  
 maxmemory 512mb \# Ajustați în funcție de RAM-ul disponibil  
-maxmemory-policy allkeys-lru  
+maxmemory-policy volatile-lru  
 save "" \# Dezactivează snapshot-urile implicite dacă persistența nu e critică pentru cache  
 appendonly no \# Pentru cache pur, AOF nu este necesar și consumă I/O
 
@@ -451,7 +451,7 @@ Această analiză oferă o fundație solidă pentru o aplicație de producție c
 | **PM2 Mode** | ecosystem.config.js | cluster, instances: 'max' | Utilizează toate nucleele CPU pentru Node.js. |
 | **Nginx Static** | nginx.conf | location /\_next/static | Ocolește Node.js pentru asset-uri, folosind sendfile. |
 | **Postgres Vacuum** | postgresql.conf | autovacuum \= on | Previne degradarea performanței în timp (Database Bloat). |
-| **Redis Policy** | redis.conf | allkeys-lru | Asigură că Redis funcționează optim ca un cache, nu DB. |
+| **Redis Policy** | redis.conf | volatile-lru | Asigură că Redis funcționează optim ca un cache, nu DB. |
 | **Kernel TCP** | sysctl.conf | tw\_reuse=1, somaxconn=65535 | Previne epuizarea porturilor la trafic intens. |
 
 #### **Lucrări citate**

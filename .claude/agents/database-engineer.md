@@ -615,7 +615,7 @@ redis-cli -n 1 CONFIG GET maxmemory-policy
 redis-cli CONFIG SET maxmemory 256mb
 
 # Use LRU eviction for cache workload
-redis-cli CONFIG SET maxmemory-policy allkeys-lru
+redis-cli CONFIG SET maxmemory-policy volatile-lru
 ```
 
 #### 3.3 Cache Invalidation Strategy
