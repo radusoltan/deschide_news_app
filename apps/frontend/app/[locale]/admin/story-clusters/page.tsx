@@ -131,8 +131,23 @@ export default function StoryClustersPage() {
   }, [statusFilter, page]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    // Inline fetch avoids synchronous setState from loadData callback
+    let active = true;
+    fetchStoryClusters(
+      statusFilter === 'all' ? undefined : statusFilter,
+      page,
+    ).then(result => {
+      if (!active) return;
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setItems(result.items);
+        setTotalItems(result.totalItems);
+      }
+      setLoading(false);
+    });
+    return () => { active = false; };
+  }, [statusFilter, page]);
 
   useEffect(() => {
     if (toast) {

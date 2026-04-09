@@ -12,8 +12,10 @@ parameters:
         - src/
 
     # Symfony-specific configuration
+    # PREREQUISITE: Run `APP_DEBUG=1 symfony console cache:warmup --env=dev`
+    # before PHPStan to generate the container XML. CI pipelines must include
+    # this step or PHPStan will fail with "Container does not exist".
     symfony:
-        # Path to Symfony container XML file for service analysis
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
 
     # Doctrine-specific configuration

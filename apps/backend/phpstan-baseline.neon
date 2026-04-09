@@ -7,6 +7,72 @@ parameters:
 			path: src/Command/AggregateStatsCommand.php
 
 		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Command/AggregatorSchedulerCommand.php
+
+		-
+			message: '#^Constant App\\Command\\Archive\\ProcessArchiveContentCommand\:\:DEFAULT_BATCH_SIZE is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: src/Command/Archive/ProcessArchiveContentCommand.php
+
+		-
+			message: '#^Method App\\Command\\Archive\\ProcessArchiveContentCommand\:\:displaySample\(\) has parameter \$result with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/Archive/ProcessArchiveContentCommand.php
+
+		-
+			message: '#^Method App\\Command\\Archive\\ProcessArchiveContentCommand\:\:fetchArticles\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/Archive/ProcessArchiveContentCommand.php
+
+		-
+			message: '#^Method App\\Command\\Archive\\ProcessArchiveContentCommand\:\:processArticle\(\) has parameter \$article with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/Archive/ProcessArchiveContentCommand.php
+
+		-
+			message: '#^Method App\\Command\\Archive\\ProcessArchiveContentCommand\:\:processArticle\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/Archive/ProcessArchiveContentCommand.php
+
+		-
+			message: '#^Method App\\Command\\Archive\\ProcessArchiveContentCommand\:\:saveProcessedContent\(\) has parameter \$processedArticles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/Archive/ProcessArchiveContentCommand.php
+
+		-
+			message: '#^Method App\\Command\\Archive\\ProcessArchiveContentCommand\:\:updateGlobalStats\(\) has parameter \$stats with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/Archive/ProcessArchiveContentCommand.php
+
+		-
+			message: '#^Property App\\Command\\Archive\\ProcessArchiveContentCommand\:\:\$globalStats type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/Archive/ProcessArchiveContentCommand.php
+
+		-
+			message: '#^Method App\\Command\\Archive\\SyncArchiveImagesCommand\:\:getDirectoryStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/Archive/SyncArchiveImagesCommand.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/Archive/SyncArchiveImagesCommand.php
+
+		-
 			message: '#^Call to an undefined method Symfony\\Component\\Console\\Helper\\HelperInterface\:\:ask\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -31,6 +97,12 @@ parameters:
 			path: src/Command/CacheWarmCommand.php
 
 		-
+			message: '#^Method App\\Command\\CleanupPageViewsCommand\:\:getCurrentStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/CleanupPageViewsCommand.php
+
+		-
 			message: '#^Call to an undefined method Symfony\\Component\\Console\\Helper\\HelperInterface\:\:ask\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -43,20 +115,20 @@ parameters:
 			path: src/Command/CleanupStatsCommand.php
 
 		-
-			message: '#^Access to property \$queries of deprecated class Doctrine\\DBAL\\Logging\\DebugStack\.$#'
-			identifier: property.deprecatedClass
+			message: '#^Method Doctrine\\Persistence\\ObjectManager\:\:clear\(\) invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: src/Command/ClusterDataQualityCommand.php
+
+		-
+			message: '#^Access to property \$queries on an unknown class Doctrine\\DBAL\\Logging\\DebugStack\.$#'
+			identifier: class.notFound
 			count: 1
 			path: src/Command/DatabaseQueryAuditCommand.php
 
 		-
-			message: '#^Call to method __construct\(\) of deprecated class Doctrine\\DBAL\\Logging\\DebugStack\.$#'
-			identifier: method.deprecatedClass
-			count: 1
-			path: src/Command/DatabaseQueryAuditCommand.php
-
-		-
-			message: '#^Instantiation of deprecated class Doctrine\\DBAL\\Logging\\DebugStack\.$#'
-			identifier: new.deprecatedClass
+			message: '#^Instantiated class Doctrine\\DBAL\\Logging\\DebugStack not found\.$#'
+			identifier: class.notFound
 			count: 1
 			path: src/Command/DatabaseQueryAuditCommand.php
 
@@ -67,10 +139,22 @@ parameters:
 			path: src/Command/DatabaseQueryAuditCommand.php
 
 		-
-			message: '#^Property Doctrine\\DBAL\\Logging\\DebugStack\:\:\$queries \(array\<int, array\<string, mixed\>\>\) on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.property
+			message: '#^Strict comparison using \=\=\= between mixed and 0 will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
 			count: 1
-			path: src/Command/DatabaseQueryAuditCommand.php
+			path: src/Command/Editorial/DevResetCommand.php
+
+		-
+			message: '#^Call to an undefined method App\\Entity\\Topic\:\:getName\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Command/Editorial/GenerateDossiersCommand.php
+
+		-
+			message: '#^Part \$articles \(list\<App\\Entity\\Article\>\) of encapsed string cannot be cast to string\.$#'
+			identifier: encapsedStringPart.nonString
+			count: 1
+			path: src/Command/Editorial/GenerateDossiersCommand.php
 
 		-
 			message: '#^Property App\\Command\\ElasticsearchIndexArticlesCommand\:\:\$supportedLocales type has no value type specified in iterable type array\.$#'
@@ -100,6 +184,12 @@ parameters:
 			message: '#^Method App\\Command\\Import\\ImportArticlesCommand\:\:buildArticlePayload\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
+			path: src/Command/Import/ImportArticlesCommand.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between mixed~\(0\|0\.0\|''''\|''0''\|array\{\}\|false\|null\) and ''0'' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 3
 			path: src/Command/Import/ImportArticlesCommand.php
 
 		-
@@ -157,10 +247,10 @@ parameters:
 			path: src/Command/Import/ImportCategoriesCommand.php
 
 		-
-			message: '#^Call to an undefined method App\\Entity\\Category\:\:setDescription\(\)\.$#'
-			identifier: method.notFound
+			message: '#^Method App\\Command\\Import\\ImportCategoriesCommand\:\:generateSlug\(\) is unused\.$#'
+			identifier: method.unused
 			count: 1
-			path: src/Command/Import/ImportCategoriesDirectCommand.php
+			path: src/Command/Import/ImportCategoriesCommand.php
 
 		-
 			message: '#^If condition is always false\.$#'
@@ -169,10 +259,22 @@ parameters:
 			path: src/Command/Import/ImportCategoriesDirectCommand.php
 
 		-
+			message: '#^Method App\\Command\\Import\\ImportCategoriesDirectCommand\:\:decodeBlobContent\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Command/Import/ImportCategoriesDirectCommand.php
+
+		-
 			message: '#^Method Symfony\\Component\\Console\\Style\\SymfonyStyle\:\:text\(\) invoked with 2 parameters, 1 required\.$#'
 			identifier: arguments.count
 			count: 4
 			path: src/Command/Import/ImportCategoriesDirectCommand.php
+
+		-
+			message: '#^Property App\\Command\\Import\\ImportCompleteCategoriesCommand\:\:\$importTokenService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Command/Import/ImportCompleteCategoriesCommand.php
 
 		-
 			message: '''
@@ -232,6 +334,18 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Command/Import/ImportCsvArticlesCommand.php
+
+		-
+			message: '#^Constant App\\Command\\Import\\ImportCsvLegacyArticlesCommand\:\:MAPPING_FILE is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: src/Command/Import/ImportCsvLegacyArticlesCommand.php
+
+		-
+			message: '#^Method App\\Command\\Import\\ImportCsvLegacyArticlesCommand\:\:saveCheckpoint\(\) has parameter \$stats with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/Import/ImportCsvLegacyArticlesCommand.php
 
 		-
 			message: '#^Method App\\Command\\Import\\ImportTranslationsCommand\:\:buildTranslationPayload\(\) has parameter \$articleData with no value type specified in iterable type array\.$#'
@@ -342,10 +456,130 @@ parameters:
 			path: src/Command/SampleImportCommand.php
 
 		-
+			message: '#^Method App\\Command\\ScrapeSourcesCommand\:\:__construct\(\) has parameter \$sources with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/ScrapeSourcesCommand.php
+
+		-
+			message: '#^Constant App\\Command\\SeedDemoDataCommand\:\:TAGS_COUNT is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: src/Command/SeedDemoDataCommand.php
+
+		-
+			message: '#^Method App\\Command\\SeedDemoDataCommand\:\:generateContent\(\) has parameter \$faker with no type specified\.$#'
+			identifier: missingType.parameter
+			count: 1
+			path: src/Command/SeedDemoDataCommand.php
+
+		-
+			message: '#^Method App\\Command\\SeedDemoDataCommand\:\:seedArchiveArticles\(\) has parameter \$authors with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SeedDemoDataCommand.php
+
+		-
+			message: '#^Method App\\Command\\SeedDemoDataCommand\:\:seedArchiveArticles\(\) has parameter \$categories with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SeedDemoDataCommand.php
+
+		-
+			message: '#^Method App\\Command\\SeedDemoDataCommand\:\:seedSportMatches\(\) has parameter \$categories with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SeedDemoDataCommand.php
+
+		-
+			message: '#^Method App\\Command\\SeedDemoDataCommand\:\:seedSportMatches\(\) has parameter \$users with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SeedDemoDataCommand.php
+
+		-
+			message: '#^Call to deprecated function imagedestroy\(\)\.$#'
+			identifier: function.deprecated
+			count: 1
+			path: src/Command/SeedImagesCommand.php
+
+		-
 			message: '#^Method App\\Command\\SeedLiveTextTemplatesCommand\:\:getTemplateDefinitions\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Command/SeedLiveTextTemplatesCommand.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 2
+			path: src/Command/SeedProductionDataCommand.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Command/SeoBackfillCommand.php
+
+		-
+			message: '#^Method App\\Command\\SimulateTrafficCommand\:\:buildWeightedPool\(\) has parameter \$articles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SimulateTrafficCommand.php
+
+		-
+			message: '#^Method App\\Command\\SimulateTrafficCommand\:\:generatePageViews\(\) has parameter \$categories with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SimulateTrafficCommand.php
+
+		-
+			message: '#^Method App\\Command\\SimulateTrafficCommand\:\:generatePageViews\(\) has parameter \$visitorPool with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SimulateTrafficCommand.php
+
+		-
+			message: '#^Method App\\Command\\SimulateTrafficCommand\:\:generatePageViews\(\) has parameter \$weightedPool with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SimulateTrafficCommand.php
+
+		-
+			message: '#^Method App\\Command\\SimulateTrafficCommand\:\:pickWeightedArticle\(\) has parameter \$cumWeights with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SimulateTrafficCommand.php
+
+		-
+			message: '#^Method App\\Command\\SimulateTrafficCommand\:\:pickWeightedArticle\(\) has parameter \$pool with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SimulateTrafficCommand.php
+
+		-
+			message: '#^Method App\\Command\\SimulateTrafficCommand\:\:pickWeightedArticle\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SimulateTrafficCommand.php
+
+		-
+			message: '#^Method App\\Command\\SimulateTrafficCommand\:\:populateRedisTrending\(\) has parameter \$weightedPool with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Command/SimulateTrafficCommand.php
+
+		-
+			message: '#^Property App\\Command\\SimulateTrafficCommand\:\:\$articleRepository is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Command/SimulateTrafficCommand.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: src/Command/TranslationEvaluateCommand.php
 
 		-
 			message: '#^Call to an undefined method App\\Entity\\Category\:\:__toString\(\)\.$#'
@@ -360,22 +594,22 @@ parameters:
 			path: src/Command/TrendingArticlesCommand.php
 
 		-
-			message: '#^Access to undefined constant Gedmo\\Translatable\\Query\\TreeWalker\\TranslationWalker\:\:HINT_INNER_JOIN\.$#'
-			identifier: classConstant.notFound
-			count: 2
-			path: src/Controller/Api/StatsController.php
+			message: '#^Property App\\Controller\\Admin\\ArticleArchiveController\:\:\$entityManager is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Controller/Admin/ArticleArchiveController.php
 
 		-
-			message: '#^Access to undefined constant Gedmo\\Translatable\\Query\\TreeWalker\\TranslationWalker\:\:HINT_TRANSLATABLE_LOCALE\.$#'
-			identifier: classConstant.notFound
-			count: 2
-			path: src/Controller/Api/StatsController.php
+			message: '#^Parameter \$user of method App\\Service\\Ai\\AiOrchestratorService\:\:processMessage\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Api/AiChatController.php
 
 		-
-			message: '#^Call to an undefined method Doctrine\\ORM\\QueryBuilder\:\:setHint\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: src/Controller/Api/StatsController.php
+			message: '#^Method App\\Controller\\Api\\DedupStatsController\:\:computeStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controller/Api/DedupStatsController.php
 
 		-
 			message: '#^Method App\\Controller\\Api\\StatsController\:\:parseDateRange\(\) return type has no value type specified in iterable type array\.$#'
@@ -388,6 +622,12 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Controller/Api/StatsController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\Serializer\\SerializerInterface\:\:normalize\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/Api/StoryClusterController.php
 
 		-
 			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:getId\(\)\.$#'
@@ -412,6 +652,30 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Controller/ArticleLockController.php
+
+		-
+			message: '#^Anonymous function has an unused use \$locale\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: src/Controller/ArticleSearchController.php
+
+		-
+			message: '#^Method App\\Controller\\ArticleSearchController\:\:transformImages\(\) has parameter \$source with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controller/ArticleSearchController.php
+
+		-
+			message: '#^Method App\\Controller\\ArticleSearchController\:\:transformImages\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Controller/ArticleSearchController.php
+
+		-
+			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\<string\>\:\:get\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Controller/ArticleSearchController.php
 
 		-
 			message: '#^Call to an undefined method App\\Entity\\Category\:\:getName\(\)\.$#'
@@ -456,16 +720,34 @@ parameters:
 			path: src/Controller/LiveTextViewController.php
 
 		-
-			message: '#^Call to method App\\Repository\\UrlRedirectRepository\:\:findOneBy\(\) \- entity App\\Entity\\UrlRedirect does not have a field named \$isActive\.$#'
-			identifier: doctrine.findOneByArgument
+			message: '#^Call to protected method getEntityManager\(\) of class Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<App\\Entity\\UrlRedirect\>\.$#'
+			identifier: method.protected
 			count: 1
 			path: src/Controller/RedirectManagementController.php
 
 		-
-			message: '#^Call to protected method getEntityManager\(\) of class Doctrine\\ORM\\EntityRepository\<App\\Entity\\UrlRedirect\>\.$#'
-			identifier: method.protected
+			message: '#^Method App\\Controller\\TagController\:\:serializeTag\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
-			path: src/Controller/RedirectManagementController.php
+			path: src/Controller/TagController.php
+
+		-
+			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\<string\>\:\:get\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Controller/TagController.php
+
+		-
+			message: '#^Call to protected method getEntityManager\(\) of class Doctrine\\ORM\\EntityRepository\<App\\Entity\\Topic\>\.$#'
+			identifier: method.protected
+			count: 2
+			path: src/Controller/TopicController.php
+
+		-
+			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\<string\>\:\:get\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 3
+			path: src/Controller/TopicController.php
 
 		-
 			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\<string\>\:\:get\(\) expects string\|null, int given\.$#'
@@ -496,6 +778,18 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/DataFixtures/ImageFixtures.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<string\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Doctrine/Type/TextArrayType.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-string and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Doctrine/Type/TextArrayType.php
 
 		-
 			message: '#^Method App\\Dto\\LiveText\\LiveTextAnalyticsDto\:\:__construct\(\) has parameter \$data with no value type specified in iterable type array\.$#'
@@ -552,6 +846,12 @@ parameters:
 			path: src/Dto/LiveText/PostUpdatedEventDto.php
 
 		-
+			message: '#^Method App\\Dto\\LiveText\\SportLiveTextEventDto\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Dto/LiveText/SportLiveTextEventDto.php
+
+		-
 			message: '#^Method App\\Dto\\LiveText\\StatusChangedEventDto\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -562,6 +862,54 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Dto/LiveText/ViewersCountEventDto.php
+
+		-
+			message: '#^Method App\\Entity\\AggregatorRun\:\:getErrorDetails\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/AggregatorRun.php
+
+		-
+			message: '#^Method App\\Entity\\AggregatorRun\:\:setErrorDetails\(\) has parameter \$errorDetails with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/AggregatorRun.php
+
+		-
+			message: '#^Property App\\Entity\\AggregatorRun\:\:\$errorDetails type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/AggregatorRun.php
+
+		-
+			message: '#^Property App\\Entity\\AiConversation\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/AiConversation.php
+
+		-
+			message: '#^Property App\\Entity\\AiConversation\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/AiConversation.php
+
+		-
+			message: '#^Property App\\Entity\\AiMessage\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/AiMessage.php
+
+		-
+			message: '#^Property App\\Entity\\AiPromptTemplate\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/AiPromptTemplate.php
+
+		-
+			message: '#^Property App\\Entity\\AiPromptTemplate\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/AiPromptTemplate.php
 
 		-
 			message: '#^Property App\\Entity\\Article\:\:\$articleImages type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\ArticleImage\>\.$#'
@@ -612,8 +960,32 @@ parameters:
 			path: src/Entity/Article.php
 
 		-
+			message: '#^Property App\\Entity\\Article\:\:\$tags type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Tag\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Article.php
+
+		-
+			message: '#^Property App\\Entity\\Article\:\:\$tags with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Article.php
+
+		-
 			message: '#^Property App\\Entity\\Article\:\:\$title type mapping mismatch\: property can contain string\|null but database expects string\.$#'
 			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Article.php
+
+		-
+			message: '#^Property App\\Entity\\Article\:\:\$topics type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Topic\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Article.php
+
+		-
+			message: '#^Property App\\Entity\\Article\:\:\$topics with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
 			count: 1
 			path: src/Entity/Article.php
 
@@ -726,6 +1098,18 @@ parameters:
 			path: src/Entity/Category.php
 
 		-
+			message: '#^Property App\\Entity\\Category\:\:\$children type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Category\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Category.php
+
+		-
+			message: '#^Property App\\Entity\\Category\:\:\$children with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Category.php
+
+		-
 			message: '#^Property App\\Entity\\Category\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
 			identifier: doctrine.columnType
 			count: 1
@@ -796,6 +1180,36 @@ parameters:
 			identifier: doctrine.columnType
 			count: 1
 			path: src/Entity/ExternalArticleMapping.php
+
+		-
+			message: '#^Method App\\Entity\\GeneratedContent\:\:getMetadata\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/GeneratedContent.php
+
+		-
+			message: '#^Method App\\Entity\\GeneratedContent\:\:setMetadata\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/GeneratedContent.php
+
+		-
+			message: '#^Property App\\Entity\\GeneratedContent\:\:\$metadata type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/GeneratedContent.php
+
+		-
+			message: '#^Attribute class Vich\\UploaderBundle\\Mapping\\Annotation\\Uploadable is deprecated\: since 2\.9, use Vich\\UploaderBundle\\Mapping\\Attribute\\Uploadable instead$#'
+			identifier: attribute.deprecated
+			count: 1
+			path: src/Entity/Image.php
+
+		-
+			message: '#^Attribute class Vich\\UploaderBundle\\Mapping\\Annotation\\UploadableField is deprecated\: since 2\.9, use Vich\\UploaderBundle\\Mapping\\Attribute\\UploadableField instead$#'
+			identifier: attribute.deprecated
+			count: 1
+			path: src/Entity/Image.php
 
 		-
 			message: '#^Method App\\Entity\\Image\:\:getCropData\(\) return type has no value type specified in iterable type array\.$#'
@@ -900,12 +1314,6 @@ parameters:
 			path: src/Entity/LiveText.php
 
 		-
-			message: '#^Property App\\Entity\\LiveText\:\:\$author type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
-			identifier: doctrine.associationType
-			count: 1
-			path: src/Entity/LiveText.php
-
-		-
 			message: '#^Property App\\Entity\\LiveText\:\:\$createdAt type mapping mismatch\: property can contain DateTimeInterface\|null but database expects DateTimeInterface\.$#'
 			identifier: doctrine.columnType
 			count: 1
@@ -974,12 +1382,6 @@ parameters:
 		-
 			message: '#^Property App\\Entity\\LiveTextAbTest\:\:\$createdAt type mapping mismatch\: property can contain DateTimeInterface\|null but database expects DateTimeInterface\.$#'
 			identifier: doctrine.columnType
-			count: 1
-			path: src/Entity/LiveTextAbTest.php
-
-		-
-			message: '#^Property App\\Entity\\LiveTextAbTest\:\:\$createdBy type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
-			identifier: doctrine.associationType
 			count: 1
 			path: src/Entity/LiveTextAbTest.php
 
@@ -1096,12 +1498,6 @@ parameters:
 			identifier: doctrine.columnType
 			count: 1
 			path: src/Entity/LiveTextMatchEvent.php
-
-		-
-			message: '#^Property App\\Entity\\LiveTextPost\:\:\$author type mapping mismatch\: property can contain App\\Entity\\User\|null but database expects App\\Entity\\User\.$#'
-			identifier: doctrine.associationType
-			count: 1
-			path: src/Entity/LiveTextPost.php
 
 		-
 			message: '#^Property App\\Entity\\LiveTextPost\:\:\$content type mapping mismatch\: property can contain string\|null but database expects string\.$#'
@@ -1296,22 +1692,160 @@ parameters:
 			path: src/Entity/LiveTextView.php
 
 		-
-			message: '#^Property App\\Entity\\PageView\:\:\$id type mapping mismatch\: database can contain string but property expects int\|null\.$#'
+			message: '#^Property App\\Entity\\MenuItem\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
 			identifier: doctrine.columnType
 			count: 1
-			path: src/Entity/PageView.php
+			path: src/Entity/MenuItem.php
 
 		-
-			message: '#^Call to static method uuid4\(\) on an unknown class Ramsey\\Uuid\\Uuid\.$#'
-			identifier: class.notFound
+			message: '#^Property App\\Entity\\MenuItem\:\:\$label type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
 			count: 1
-			path: src/Entity/Session.php
+			path: src/Entity/MenuItem.php
+
+		-
+			message: '#^Property App\\Entity\\MenuItem\:\:\$menu type mapping mismatch\: property can contain App\\Enum\\MenuType\|null but database expects App\\Enum\\MenuType\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/MenuItem.php
+
+		-
+			message: '#^Property App\\Entity\\MenuItem\:\:\$type type mapping mismatch\: property can contain App\\Enum\\MenuItemType\|null but database expects App\\Enum\\MenuItemType\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/MenuItem.php
+
+		-
+			message: '#^Property App\\Entity\\MenuItem\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/MenuItem.php
+
+		-
+			message: '#^Method App\\Entity\\PressRelease\:\:getSuggestedTopics\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/PressRelease.php
+
+		-
+			message: '#^Method App\\Entity\\PressRelease\:\:setSuggestedTopics\(\) has parameter \$suggestedTopics with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/PressRelease.php
+
+		-
+			message: '#^Property App\\Entity\\PressRelease\:\:\$suggestedTopics type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/PressRelease.php
 
 		-
 			message: '#^Strict comparison using \!\=\= between DateTimeInterface and null will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/Entity/Session.php
+
+		-
+			message: '#^Property App\\Entity\\ShortLink\:\:\$code type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/ShortLink.php
+
+		-
+			message: '#^Property App\\Entity\\ShortLink\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/ShortLink.php
+
+		-
+			message: '#^Property App\\Entity\\ShortLink\:\:\$originalUrl type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/ShortLink.php
+
+		-
+			message: '#^Property App\\Entity\\ShortLinkInteraction\:\:\$clickedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/ShortLinkInteraction.php
+
+		-
+			message: '#^Property App\\Entity\\ShortLinkInteraction\:\:\$shortLink type mapping mismatch\: property can contain App\\Entity\\ShortLink\|null but database expects App\\Entity\\ShortLink\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/ShortLinkInteraction.php
+
+		-
+			message: '#^Method App\\Entity\\StoryCluster\:\:getKeyFacts\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/StoryCluster.php
+
+		-
+			message: '#^Method App\\Entity\\StoryCluster\:\:getRegionTags\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/StoryCluster.php
+
+		-
+			message: '#^Method App\\Entity\\StoryCluster\:\:setKeyFacts\(\) has parameter \$keyFacts with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/StoryCluster.php
+
+		-
+			message: '#^Method App\\Entity\\StoryCluster\:\:setRegionTags\(\) has parameter \$regionTags with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/StoryCluster.php
+
+		-
+			message: '#^Property App\\Entity\\StoryCluster\:\:\$keyFacts type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/StoryCluster.php
+
+		-
+			message: '#^Property App\\Entity\\StoryCluster\:\:\$regionTags type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Entity/StoryCluster.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$articles type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Article\>\.$#'
+			identifier: doctrine.associationType
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$articles with generic interface Doctrine\\Common\\Collections\\Collection does not specify its types\: TKey, T$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$name type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$slug type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Tag.php
+
+		-
+			message: '#^Property App\\Entity\\Tag\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Tag.php
 
 		-
 			message: '#^Method App\\Entity\\Thumbnail\:\:getCropData\(\) return type has no value type specified in iterable type array\.$#'
@@ -1426,6 +1960,30 @@ parameters:
 			identifier: doctrine.columnType
 			count: 1
 			path: src/Entity/ThumbnailProfile.php
+
+		-
+			message: '#^Property App\\Entity\\Topic\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Topic.php
+
+		-
+			message: '#^Property App\\Entity\\Topic\:\:\$slug type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Topic.php
+
+		-
+			message: '#^Property App\\Entity\\Topic\:\:\$title type mapping mismatch\: property can contain string\|null but database expects string\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Topic.php
+
+		-
+			message: '#^Property App\\Entity\\Topic\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/Topic.php
 
 		-
 			message: '#^Property App\\Entity\\User\:\:\$email type mapping mismatch\: property can contain string\|null but database expects string\.$#'
@@ -1548,10 +2106,118 @@ parameters:
 			path: src/EventListener/CategorySlugChangeListener.php
 
 		-
+			message: '#^Instanceof between Symfony\\Component\\Security\\Core\\User\\UserInterface and Symfony\\Component\\Security\\Core\\User\\UserInterface will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/EventListener/MercureJwtCookieListener.php
+
+		-
+			message: '#^Method App\\EventListener\\PressReleaseIndexListener\:\:indexIfPressRelease\(\) has parameter \$args with generic class Doctrine\\Persistence\\Event\\LifecycleEventArgs but does not specify its types\: TObjectManager$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/EventListener/PressReleaseIndexListener.php
+
+		-
+			message: '#^Method App\\EventListener\\PressReleaseIndexListener\:\:postPersist\(\) has parameter \$args with generic class Doctrine\\Persistence\\Event\\LifecycleEventArgs but does not specify its types\: TObjectManager$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/EventListener/PressReleaseIndexListener.php
+
+		-
+			message: '#^Method App\\EventListener\\PressReleaseIndexListener\:\:postUpdate\(\) has parameter \$args with generic class Doctrine\\Persistence\\Event\\LifecycleEventArgs but does not specify its types\: TObjectManager$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/EventListener/PressReleaseIndexListener.php
+
+		-
 			message: '#^Property App\\EventSubscriber\\HttpMetricsSubscriber\:\:\$requestStartTimes type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/EventSubscriber/HttpMetricsSubscriber.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between DateTimeImmutable and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/EventSubscriber/RateLimiterSubscriber.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Symfony\\Component\\HttpFoundation\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/EventSubscriber/SecurityNotificationSubscriber.php
+
+		-
+			message: '#^Call to deprecated method setAccessible\(\) of class ReflectionProperty\.$#'
+			identifier: method.deprecated
+			count: 4
+			path: src/EventSubscriber/TestCacheHeadersSubscriber.php
+
+		-
+			message: '#^Method App\\Message\\CheckOrphanedTagsMessage\:\:__construct\(\) has parameter \$tagIds with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Message/CheckOrphanedTagsMessage.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/MessageHandler/Aggregator/TriggerAggregatorRunHandler.php
+
+		-
+			message: '#^Property App\\MessageHandler\\Editorial\\EvaluateTranslationHandler\:\:\$messageBus is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/MessageHandler/Editorial/EvaluateTranslationHandler.php
+
+		-
+			message: '#^Call to an undefined method App\\Entity\\Topic\:\:getName\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/MessageHandler/Editorial/GenerateDossiersHandler.php
+
+		-
+			message: '#^Property App\\MessageHandler\\Editorial\\ProcessScrapedArticleHandler\:\:\$authorResolver is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/MessageHandler/Editorial/ProcessScrapedArticleHandler.php
+
+		-
+			message: '#^Method App\\MessageHandler\\Editorial\\ScrapeSourceHandler\:\:__construct\(\) has parameter \$sources with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/MessageHandler/Editorial/ScrapeSourceHandler.php
+
+		-
+			message: '#^Call to protected method getEntityManager\(\) of class Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<App\\Entity\\Article\>\.$#'
+			identifier: method.protected
+			count: 1
+			path: src/MessageHandler/OptimizeSeoHandler.php
+
+		-
+			message: '#^Property App\\MessageHandler\\TranslateArticleHandler\:\:\$messageBus is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/MessageHandler/TranslateArticleHandler.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 2
+			path: src/MessageHandler/TranslateEntityHandler.php
+
+		-
+			message: '#^Method App\\MessageHandler\\TranslateEntityHandler\:\:finalizeEntity\(\) has parameter \$failures with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/MessageHandler/TranslateEntityHandler.php
+
+		-
+			message: '#^Method App\\MessageHandler\\TranslateEntityHandler\:\:finalizeEntity\(\) has parameter \$successes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/MessageHandler/TranslateEntityHandler.php
 
 		-
 			message: '#^Method App\\Repository\\ArticleLockRepository\:\:findActiveLocksForUser\(\) return type has no value type specified in iterable type array\.$#'
@@ -1602,6 +2268,108 @@ parameters:
 			path: src/Repository/LiveTextPostEngagementRepository.php
 
 		-
+			message: '#^Class App\\Repository\\ShortLinkInteractionRepository has PHPDoc tag @method for method findBy\(\) parameter \#1 \$criteria with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ShortLinkInteractionRepository.php
+
+		-
+			message: '#^Class App\\Repository\\ShortLinkInteractionRepository has PHPDoc tag @method for method findBy\(\) parameter \#2 \$orderBy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ShortLinkInteractionRepository.php
+
+		-
+			message: '#^Class App\\Repository\\ShortLinkInteractionRepository has PHPDoc tag @method for method findOneBy\(\) parameter \#1 \$criteria with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ShortLinkInteractionRepository.php
+
+		-
+			message: '#^Class App\\Repository\\ShortLinkInteractionRepository has PHPDoc tag @method for method findOneBy\(\) parameter \#2 \$orderBy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ShortLinkInteractionRepository.php
+
+		-
+			message: '#^Class App\\Repository\\ShortLinkRepository has PHPDoc tag @method for method findBy\(\) parameter \#1 \$criteria with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ShortLinkRepository.php
+
+		-
+			message: '#^Class App\\Repository\\ShortLinkRepository has PHPDoc tag @method for method findBy\(\) parameter \#2 \$orderBy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ShortLinkRepository.php
+
+		-
+			message: '#^Class App\\Repository\\ShortLinkRepository has PHPDoc tag @method for method findOneBy\(\) parameter \#1 \$criteria with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ShortLinkRepository.php
+
+		-
+			message: '#^Class App\\Repository\\ShortLinkRepository has PHPDoc tag @method for method findOneBy\(\) parameter \#2 \$orderBy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/ShortLinkRepository.php
+
+		-
+			message: '#^Access to an undefined property App\\Repository\\TopicRepository\:\:\$_em\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Repository/TopicRepository.php
+
+		-
+			message: '#^Class App\\Repository\\VideoShowRepository has PHPDoc tag @method for method findBy\(\) parameter \#1 \$criteria with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/VideoShowRepository.php
+
+		-
+			message: '#^Class App\\Repository\\VideoShowRepository has PHPDoc tag @method for method findBy\(\) parameter \#2 \$orderBy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/VideoShowRepository.php
+
+		-
+			message: '#^Class App\\Repository\\VideoShowRepository has PHPDoc tag @method for method findOneBy\(\) parameter \#1 \$criteria with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/VideoShowRepository.php
+
+		-
+			message: '#^Class App\\Repository\\VideoShowRepository has PHPDoc tag @method for method findOneBy\(\) parameter \#2 \$orderBy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/VideoShowRepository.php
+
+		-
+			message: '#^Class App\\Repository\\YouTubeVideoRepository has PHPDoc tag @method for method findBy\(\) parameter \#1 \$criteria with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/YouTubeVideoRepository.php
+
+		-
+			message: '#^Class App\\Repository\\YouTubeVideoRepository has PHPDoc tag @method for method findBy\(\) parameter \#2 \$orderBy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/YouTubeVideoRepository.php
+
+		-
+			message: '#^Class App\\Repository\\YouTubeVideoRepository has PHPDoc tag @method for method findOneBy\(\) parameter \#1 \$criteria with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/YouTubeVideoRepository.php
+
+		-
+			message: '#^Class App\\Repository\\YouTubeVideoRepository has PHPDoc tag @method for method findOneBy\(\) parameter \#2 \$orderBy with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/YouTubeVideoRepository.php
+
+		-
 			message: '#^Class App\\Security\\Voter\\LiveTextPostVoter extends generic class Symfony\\Component\\Security\\Core\\Authorization\\Voter\\Voter but does not specify its types\: TAttribute, TSubject$#'
 			identifier: missingType.generics
 			count: 1
@@ -1620,88 +2388,442 @@ parameters:
 			path: src/Serializer/MultipartDecoder.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:bulkIndexDocuments\(\) has parameter \$documents with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Offset ''subject'' on array\{messageId\: string, folderId\: string, subject\: string, fromAddress\: non\-falsy\-string, receivedTime\: string, summary\: string, hasAttachment\: bool, hasInline\: bool\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Aggregator/GoogleAlertsAggregator.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:bulkIndexDocuments\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method App\\Service\\Aggregator\\GoogleNewsRssAggregator\:\:pickUserAgent\(\) is unused\.$#'
+			identifier: method.unused
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Aggregator/GoogleNewsRssAggregator.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:getAliases\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Dead catch \- App\\Service\\Ai\\Provider\\GeminiCliException is never thrown in the try block\.$#'
+			identifier: catch.neverThrown
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Aggregator/SemanticDeduplicatorService.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:getAnalyzerForLocale\(\) return type has no value type specified in iterable type array\.$#'
+			message: '#^Method App\\Service\\Aggregator\\SemanticDeduplicatorService\:\:extractJson\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Aggregator/SemanticDeduplicatorService.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:getClusterHealth\(\) return type has no value type specified in iterable type array\.$#'
+			message: '#^Method App\\Service\\Aggregator\\TelegramAggregator\:\:extractTitle\(\) has parameter \$message with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Aggregator/TelegramAggregator.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:getIndexStats\(\) return type has no value type specified in iterable type array\.$#'
+			message: '#^Method App\\Service\\Aggregator\\TelegramAggregator\:\:extractUrls\(\) has parameter \$message with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Aggregator/TelegramAggregator.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:indexDocument\(\) has parameter \$document with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Offset ''messages'' on array\{messages\: list\<array\<string, mixed\>\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Aggregator/TelegramAggregator.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:reindex\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Aggregator/TrendQueryGeneratorService.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:search\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Property App\\Service\\Aggregator\\TrendScoringService\:\:\$topicRepository is never read, only written\.$#'
+			identifier: property.onlyWritten
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Aggregator/TrendScoringService.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:search\(\) has parameter \$sort with no value type specified in iterable type array\.$#'
+			message: '#^Method App\\Service\\Ai\\AiMercureService\:\:publish\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Ai/AiMercureService.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:search\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Property App\\Service\\Ai\\AiOrchestratorService\:\:\$articleRepository is never read, only written\.$#'
+			identifier: property.onlyWritten
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Ai/AiOrchestratorService.php
 
 		-
-			message: '#^Method App\\Service\\ElasticService\:\:suggest\(\) return type has no value type specified in iterable type array\.$#'
+			message: '#^Property App\\Service\\Ai\\AiOrchestratorService\:\:\$messageBus is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Service/Ai/AiOrchestratorService.php
+
+		-
+			message: '#^Property App\\Service\\Ai\\AiOrchestratorService\:\:\$weeklySummaryService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Service/Ai/AiOrchestratorService.php
+
+		-
+			message: '#^Method App\\Service\\Ai\\AnthropicApiClient\:\:buildRequestBody\(\) has parameter \$messages with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Ai/AnthropicApiClient.php
+
+		-
+			message: '#^Method App\\Service\\Ai\\AnthropicApiClient\:\:requestWithRetry\(\) has parameter \$body with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Ai/AnthropicApiClient.php
+
+		-
+			message: '#^Method App\\Service\\Ai\\ClaudeCliClient\:\:buildPrompt\(\) has parameter \$messages with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Ai/ClaudeCliClient.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Service/Analytics/AnalyticsService.php
+
+		-
+			message: '#^Method App\\Service\\Analytics\\AnalyticsService\:\:getTrendingArticles\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Analytics/AnalyticsService.php
+
+		-
+			message: '#^Method App\\Service\\Archive\\ContentProcessor\:\:lookupImage\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Archive/ContentProcessor.php
+
+		-
+			message: '#^Method App\\Service\\Archive\\ContentProcessor\:\:transformImageShortcode\(\) has parameter \$matches with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Archive/ContentProcessor.php
+
+		-
+			message: '#^Method App\\Service\\Archive\\ContentProcessor\:\:transformInternalLink\(\) has parameter \$matches with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Archive/ContentProcessor.php
+
+		-
+			message: '#^Property App\\Service\\Archive\\ContentProcessor\:\:\$imageCache type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Archive/ContentProcessor.php
+
+		-
+			message: '#^Property App\\Service\\Archive\\ContentProcessor\:\:\$stats type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Archive/ContentProcessor.php
+
+		-
+			message: '#^Method App\\Service\\ArticleArchiveService\:\:getArchiveStatistics\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ArticleArchiveService.php
+
+		-
+			message: '#^Method App\\Service\\ArticleArchiveService\:\:getArchiveStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 2
+			path: src/Service/ArticleArchiveService.php
+
+		-
+			message: '#^PHPDoc tag @throws with type Doctrine\\ORM\\ORMException is not subtype of Throwable$#'
+			identifier: throws.notThrowable
+			count: 2
+			path: src/Service/ArticleArchiveService.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: src/Service/Cache/CacheService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between Predis\\Response\\Status and ''OK'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Service/Cache/CacheService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between Predis\\Response\\Status and true will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Service/Cache/CacheService.php
+
+		-
+			message: '#^Offset ''key_facts'' on array\{summary_short\: string, summary_medium\: string, why_it_matters\: string, key_facts\: list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/Clustering/ClusterSummaryService.php
+
+		-
+			message: '#^Offset ''summary_medium'' on array\{summary_short\: string, summary_medium\: string, why_it_matters\: string, key_facts\: list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/Clustering/ClusterSummaryService.php
+
+		-
+			message: '#^Offset ''summary_short'' on array\{summary_short\: string, summary_medium\: string, why_it_matters\: string, key_facts\: list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/Clustering/ClusterSummaryService.php
+
+		-
+			message: '#^Offset ''why_it_matters'' on array\{summary_short\: string, summary_medium\: string, why_it_matters\: string, key_facts\: list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/Clustering/ClusterSummaryService.php
+
+		-
+			message: '#^Deprecated in PHP 8\.4\: Parameter \#1 \$since \(DateTimeInterface\) is implicitly nullable via default value null\.$#'
+			identifier: parameter.implicitlyNullable
+			count: 1
+			path: src/Service/Clustering/ClusteringService.php
+
+		-
+			message: '#^Method App\\Service\\Clustering\\PressReleaseIndexManager\:\:bulkIndex\(\) has parameter \$documents with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Clustering/PressReleaseIndexManager.php
+
+		-
+			message: '#^Method App\\Service\\Clustering\\PressReleaseIndexManager\:\:indexDocument\(\) has parameter \$document with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Clustering/PressReleaseIndexManager.php
+
+		-
+			message: '#^Property App\\Service\\Clustering\\PressReleaseIndexer\:\:\$logger is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Service/Clustering/PressReleaseIndexer.php
+
+		-
+			message: '#^Match arm comparison between ''alert''\|''breaking''\|''flash'' and ''analysis'' is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: src/Service/Editorial/ArticleContextService.php
+
+		-
+			message: '#^Match arm comparison between ''alert''\|''breaking''\|''flash'' and ''opinion'' is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: src/Service/Editorial/ArticleContextService.php
+
+		-
+			message: '#^Match arm comparison between ''alert''\|''breaking''\|''flash'' and ''photo_gallery'' is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: src/Service/Editorial/ArticleContextService.php
+
+		-
+			message: '#^Match arm comparison between ''alert''\|''breaking''\|''flash'' and ''video'' is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: src/Service/Editorial/ArticleContextService.php
+
+		-
+			message: '#^Method App\\Service\\Editorial\\ArticleIngestionService\:\:slugify\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Service/Editorial/ArticleIngestionService.php
+
+		-
+			message: '#^Offset ''source'' on array\{id\: int, score\: float, source\: array\<string, mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/Editorial/BackgroundGeneratorService.php
+
+		-
+			message: '#^Offset ''id'' on array\{id\: int, score\: float, highlight\: array\<string, list\<string\>\>, source\: array\<string, mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/Editorial/ConnectionDetectionService.php
+
+		-
+			message: '#^Property App\\Service\\Editorial\\DailyBriefingService\:\:\$briefingNotebookId is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Service/Editorial/DailyBriefingService.php
+
+		-
+			message: '#^Property App\\Service\\Editorial\\DailyBriefingService\:\:\$notebookLMService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Service/Editorial/DailyBriefingService.php
+
+		-
+			message: '#^Method App\\Service\\Editorial\\DossierGenerationService\:\:buildDossierFrontmatter\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: src/Service/Editorial/DossierGenerationService.php
+
+		-
+			message: '#^Property App\\Service\\Editorial\\WeeklySummaryService\:\:\$notebookLMService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Service/Editorial/WeeklySummaryService.php
+
+		-
+			message: '#^Property App\\Service\\Editorial\\WeeklySummaryService\:\:\$weeklyNotebookId is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Service/Editorial/WeeklySummaryService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:buildSortArray\(\) has parameter \$sort with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ArticleSearchService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:buildSortArray\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ArticleSearchService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:search\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ArticleSearchService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:search\(\) has parameter \$sort with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ArticleSearchService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:search\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ArticleSearchService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:searchArchivedArticles\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ArticleSearchService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:searchArchivedArticles\(\) has parameter \$sort with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ArticleSearchService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:searchArchivedArticles\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ArticleSearchService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:suggest\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ArticleSearchService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ElasticDocumentService\:\:bulkIndexDocuments\(\) has parameter \$documents with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ElasticDocumentService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ElasticDocumentService\:\:bulkIndexDocuments\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ElasticDocumentService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ElasticDocumentService\:\:indexDocument\(\) has parameter \$document with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ElasticDocumentService.php
 
 		-
 			message: '#^Parameter \#1 \$params of method Elastic\\Elasticsearch\\Client\:\:delete\(\) expects array\{id\: string, index\: string, wait_for_active_shards\?\: string, refresh\?\: string, routing\?\: string, timeout\?\: int\|string, if_seq_no\?\: int, if_primary_term\?\: int, \.\.\.\}\|null, array\{index\: string, id\: int\} given\.$#'
 			identifier: argument.type
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Elasticsearch/ElasticDocumentService.php
 
 		-
-			message: '#^Property App\\Service\\ElasticService\:\:\$supportedLocales type has no value type specified in iterable type array\.$#'
+			message: '#^Property App\\Service\\Elasticsearch\\ElasticDocumentService\:\:\$supportedLocales type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Service/ElasticService.php
+			path: src/Service/Elasticsearch/ElasticDocumentService.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ElasticIndexManager\:\:getAliases\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ElasticIndexManager.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ElasticIndexManager\:\:getAnalyzerForLocale\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ElasticIndexManager.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ElasticIndexManager\:\:getClusterHealth\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ElasticIndexManager.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ElasticIndexManager\:\:getIndexStats\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ElasticIndexManager.php
+
+		-
+			message: '#^Method App\\Service\\Elasticsearch\\ElasticIndexManager\:\:reindex\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ElasticIndexManager.php
+
+		-
+			message: '#^Property App\\Service\\Elasticsearch\\ElasticIndexManager\:\:\$supportedLocales type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Elasticsearch/ElasticIndexManager.php
+
+		-
+			message: '#^Method App\\Service\\HealthCheckService\:\:checkAll\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/HealthCheckService.php
+
+		-
+			message: '#^Method App\\Service\\HealthCheckService\:\:checkDatabase\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/HealthCheckService.php
+
+		-
+			message: '#^Method App\\Service\\HealthCheckService\:\:checkElasticsearch\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/HealthCheckService.php
+
+		-
+			message: '#^Method App\\Service\\HealthCheckService\:\:checkRedis\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/HealthCheckService.php
 
 		-
 			message: '#^Method App\\Service\\ImageElasticService\:\:getHealth\(\) return type has no value type specified in iterable type array\.$#'
@@ -1816,6 +2938,119 @@ parameters:
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/Service/ImageService.php
+
+		-
+			message: '''
+				#^Call to deprecated method createFromPath\(\) of class League\\Csv\\Reader\:
+				since version 9\.27\.0
+
+				Returns a new instance from a file path\.$#
+			'''
+			identifier: staticMethod.deprecated
+			count: 2
+			path: src/Service/Import/CsvLegacyParser.php
+
+		-
+			message: '#^Method App\\Service\\Import\\CsvLegacyParser\:\:normalizeRecord\(\) has parameter \$record with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Import/CsvLegacyParser.php
+
+		-
+			message: '#^Method App\\Service\\Import\\CsvLegacyParser\:\:normalizeRecord\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Import/CsvLegacyParser.php
+
+		-
+			message: '#^Method App\\Service\\Import\\LegacyArticleImporter\:\:createArticle\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Import/LegacyArticleImporter.php
+
+		-
+			message: '#^Method App\\Service\\Import\\LegacyArticleImporter\:\:importRow\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Import/LegacyArticleImporter.php
+
+		-
+			message: '#^Property App\\Service\\Import\\LegacyArticleImporter\:\:\$entityManager \(Doctrine\\ORM\\EntityManagerInterface\) does not accept Doctrine\\Persistence\\ObjectManager\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Service/Import/LegacyArticleImporter.php
+
+		-
+			message: '#^Method App\\Service\\Import\\LegacyAuthorMapper\:\:getUnknownAuthors\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Import/LegacyAuthorMapper.php
+
+		-
+			message: '#^Method App\\Service\\Import\\LegacyCategoryMapper\:\:createCategory\(\) has parameter \$titles with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Import/LegacyCategoryMapper.php
+
+		-
+			message: '#^Constant App\\Service\\Import\\LegacyHtmlSanitizer\:\:ALLOWED_ATTRS is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: src/Service/Import/LegacyHtmlSanitizer.php
+
+		-
+			message: '#^Constant App\\Service\\Import\\LegacyHtmlSanitizer\:\:ALLOWED_TAGS is unused\.$#'
+			identifier: classConstant.unused
+			count: 1
+			path: src/Service/Import/LegacyHtmlSanitizer.php
+
+		-
+			message: '#^Method App\\Service\\Import\\LegacyLinkReplacer\:\:getOrphanLinks\(\) should return array\<int, array\{articleId\: int, articleSlug\: string, brokenLink\: string, referencedSlug\: string\}\> but returns array\<int, array\{articleId\: int, slug\: string, brokenLink\: string, referencedSlug\: string\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Import/LegacyLinkReplacer.php
+
+		-
+			message: '#^Method App\\Service\\Import\\LegacyLinkReplacer\:\:replaceInTranslations\(\) has parameter \$knownSlugs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Import/LegacyLinkReplacer.php
+
+		-
+			message: '#^Method App\\Service\\Import\\LegacyLinkReplacer\:\:replaceLinksInText\(\) has parameter \$knownSlugs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Import/LegacyLinkReplacer.php
+
+		-
+			message: '#^Property App\\Service\\Import\\LegacyLinkReplacer\:\:\$logger is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Service/Import/LegacyLinkReplacer.php
+
+		-
+			message: '#^Method App\\Service\\Import\\LegacyTranslationImporter\:\:applyTranslation\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Import/LegacyTranslationImporter.php
+
+		-
+			message: '#^Method App\\Service\\Import\\LegacyTranslationImporter\:\:importTranslation\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Import/LegacyTranslationImporter.php
+
+		-
+			message: '#^Parameter \#3 \$types of method Doctrine\\DBAL\\Connection\:\:fetchAllAssociative\(\) expects array\<int\<0, max\>\|string, Doctrine\\DBAL\\ArrayParameterType\|Doctrine\\DBAL\\ParameterType\|Doctrine\\DBAL\\Types\\Type\|string\>, array\{1\: 1\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Import/MigrationLoggerService.php
+
+		-
+			message: '#^Property App\\Service\\Import\\RssFeedImporter\:\:\$em \(Doctrine\\ORM\\EntityManagerInterface\) does not accept Doctrine\\Persistence\\ObjectManager\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Service/Import/RssFeedImporter.php
 
 		-
 			message: '#^Method App\\Service\\LiveTextAbTestService\:\:calculateResults\(\) return type has no value type specified in iterable type array\.$#'
@@ -1938,12 +3173,6 @@ parameters:
 			path: src/Service/LiveTextAnalyticsService.php
 
 		-
-			message: '#^Instantiated class App\\Dto\\LiveText\\LiveTextEventDto is abstract\.$#'
-			identifier: new.abstract
-			count: 5
-			path: src/Service/LiveTextNotificationService.php
-
-		-
 			message: '#^Method App\\Service\\LiveTextSportService\:\:addMatchEvent\(\) has parameter \$eventData with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -1980,64 +3209,40 @@ parameters:
 			path: src/Service/LiveTextSportService.php
 
 		-
-			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Service/PerformanceService.php
-
-		-
-			message: '#^Constant App\\Service\\PerformanceService\:\:TTL_ARTICLE is unused\.$#'
-			identifier: classConstant.unused
-			count: 1
-			path: src/Service/PerformanceService.php
-
-		-
-			message: '#^Constant App\\Service\\PerformanceService\:\:TTL_ARTICLE_LIST is unused\.$#'
-			identifier: classConstant.unused
-			count: 1
-			path: src/Service/PerformanceService.php
-
-		-
-			message: '#^Constant App\\Service\\PerformanceService\:\:TTL_CATEGORY is unused\.$#'
-			identifier: classConstant.unused
-			count: 1
-			path: src/Service/PerformanceService.php
-
-		-
-			message: '#^Constant App\\Service\\PerformanceService\:\:TTL_TRENDING is unused\.$#'
-			identifier: classConstant.unused
-			count: 1
-			path: src/Service/PerformanceService.php
-
-		-
-			message: '#^Method App\\Service\\PerformanceService\:\:getTrendingArticles\(\) return type has no value type specified in iterable type array\.$#'
+			message: '#^Method App\\Service\\PressEmailParser\:\:buildContent\(\) has parameter \$paragraphs with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
-			path: src/Service/PerformanceService.php
+			path: src/Service/PressEmailParser.php
 
 		-
-			message: '#^Property App\\Service\\PerformanceService\:\:\$em is never read, only written\.$#'
-			identifier: property.onlyWritten
+			message: '#^Method App\\Service\\PressEmailParser\:\:buildLead\(\) has parameter \$paragraphs with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
-			path: src/Service/PerformanceService.php
+			path: src/Service/PressEmailParser.php
 
 		-
-			message: '#^Result of \|\| is always false\.$#'
-			identifier: booleanOr.alwaysFalse
-			count: 1
-			path: src/Service/PerformanceService.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between Predis\\Response\\Status and ''OK'' will always evaluate to false\.$#'
+			message: '#^Strict comparison using \=\=\= between non\-empty\-list\<non\-empty\-string\> and array\{\} will always evaluate to false\.$#'
 			identifier: identical.alwaysFalse
 			count: 1
-			path: src/Service/PerformanceService.php
+			path: src/Service/ScrapedContentCleaner.php
 
 		-
-			message: '#^Strict comparison using \=\=\= between Predis\\Response\\Status and true will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
+			message: '#^Method App\\Service\\Scraping\\FrontmatterGenerator\:\:toYaml\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
-			path: src/Service/PerformanceService.php
+			path: src/Service/Scraping/FrontmatterGenerator.php
+
+		-
+			message: '#^Method App\\Service\\Search\\SearchService\:\:formatResults\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/Search/SearchService.php
+
+		-
+			message: '#^Method App\\Service\\SeoResultProcessor\:\:process\(\) has parameter \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/SeoResultProcessor.php
 
 		-
 			message: '#^Method App\\Service\\SlugLookupService\:\:bulkValidate\(\) has parameter \$slugs with no value type specified in iterable type array\.$#'
@@ -2086,6 +3291,102 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Service/SocialMediaService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 2
+			path: src/Service/TagService.php
+
+		-
+			message: '#^Offset ''score'' on non\-empty\-array on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/Translation/TranslationEvaluatorService.php
+
+		-
+			message: '#^Offset ''translated_body'' on array\{translated_headline\: string, translated_body\: string, translated_description\: string, suggested_slug\: string, seo_description\: string, entities\: list\<string\>, topics\: list\<string\>, locations\: list\<string\>, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Service/Translation/TranslationEvaluatorService.php
+
+		-
+			message: '#^Method App\\Service\\TranslationResultProcessor\:\:process\(\) has parameter \$locales with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/TranslationResultProcessor.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$needsReview$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/Service/TranslationResultProcessor.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$savedLocales$#'
+			identifier: parameter.notFound
+			count: 1
+			path: src/Service/TranslationResultProcessor.php
+
+		-
+			message: '#^Method App\\Service\\YouTubeSyncService\:\:fetchChannelData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/YouTubeSyncService.php
+
+		-
+			message: '#^Method App\\Service\\YouTubeSyncService\:\:fetchPlaylistItems\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/YouTubeSyncService.php
+
+		-
+			message: '#^Method App\\Service\\YouTubeSyncService\:\:fetchVideosData\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/YouTubeSyncService.php
+
+		-
+			message: '#^Method App\\Service\\YouTubeSyncService\:\:processVideo\(\) has parameter \$videoData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/YouTubeSyncService.php
+
+		-
+			message: '#^Method App\\Service\\YouTubeSyncService\:\:processVideo\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: src/Service/YouTubeSyncService.php
+
+		-
+			message: '#^Property App\\Service\\YouTubeSyncService\:\:\$videoShowRepository is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Service/YouTubeSyncService.php
+
+		-
+			message: '#^Method App\\Service\\ZohoMailService\:\:apiRequest\(\) has parameter \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Service/ZohoMailService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/State/ArchivedArticleProvider.php
+
+		-
+			message: '#^Call to function is_array\(\) with non\-empty\-array\<mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/State/ArchivedArticleProvider.php
+
+		-
+			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\<string\>\:\:get\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/State/ArchivedArticleProvider.php
 
 		-
 			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\ArticleImage\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
@@ -2160,6 +3461,12 @@ parameters:
 			path: src/State/ArticleProcessor.php
 
 		-
+			message: '#^Variable \$oldStatus might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: src/State/ArticleProcessor.php
+
+		-
 			message: '#^Call to function is_array\(\) with array\<mixed\> will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
 			count: 1
@@ -2172,9 +3479,27 @@ parameters:
 			path: src/State/ArticleProvider.php
 
 		-
+			message: '#^Call to function is_array\(\) with string\|null will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: src/State/ArticleProvider.php
+
+		-
+			message: '#^Offset ''id'' on \*NEVER\* in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: src/State/ArticleProvider.php
+
+		-
 			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\<string\>\:\:get\(\) expects string\|null, int given\.$#'
 			identifier: argument.type
 			count: 2
+			path: src/State/ArticleProvider.php
+
+		-
+			message: '#^Result of && is always false\.$#'
+			identifier: booleanAnd.alwaysFalse
+			count: 1
 			path: src/State/ArticleProvider.php
 
 		-
@@ -2196,20 +3521,26 @@ parameters:
 			path: src/State/AuthorProcessor.php
 
 		-
-			message: '#^Call to function is_array\(\) with array\<mixed\> will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/State/CachedArticleProvider.php
-
-		-
 			message: '#^Method App\\State\\CachedArticleProvider\:\:__construct\(\) has parameter \$decorated with generic interface ApiPlatform\\State\\ProviderInterface but does not specify its types\: T$#'
 			identifier: missingType.generics
 			count: 1
 			path: src/State/CachedArticleProvider.php
 
 		-
-			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\<string\>\:\:get\(\) expects string\|null, int given\.$#'
-			identifier: argument.type
+			message: '#^Property App\\State\\CachedArticleProvider\:\:\$logger is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/State/CachedArticleProvider.php
+
+		-
+			message: '#^Property App\\State\\CachedArticleProvider\:\:\$performance is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/State/CachedArticleProvider.php
+
+		-
+			message: '#^Property App\\State\\CachedArticleProvider\:\:\$requestStack is never read, only written\.$#'
+			identifier: property.onlyWritten
 			count: 1
 			path: src/State/CachedArticleProvider.php
 
@@ -2238,10 +3569,22 @@ parameters:
 			path: src/State/CategoryProcessor.php
 
 		-
+			message: '#^Strict comparison using \!\=\= between non\-falsy\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/State/CategoryProcessor.php
+
+		-
 			message: '#^Unreachable statement \- code above always terminates\.$#'
 			identifier: deadCode.unreachable
 			count: 1
 			path: src/State/CategoryProcessor.php
+
+		-
+			message: '#^Property App\\State\\CategoryProvider\:\:\$translatableListener is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/State/CategoryProvider.php
 
 		-
 			message: '#^Call to an undefined method ApiPlatform\\Metadata\\Operation\:\:getUriTemplate\(\)\.$#'
@@ -2252,12 +3595,6 @@ parameters:
 		-
 			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\Image\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
 			identifier: generics.lessTypes
-			count: 1
-			path: src/State/ImageProcessor.php
-
-		-
-			message: '#^If condition is always true\.$#'
-			identifier: if.alwaysTrue
 			count: 1
 			path: src/State/ImageProcessor.php
 
@@ -2316,6 +3653,12 @@ parameters:
 			path: src/State/ImageProcessor.php
 
 		-
+			message: '#^Class ApiPlatform\\Doctrine\\Orm\\Paginator constructor invoked with 3 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: src/State/ImageProvider.php
+
+		-
 			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\<string\>\:\:get\(\) expects string\|null, int given\.$#'
 			identifier: argument.type
 			count: 2
@@ -2324,12 +3667,6 @@ parameters:
 		-
 			message: '#^Class App\\State\\ImportantArticlesListProvider implements generic interface ApiPlatform\\State\\ProviderInterface but does not specify its types\: T$#'
 			identifier: missingType.generics
-			count: 1
-			path: src/State/ImportantArticlesListProvider.php
-
-		-
-			message: '#^Method App\\State\\ImportantArticlesListProvider\:\:loadArticleTranslation\(\) has parameter \$article with no type specified\.$#'
-			identifier: missingType.parameter
 			count: 1
 			path: src/State/ImportantArticlesListProvider.php
 
@@ -2454,6 +3791,132 @@ parameters:
 			path: src/State/LiveTextReactionProcessor.php
 
 		-
+			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\MenuItem\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
+			identifier: generics.lessTypes
+			count: 1
+			path: src/State/MenuItemProcessor.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\MenuItem and App\\Entity\\MenuItem will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: src/State/MenuItemProcessor.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: src/State/MenuItemProcessor.php
+
+		-
+			message: '#^Property App\\State\\MenuItemProvider\:\:\$translatableListener is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/State/MenuItemProvider.php
+
+		-
+			message: '#^Class App\\State\\PressReleaseApproveProcessor implements generic interface ApiPlatform\\State\\ProcessorInterface but does not specify its types\: T1, T2$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/State/PressReleaseApproveProcessor.php
+
+		-
+			message: '#^Parameter \#1 \$processedBy of method App\\Entity\\PressRelease\:\:setProcessedBy\(\) expects App\\Entity\\User\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/State/PressReleaseApproveProcessor.php
+
+		-
+			message: '#^Class App\\State\\PressReleaseRejectProcessor implements generic interface ApiPlatform\\State\\ProcessorInterface but does not specify its types\: T1, T2$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/State/PressReleaseRejectProcessor.php
+
+		-
+			message: '#^Parameter \#1 \$processedBy of method App\\Entity\\PressRelease\:\:setProcessedBy\(\) expects App\\Entity\\User\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/State/PressReleaseRejectProcessor.php
+
+		-
+			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\ShortLink\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
+			identifier: generics.lessTypes
+			count: 1
+			path: src/State/ShortLinkProcessor.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\ShortLink and App\\Entity\\ShortLink will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: src/State/ShortLinkProcessor.php
+
+		-
+			message: '#^Parameter \#1 \$createdBy of method App\\Entity\\ShortLink\:\:setCreatedBy\(\) expects App\\Entity\\User\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/State/ShortLinkProcessor.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: src/State/ShortLinkProcessor.php
+
+		-
+			message: '#^Method App\\State\\ShortLinkStats\:\:__construct\(\) has parameter \$clicksPerDay with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/ShortLinkStatsProvider.php
+
+		-
+			message: '#^Method App\\State\\ShortLinkStats\:\:__construct\(\) has parameter \$countries with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/ShortLinkStatsProvider.php
+
+		-
+			message: '#^Method App\\State\\ShortLinkStats\:\:__construct\(\) has parameter \$deviceTypes with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/ShortLinkStatsProvider.php
+
+		-
+			message: '#^Method App\\State\\ShortLinkStats\:\:__construct\(\) has parameter \$topReferrers with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/ShortLinkStatsProvider.php
+
+		-
+			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\Tag\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
+			identifier: generics.lessTypes
+			count: 1
+			path: src/State/TagProcessor.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\Tag and App\\Entity\\Tag will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: src/State/TagProcessor.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: src/State/TagProcessor.php
+
+		-
+			message: '#^Call to function is_array\(\) with non\-empty\-array\<mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/State/TagProvider.php
+
+		-
+			message: '#^Parameter \#2 \$default of method Symfony\\Component\\HttpFoundation\\InputBag\<string\>\:\:get\(\) expects string\|null, int given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/State/TagProvider.php
+
+		-
 			message: '#^Call to an undefined method ApiPlatform\\Metadata\\Operation\:\:getUriTemplate\(\)\.$#'
 			identifier: method.notFound
 			count: 1
@@ -2494,6 +3957,48 @@ parameters:
 			identifier: deadCode.unreachable
 			count: 1
 			path: src/State/ThumbnailProfileProcessor.php
+
+		-
+			message: '#^Call to deprecated method eraseCredentials\(\) of class App\\Entity\\User\.$#'
+			identifier: method.deprecated
+			count: 1
+			path: src/State/UserProcessor.php
+
+		-
+			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\User\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
+			identifier: generics.lessTypes
+			count: 1
+			path: src/State/UserProcessor.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\User and App\\Entity\\User will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/State/UserProcessor.php
+
+		-
+			message: '#^Method App\\State\\UserProcessor\:\:handleCreateOrUpdate\(\) has parameter \$uriVariables with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/UserProcessor.php
+
+		-
+			message: '#^Method App\\State\\UserProcessor\:\:handleDelete\(\) has parameter \$uriVariables with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/State/UserProcessor.php
+
+		-
+			message: '#^Result of \|\| is always true\.$#'
+			identifier: booleanOr.alwaysTrue
+			count: 2
+			path: src/State/UserProcessor.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between null and null will always evaluate to true\.$#'
+			identifier: identical.alwaysTrue
+			count: 2
+			path: src/State/UserProcessor.php
 
 		-
 			message: '#^Class App\\Transformer\\Article\\ReadingTimeTransformer implements generic interface Symfony\\Component\\ObjectMapper\\TransformCallableInterface but does not specify its types\: T, T2$#'

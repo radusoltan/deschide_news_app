@@ -21,10 +21,12 @@ interface ArticleUpdateEvent {
  */
 export function useArticleUpdates(onUpdate: (event: ArticleUpdateEvent) => void) {
   const onUpdateRef = useRef(onUpdate);
-  onUpdateRef.current = onUpdate;
+  useEffect(() => { onUpdateRef.current = onUpdate; });
   const reconnectCount = useRef(0);
   const esRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const connectRef = useRef<(() => void) | null>(null);
 
   const connect = useCallback(() => {
     if (typeof window === 'undefined' || typeof EventSource === 'undefined') return;
@@ -61,10 +63,14 @@ export function useArticleUpdates(onUpdate: (event: ArticleUpdateEvent) => void)
       esRef.current = null;
       if (reconnectCount.current < MAX_RECONNECT) {
         reconnectCount.current++;
-        reconnectTimeoutRef.current = setTimeout(connect, RECONNECT_DELAY);
+        reconnectTimeoutRef.current = setTimeout(() => connectRef.current?.(), RECONNECT_DELAY);
       }
     };
   }, []);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   useEffect(() => {
     connect();

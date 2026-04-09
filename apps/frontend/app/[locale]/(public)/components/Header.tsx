@@ -23,7 +23,14 @@ interface DarkModeToggleProps {
 }
 
 function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
+    if (typeof window === 'undefined') return 'system'
+    try {
+      const saved = window.localStorage.getItem('theme-preference')
+      if (saved === 'light' || saved === 'dark' || saved === 'system') return saved
+    } catch { /* ignore */ }
+    return 'system'
+  })
 
   const applyTheme = useCallback((nextTheme: 'light' | 'dark' | 'system') => {
     if (typeof document === 'undefined') {
@@ -52,24 +59,8 @@ function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
   }, [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    let stored: 'light' | 'dark' | 'system' = 'system'
-
-    try {
-      const savedTheme = window.localStorage.getItem('theme-preference')
-      if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
-        stored = savedTheme
-      }
-    } catch {
-      stored = 'system'
-    }
-
-    setTheme(stored)
-    applyTheme(stored)
-  }, [applyTheme])
+    applyTheme(theme)
+  }, [applyTheme, theme])
 
   const cycleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
