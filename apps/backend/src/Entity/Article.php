@@ -20,7 +20,9 @@ use App\Enum\ArticleBadge;
 use App\Enum\ArticleStatus;
 use App\Repository\ArticleRepository;
 use App\State\ArchivedArticleProvider;
-use App\State\ArticleProcessor;
+use App\State\Article\ArticleCreateProcessor;
+use App\State\Article\ArticleDeleteProcessor;
+use App\State\Article\ArticleUpdateProcessor;
 use App\State\ArticleProvider;
 use App\Validator\ReservedSlug;
 use DateTimeImmutable;
@@ -81,22 +83,25 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
         ),
         new Post(
             uriTemplate: '/articles',
-            denormalizationContext: ['groups' => ['article:write']]
+            denormalizationContext: ['groups' => ['article:write']],
+            processor: ArticleCreateProcessor::class
         ),
         new Put(
             uriTemplate: '/articles/{id}',
-            denormalizationContext: ['groups' => ['article:write']]
+            denormalizationContext: ['groups' => ['article:write']],
+            processor: ArticleUpdateProcessor::class
         ),
         new Patch(
             uriTemplate: '/articles/{id}',
-            denormalizationContext: ['groups' => ['article:write']]
+            denormalizationContext: ['groups' => ['article:write']],
+            processor: ArticleUpdateProcessor::class
         ),
         new Delete(
-            uriTemplate: '/articles/{id}'
+            uriTemplate: '/articles/{id}',
+            processor: ArticleDeleteProcessor::class
         ),
     ],
-    provider: ArticleProvider::class,
-    processor: ArticleProcessor::class
+    provider: ArticleProvider::class
 )]
 #[ApiResource(
     operations: [
