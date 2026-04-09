@@ -11,6 +11,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[AsCommand(
@@ -22,6 +23,8 @@ final class ImportRssFeedCommand extends Command
     public function __construct(
         private readonly RssFeedImporter $importer,
         private readonly HttpClientInterface $httpClient,
+        #[Autowire('%env(default:frontend_revalidate_url_default:FRONTEND_REVALIDATE_URL)%')]
+        private readonly string $frontendRevalidateUrl = 'http://localhost:3005/api/revalidate-articles',
     ) {
         parent::__construct();
     }
@@ -77,7 +80,7 @@ final class ImportRssFeedCommand extends Command
         // Invalidate frontend article cache
         if ($stats['imported'] > 0) {
             try {
-                $this->httpClient->request('POST', 'http://localhost:3005/api/revalidate-articles', [
+                $this->httpClient->request('POST', $this->frontendRevalidateUrl, [
                     'timeout' => 5,
                 ]);
                 $io->info('Frontend cache invalidated.');

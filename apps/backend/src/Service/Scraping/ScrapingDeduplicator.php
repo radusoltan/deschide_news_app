@@ -6,7 +6,11 @@ namespace App\Service\Scraping;
 
 use App\Repository\ArticleRepository;
 
-final readonly class ContentDeduplicator
+/**
+ * Renamed from ContentDeduplicator to avoid collision with
+ * App\Service\ContentDeduplicator (PressRelease deduplication).
+ */
+final readonly class ScrapingDeduplicator
 {
     public function __construct(
         private ArticleRepository $articleRepository,

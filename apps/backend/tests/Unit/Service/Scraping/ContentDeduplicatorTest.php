@@ -6,7 +6,7 @@ namespace App\Tests\Unit\Service\Scraping;
 
 use App\Entity\Article;
 use App\Repository\ArticleRepository;
-use App\Service\Scraping\ContentDeduplicator;
+use App\Service\Scraping\ScrapingDeduplicator;
 use PHPUnit\Framework\TestCase;
 
 class ContentDeduplicatorTest extends TestCase
@@ -16,7 +16,7 @@ class ContentDeduplicatorTest extends TestCase
         $repo = $this->createMock(ArticleRepository::class);
         $repo->method('findOneBy')->willReturn(null);
 
-        $dedup = new ContentDeduplicator($repo);
+        $dedup = new ScrapingDeduplicator($repo);
 
         $hash1 = $dedup->computeHash('Guvernul a aprobat noul plan.');
         $hash2 = $dedup->computeHash('Guvernul a aprobat noul plan.');
@@ -27,7 +27,7 @@ class ContentDeduplicatorTest extends TestCase
     public function testDifferentContentReturnsDifferentHash(): void
     {
         $repo = $this->createMock(ArticleRepository::class);
-        $dedup = new ContentDeduplicator($repo);
+        $dedup = new ScrapingDeduplicator($repo);
 
         $hash1 = $dedup->computeHash('Articol despre economie.');
         $hash2 = $dedup->computeHash('Articol despre politică.');
@@ -38,7 +38,7 @@ class ContentDeduplicatorTest extends TestCase
     public function testNormalizationIgnoresCase(): void
     {
         $repo = $this->createMock(ArticleRepository::class);
-        $dedup = new ContentDeduplicator($repo);
+        $dedup = new ScrapingDeduplicator($repo);
 
         $hash1 = $dedup->computeHash('Moldova aprobă REFORMĂ.');
         $hash2 = $dedup->computeHash('moldova aprobă reformă.');
@@ -49,7 +49,7 @@ class ContentDeduplicatorTest extends TestCase
     public function testNormalizationIgnoresPunctuation(): void
     {
         $repo = $this->createMock(ArticleRepository::class);
-        $dedup = new ContentDeduplicator($repo);
+        $dedup = new ScrapingDeduplicator($repo);
 
         $hash1 = $dedup->computeHash('Guvernul a aprobat planul!');
         $hash2 = $dedup->computeHash('Guvernul a aprobat planul');
@@ -60,7 +60,7 @@ class ContentDeduplicatorTest extends TestCase
     public function testNormalizationIgnoresExtraWhitespace(): void
     {
         $repo = $this->createMock(ArticleRepository::class);
-        $dedup = new ContentDeduplicator($repo);
+        $dedup = new ScrapingDeduplicator($repo);
 
         $hash1 = $dedup->computeHash("Text  cu    spații\n\nmulte.");
         $hash2 = $dedup->computeHash('Text cu spații multe.');
@@ -76,7 +76,7 @@ class ContentDeduplicatorTest extends TestCase
             ->method('findOneBy')
             ->willReturn($article);
 
-        $dedup = new ContentDeduplicator($repo);
+        $dedup = new ScrapingDeduplicator($repo);
 
         $this->assertTrue($dedup->isDuplicate('Conținut existent'));
     }
@@ -88,7 +88,7 @@ class ContentDeduplicatorTest extends TestCase
             ->method('findOneBy')
             ->willReturn(null);
 
-        $dedup = new ContentDeduplicator($repo);
+        $dedup = new ScrapingDeduplicator($repo);
 
         $this->assertFalse($dedup->isDuplicate('Conținut nou'));
     }
@@ -96,7 +96,7 @@ class ContentDeduplicatorTest extends TestCase
     public function testHashIsSha256(): void
     {
         $repo = $this->createMock(ArticleRepository::class);
-        $dedup = new ContentDeduplicator($repo);
+        $dedup = new ScrapingDeduplicator($repo);
 
         $hash = $dedup->computeHash('test');
 

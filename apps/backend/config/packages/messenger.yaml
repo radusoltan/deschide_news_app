@@ -68,6 +68,18 @@ framework:
                     multiplier: 3
                     max_delay: 60000
 
+            # AI processing transport — dedicated queue with generous retries
+            # for Gemini CLI calls (translation, SEO, topic detection, clustering)
+            ai_async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: ai_async
+                retry_strategy:
+                    max_retries: 3
+                    delay: 5000
+                    multiplier: 3
+                    max_delay: 120000
+
             # Editorial processing transport (Sprint 16)
             editorial:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
@@ -96,16 +108,15 @@ framework:
             # Short link analytics (async for fast redirects)
             'App\Message\ShortLinkClickMessage': async
 
-            # Translation: default route is 'translations' (normal priority).
-            # Priority routing is handled by TranslationPriorityDispatcher.
-            'App\Message\TranslateArticleMessage': translations
-            'App\Message\TranslateEntityMessage': translations
+            # Translation: routed to ai_async (Gemini CLI subprocess)
+            'App\Message\TranslateArticleMessage': ai_async
+            'App\Message\TranslateEntityMessage': ai_async
 
             # Batch translation scheduling (processed by TranslatePendingBatchHandler)
             'App\Message\TranslatePendingBatch': async
 
             # SEO optimization (Gemini AI generates metaTitle, metaDescription, tags)
-            'App\Message\OptimizeSeoMessage': async
+            'App\Message\OptimizeSeoMessage': ai_async
 
             # Scraping pipeline (Sprint 16)
             'App\Message\Editorial\ScrapeSourceMessage': scraping
@@ -130,7 +141,7 @@ framework:
             'App\Message\Clustering\ClusterPressReleaseMessage': editorial
             'App\Message\Clustering\TriggerClusterRunMessage': editorial
             'App\Message\Clustering\TriggerClusterScoringMessage': editorial
-            'App\Message\Clustering\SummarizeClusterMessage': editorial
+            'App\Message\Clustering\SummarizeClusterMessage': ai_async
 
             # Mercure real-time updates (Sprint 20)
             'Symfony\Component\Mercure\Update': async

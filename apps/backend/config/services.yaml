@@ -12,6 +12,9 @@ parameters:
     # Notification cleanup
     app.notification_retention_days: 90
 
+    # Frontend revalidation URL (env-configurable, avoids hardcoded localhost)
+    frontend_revalidate_url_default: 'http://localhost:3005/api/revalidate-articles'
+
     # Gemini CLI path for translation workflow
     gemini_cli_path: '%env(default:gemini_cli_default:GEMINI_CLI_PATH)%'
     gemini_cli_default: '/usr/bin/gemini'
