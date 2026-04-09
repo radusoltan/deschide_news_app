@@ -144,9 +144,17 @@ export async function refreshAccessToken(): Promise<boolean> {
     await updateSession(newTokens);
 
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Token refresh failed:', error);
-    await deleteSession();
+
+    // Only delete session if the refresh token is truly rejected (401/403)
+    // For network or transient errors, preserve the session so the user
+    // can retry without being forced to re-login
+    const status = error?.status ?? error?.code;
+    if (status === 401 || status === 403) {
+      await deleteSession();
+    }
+
     return false;
   }
 }

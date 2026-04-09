@@ -4,8 +4,7 @@
  */
 
 import 'server-only';
-import { getSession } from '@/lib/auth/session';
-import { isTokenExpired, refreshToken as refreshTokenApi, isRefreshTokenExpired } from '@/lib/api-client';
+import { getAccessToken } from '@/lib/dal';
 import type {
   Image,
   ImageListResponse,
@@ -19,36 +18,11 @@ import type {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 /**
- * Get a fresh access token, refreshing if necessary
- * Same logic as in dal.ts to ensure token refresh works
+ * Get a fresh access token using the canonical DAL implementation.
+ * This delegates to dal.ts which handles refresh and session cookie updates.
  */
 async function getFreshAccessToken(): Promise<string | null> {
-  const session = await getSession();
-  if (!session) return null;
-
-  const { accessToken, refreshToken, refreshTokenExpiresAt } = session.tokens;
-
-  // If access token is still valid, return it
-  if (!isTokenExpired(accessToken)) {
-    return accessToken;
-  }
-
-  // Access token expired - check if refresh token is still valid
-  if (isRefreshTokenExpired(refreshTokenExpiresAt)) {
-    console.log('[Images API] Refresh token expired, session invalid');
-    return null;
-  }
-
-  // Try to refresh the token
-  try {
-    console.log('[Images API] Access token expired, refreshing...');
-    const newTokens = await refreshTokenApi(refreshToken);
-    console.log('[Images API] Token refreshed successfully');
-    return newTokens.token;
-  } catch (error) {
-    console.error('[Images API] Token refresh failed:', error);
-    return null;
-  }
+  return getAccessToken();
 }
 
 /**

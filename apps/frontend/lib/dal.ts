@@ -137,15 +137,19 @@ async function authenticatedFetch(
   if (response.status === 401) {
     console.log('[DAL] Got 401, attempting token refresh...');
 
-    // Try to refresh and retry once
-    const newToken = await getFreshAccessToken();
-    if (newToken && newToken !== accessToken) {
-      // Retry with new token
-      requestHeaders['Authorization'] = `Bearer ${newToken}`;
-      return fetch(`${API_BASE_URL}${endpoint}`, {
-        ...fetchOptions,
-        headers: requestHeaders,
-      });
+    // Bypass the cache() wrapper — call refreshSessionToken directly
+    // to get a truly fresh token and update the session cookie
+    try {
+      const refreshResult = await refreshSessionToken();
+      if (refreshResult.success) {
+        requestHeaders['Authorization'] = `Bearer ${refreshResult.accessToken}`;
+        return fetch(`${API_BASE_URL}${endpoint}`, {
+          ...fetchOptions,
+          headers: requestHeaders,
+        });
+      }
+    } catch (refreshError) {
+      console.error('[DAL] Token refresh on 401 failed:', refreshError);
     }
   }
 
