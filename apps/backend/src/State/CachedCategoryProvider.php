@@ -6,7 +6,7 @@ namespace App\State;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
-use App\Service\PerformanceService;
+use App\Service\Cache\CacheService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -19,7 +19,7 @@ final class CachedCategoryProvider implements ProviderInterface
 {
     public function __construct(
         private readonly ProviderInterface $decorated,
-        private readonly PerformanceService $performance,
+        private readonly CacheService $performance,
         private readonly RequestStack $requestStack,
         private readonly LoggerInterface $logger
     ) {

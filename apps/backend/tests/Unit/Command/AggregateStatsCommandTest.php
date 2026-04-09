@@ -8,7 +8,7 @@ use App\Command\AggregateStatsCommand;
 use App\Repository\ArticleRepository;
 use App\Repository\PageViewRepository;
 use App\Repository\SessionRepository;
-use App\Service\PerformanceService;
+use App\Service\Analytics\AnalyticsService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Predis\Client;
@@ -64,7 +64,7 @@ class AggregateStatsCommandTest extends TestCase
         $sessionRepo->method('calculateBounceRate')->willReturn(45.5);
         $sessionRepo->method('calculateAvgDuration')->willReturn(120);
 
-        $perf = $this->createMock(PerformanceService::class);
+        $perf = $this->createMock(AnalyticsService::class);
         $perf->method('getUniqueVisitorCount')->willReturn(80);
 
         $em = $this->createMock(EntityManagerInterface::class);
@@ -97,7 +97,7 @@ class AggregateStatsCommandTest extends TestCase
         $sessionRepo->method('calculateBounceRate')->willReturn(30.0);
         $sessionRepo->method('calculateAvgDuration')->willReturn(90);
 
-        $perf = $this->createMock(PerformanceService::class);
+        $perf = $this->createMock(AnalyticsService::class);
         $perf->method('getUniqueVisitorCount')->willReturn(40);
 
         $em = $this->createMock(EntityManagerInterface::class);
@@ -132,7 +132,7 @@ class AggregateStatsCommandTest extends TestCase
         $sessionRepo->method('calculateBounceRate')->willReturn(0.0);
         $sessionRepo->method('calculateAvgDuration')->willReturn(0);
 
-        $perf = $this->createMock(PerformanceService::class);
+        $perf = $this->createMock(AnalyticsService::class);
         $perf->method('getUniqueVisitorCount')->willReturn(0);
 
         $em = $this->createMock(EntityManagerInterface::class);
@@ -172,7 +172,7 @@ class AggregateStatsCommandTest extends TestCase
         $sessionRepo->method('calculateBounceRate')->willReturn(35.0);
         $sessionRepo->method('calculateAvgDuration')->willReturn(150);
 
-        $perf = $this->createStub(PerformanceService::class);
+        $perf = $this->createStub(AnalyticsService::class);
         $perf->method('getUniqueVisitorCount')->willReturn(180);
 
         $statsRepo = $this->createStub(\Doctrine\ORM\EntityRepository::class);
@@ -216,7 +216,7 @@ class AggregateStatsCommandTest extends TestCase
         $sessionRepo->method('calculateBounceRate')->willReturn(0.0);
         $sessionRepo->method('calculateAvgDuration')->willReturn(0);
 
-        $perf = $this->createStub(PerformanceService::class);
+        $perf = $this->createStub(AnalyticsService::class);
         $perf->method('getUniqueVisitorCount')->willReturn(0);
 
         $statsRepo = $this->createStub(\Doctrine\ORM\EntityRepository::class);
@@ -252,7 +252,7 @@ class AggregateStatsCommandTest extends TestCase
         $sessionRepo->method('calculateBounceRate')->willReturn(40.0);
         $sessionRepo->method('calculateAvgDuration')->willReturn(100);
 
-        $perf = $this->createStub(PerformanceService::class);
+        $perf = $this->createStub(AnalyticsService::class);
         $perf->method('getUniqueVisitorCount')->willReturn(0); // Redis returns 0
 
         $statsRepo = $this->createStub(\Doctrine\ORM\EntityRepository::class);
@@ -289,7 +289,7 @@ class AggregateStatsCommandTest extends TestCase
         $sessionRepo->method('calculateBounceRate')->willReturn(25.5);
         $sessionRepo->method('calculateAvgDuration')->willReturn(200);
 
-        $perf = $this->createStub(PerformanceService::class);
+        $perf = $this->createStub(AnalyticsService::class);
         $perf->method('getUniqueVisitorCount')->willReturn(250);
 
         $existingStats = new \App\Entity\SiteStatsDaily();
@@ -337,7 +337,7 @@ class AggregateStatsCommandTest extends TestCase
         $sessionRepo->method('calculateBounceRate')->willReturn(30.0);
         $sessionRepo->method('calculateAvgDuration')->willReturn(90);
 
-        $perf = $this->createStub(PerformanceService::class);
+        $perf = $this->createStub(AnalyticsService::class);
         $perf->method('getUniqueVisitorCount')->willReturn(40);
 
         $statsRepo = $this->createStub(\Doctrine\ORM\EntityRepository::class);
@@ -375,7 +375,7 @@ class AggregateStatsCommandTest extends TestCase
         $sessionRepo->method('calculateBounceRate')->willReturn(45.5);
         $sessionRepo->method('calculateAvgDuration')->willReturn(180);
 
-        $perf = $this->createStub(PerformanceService::class);
+        $perf = $this->createStub(AnalyticsService::class);
         $perf->method('getUniqueVisitorCount')->willReturn(400);
 
         $statsRepo = $this->createStub(\Doctrine\ORM\EntityRepository::class);
@@ -404,7 +404,7 @@ class AggregateStatsCommandTest extends TestCase
     private function buildCommand(): AggregateStatsCommand
     {
         return new AggregateStatsCommand(
-            $this->createStub(PerformanceService::class),
+            $this->createStub(AnalyticsService::class),
             $this->createStub(PageViewRepository::class),
             $this->createStub(SessionRepository::class),
             $this->createStub(ArticleRepository::class),

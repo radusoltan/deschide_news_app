@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Command;
 
 use App\Command\CacheClearCommand;
-use App\Service\PerformanceService;
+use App\Service\Cache\CacheService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application;
@@ -16,7 +16,7 @@ class CacheClearCommandTest extends TestCase
 {
     public function testCommandHasCorrectName(): void
     {
-        $perf = $this->createStub(PerformanceService::class);
+        $perf = $this->createStub(CacheService::class);
         $logger = $this->createStub(LoggerInterface::class);
         $command = new CacheClearCommand($perf, $logger);
         $this->assertSame('app:cache:clear', $command->getName());
@@ -24,7 +24,7 @@ class CacheClearCommandTest extends TestCase
 
     public function testCommandHasDescription(): void
     {
-        $perf = $this->createStub(PerformanceService::class);
+        $perf = $this->createStub(CacheService::class);
         $logger = $this->createStub(LoggerInterface::class);
         $command = new CacheClearCommand($perf, $logger);
         $this->assertNotEmpty($command->getDescription());
@@ -32,7 +32,7 @@ class CacheClearCommandTest extends TestCase
 
     public function testCommandHasOptions(): void
     {
-        $perf = $this->createStub(PerformanceService::class);
+        $perf = $this->createStub(CacheService::class);
         $logger = $this->createStub(LoggerInterface::class);
         $command = new CacheClearCommand($perf, $logger);
         $this->assertTrue($command->getDefinition()->hasOption('type'));
@@ -41,7 +41,7 @@ class CacheClearCommandTest extends TestCase
 
     public function testExecuteWithForceAndTypeAll(): void
     {
-        $perf = $this->createMock(PerformanceService::class);
+        $perf = $this->createMock(CacheService::class);
         $perf->method('deleteCachedPattern')->with('*')->willReturn(42);
 
         $logger = $this->createMock(LoggerInterface::class);
@@ -60,7 +60,7 @@ class CacheClearCommandTest extends TestCase
 
     public function testExecuteWithForceAndTypeArticles(): void
     {
-        $perf = $this->createMock(PerformanceService::class);
+        $perf = $this->createMock(CacheService::class);
         $perf->method('deleteCachedPattern')->with('api:articles:*')->willReturn(10);
 
         $logger = $this->createStub(LoggerInterface::class);
@@ -78,7 +78,7 @@ class CacheClearCommandTest extends TestCase
 
     public function testExecuteWithForceAndTypeCategories(): void
     {
-        $perf = $this->createMock(PerformanceService::class);
+        $perf = $this->createMock(CacheService::class);
         $perf->method('deleteCachedPattern')->with('api:categories:*')->willReturn(5);
 
         $logger = $this->createStub(LoggerInterface::class);
@@ -95,7 +95,7 @@ class CacheClearCommandTest extends TestCase
 
     public function testExecuteWithInvalidTypeThrowsException(): void
     {
-        $perf = $this->createStub(PerformanceService::class);
+        $perf = $this->createStub(CacheService::class);
         $logger = $this->createStub(LoggerInterface::class);
 
         $command = new CacheClearCommand($perf, $logger);

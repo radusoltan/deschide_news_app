@@ -9,7 +9,7 @@ use App\Entity\SiteStatsDaily;
 use App\Repository\ArticleRepository;
 use App\Repository\PageViewRepository;
 use App\Repository\SessionRepository;
-use App\Service\PerformanceService;
+use App\Service\Analytics\AnalyticsService;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Predis\Client;
@@ -28,7 +28,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class AggregateStatsCommand extends Command
 {
     public function __construct(
-        private readonly PerformanceService $performance,
+        private readonly AnalyticsService $performance,
         private readonly PageViewRepository $pageViewRepository,
         private readonly SessionRepository $sessionRepository,
         private readonly ArticleRepository $articleRepository,

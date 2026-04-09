@@ -8,7 +8,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\State\ProviderInterface;
 use App\Entity\Category;
-use App\Service\PerformanceService;
+use App\Service\Cache\CacheService;
 use App\State\CachedCategoryProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,14 +23,14 @@ class CachedCategoryProviderTest extends TestCase
 {
     private CachedCategoryProvider $provider;
     private ProviderInterface $decorated;
-    private PerformanceService $performance;
+    private CacheService $performance;
     private RequestStack $requestStack;
     private LoggerInterface $logger;
 
     protected function setUp(): void
     {
         $this->decorated = $this->createMock(ProviderInterface::class);
-        $this->performance = $this->createMock(PerformanceService::class);
+        $this->performance = $this->createMock(CacheService::class);
         $this->requestStack = $this->createStub(RequestStack::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 

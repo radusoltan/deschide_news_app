@@ -17,7 +17,7 @@ use App\Event\ArticleAutoCreatedEvent;
 use App\Event\ArticlePublishedEvent;
 use App\Event\ArticleUpdatedEvent;
 use App\Message\CheckOrphanedTagsMessage;
-use App\Service\PerformanceService;
+use App\Service\Cache\CacheService;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use Psr\Cache\CacheItemPoolInterface;
@@ -41,7 +41,7 @@ final class ArticleProcessor implements ProcessorInterface
         private readonly EntityManagerInterface $entityManager,
         private readonly RequestStack $requestStack,
         private readonly MessageBusInterface $messageBus,
-        private readonly PerformanceService $performanceService,
+        private readonly CacheService $performanceService,
         private readonly CacheItemPoolInterface $doctrineResultCachePool,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly HttpClientInterface $httpClient,
@@ -403,11 +403,11 @@ final class ArticleProcessor implements ProcessorInterface
 
     /**
      * Invalidate article cache for all locales (individual + list caches)
-     * Clears both PerformanceService cache AND Doctrine Result Cache.
+     * Clears both CacheService cache AND Doctrine Result Cache.
      */
     private function invalidateArticleCache(int $articleId): void
     {
-        // 1. Clear PerformanceService Redis cache (used by CachedArticleProvider)
+        // 1. Clear CacheService Redis cache (used by CachedArticleProvider)
         $this->performanceService->invalidateArticle($articleId);
 
         // 2. Clear Doctrine Result Cache (used by ArticleProvider.enableResultCache())

@@ -8,7 +8,7 @@ use App\Entity\UrlRedirect;
 use App\Repository\ArticleRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\UrlRedirectRepository;
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ArticleSearchService;
 use App\Service\SlugLookupService;
 use Doctrine\ORM\EntityManagerInterface;
 use Generator;
@@ -21,7 +21,7 @@ class SlugLookupServiceTest extends TestCase
 {
     private SlugLookupService $service;
 
-    private ElasticService $elasticService;
+    private ArticleSearchService $elasticService;
 
     private ArticleRepository $articleRepository;
 
@@ -35,7 +35,7 @@ class SlugLookupServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->elasticService = $this->createMock(ElasticService::class);
+        $this->elasticService = $this->createMock(ArticleSearchService::class);
         $this->articleRepository = $this->createMock(ArticleRepository::class);
         $this->categoryRepository = $this->createMock(CategoryRepository::class);
         $this->redirectRepository = $this->createMock(UrlRedirectRepository::class);

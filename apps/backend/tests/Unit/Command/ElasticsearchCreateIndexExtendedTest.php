@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Command;
 
 use App\Command\ElasticsearchCreateIndexCommand;
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ElasticIndexManager;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
@@ -16,28 +16,28 @@ class ElasticsearchCreateIndexExtendedTest extends TestCase
 {
     public function testCommandName(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticIndexManager::class);
         $command = new ElasticsearchCreateIndexCommand($service);
         $this->assertSame('app:elasticsearch:create-index', $command->getName());
     }
 
     public function testCommandDescription(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticIndexManager::class);
         $command = new ElasticsearchCreateIndexCommand($service);
         $this->assertNotEmpty($command->getDescription());
     }
 
     public function testCommandHasLocaleOption(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticIndexManager::class);
         $command = new ElasticsearchCreateIndexCommand($service);
         $this->assertTrue($command->getDefinition()->hasOption('locale'));
     }
 
     public function testReturnsSuccessWhenDisabled(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(false);
 
         $command = new ElasticsearchCreateIndexCommand($service);
@@ -53,7 +53,7 @@ class ElasticsearchCreateIndexExtendedTest extends TestCase
 
     public function testCreatesAllIndicesWhenNoLocale(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->expects($this->once())->method('createAllIndices');
         $service->method('getClusterHealth')->willReturn(null);
@@ -71,7 +71,7 @@ class ElasticsearchCreateIndexExtendedTest extends TestCase
 
     public function testCreatesSpecificLocaleIndex(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->expects($this->once())->method('createIndex')->with('ro');
         $service->method('getClusterHealth')->willReturn(null);
@@ -91,7 +91,7 @@ class ElasticsearchCreateIndexExtendedTest extends TestCase
 
     public function testDisplaysClusterHealthWhenAvailable(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('getClusterHealth')->willReturn([
             'cluster_name' => 'my-cluster',
@@ -115,7 +115,7 @@ class ElasticsearchCreateIndexExtendedTest extends TestCase
 
     public function testHandlesException(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('createAllIndices')->willThrowException(new Exception('ES down'));
 
@@ -132,7 +132,7 @@ class ElasticsearchCreateIndexExtendedTest extends TestCase
 
     public function testCreatesEnIndex(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->expects($this->once())->method('createIndex')->with('en');
         $service->method('getClusterHealth')->willReturn(null);
@@ -149,7 +149,7 @@ class ElasticsearchCreateIndexExtendedTest extends TestCase
 
     public function testCreatesRuIndex(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->expects($this->once())->method('createIndex')->with('ru');
         $service->method('getClusterHealth')->willReturn(null);

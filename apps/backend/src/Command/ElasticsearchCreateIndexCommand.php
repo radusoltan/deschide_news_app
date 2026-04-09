@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ElasticIndexManager;
 use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -20,7 +20,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class ElasticsearchCreateIndexCommand extends Command
 {
     public function __construct(
-        private readonly ElasticService $elasticService
+        private readonly ElasticIndexManager $elasticService
     ) {
         parent::__construct();
     }

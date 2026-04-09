@@ -121,6 +121,7 @@ class AggregatorSchedulerCommand extends Command
                         rawContent: $result->rawContent,
                         keywords: $result->keywords,
                         aggregatorSourceType: $result->aggregatorSourceType?->value ?? '',
+                        sourcePublisherDomain: $result->sourcePublisherDomain,
                     );
 
                     $this->messageBus->dispatch($message);

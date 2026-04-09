@@ -16,7 +16,7 @@ use App\Enum\ArticleStatus;
 use App\Event\ArticlePublishedEvent;
 use App\Event\ArticleUpdatedEvent;
 use App\Message\CheckOrphanedTagsMessage;
-use App\Service\PerformanceService;
+use App\Service\Cache\CacheService;
 use App\State\ArticleProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -42,7 +42,7 @@ class ArticleProcessorTest extends TestCase
     private EntityManagerInterface $entityManager;
     private RequestStack $requestStack;
     private MessageBusInterface $messageBus;
-    private PerformanceService $performanceService;
+    private CacheService $performanceService;
     private CacheItemPoolInterface $cachePool;
     private EventDispatcherInterface $eventDispatcher;
     private HttpClientInterface $httpClient;
@@ -53,7 +53,7 @@ class ArticleProcessorTest extends TestCase
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->requestStack = $this->createStub(RequestStack::class);
         $this->messageBus = $this->createMock(MessageBusInterface::class);
-        $this->performanceService = $this->createMock(PerformanceService::class);
+        $this->performanceService = $this->createMock(CacheService::class);
         $this->cachePool = $this->createStub(CacheItemPoolInterface::class);
         $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $this->httpClient = $this->createStub(HttpClientInterface::class);

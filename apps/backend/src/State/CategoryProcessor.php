@@ -8,7 +8,7 @@ use ApiPlatform\Metadata\DeleteOperationInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Category;
-use App\Service\PerformanceService;
+use App\Service\Cache\CacheService;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use LogicException;
@@ -24,7 +24,7 @@ final class CategoryProcessor implements ProcessorInterface
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly RequestStack $requestStack,
-        private readonly PerformanceService $performance,
+        private readonly CacheService $performance,
         private readonly SluggerInterface $slugger,
     ) {
     }

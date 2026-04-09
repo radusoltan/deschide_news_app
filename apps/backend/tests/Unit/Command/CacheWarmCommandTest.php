@@ -7,7 +7,8 @@ namespace App\Tests\Unit\Command;
 use App\Command\CacheWarmCommand;
 use App\Repository\ArticleRepository;
 use App\Repository\CategoryRepository;
-use App\Service\PerformanceService;
+use App\Service\Analytics\AnalyticsService;
+use App\Service\Cache\CacheService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application;
@@ -37,12 +38,14 @@ class CacheWarmCommandTest extends TestCase
 
     public function testExecuteWithTrendingArticles(): void
     {
-        $performance = $this->createMock(PerformanceService::class);
-        $performance->method('getTrendingArticles')->willReturn([
+        $analytics = $this->createMock(AnalyticsService::class);
+        $analytics->method('getTrendingArticles')->willReturn([
             ['article_id' => 1],
             ['article_id' => 2],
         ]);
-        $performance->method('setCached')->willReturn(true);
+
+        $cache = $this->createMock(CacheService::class);
+        $cache->method('setCached')->willReturn(true);
 
         $article1 = $this->createMock(\App\Entity\Article::class);
         $article1->method('getId')->willReturn(1);
@@ -59,7 +62,8 @@ class CacheWarmCommandTest extends TestCase
         $categoryRepo->method('findAll')->willReturn([]);
 
         $command = $this->buildCommand(
-            performance: $performance,
+            cache: $cache,
+            analytics: $analytics,
             articleRepository: $articleRepo,
             categoryRepository: $categoryRepo,
         );
@@ -75,9 +79,11 @@ class CacheWarmCommandTest extends TestCase
 
     public function testExecuteWithNoTrendingFallsBackToLatest(): void
     {
-        $performance = $this->createMock(PerformanceService::class);
-        $performance->method('getTrendingArticles')->willReturn([]);
-        $performance->method('setCached')->willReturn(true);
+        $analytics = $this->createMock(AnalyticsService::class);
+        $analytics->method('getTrendingArticles')->willReturn([]);
+
+        $cache = $this->createMock(CacheService::class);
+        $cache->method('setCached')->willReturn(true);
 
         // Mock QueryBuilder chain for fallback
         $query = $this->createMock(\Doctrine\ORM\Query::class);
@@ -97,7 +103,8 @@ class CacheWarmCommandTest extends TestCase
         $categoryRepo->method('findAll')->willReturn([]);
 
         $command = $this->buildCommand(
-            performance: $performance,
+            cache: $cache,
+            analytics: $analytics,
             articleRepository: $articleRepo,
             categoryRepository: $categoryRepo,
         );
@@ -114,9 +121,11 @@ class CacheWarmCommandTest extends TestCase
 
     public function testExecuteWarmsCategories(): void
     {
-        $performance = $this->createMock(PerformanceService::class);
-        $performance->method('getTrendingArticles')->willReturn([]);
-        $performance->method('setCached')->willReturn(true);
+        $analytics = $this->createMock(AnalyticsService::class);
+        $analytics->method('getTrendingArticles')->willReturn([]);
+
+        $cache = $this->createMock(CacheService::class);
+        $cache->method('setCached')->willReturn(true);
 
         $query = $this->createMock(\Doctrine\ORM\Query::class);
         $query->method('getResult')->willReturn([]);
@@ -138,7 +147,8 @@ class CacheWarmCommandTest extends TestCase
         $categoryRepo->method('findAll')->willReturn([$category]);
 
         $command = $this->buildCommand(
-            performance: $performance,
+            cache: $cache,
+            analytics: $analytics,
             articleRepository: $articleRepo,
             categoryRepository: $categoryRepo,
         );
@@ -153,13 +163,15 @@ class CacheWarmCommandTest extends TestCase
     }
 
     private function buildCommand(
-        ?PerformanceService $performance = null,
+        ?CacheService $cache = null,
+        ?AnalyticsService $analytics = null,
         ?ArticleRepository $articleRepository = null,
         ?CategoryRepository $categoryRepository = null,
         ?LoggerInterface $logger = null,
     ): CacheWarmCommand {
         return new CacheWarmCommand(
-            $performance ?? $this->createStub(PerformanceService::class),
+            $cache ?? $this->createStub(CacheService::class),
+            $analytics ?? $this->createStub(AnalyticsService::class),
             $articleRepository ?? $this->createStub(ArticleRepository::class),
             $categoryRepository ?? $this->createStub(CategoryRepository::class),
             $logger ?? $this->createStub(LoggerInterface::class),

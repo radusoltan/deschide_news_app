@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Message\PageViewEvent;
-use App\Service\PerformanceService;
+use App\Service\Analytics\AnalyticsService;
+use App\Service\Cache\CacheService;
 use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,7 +17,8 @@ use Symfony\Component\Routing\Attribute\Route;
 class TrackingController extends AbstractController
 {
     public function __construct(
-        private readonly PerformanceService $performance,
+        private readonly AnalyticsService $analytics,
+        private readonly CacheService $cache,
         private readonly MessageBusInterface $messageBus
     ) {
     }
@@ -34,9 +36,9 @@ class TrackingController extends AbstractController
         $visitorId = $data['visitor_id'];
 
         // Increment counters (sync - fast)
-        $this->performance->incrementArticleViews($articleId);
-        $this->performance->trackUniqueVisitor($articleId, $visitorId);
-        $this->performance->trackSiteVisitor($visitorId);
+        $this->analytics->incrementArticleViews($articleId);
+        $this->analytics->trackUniqueVisitor($articleId, $visitorId);
+        $this->analytics->trackSiteVisitor($visitorId);
 
         // Dispatch async event for detailed tracking
         $this->messageBus->dispatch(new PageViewEvent(
@@ -63,7 +65,7 @@ class TrackingController extends AbstractController
 
         // Store reading time for aggregation
         $key = "reading_time:{$data['article_id']}:{$data['visitor_id']}";
-        $this->performance->setCached($key, $data['reading_time'], 86400); // 24h
+        $this->cache->setCached($key, $data['reading_time'], 86400); // 24h
 
         return new JsonResponse(['success' => true]);
     }
@@ -80,7 +82,7 @@ class TrackingController extends AbstractController
         // Track completion (100% scroll)
         if ($data['scroll_depth'] === 100) {
             $key = "completed:{$data['article_id']}:{$data['visitor_id']}";
-            $this->performance->setCached($key, 1, 86400);
+            $this->cache->setCached($key, 1, 86400);
         }
 
         return new JsonResponse(['success' => true]);
@@ -89,7 +91,7 @@ class TrackingController extends AbstractController
     #[Route('/api/stats/article/{id}', name: 'get_article_stats', methods: ['GET'])]
     public function getArticleStats(int $id): JsonResponse
     {
-        $views = $this->performance->getArticleViews($id);
+        $views = $this->analytics->getArticleViews($id);
 
         return new JsonResponse([
             'article_id' => $id,
@@ -101,7 +103,7 @@ class TrackingController extends AbstractController
     public function getTrending(Request $request): JsonResponse
     {
         $limit = (int) $request->query->get('limit', 10);
-        $trending = $this->performance->getTrendingArticles($limit);
+        $trending = $this->analytics->getTrendingArticles($limit);
 
         return new JsonResponse([
             'trending' => $trending,
@@ -112,7 +114,7 @@ class TrackingController extends AbstractController
     public function getSiteStats(Request $request): JsonResponse
     {
         $date = $request->query->get('date', date('Y-m-d'));
-        $uniqueVisitors = $this->performance->getUniqueVisitorCount($date);
+        $uniqueVisitors = $this->analytics->getUniqueVisitorCount($date);
 
         return new JsonResponse([
             'date' => $date,

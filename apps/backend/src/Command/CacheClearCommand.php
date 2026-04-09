@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Service\PerformanceService;
+use App\Service\Cache\CacheService;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -22,7 +22,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class CacheClearCommand extends Command
 {
     public function __construct(
-        private readonly PerformanceService $performance,
+        private readonly CacheService $performance,
         private readonly LoggerInterface $logger
     ) {
         parent::__construct();

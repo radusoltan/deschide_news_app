@@ -67,8 +67,22 @@ services:
     #     calls:
     #         - [setTransliterator, [['App\Service\RomanianSlugger', 'slugifyStatic']]]
 
-    # Elasticsearch Service
-    App\Service\ElasticService:
+    # Elasticsearch Services (split from ElasticService — T38.4 SRP)
+    App\Service\Elasticsearch\ElasticIndexManager:
+        arguments:
+            $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
+            $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
+            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
+
+    App\Service\Elasticsearch\ArticleSearchService:
+        arguments:
+            $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
+            $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
+            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
+
+    App\Service\Elasticsearch\ElasticDocumentService:
         arguments:
             $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
@@ -99,11 +113,16 @@ services:
                 prefix: 'deschide_session:'
                 ttl: 86400
 
-    # Performance Service (Cache + Statistics)
-    App\Service\PerformanceService:
+    # Cache Service (split from PerformanceService — T38.4 SRP)
+    App\Service\Cache\CacheService:
         arguments:
             $redis: '@Predis\Client'
-            $em: '@doctrine.orm.entity_manager'
+            $logger: '@logger'
+
+    # Analytics Service (split from PerformanceService — T38.4 SRP)
+    App\Service\Analytics\AnalyticsService:
+        arguments:
+            $redis: '@Predis\Client'
             $logger: '@logger'
 
     # Cached Article Provider (Decorator)
@@ -111,7 +130,7 @@ services:
         decorates: App\State\ArticleProvider
         arguments:
             $decorated: '@.inner'
-            $performance: '@App\Service\PerformanceService'
+            $performance: '@App\Service\Cache\CacheService'
             $requestStack: '@request_stack'
             $logger: '@logger'
 
@@ -120,7 +139,7 @@ services:
         decorates: App\State\CategoryProvider
         arguments:
             $decorated: '@.inner'
-            $performance: '@App\Service\PerformanceService'
+            $performance: '@App\Service\Cache\CacheService'
             $requestStack: '@request_stack'
             $logger: '@logger'
 
@@ -200,7 +219,7 @@ services:
         tags:
             - { name: kernel.event_subscriber }
 
-    # Article Processor with dual cache invalidation (PerformanceService + Doctrine Result Cache)
+    # Article Processor with dual cache invalidation (CacheService + Doctrine Result Cache)
     App\State\ArticleProcessor:
         arguments:
             $doctrineResultCachePool: '@doctrine.result_cache_pool'

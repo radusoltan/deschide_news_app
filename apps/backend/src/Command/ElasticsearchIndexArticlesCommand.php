@@ -6,7 +6,7 @@ namespace App\Command;
 
 use App\Entity\Article;
 use App\Enum\ArticleStatus;
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ElasticDocumentService;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -25,7 +25,7 @@ class ElasticsearchIndexArticlesCommand extends Command
     private array $supportedLocales = ['ro', 'en', 'ru'];
 
     public function __construct(
-        private readonly ElasticService $elasticService,
+        private readonly ElasticDocumentService $elasticService,
         private readonly EntityManagerInterface $entityManager
     ) {
         parent::__construct();

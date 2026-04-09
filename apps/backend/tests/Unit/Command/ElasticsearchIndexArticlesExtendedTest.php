@@ -8,7 +8,7 @@ use App\Command\ElasticsearchIndexArticlesCommand;
 use App\Entity\Article;
 use App\Entity\Author;
 use App\Entity\Category;
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ElasticDocumentService;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,7 +24,7 @@ class ElasticsearchIndexArticlesExtendedTest extends TestCase
 {
     public function testIndexArticlesWithEmptyResult(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
 
         $query = $this->createStub(Query::class);
@@ -59,7 +59,7 @@ class ElasticsearchIndexArticlesExtendedTest extends TestCase
 
     public function testIndexArticlesWithSpecificLocale(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('bulkIndexDocuments')->willReturn(['indexed' => 0, 'errors' => 0]);
 
@@ -94,7 +94,7 @@ class ElasticsearchIndexArticlesExtendedTest extends TestCase
 
     public function testIndexArticlesWithStatusFilter(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
 
         $query = $this->createStub(Query::class);
@@ -126,7 +126,7 @@ class ElasticsearchIndexArticlesExtendedTest extends TestCase
 
     public function testIndexArticlesWithIncludeArchived(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
 
         $query = $this->createStub(Query::class);

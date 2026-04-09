@@ -10,7 +10,7 @@ use ApiPlatform\Metadata\Put;
 use App\Entity\Article;
 use App\Entity\Category;
 use App\Enum\CategoryStatus;
-use App\Service\PerformanceService;
+use App\Service\Cache\CacheService;
 use App\State\CategoryProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,14 +30,14 @@ class CategoryProcessorTest extends TestCase
     private CategoryProcessor $processor;
     private EntityManagerInterface $entityManager;
     private RequestStack $requestStack;
-    private PerformanceService $performanceService;
+    private CacheService $performanceService;
     private SluggerInterface $slugger;
 
     protected function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->requestStack = $this->createStub(RequestStack::class);
-        $this->performanceService = $this->createMock(PerformanceService::class);
+        $this->performanceService = $this->createMock(CacheService::class);
         $this->slugger = $this->createMock(SluggerInterface::class);
         $this->slugger->method('slug')->willReturnCallback(
             fn (string $string) => new UnicodeString(strtolower(str_replace(' ', '-', $string)))
