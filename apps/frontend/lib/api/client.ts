@@ -1,4 +1,8 @@
 /**
+ * @deprecated Use `@/lib/api/api-client` instead.
+ * This client is superseded by the unified API client which consolidates
+ * retry, timeout, and token refresh from all three legacy transports.
+ *
  * Enhanced API Client for Backend Communication
  * Provides base functionality with error handling, retry logic, and timeout support
  */
