@@ -78,6 +78,12 @@ final class ArticleProcessor implements ProcessorInterface
                     $tag->setUsageCount(max(0, $tag->getUsageCount() - 1));
                 }
 
+                // Clean orphaned ext_translations before removing the entity
+                $this->entityManager->getConnection()->executeStatement(
+                    'DELETE FROM ext_translations WHERE object_class = ? AND foreign_key = ?',
+                    [Article::class, (string) $data->getId()]
+                );
+
                 $this->entityManager->remove($data);
                 $this->entityManager->flush();
 
@@ -138,9 +144,11 @@ final class ArticleProcessor implements ProcessorInterface
                 $existingEntity->setBadge($data->getBadge());
                 $existingEntity->setIsFeatured($data->isFeatured());
 
-                // Update publishAt if provided
+                // Update publishAt if provided, clear it when leaving SUBMITTED status
                 if ($data->getPublishAt() !== null) {
                     $existingEntity->setPublishAt($data->getPublishAt());
+                } elseif ($data->getStatus() !== ArticleStatus::SUBMITTED) {
+                    $existingEntity->setPublishAt(null);
                 }
 
                 // Update category if provided (get managed entity)

@@ -149,7 +149,7 @@ class PressRelease
     private ?User $processedBy = null;
 
     #[ORM\OneToOne(targetEntity: Article::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     #[Groups(['press:read'])]
     private ?Article $article = null;
 
@@ -194,7 +194,7 @@ class PressRelease
     private ?float $relevanceScore = null;
 
     /** Image URL extracted from source (RSS feed, article page) */
-    #[ORM\Column(length: 500, nullable: true)]
+    #[ORM\Column(length: 2048, nullable: true)]
     #[Groups(['press:read'])]
     private ?string $sourceImageUrl = null;
 
@@ -320,7 +320,12 @@ class PressRelease
     public function setRelevanceScore(?float $relevanceScore): static { $this->relevanceScore = $relevanceScore; return $this; }
 
     public function getSourceImageUrl(): ?string { return $this->sourceImageUrl; }
-    public function setSourceImageUrl(?string $sourceImageUrl): static { $this->sourceImageUrl = $sourceImageUrl; return $this; }
+    public function setSourceImageUrl(?string $sourceImageUrl): static
+    {
+        $this->sourceImageUrl = $sourceImageUrl !== null ? mb_substr($sourceImageUrl, 0, 2048) : null;
+
+        return $this;
+    }
 
     public function getSourcePublisherDomain(): ?string { return $this->sourcePublisherDomain; }
     public function setSourcePublisherDomain(?string $sourcePublisherDomain): static { $this->sourcePublisherDomain = $sourcePublisherDomain; return $this; }

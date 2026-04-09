@@ -34,6 +34,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\MaxDepth;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: ArticleRepository::class)]
 #[ORM\Cache(usage: 'NONSTRICT_READ_WRITE', region: 'short_lived')]
@@ -207,8 +208,8 @@ class Article implements Translatable
 
     #[ORM\ManyToMany(targetEntity: self::class)]
     #[ORM\JoinTable(name: 'related_articles')]
-    #[ORM\JoinColumn(name: 'article_id', referencedColumnName: 'id')]
-    #[ORM\InverseJoinColumn(name: 'related_article_id', referencedColumnName: 'id')]
+    #[ORM\JoinColumn(name: 'article_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'related_article_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     #[Assert\Count(max: 20, maxMessage: 'An article cannot have more than {{ limit }} related articles.')]
     #[Groups(['article:detail', 'article:write'])]
     private Collection $relatedArticles;
@@ -257,7 +258,6 @@ class Article implements Translatable
     private ?DateTimeImmutable $publishedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    #[Assert\GreaterThan('now', message: 'Publish date must be in the future.')]
     #[Groups(['article:read', 'article:write'])]
     private ?DateTimeImmutable $publishAt = null;
 
@@ -574,6 +574,21 @@ class Article implements Translatable
     {
         if ($this->status === ArticleStatus::PUBLISHED && $this->publishedAt === null) {
             $this->publishedAt = new DateTimeImmutable();
+        }
+    }
+
+    /**
+     * Only validate publishAt is in the future when the article is being submitted for scheduling.
+     */
+    #[Assert\Callback]
+    public function validatePublishAt(ExecutionContextInterface $context): void
+    {
+        if ($this->publishAt !== null && $this->status === ArticleStatus::SUBMITTED) {
+            if ($this->publishAt <= new DateTimeImmutable()) {
+                $context->buildViolation('Publish date must be in the future.')
+                    ->atPath('publishAt')
+                    ->addViolation();
+            }
         }
     }
 
