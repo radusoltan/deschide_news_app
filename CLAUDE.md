@@ -9,8 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 **Deschide News App** - A multilanguage news platform with:
-- **Backend**: Symfony 7.3 (PHP 8.4) - RESTful API
-- **Frontend**: Next.js 16 (React 19.2 / TypeScript) - Web interface
+- **Backend**: Symfony 8.0 (PHP 8.5) - RESTful API
+- **Frontend**: Next.js 16.2 (React 19.2 / TypeScript) - Web interface
 - **Languages**: Romanian (ro), English (en), Russian (ru)
 - **Architecture**: Monorepo with unified version control
 
@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 /var/www/deschide_news_app/    # ROOT MONOREPO
 ├── .git/                      # Unified git repository
 ├── apps/
-│   ├── backend/              # Symfony 7.3 API (PHP 8.4)
+│   ├── backend/              # Symfony 8.0 API (PHP 8.5)
 │   │   ├── config/           # Configuration files
 │   │   ├── public/           # Web root (index.php)
 │   │   ├── src/              # Application code
@@ -28,7 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   ├── docs/             # Backend documentation
 │   │   ├── composer.json     # PHP dependencies
 │   │   └── README.md         # Backend README
-│   └── frontend/             # Next.js 16 (React 19.2, TypeScript)
+│   └── frontend/             # Next.js 16.2 (React 19.2, TypeScript)
 │       ├── app/              # App Router pages
 │       ├── components/       # React components
 │       ├── lib/              # Utilities
@@ -302,7 +302,7 @@ ss -tulpn | grep -E ":(3005|8081)"
 
 ## Architecture Notes
 
-### Backend (Symfony 7.3)
+### Backend (Symfony 8.0)
 
 **Location**: `/var/www/deschide_news_app/apps/backend`
 
@@ -310,7 +310,7 @@ ss -tulpn | grep -E ":(3005|8081)"
 - **API Documentation**: `http://127.0.0.1:8081/api/docs.jsonld` (Hydra documentation)
 - **API Entrypoint**: `http://127.0.0.1:8081/api`
 - **Authentication**: JWT tokens (Lexik JWT + Gesdinet Refresh Token)
-- **Database**: PostgreSQL 17 via Doctrine ORM 3.5
+- **Database**: PostgreSQL 18 via Doctrine ORM 3.5
 - **Multilanguage**: Gedmo Translatable (strict mode with HINT_INNER_JOIN)
 - **Message Queue**: RabbitMQ via Symfony Messenger
 - **Cache**: Redis (DB 1, prefix: `deschide_news:*`)
@@ -446,12 +446,12 @@ MERCURE_URL=http://localhost:3000/.well-known/mercure
 CORS_ALLOW_ORIGIN=^http://localhost:3005$|^http://deschide\.local$
 ```
 
-### Frontend (Next.js 16)
+### Frontend (Next.js 16.2)
 
 **Location**: `/var/www/deschide_news_app/deschide_frontend`
 
 - **Router**: App Router (`app/` directory)
-- **Bundler**: Turbopack (default in Next.js 16)
+- **Bundler**: Turbopack (default in Next.js 16.2)
 - **Styling**: Tailwind CSS 4
 - **API Integration**: Fetch to Symfony backend
 - **Multilanguage**: To be configured (custom library)
@@ -861,7 +861,7 @@ Follow **Conventional Commits** specification:
 git commit -m "feat(backend): add article reaction system"
 git commit -m "fix(frontend): resolve image loading issue in gallery"
 git commit -m "docs: update API documentation for categories"
-git commit -m "chore(backend): upgrade Symfony to 7.3.1"
+git commit -m "chore(backend): upgrade Symfony to 8.0.1"
 ```
 
 ### Pull Request Process
@@ -1167,8 +1167,8 @@ This skill provides:
 
 ✅ **Completed:**
 - Development environment configured
-- Backend installed (Symfony 7.3, PHP 8.4)
-- Frontend installed (Next.js 16, React 19.2)
+- Backend installed (Symfony 8.0, PHP 8.5)
+- Frontend installed (Next.js 16.2, React 19.2)
 - Both applications running on dedicated ports (8081, 3005)
 - Port allocation documented (no conflicts)
 - Environment variables configured
