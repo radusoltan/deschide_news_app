@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import FlowbiteInit from './components/FlowbiteInit';
@@ -12,10 +13,18 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
   const session = await getSession();
+
+  if (!session) {
+    redirect(`/${locale}/login`);
+  }
+
   const username = session?.user?.username ?? 'Admin';
 
   return (
