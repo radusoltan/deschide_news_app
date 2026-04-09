@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service\Editorial;
 
 use App\Dto\Editorial\EntityExtractionResult;
 use App\Entity\Article;
+use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\ArticleIngestionService;
 use App\Service\NotebookLM\NotebookLMService;
 use PHPUnit\Framework\TestCase;
@@ -97,7 +98,7 @@ class ArticleIngestionServiceTest extends TestCase
         );
 
         $service = new ArticleIngestionService(
-            geminiCliPath: '/usr/bin/gemini',
+            geminiCli: new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()),
             notebookLMService: $notebookLM,
             logger: new NullLogger(),
         );
@@ -117,7 +118,7 @@ class ArticleIngestionServiceTest extends TestCase
         );
 
         $service = new ArticleIngestionService(
-            geminiCliPath: '/usr/bin/gemini',
+            geminiCli: new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()),
             notebookLMService: $notebookLM,
             logger: new NullLogger(),
         );

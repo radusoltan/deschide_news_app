@@ -7,6 +7,7 @@ namespace App\Tests\Service\Translation;
 use App\Dto\Translation\TranslationEvaluationResult;
 use App\Dto\Translation\TranslationOptimizationResult;
 use App\Entity\Article;
+use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Translation\GeminiStructuredTranslator;
 use App\Service\Translation\TranslationEvaluatorService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -93,10 +94,11 @@ class TranslationEvaluatorServiceTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('find')->willReturn(null);
 
-        // GeminiStructuredTranslator is final, create a real instance with a non-existent CLI path
-        $translator = new GeminiStructuredTranslator(new NullLogger(), '/dev/null');
+        // GeminiStructuredTranslator is final, create a real instance with a mocked GeminiCliService
+        $geminiCli = new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger());
+        $translator = new GeminiStructuredTranslator($geminiCli, new NullLogger());
 
-        $service = new TranslationEvaluatorService($em, $translator, new NullLogger(), '/dev/null');
+        $service = new TranslationEvaluatorService($em, $translator, $geminiCli, new NullLogger());
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Article #999 not found');
@@ -114,8 +116,9 @@ class TranslationEvaluatorServiceTest extends TestCase
         $em = $this->createMock(EntityManagerInterface::class);
         $em->method('find')->willReturn($article);
 
-        $translator = new GeminiStructuredTranslator(new NullLogger(), '/dev/null');
-        $service = new TranslationEvaluatorService($em, $translator, new NullLogger(), '/dev/null');
+        $geminiCli = new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger());
+        $translator = new GeminiStructuredTranslator($geminiCli, new NullLogger());
+        $service = new TranslationEvaluatorService($em, $translator, $geminiCli, new NullLogger());
 
         $result = $service->evaluateAndOptimize(1, 'en');
 
@@ -139,8 +142,9 @@ class TranslationEvaluatorServiceTest extends TestCase
         $em->method('find')->willReturn($article);
         $em->method('getRepository')->willReturn($translationRepo);
 
-        $translator = new GeminiStructuredTranslator(new NullLogger(), '/dev/null');
-        $service = new TranslationEvaluatorService($em, $translator, new NullLogger(), '/dev/null');
+        $geminiCli = new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger());
+        $translator = new GeminiStructuredTranslator($geminiCli, new NullLogger());
+        $service = new TranslationEvaluatorService($em, $translator, $geminiCli, new NullLogger());
 
         $result = $service->evaluateAndOptimize(1, 'en');
 

@@ -9,15 +9,16 @@ use App\Entity\GeneratedContent;
 use App\Enum\ArticleStatus;
 use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 class WeeklySummaryService
 {
     private const GEMINI_TIMEOUT = 180;
 
     public function __construct(
-        private readonly string $geminiCliPath,
+        private readonly GeminiCliService $geminiCli,
         private readonly EntityManagerInterface $em,
         private readonly NotebookLMService $notebookLMService,
         private readonly LoggerInterface $logger,
@@ -164,18 +165,9 @@ PROMPT;
 
     private function callGemini(string $prompt): ?string
     {
-        $process = new Process([$this->geminiCliPath, '-p', $prompt]);
-        $process->setTimeout(self::GEMINI_TIMEOUT);
-
         try {
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                return null;
-            }
-
-            return trim($process->getOutput());
-        } catch (\Throwable $e) {
+            return $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
+        } catch (GeminiCliException $e) {
             $this->logger->error('WeeklySummary: Gemini exception', [
                 'error' => $e->getMessage(),
             ]);

@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Service\Ai\Provider;
 
 use App\Enum\AiAgentType;
 use App\Service\Ai\Provider\GeminiCliProvider;
+use App\Service\Ai\Provider\GeminiCliService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -15,7 +16,7 @@ class GeminiCliProviderTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->provider = new GeminiCliProvider('/usr/bin/gemini', new NullLogger());
+        $this->provider = new GeminiCliProvider(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()));
     }
 
     public function testGetNameReturnsGemini(): void
@@ -60,7 +61,7 @@ class GeminiCliProviderTest extends TestCase
 
     public function testChatThrowsOnInvalidPath(): void
     {
-        $provider = new GeminiCliProvider('/nonexistent/gemini', new NullLogger());
+        $provider = new GeminiCliProvider(new GeminiCliService('/nonexistent/gemini', '/tmp', new NullLogger()));
 
         $this->expectException(\RuntimeException::class);
 

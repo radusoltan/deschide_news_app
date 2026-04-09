@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Topic;
 
+use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Topic\BatchResult;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -110,8 +111,8 @@ class BatchTopicClassifierTest extends TestCase
         return new \App\Service\Topic\BatchTopicClassifier(
             $em,
             $topicRepo,
+            new GeminiCliService('/usr/bin/false', '/tmp', $logger),
             $logger,
-            '/usr/bin/gemini',
             '/tmp',
         );
     }

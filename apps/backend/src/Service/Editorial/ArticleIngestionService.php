@@ -7,15 +7,16 @@ namespace App\Service\Editorial;
 use App\Dto\Editorial\EntityExtractionResult;
 use App\Entity\Article;
 use App\Service\NotebookLM\NotebookLMService;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 final class ArticleIngestionService
 {
     private const GEMINI_TIMEOUT = 120;
 
     public function __construct(
-        private readonly string $geminiCliPath,
+        private readonly GeminiCliService $geminiCli,
         private readonly NotebookLMService $notebookLMService,
         private readonly LoggerInterface $logger,
         /** @var array<string, string> */
@@ -133,23 +134,9 @@ PROMPT;
 
     private function callGemini(string $prompt): ?string
     {
-        $process = new Process([$this->geminiCliPath, '-p', $prompt]);
-        $process->setTimeout(self::GEMINI_TIMEOUT);
-
         try {
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                $this->logger->warning('ArticleIngestion: Gemini process failed', [
-                    'exitCode' => $process->getExitCode(),
-                    'error' => mb_substr($process->getErrorOutput(), 0, 200),
-                ]);
-
-                return null;
-            }
-
-            return trim($process->getOutput());
-        } catch (\Throwable $e) {
+            return $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
+        } catch (GeminiCliException $e) {
             $this->logger->error('ArticleIngestion: Gemini exception', [
                 'error' => $e->getMessage(),
             ]);
@@ -163,11 +150,7 @@ PROMPT;
      */
     private function parseJsonResponse(string $raw): ?array
     {
-        // Strip markdown code block wrappers if present
-        $cleaned = preg_replace('/^```(?:json)?\s*/m', '', $raw);
-        $cleaned = preg_replace('/\s*```\s*$/m', '', $cleaned);
-        $cleaned = trim($cleaned);
-
+        $cleaned = $this->geminiCli->stripFences($raw);
         $data = json_decode($cleaned, true);
 
         return is_array($data) ? $data : null;

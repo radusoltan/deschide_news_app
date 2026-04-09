@@ -6,8 +6,9 @@ namespace App\Service\Clustering;
 
 use App\Entity\StoryCluster;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 /**
  * Generates AI summaries for StoryClusters using Gemini CLI.
@@ -27,7 +28,7 @@ class ClusterSummaryService
     private const MAX_PRS_IN_PROMPT = 10;
 
     public function __construct(
-        private readonly string $geminiCliPath,
+        private readonly GeminiCliService $geminiCli,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
     ) {}
@@ -141,34 +142,9 @@ class ClusterSummaryService
 
     private function callGemini(string $prompt): ?string
     {
-        $process = new Process([$this->geminiCliPath, '-p', $prompt]);
-        $process->setTimeout(self::GEMINI_TIMEOUT);
-
-        $start = microtime(true);
-
         try {
-            $process->run();
-
-            $duration = round((microtime(true) - $start) * 1000);
-
-            if (!$process->isSuccessful()) {
-                $this->logger->error('ClusterSummaryService: Gemini CLI failed', [
-                    'exitCode' => $process->getExitCode(),
-                    'stderr' => mb_substr($process->getErrorOutput(), 0, 300),
-                    'duration_ms' => $duration,
-                ]);
-                return null;
-            }
-
-            $output = trim($process->getOutput());
-
-            $this->logger->debug('ClusterSummaryService: Gemini call', [
-                'duration_ms' => $duration,
-                'outputLength' => \strlen($output),
-            ]);
-
-            return $output;
-        } catch (\Throwable $e) {
+            return $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
+        } catch (GeminiCliException $e) {
             $this->logger->error('ClusterSummaryService: Gemini exception', [
                 'error' => $e->getMessage(),
             ]);

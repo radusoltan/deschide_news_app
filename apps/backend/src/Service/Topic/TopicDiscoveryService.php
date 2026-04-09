@@ -11,8 +11,9 @@ use App\Enum\PressReleaseStatus;
 use App\Repository\TopicRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Translation;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 class TopicDiscoveryService
 {
@@ -22,8 +23,8 @@ class TopicDiscoveryService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly TopicRepository $topicRepository,
+        private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
-        private readonly string $geminiCliPath = 'gemini',
     ) {}
 
     /**
@@ -145,28 +146,10 @@ Răspunde DOAR cu JSON valid, fără explicații.
 PROMPT;
 
         try {
-            $process = new Process(
-                [$this->geminiCliPath, '-p'],
-                null,
-                null,
-                $prompt,
-                self::GEMINI_TIMEOUT,
-            );
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                $this->logger->warning('TopicDiscovery: Gemini CLI failed', [
-                    'exitCode' => $process->getExitCode(),
-                    'error' => mb_substr($process->getErrorOutput(), 0, 200),
-                ]);
-
-                return [];
-            }
-
-            $output = trim($process->getOutput());
+            $output = $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
 
             return $this->parseGeminiResponse($output);
-        } catch (\Throwable $e) {
+        } catch (GeminiCliException $e) {
             $this->logger->warning('TopicDiscovery: Gemini analysis failed', [
                 'error' => $e->getMessage(),
             ]);

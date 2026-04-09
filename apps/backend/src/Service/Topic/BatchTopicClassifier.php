@@ -8,8 +8,8 @@ use App\Entity\Article;
 use App\Entity\Topic;
 use App\Repository\TopicRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 /**
  * Classifies articles to topics in batches using Gemini CLI.
@@ -27,8 +27,8 @@ class BatchTopicClassifier
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly TopicRepository $topicRepository,
+        private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
-        private readonly string $geminiCliPath,
         private readonly string $projectDir,
     ) {
     }
@@ -192,27 +192,14 @@ PROMPT;
 
     private function callGemini(string $prompt): string
     {
-        $process = new Process(
-            command: [$this->geminiCliPath, '-p', 'Classify these Moldovan news articles into topics. Return JSON array.'],
-            cwd: $this->projectDir,
-            env: [
-                'HOME' => '/home/radu',
-                'PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin',
+        return $this->geminiCli->execute(
+            'Classify these Moldovan news articles into topics. Return JSON array.',
+            [
+                'stdin' => $prompt,
+                'timeout' => self::TIMEOUT,
+                'cwd' => $this->projectDir,
             ],
-            timeout: self::TIMEOUT,
         );
-
-        $process->setInput($prompt);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException(
-                'Gemini CLI failed (exit ' . $process->getExitCode() . '): '
-                . mb_substr($process->getErrorOutput(), 0, 500)
-            );
-        }
-
-        return trim($process->getOutput());
     }
 
     /**

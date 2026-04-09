@@ -8,11 +8,11 @@ use App\Message\TranslateArticleMessage;
 use App\Repository\ArticleRepository;
 use App\Service\TranslationResultProcessor;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Process\Exception\ProcessTimedOutException;
-use Symfony\Component\Process\Process;
 
 #[AsMessageHandler]
 final readonly class TranslateArticleHandler
@@ -25,8 +25,8 @@ final readonly class TranslateArticleHandler
         private TranslationResultProcessor $resultProcessor,
         private EntityManagerInterface $em,
         private MessageBusInterface $messageBus,
+        private GeminiCliService $geminiCli,
         private LoggerInterface $logger,
-        private string $geminiCliPath,
         private string $projectDir,
     ) {
     }
@@ -92,12 +92,12 @@ final readonly class TranslateArticleHandler
                     'locale' => $locale,
                     'duration' => round(microtime(true) - $start, 2) . 's',
                 ]);
-            } catch (ProcessTimedOutException $e) {
+            } catch (GeminiCliException $e) {
                 $failures[] = $locale;
-                $this->logger->error('TranslateArticleHandler: Gemini timeout', [
+                $this->logger->error('TranslateArticleHandler: Gemini ' . ($e->isTimeout() ? 'timeout' : 'failed'), [
                     'articleId' => $message->articleId,
                     'locale' => $locale,
-                    'timeout' => self::TIMEOUT,
+                    'error' => $e->getMessage(),
                 ]);
             } catch (\Throwable $e) {
                 $failures[] = $locale;
@@ -174,41 +174,21 @@ final readonly class TranslateArticleHandler
             $systemPrompt = file_get_contents($agentFile);
         }
 
-        // Write prompt to temp file to avoid CLI argument length limits
-        $tmpFile = tempnam(sys_get_temp_dir(), 'gemini_prompt_');
-        file_put_contents($tmpFile, $promptJson);
-
         // Combine system prompt + article JSON via stdin
         $stdinContent = $systemPrompt . "\n\n---\n\nArticle JSON to translate:\n" . $promptJson;
 
-        // Gemini CLI: use -p with short instruction, full content via stdin
-        $process = new Process(
-            command: [
-                $this->geminiCliPath,
-                '-p', 'Translate the article from the input below. Return JSON with translations key containing ' . implode(' and ', $locales) . '.',
-                '-o', 'json',
+        $output = $this->geminiCli->execute(
+            'Translate the article from the input below. Return JSON with translations key containing ' . implode(' and ', $locales) . '.',
+            [
+                'stdin' => $stdinContent,
+                'jsonOutput' => true,
+                'timeout' => self::TIMEOUT,
+                'cwd' => $this->projectDir,
             ],
-            cwd: $this->projectDir,
-            env: ['HOME' => '/home/radu', 'PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin'],
-            timeout: self::TIMEOUT,
         );
 
-        $process->setInput($stdinContent);
-        $process->run();
-
-        @unlink($tmpFile);
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException(
-                'Gemini CLI failed (exit ' . $process->getExitCode() . '): '
-                . $process->getErrorOutput()
-            );
-        }
-
-        $output = trim($process->getOutput());
-
-        if (empty($output)) {
-            throw new \RuntimeException('Gemini CLI returned empty output');
+        if ($output === '') {
+            throw new GeminiCliException('Gemini CLI returned empty output');
         }
 
         return $output;

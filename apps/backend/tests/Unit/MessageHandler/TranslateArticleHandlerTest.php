@@ -19,6 +19,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use App\Service\Ai\Provider\GeminiCliService;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -69,8 +70,8 @@ class TranslateArticleHandlerTest extends TestCase
             $this->resultProcessor,
             $this->em,
             $messageBus,
+            new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()),
             new NullLogger(),
-            '/usr/bin/gemini', // not actually called — process is not spawned
             '/tmp',
         );
     }

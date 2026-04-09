@@ -11,6 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\NullLogger;
 
 class ClusterSummaryServiceTest extends TestCase
@@ -25,7 +26,7 @@ class ClusterSummaryServiceTest extends TestCase
     #[Test]
     public function emptyClusterReturnsFalse(): void
     {
-        $service = new ClusterSummaryService('/nonexistent', $this->em, new NullLogger());
+        $service = new ClusterSummaryService(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), $this->em, new NullLogger());
 
         $cluster = new StoryCluster();
         $cluster->setPrimaryHeadline('Test');
@@ -38,7 +39,7 @@ class ClusterSummaryServiceTest extends TestCase
     #[Test]
     public function parseResponseHandlesValidJson(): void
     {
-        $service = new ClusterSummaryService('/nonexistent', $this->em, new NullLogger());
+        $service = new ClusterSummaryService(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), $this->em, new NullLogger());
 
         $json = json_encode([
             'summary_short' => 'Short summary',
@@ -59,7 +60,7 @@ class ClusterSummaryServiceTest extends TestCase
     #[Test]
     public function parseResponseStripsMarkdownCodeBlock(): void
     {
-        $service = new ClusterSummaryService('/nonexistent', $this->em, new NullLogger());
+        $service = new ClusterSummaryService(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), $this->em, new NullLogger());
 
         $raw = '```json
 {
@@ -80,7 +81,7 @@ class ClusterSummaryServiceTest extends TestCase
     #[Test]
     public function parseResponseReturnsNullForInvalidJson(): void
     {
-        $service = new ClusterSummaryService('/nonexistent', $this->em, new NullLogger());
+        $service = new ClusterSummaryService(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), $this->em, new NullLogger());
 
         $ref = new \ReflectionMethod($service, 'parseResponse');
 
@@ -92,7 +93,7 @@ class ClusterSummaryServiceTest extends TestCase
     #[Test]
     public function parseResponseReturnsNullWhenKeyFactsNotArray(): void
     {
-        $service = new ClusterSummaryService('/nonexistent', $this->em, new NullLogger());
+        $service = new ClusterSummaryService(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), $this->em, new NullLogger());
 
         $json = json_encode([
             'summary_short' => 'Short',
@@ -110,7 +111,7 @@ class ClusterSummaryServiceTest extends TestCase
     #[Test]
     public function buildPromptContainsClusterData(): void
     {
-        $service = new ClusterSummaryService('/nonexistent', $this->em, new NullLogger());
+        $service = new ClusterSummaryService(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), $this->em, new NullLogger());
 
         $cluster = new StoryCluster();
         $cluster->setPrimaryHeadline('EU Sanctions Update');

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Repository\TopicRepository;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 class TopicDetectorService
 {
@@ -14,8 +14,8 @@ class TopicDetectorService
 
     public function __construct(
         private readonly TopicRepository $topicRepository,
+        private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
-        private readonly string $geminiCliPath,
         private readonly string $projectDir,
     ) {}
 
@@ -98,28 +98,15 @@ PROMPT;
 
     private function callGemini(string $prompt): string
     {
-        $process = new Process(
-            command: [
-                $this->geminiCliPath,
-                '-p', 'Analyze the article and return topic suggestions as JSON array.',
-                '-o', 'json',
+        return $this->geminiCli->execute(
+            'Analyze the article and return topic suggestions as JSON array.',
+            [
+                'stdin' => $prompt,
+                'jsonOutput' => true,
+                'timeout' => self::TIMEOUT,
+                'cwd' => $this->projectDir,
             ],
-            cwd: $this->projectDir,
-            env: ['HOME' => '/home/radu', 'PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin'],
-            timeout: self::TIMEOUT,
         );
-
-        $process->setInput($prompt);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException(
-                'Gemini CLI failed (exit ' . $process->getExitCode() . '): '
-                . $process->getErrorOutput()
-            );
-        }
-
-        return trim($process->getOutput());
     }
 
     /**
