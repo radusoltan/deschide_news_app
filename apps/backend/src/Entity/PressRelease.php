@@ -16,6 +16,7 @@ use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use App\Repository\PressReleaseRepository;
 use App\State\PressReleaseApproveProcessor;
+use App\State\PressReleaseRejectProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -50,6 +51,13 @@ use Symfony\Component\Serializer\Attribute\Groups;
             normalizationContext: ['groups' => ['press:read']],
             processor: PressReleaseApproveProcessor::class,
             description: 'Approve a press release and create an article from it',
+        ),
+        new Post(
+            uriTemplate: '/press_releases/{id}/reject',
+            denormalizationContext: ['groups' => ['press:write']],
+            normalizationContext: ['groups' => ['press:read']],
+            processor: PressReleaseRejectProcessor::class,
+            description: 'Reject a pending press release',
         ),
         new Delete(),
     ],

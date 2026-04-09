@@ -8,19 +8,15 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\PressRelease;
 use App\Enum\PressReleaseStatus;
-use App\Service\Editorial\ArticleFactoryService;
-use App\Service\Editorial\PostApprovalDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-class PressReleaseApproveProcessor implements ProcessorInterface
+class PressReleaseRejectProcessor implements ProcessorInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
-        private readonly ArticleFactoryService $articleFactory,
-        private readonly PostApprovalDispatcher $postApprovalDispatcher,
         private readonly Security $security,
         private readonly LoggerInterface $logger,
     ) {
@@ -33,16 +29,11 @@ class PressReleaseApproveProcessor implements ProcessorInterface
         }
 
         if ($data->getStatus() !== PressReleaseStatus::PENDING) {
-            throw new BadRequestHttpException('Only pending press releases can be approved');
+            throw new BadRequestHttpException('Only pending press releases can be rejected');
         }
 
-        // Create article from press release
-        $article = $this->articleFactory->createFromPressRelease($data);
-
-        // Update press release status
-        $data->setStatus(PressReleaseStatus::APPROVED);
+        $data->setStatus(PressReleaseStatus::REJECTED);
         $data->setProcessedAt(new \DateTimeImmutable());
-        $data->setArticle($article);
 
         $user = $this->security->getUser();
         if ($user !== null) {
@@ -51,14 +42,11 @@ class PressReleaseApproveProcessor implements ProcessorInterface
 
         $this->em->flush();
 
-        $this->logger->info('Article created from PressRelease', [
-            'articleId' => $article->getId(),
+        $this->logger->info('PressRelease rejected', [
             'pressReleaseId' => $data->getId(),
             'sourceType' => $data->getSourceType()->value,
+            'rejectionReason' => $data->getRejectionReason(),
         ]);
-
-        // Dispatch post-approval messages
-        $this->postApprovalDispatcher->dispatch($article, $data);
 
         return $data;
     }

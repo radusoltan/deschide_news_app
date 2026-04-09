@@ -97,7 +97,7 @@ class RemoteImageDownloader
             $width = $imageSize[0] ?? 0;
             $height = $imageSize[1] ?? 0;
 
-            // Create Image entity (same pattern as PressReleaseApproveProcessor::attachImage)
+            // Create Image entity (same pattern as ArticleFactoryService::attachImage)
             $image = new Image();
             $image->setFilename($filename);
             $image->setOriginalFilename(basename(parse_url($url, \PHP_URL_PATH) ?: $filename));
