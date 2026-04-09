@@ -33,9 +33,13 @@ Desktop.ini
 .env.local
 .env*.local
 .env.backup
+.env.backup.*
 *.pem
 *.key
 *.crt
+**/NEW_CREDENTIALS.txt
+**/import-sources-credentials.txt
+*.backup
 
 # ------------------------------------------------------------------------------
 # Testing & QA Artifacts (CRITICAL)

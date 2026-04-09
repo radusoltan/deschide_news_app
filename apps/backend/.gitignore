@@ -35,3 +35,9 @@
 /.php-cs-fixer.php
 /.php-cs-fixer.cache
 ###< friendsofphp/php-cs-fixer ###
+
+###> security: credentials and backups ###
+NEW_CREDENTIALS.txt
+.env.backup*
+*.backup
+###< security: credentials and backups ###
