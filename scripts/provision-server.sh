@@ -551,6 +551,10 @@ run_cmd apt-get install -y rabbitmq-server
 log_info "Enabling management plugin..."
 if [ "$DRY_RUN" = false ]; then
     rabbitmq-plugins enable rabbitmq_management
+    RABBITMQ_PASS=$(openssl rand -base64 24)
+    rabbitmqctl add_user deschide "$RABBITMQ_PASS" 2>/dev/null || rabbitmqctl change_password deschide "$RABBITMQ_PASS"
+    rabbitmqctl set_permissions -p / deschide ".*" ".*" ".*"
+    rabbitmqctl delete_user guest 2>/dev/null || true
     systemctl enable rabbitmq-server
     systemctl restart rabbitmq-server
     log_success "RabbitMQ management plugin enabled (http://localhost:15672)"
@@ -817,6 +821,7 @@ if [ "$DRY_RUN" = false ]; then
     BACKEND_ENV="$APP_DIR/apps/backend/.env.local"
     JWT_SECRET=$(openssl rand -hex 32)
     REVALIDATE_SECRET=$(openssl rand -hex 24)
+    RABBITMQ_PASS=$(openssl rand -base64 24)
 
     cat > "$BACKEND_ENV" <<ENVFILE
 ###> symfony/framework-bundle ###
@@ -835,7 +840,7 @@ JWT_PASSPHRASE=${JWT_SECRET}
 ###< lexik/jwt-authentication-bundle ###
 
 ###> symfony/messenger ###
-MESSENGER_TRANSPORT_DSN=amqp://guest:guest@localhost:5672/%2f/deschide_news_messages
+MESSENGER_TRANSPORT_DSN=amqp://deschide:${RABBITMQ_PASS}@localhost:5672/%2f/deschide_news_messages
 ###< symfony/messenger ###
 
 ###> redis ###
