@@ -102,11 +102,11 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
     }).filter((id: number | null) => id !== null);
   }
 
-  // Convert publishedAt from ISO to datetime-local format (YYYY-MM-DDTHH:mm)
+  // Convert publishAt (scheduled date) from ISO to datetime-local format (YYYY-MM-DDTHH:mm)
   let publishAtLocal = '';
-  if (article.publishedAt) {
+  if (article.publishAt) {
     // Use moment to convert to local timezone and format for datetime-local input
-    publishAtLocal = moment(article.publishedAt).format('YYYY-MM-DDTHH:mm');
+    publishAtLocal = moment(article.publishAt).format('YYYY-MM-DDTHH:mm');
   }
 
   return (
