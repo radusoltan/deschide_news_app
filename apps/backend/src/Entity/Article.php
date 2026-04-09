@@ -191,7 +191,7 @@ class Article implements Translatable
 
     // Relationships
     #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'articles')]
-    #[ORM\JoinColumn(name: 'category_id', referencedColumnName: 'id', nullable: true)]
+    #[ORM\JoinColumn(name: 'category_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     #[Groups(['article:read', 'article:write'])]
     private ?Category $category = null;
 

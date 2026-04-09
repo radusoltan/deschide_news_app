@@ -137,7 +137,7 @@ class LiveText implements Translatable
 
     // Relationships
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     #[Groups(['livetext:read', 'livetext:write'])]
     #[MaxDepth(1)]
     private ?User $author = null;

@@ -135,7 +135,7 @@ class LiveTextAbTest
      * Created by.
      */
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?User $createdBy = null;
 
     /**

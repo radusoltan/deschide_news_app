@@ -31,7 +31,7 @@ class LiveTextPostEngagement
      * Associated post.
      */
     #[ORM\ManyToOne(targetEntity: LiveTextPost::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?LiveTextPost $post = null;
 
     /**

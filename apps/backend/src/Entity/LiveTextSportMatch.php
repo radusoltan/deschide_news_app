@@ -54,7 +54,7 @@ class LiveTextSportMatch
      * Associated LiveText.
      */
     #[ORM\OneToOne(inversedBy: 'sportMatch', targetEntity: LiveText::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Groups(['sport_match:read', 'sport_match:write'])]
     private ?LiveText $liveText = null;
 

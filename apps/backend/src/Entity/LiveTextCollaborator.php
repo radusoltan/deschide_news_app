@@ -59,14 +59,14 @@ class LiveTextCollaborator
 
     // Relationships
     #[ORM\ManyToOne(targetEntity: LiveText::class, inversedBy: 'collaborators')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Assert\NotNull(message: 'Live text must be specified.')]
     #[Groups(['collaborator:read', 'collaborator:write'])]
     #[MaxDepth(1)]
     private ?LiveText $liveText = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Assert\NotNull(message: 'User must be specified.')]
     #[Groups(['collaborator:read', 'collaborator:write', 'livetext:read', 'livetext:detail'])]
     #[MaxDepth(1)]

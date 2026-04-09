@@ -144,7 +144,7 @@ class PressRelease
     private ?\DateTimeImmutable $processedAt = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     #[Groups(['press:read'])]
     private ?User $processedBy = null;
 
@@ -210,7 +210,7 @@ class PressRelease
 
     /** Link to the Source entity for credibility, country, and category metadata */
     #[ORM\ManyToOne(targetEntity: Source::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     #[Groups(['press:read'])]
     private ?Source $source = null;
 
