@@ -14,7 +14,7 @@ import {
 import type { Locale } from '@/lib/types';
 
 interface ArticleCardProps {
-  article: any;
+  article: Article;
   locale: Locale;
   variant?: 'default' | 'horizontal' | 'minimal';
   showCategory?: boolean;

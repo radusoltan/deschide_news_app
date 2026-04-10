@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Failed to create article' }));
+      const errorData = await response.json().catch(() => ({ message: 'Failed to create article' }));
       return NextResponse.json(
-        { error: error.message || error['hydra:description'] || 'Failed to create article' },
+        { error: errorData.message || errorData['hydra:description'] || 'Failed to create article' },
         { status: response.status }
       );
     }
@@ -39,10 +39,11 @@ export async function POST(request: NextRequest) {
     const article = await response.json();
 
     return NextResponse.json(article, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('POST /api/articles error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to create article' },
+      { error: errMsg || 'Failed to create article' },
       { status: 500 }
     );
   }

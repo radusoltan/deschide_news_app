@@ -7,6 +7,7 @@ import { Metadata } from 'next';
 import { fetchPopularTags } from '@/lib/api/tags';
 import { TagCloud } from '@/components/tags';
 import type { Locale } from '@/lib/types';
+import type { Tag } from '@/lib/types/tag';
 
 interface TagsPageProps {
   params: Promise<{ locale: string }>;
@@ -49,7 +50,7 @@ export default async function TagsPage({ params }: TagsPageProps) {
   const locale = localeParam as Locale;
 
   // Fetch popular tags
-  let tags: any[] = [];
+  let tags: Tag[] = [];
   try {
     const response = await fetchPopularTags(locale, 100);
     tags = response['hydra:member'] || [];

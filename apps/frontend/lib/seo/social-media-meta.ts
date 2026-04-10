@@ -61,13 +61,12 @@ export function getOGImageFromArticle(
   }
 
   // Type guard: check if image has path property (from API response)
-  const imageWithPath = featuredImage as any;
-  if (!imageWithPath.path) {
+  if (!featuredImage.path) {
     return null;
   }
 
   // Use original image path
-  const imageUrl = `${CDN_URL}/uploads/${imageWithPath.path}`;
+  const imageUrl = `${CDN_URL}/uploads/${featuredImage.path}`;
 
   return {
     url: imageUrl,

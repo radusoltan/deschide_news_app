@@ -92,7 +92,7 @@ const SecondaryStoryCard: React.FC<{
     ? getThumbnailByProfile(featuredImage, 'card_small')
     : null;
   const imageToUse = thumbnail || featuredImage;
-  const articleUrl = buildArticleUrl(article as any, locale as Locale);
+  const articleUrl = buildArticleUrl(article as Article, locale as Locale);
 
   if (layout === 'horizontal') {
     // Horizontal card for mobile

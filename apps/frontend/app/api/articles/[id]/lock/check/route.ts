@@ -35,10 +35,11 @@ export async function GET(
     }
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('GET /api/articles/[id]/lock/check error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to check lock status' },
+      { error: errMsg || 'Failed to check lock status' },
       { status: 500 }
     );
   }

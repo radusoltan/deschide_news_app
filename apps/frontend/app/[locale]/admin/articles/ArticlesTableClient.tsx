@@ -12,8 +12,8 @@ interface Article {
   title: string;
   slug: string;
   status: string;
-  category?: any;
-  authors?: any[];
+  category?: { id: number; title: string; slug: string } | string;
+  authors?: { id: number; fullName: string; slug: string }[] | string[];
   publishedAt?: string;
   createdAt?: string;
   viewCount?: number;
@@ -566,9 +566,9 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                     </td>
                     <td className="px-6 py-4">
                       {Array.isArray(article.authors) && article.authors.length > 0
-                        ? article.authors.map((author: any) =>
+                        ? article.authors.map((author) =>
                             typeof author === 'object' && author !== null
-                              ? author.fullName || `${author.firstName || ''} ${author.lastName || ''}`.trim()
+                              ? author.fullName
                               : author
                           ).join(', ')
                         : '-'}

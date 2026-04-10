@@ -28,7 +28,7 @@ export default function TinyEditor({
     imageListRef.current = imageList;
   }, [imageList]);
 
-  const handleInit = useCallback((_evt: any, editor: TinyMCEEditor) => {
+  const handleInit = useCallback((_evt: unknown, editor: TinyMCEEditor) => {
     editorRef.current = editor;
     isReadyRef.current = true;
   }, []);

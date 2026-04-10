@@ -8,6 +8,7 @@ import { Suspense } from 'react';
 import { CompactCard, CompactCardSkeleton, getSectionColor } from '@/components/cards';
 import { getTrendingArticles } from '@/lib/api/statistics';
 import type { Locale } from '@/lib/types';
+import type { Article } from '@/lib/types/article';
 
 interface MostReadSectionProps {
   locale: string;
@@ -27,10 +28,10 @@ const labels = {
 } as const;
 
 async function MostReadSectionContent({ locale }: MostReadSectionProps) {
-  let trendingArticles: any[] = [];
+  let trendingArticles: Article[] = [];
 
   try {
-    trendingArticles = await getTrendingArticles(5, locale as Locale);
+    trendingArticles = await getTrendingArticles(5, locale as Locale) as unknown as Article[];
   } catch (error) {
     console.error('Failed to fetch trending articles:', error);
   }

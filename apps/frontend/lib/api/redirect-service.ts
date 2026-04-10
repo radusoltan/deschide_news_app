@@ -275,9 +275,9 @@ export async function lookupRedirect(
     );
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 404 means no redirect found - this is expected
-    if (error?.response?.status === 404) {
+    if ((error as { response?: { status?: number } })?.response?.status === 404) {
       return null;
     }
 

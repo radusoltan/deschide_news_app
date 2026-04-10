@@ -3,7 +3,7 @@ import { Checkbox, Badge } from 'flowbite-react';
 import { type Author } from '@/lib/dal';
 
 interface AuthorsTableProps {
-  authors: any[];
+  authors: Author[];
   totalItems: number;
   locale: string;
 }

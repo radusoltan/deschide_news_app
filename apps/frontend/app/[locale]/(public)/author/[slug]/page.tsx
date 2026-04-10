@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import ArticleCard from '@/components/article/ArticleCard';
 import { lookupAuthor } from '@/lib/api/slug-lookup';
 import type { Locale } from '@/lib/types';
+import type { Article } from '@/lib/types/article';
 
 interface AuthorPageProps {
   params: Promise<{
@@ -176,7 +177,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
             <>
               {/* Articles Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-                {articles.map((article: any) => (
+                {articles.map((article: Article) => (
                   <ArticleCard key={article.id} article={article} locale={locale as Locale} />
                 ))}
               </div>

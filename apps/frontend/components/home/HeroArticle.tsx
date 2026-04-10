@@ -1,3 +1,4 @@
+import type { Locale } from "@/lib/types";
 "use client";
 
 /**
@@ -98,7 +99,7 @@ export default function HeroArticle({ article, locale }: HeroArticleProps) {
   const imageToUse = heroThumbnail || featuredImage;
 
   // Build URLs
-  const articleUrl = buildArticleUrl(article as Article, locale as any);
+  const articleUrl = buildArticleUrl(article as Article, locale as Locale);
   const categorySlug = article.category?.slug || 'uncategorized';
   const categoryTitle = article.category?.title || 'News';
 

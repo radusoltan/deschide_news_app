@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import ArticleForm from '../components/ArticleForm';
-import { getCategories } from '@/lib/dal';
-import { getAuthors } from '@/lib/api/authors';
+import { getCategories, type Category } from '@/lib/dal';
+import { getAuthors, type Author } from '@/lib/api/authors';
 
 interface NewArticlePageProps {
   params: Promise<{
@@ -13,17 +13,17 @@ export default async function NewArticlePage({ params }: NewArticlePageProps) {
   const { locale } = await params;
 
   // Fetch categories for the select dropdown
-  let categories: any[] = [];
+  let categories: Category[] = [];
   try {
     const data = await getCategories({ locale, itemsPerPage: 100 });
-    categories = data.member.filter((cat: any) => cat.status === 'active');
+    categories = data.member.filter((cat: Category) => cat.status === 'active');
   } catch (error) {
     console.error('Failed to fetch categories:', error);
     categories = [];
   }
 
   // Fetch authors for the article form
-  let authors: any[] = [];
+  let authors: Author[] = [];
   try {
     authors = await getAuthors();
   } catch (error) {

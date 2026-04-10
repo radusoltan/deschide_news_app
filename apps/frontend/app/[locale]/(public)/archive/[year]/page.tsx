@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ArticleCard from '@/components/article/ArticleCard';
 import type { Locale } from '@/lib/types';
+import type { Article } from '@/lib/types/article';
 
 interface YearArchivePageProps {
   params: Promise<{
@@ -59,9 +60,9 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
     const articles = data['hydra:member'] || [];
 
     // Group articles by month
-    const monthMap = new Map<number, any[]>();
+    const monthMap = new Map<number, Article[]>();
 
-    articles.forEach((article: any) => {
+    articles.forEach((article: Article) => {
       if (article.publishedAt) {
         const month = new Date(article.publishedAt).getMonth();
         if (!monthMap.has(month)) {
@@ -202,7 +203,7 @@ export default async function YearArchivePage({ params }: YearArchivePageProps) 
 
                 {/* Articles Grid - Show first 8 articles */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {monthArticles.slice(0, 8).map((article: any) => (
+                  {monthArticles.slice(0, 8).map((article: Article) => (
                     <ArticleCard key={article.id} article={article} locale={locale as Locale} />
                   ))}
                 </div>

@@ -9,6 +9,7 @@ import { MetadataRoute } from 'next';
 import { fetchAllArticlesForSitemap } from '@/lib/api/sitemap-data';
 import { buildArticleUrl, parseDate } from '@/lib/seo/sitemap-utils';
 import { SITEMAP_CONFIG } from '@/lib/seo/sitemap-config';
+import type { ArticleImage } from '@/lib/types/image';
 
 export default async function imageSitemap(): Promise<MetadataRoute.Sitemap> {
   const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
@@ -32,7 +33,7 @@ export default async function imageSitemap(): Promise<MetadataRoute.Sitemap> {
         const articleSlug = translation?.slug || article.slug;
 
         // Next.js 16 expects images as string[] (URLs only)
-        const images = article.articleImages.map((articleImage: any) =>
+        const images = article.articleImages.map((articleImage: ArticleImage) =>
           `${CDN_URL}/uploads/${articleImage.image.path}`
         );
 

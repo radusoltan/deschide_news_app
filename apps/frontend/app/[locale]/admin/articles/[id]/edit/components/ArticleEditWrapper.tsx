@@ -7,11 +7,13 @@ import ArticleLockBanner from '@/components/admin/articles/ArticleLockBanner';
 import { useArticleLock } from '@/lib/hooks/useArticleLock';
 import { FiLock, FiAlertCircle } from 'react-icons/fi';
 
+import type { Article, Category, Author } from '@/lib/types/article';
+
 interface ArticleEditWrapperProps {
   locale: string;
-  article: any;
-  categories: any[];
-  authors: any[];
+  article: Article;
+  categories: Category[];
+  authors: Author[];
 }
 
 export default function ArticleEditWrapper({

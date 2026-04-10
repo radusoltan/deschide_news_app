@@ -46,10 +46,11 @@ export async function POST(
     }
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('POST /api/articles/[id]/lock error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to acquire lock' },
+      { error: errMsg || 'Failed to acquire lock' },
       { status: 500 }
     );
   }
@@ -84,10 +85,11 @@ export async function DELETE(
     }
 
     return new NextResponse(null, { status: 204 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('DELETE /api/articles/[id]/lock error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to release lock' },
+      { error: errMsg || 'Failed to release lock' },
       { status: 500 }
     );
   }

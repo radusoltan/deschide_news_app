@@ -40,7 +40,7 @@ const COLORS = [
 ];
 
 // Custom tooltip component (moved outside to prevent re-creation on each render)
-const CustomTooltip = ({ active, payload, total }: any) => {
+const CustomTooltip = ({ active, payload, total }: { active?: boolean; payload?: { name: string; value: number }[]; total: number }) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     const percentage = ((data.value / total) * 100).toFixed(1);
@@ -81,7 +81,7 @@ export function CategoryDistributionChart({
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   // Custom label
-  const renderLabel = (entry: any) => {
+  const renderLabel = (entry: { value: number }) => {
     const percentage = ((entry.value / total) * 100).toFixed(0);
     return `${percentage}%`;
   };

@@ -19,6 +19,7 @@ import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { getSectionColor, getCategorySlugFromArticle } from '@/components/cards/utils';
 import type { Locale } from '@/lib/types';
 import type { Article, Category } from '@/lib/types/article';
+import type { TrendingArticle } from '@/lib/api/statistics';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 120;
@@ -124,7 +125,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   // Fetch articles + trending in parallel
   let articles: Article[] = [];
   let totalItems = 0;
-  let trendingArticles: any[] = [];
+  let trendingArticles: TrendingArticle[] = [];
 
   const [articlesResult, trendingResult] = await Promise.allSettled([
     fetchArticlesByCategory(category.id, locale, itemsPerPage),

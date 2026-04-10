@@ -1,4 +1,4 @@
-import { getArticles, getCategories } from '@/lib/dal';
+import { getArticles, getCategories, type Article, type Category } from '@/lib/dal';
 import { apiRequest } from '@/lib/api/client';
 import { getAccessToken } from '@/lib/dal';
 import { ArticlesTableClient } from './ArticlesTableClient';
@@ -26,7 +26,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
   const statusFilter = statusParam || undefined;
 
   // Fetch articles from API
-  let articlesData: any[] = [];
+  let articlesData: Article[] = [];
   let totalItems = 0;
   let error: string | null = null;
 
@@ -41,7 +41,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
   }
 
   // Fetch categories for modal
-  let categories: any[] = [];
+  let categories: Category[] = [];
   try {
     const categoriesData = await getCategories({ locale, page: 1, itemsPerPage: 100 });
     categories = categoriesData.member || [];
@@ -51,11 +51,11 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
   }
 
   // Fetch article counts from stats API for accurate totals
-  let articleCounts: any = null;
+  let articleCounts: Record<string, number> | null = null;
   try {
     const token = await getAccessToken();
     if (token) {
-      articleCounts = await apiRequest<any>('/api/admin/stats/article-counts', {
+      articleCounts = await apiRequest<Record<string, number>>('/api/admin/stats/article-counts', {
         token,
         next: { revalidate: 60 },
       });

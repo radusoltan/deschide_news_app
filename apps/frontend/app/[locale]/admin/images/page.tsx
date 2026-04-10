@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ImageGallery } from './components/ImageGallery';
 import { ImagesPagination } from './components/ImagesPagination';
 import { getImages } from '@/lib/api/images';
+import type { Image as ImageEntity } from '@/lib/types/image';
 
 export const metadata: Metadata = {
   title: 'Image Library | Admin',
@@ -31,15 +32,15 @@ export default async function ImagesPage({ params, searchParams }: PageProps) {
   const itemsPerPage = 24; // 24 images per page for gallery grid
 
   // Fetch images from API
-  let images: any[] = [];
+  let images: ImageEntity[] = [];
   let totalItems = 0;
   let error: string | null = null;
 
   try {
     const response = await getImages({ page: currentPage, itemsPerPage });
     // Handle both 'hydra:member' and 'member' formats
-    images = response['hydra:member'] || (response as any).member || [];
-    totalItems = response['hydra:totalItems'] || (response as any).totalItems || 0;
+    images = response['hydra:member'] || ((response as unknown) as { member?: ImageEntity[] }).member || [];
+    totalItems = response['hydra:totalItems'] || ((response as unknown) as { totalItems?: number }).totalItems || 0;
     console.log('Fetched images count:', images.length, 'Total:', totalItems);
   } catch (err) {
     console.error('Failed to fetch images:', err);

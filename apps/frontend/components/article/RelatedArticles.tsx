@@ -7,7 +7,7 @@ import ArticleCard from './ArticleCard';
 import type { Locale } from '@/lib/types';
 
 interface RelatedArticlesProps {
-  articles: any[];
+  articles: Article[];
   locale: Locale;
   title?: string;
   variant?: 'default' | 'horizontal' | 'minimal';

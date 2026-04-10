@@ -7,7 +7,7 @@ import { type Category } from '@/lib/dal';
 import DeleteCategoryModal from './components/DeleteCategoryModal';
 
 interface CategoriesTableProps {
-  categories: any[];
+  categories: Category[];
   totalItems: number;
   locale: string;
 }

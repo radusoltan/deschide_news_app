@@ -26,11 +26,12 @@ export async function GET(
     const serializedImage = JSON.parse(JSON.stringify(image));
 
     return NextResponse.json(serializedImage);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error(`GET /api/images/[id]/with-thumbnails error:`, error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch image with thumbnails' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to fetch image with thumbnails' },
+      { status: 500 }
     );
   }
 }

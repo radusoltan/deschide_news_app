@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { LiveTextPost } from '@/lib/types/livetext';
 
 interface LiveTextTimelineProps {
   liveTextId: number;
-  keyPoints: any[];
+  keyPoints: LiveTextPost[];
   locale: string;
   onJumpToPost?: (postId: number) => void;
 }

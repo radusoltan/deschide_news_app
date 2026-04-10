@@ -39,6 +39,8 @@ export interface Author {
   email?: string;
   type?: string;
   status?: string;
+  title?: string;
+  bio?: string;
 }
 
 export interface Article {
@@ -86,7 +88,7 @@ export interface ArticleListResponse {
     previous?: string;
     next?: string;
   };
-  search?: any;
+  search?: Record<string, unknown>;
 }
 
 /**

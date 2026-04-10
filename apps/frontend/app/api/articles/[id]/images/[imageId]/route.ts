@@ -20,11 +20,12 @@ export async function DELETE(
     await detachImageFromArticle(articleImageId);
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('DELETE /api/articles/[id]/images/[imageId] error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to detach image' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to detach image' },
+      { status: 500 }
     );
   }
 }

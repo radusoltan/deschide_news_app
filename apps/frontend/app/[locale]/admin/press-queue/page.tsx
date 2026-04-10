@@ -8,6 +8,7 @@ import {
   fetchPressReleaseCounts,
   approvePressRelease,
   rejectPressRelease,
+  fetchPressReleaseContent,
   type PressReleaseItem,
   type SourceTypeCounts,
 } from '@/app/actions/press-releases';
@@ -69,6 +70,7 @@ export default function PressQueuePage() {
   const [isPending, startTransition] = useTransition();
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [fetchingEmails, setFetchingEmails] = useState(false);
+  const [fetchingContentId, setFetchingContentId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [counts, setCounts] = useState<SourceTypeCounts | null>(null);
 
@@ -123,6 +125,24 @@ export default function PressQueuePage() {
       await loadData();
       await loadCounts();
     });
+  };
+
+  const handleFetchContent = async (id: number) => {
+    setFetchingContentId(id);
+    setToast(null);
+    try {
+      const result = await fetchPressReleaseContent(id);
+      if (result.success) {
+        setToast({ message: `Conținut preluat (${result.wordCount ?? 0} cuvinte)`, type: 'success' });
+        await loadData();
+      } else {
+        setToast({ message: result.error || 'Eroare la preluarea conținutului', type: 'error' });
+      }
+    } catch {
+      setToast({ message: 'Eroare de rețea', type: 'error' });
+    } finally {
+      setFetchingContentId(null);
+    }
   };
 
   const handleFetchEmails = async () => {
@@ -371,6 +391,11 @@ export default function PressQueuePage() {
                       <span className="text-xs text-secondary dark:text-gray-400">
                         {getSourceLabel(pr)}
                       </span>
+                      {pr.sourceHostname && pr.sourceHostname !== 'news.google.com' && (
+                        <span className="inline-flex px-2 py-0.5 text-xs font-medium rounded border bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-800">
+                          {pr.sourceHostname}
+                        </span>
+                      )}
                       <span className="text-xs text-gray-400 dark:text-secondary">
                         {formatDate(pr.receivedAt)}
                       </span>
@@ -487,6 +512,33 @@ export default function PressQueuePage() {
                       </div>
                     )}
                   </div>
+                  {/* Fetch Content button for aggregator articles with little content */}
+                  {pr.sourceType === 'aggregator' && pr.contentLength < 500 && pr.sourceUrl && (
+                    <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-900/10 dark:border-amber-800">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                          Conținut insuficient ({pr.contentLength} caractere). Poți prelua conținutul de la sursa originală.
+                        </p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleFetchContent(pr.id); }}
+                          disabled={fetchingContentId === pr.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg disabled:opacity-50 transition flex-shrink-0"
+                        >
+                          {fetchingContentId === pr.id ? (
+                            <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                          ) : (
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                          )}
+                          {fetchingContentId === pr.id ? 'Se preia...' : 'Preia Conținut'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <div
                     className="text-sm leading-relaxed text-primary dark:text-gray-200 [&_p]:mb-3 [&_a]:text-blue-600 dark:[&_a]:text-blue-400 [&_a]:underline [&_strong]:font-semibold [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic dark:[&_blockquote]:border-gray-600"
                     dangerouslySetInnerHTML={{ __html: pr.content }}

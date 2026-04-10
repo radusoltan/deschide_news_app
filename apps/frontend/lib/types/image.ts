@@ -38,7 +38,7 @@ export interface ImageListResponse {
     'hydra:previous'?: string;
     'hydra:next'?: string;
   };
-  'hydra:search'?: any;
+  'hydra:search'?: Record<string, unknown>;
 }
 
 /**

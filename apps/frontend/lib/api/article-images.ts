@@ -142,10 +142,10 @@ export async function setFeaturedImage(articleId: number, articleImageId: number
   const articleImages = await getArticleImages(articleId);
 
   // Handle both 'hydra:member' and 'member' response formats
-  const members = articleImages['hydra:member'] || (articleImages as any).member || [];
+  const members = articleImages['hydra:member'] || (articleImages as { member?: ArticleImage[] }).member || [];
 
   // Unset current featured image if exists
-  const currentFeatured = members.find((ai: any) => ai.isFeatured);
+  const currentFeatured = members.find((ai: ArticleImage) => ai.isFeatured);
   if (currentFeatured && currentFeatured.id !== articleImageId) {
     await updateArticleImage(currentFeatured.id, { isFeatured: false });
   }

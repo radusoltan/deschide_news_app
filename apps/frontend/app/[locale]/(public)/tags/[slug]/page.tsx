@@ -9,6 +9,8 @@ import { fetchArticlesByTag, fetchTags, fetchRelatedTags } from '@/lib/api';
 import ArticleCard from '@/components/ArticleCard';
 import { TagList } from '@/components/tags';
 import type { Locale } from '@/lib/types';
+import type { Article } from '@/lib/types/article';
+import type { Tag } from '@/lib/types/tag';
 
 interface TagPageProps {
   params: Promise<{
@@ -102,7 +104,7 @@ export default async function TagPage({
   }
 
   // Fetch articles with this tag
-  let articles: any[] = [];
+  let articles: Article[] = [];
   let totalItems = 0;
   try {
     const articlesResponse = await fetchArticlesByTag(slug, locale, 20, page);
@@ -113,7 +115,7 @@ export default async function TagPage({
   }
 
   // Fetch related tags
-  let relatedTags: any[] = [];
+  let relatedTags: Tag[] = [];
   try {
     const relatedResponse = await fetchRelatedTags(tag.id, locale, 10);
     relatedTags = relatedResponse['hydra:member'] || [];

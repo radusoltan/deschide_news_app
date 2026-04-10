@@ -1,4 +1,5 @@
 import { LiveTextForm } from '../components/LiveTextForm';
+import type { Category } from '@/lib/types/article';
 
 interface NewLiveTextPageProps {
   params: Promise<{
@@ -10,7 +11,7 @@ export default async function NewLiveTextPage({ params }: NewLiveTextPageProps) 
   const { locale } = await params;
 
   // Fetch categories for selection
-  let categories: any[] = [];
+  let categories: Category[] = [];
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
     const response = await fetch(`${apiUrl}/api/categories?itemsPerPage=100&status=active`, {

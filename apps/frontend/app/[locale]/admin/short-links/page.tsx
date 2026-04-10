@@ -30,7 +30,7 @@ export default async function ShortLinksPage({
   const token = await getAccessToken();
 
   // Fetch short links
-  let shortLinksData: any[] = [];
+  let shortLinksData: { id: number; code: string; targetUrl: string; clickCount: number; isActive: boolean; createdAt: string; expiresAt?: string }[] = [];
   let totalItems = 0;
   let error: string | null = null;
 

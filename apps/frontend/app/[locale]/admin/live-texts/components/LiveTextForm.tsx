@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { LiveText, LiveTextStatus } from '@/lib/types/livetext';
+import type { Category } from '@/lib/types/article';
 
 interface LiveTextFormProps {
   locale: string;
   initialData?: LiveText;
   isEdit?: boolean;
-  categories?: any[];
+  categories?: Category[];
 }
 
 export function LiveTextForm({ locale, initialData, isEdit = false, categories = [] }: LiveTextFormProps) {
@@ -106,7 +107,7 @@ export function LiveTextForm({ locale, initialData, isEdit = false, categories =
 
       const method = isEdit ? 'PUT' : 'POST';
 
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         title: formData.title,
         description: formData.description || null,
         status: formData.status,

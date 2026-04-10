@@ -410,7 +410,7 @@ export interface Category {
   frontPageLayout?: string | null;
   inMenu?: boolean;
   inFooterMenu?: boolean;
-  parent?: any;
+  parent?: string | null; // IRI to parent category
   createdAt?: string;
   updatedAt?: string;
 }

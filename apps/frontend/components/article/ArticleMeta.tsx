@@ -7,7 +7,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import type { Article } from '@/lib/types/article';
+import type { Article, Category, Author } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 import { buildAuthorUrl, buildCategoryUrl } from '@/lib/utils/url-builder';
 
@@ -38,7 +38,7 @@ function formatDate(dateString: string, locale: Locale = 'ro'): string {
 /**
  * Get category title and slug
  */
-function getCategoryData(category: any): { title: string; slug: string } {
+function getCategoryData(category: Category | string | null): { title: string; slug: string } {
   if (typeof category === 'object' && category) {
     return {
       title: category.title || 'Uncategorized',
@@ -181,7 +181,7 @@ export default function ArticleMeta({ article, locale, className = '' }: Article
                 />
               </svg>
               by{' '}
-              {authors.map((author: any, index: number) => (
+              {authors.map((author: Author | string, index: number) => (
                 <span key={`author-${author.id || index}`}>
                   <Link
                     href={buildAuthorUrl(author.slug, locale)}

@@ -6,6 +6,7 @@ import ArticleCard from '@/components/ArticleCard';
 import MostPopular from '@/components/MostPopular';
 import { buildLocalizedUrl } from '@/lib/utils/url-builder';
 import type { Locale } from '@/lib/types';
+import type { Article, Category } from '@/lib/types/article';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 120; // Revalidate every 2 minutes
@@ -29,11 +30,11 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const itemsPerPage = 7; // 1 hero + 6 grid articles
 
   // Fetch all categories to find the one matching the slug
-  let category: any = null;
+  let category: Category | null = null;
   try {
     const categoriesResponse = await fetchCategories(locale);
     const categories = categoriesResponse.member || [];
-    category = categories.find((cat: any) => cat.slug === slug);
+    category = categories.find((cat: Category) => cat.slug === slug) ?? null;
   } catch (error) {
     console.error('Failed to fetch categories:', error);
   }
@@ -43,7 +44,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   }
 
   // Fetch articles for this category
-  let articles: any[] = [];
+  let articles: Article[] = [];
   let totalItems = 0;
   try {
     const response = await fetchArticlesByCategory(category.id, locale, itemsPerPage);

@@ -12,10 +12,10 @@ export default async function NewCategoryPage({ params }: NewCategoryPageProps) 
   const { locale } = await params;
 
   // Fetch categories for parent dropdown
-  let categories: any[] = [];
+  let categories: { id: number; title: string }[] = [];
   try {
     const data = await getCategories({ locale, itemsPerPage: 100 });
-    categories = (data.member || []).map((c: any) => ({ id: c.id, title: c.title }));
+    categories = (data.member || []).map((c: { id: number; title: string }) => ({ id: c.id, title: c.title }));
   } catch (err) {
     console.error('Failed to fetch categories for parent dropdown:', err);
   }

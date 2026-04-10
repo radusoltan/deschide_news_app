@@ -57,10 +57,11 @@ export async function POST(
     }
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('POST /api/articles/[id]/optimize-seo error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to optimize SEO' },
+      { error: errMsg || 'Failed to optimize SEO' },
       { status: 500 }
     );
   }

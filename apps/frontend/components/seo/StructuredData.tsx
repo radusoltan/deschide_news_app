@@ -9,7 +9,7 @@
 import React from 'react';
 
 interface StructuredDataProps {
-  data: any | any[];
+  data: object | object[];
 }
 
 export default function StructuredData({ data }: StructuredDataProps) {

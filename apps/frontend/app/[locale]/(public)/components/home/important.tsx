@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { fetchImportantArticles, getFeaturedImage, buildImageUrl, getThumbnailByProfile } from "@/lib/api/important-articles";
-import { ImportantArticle } from "@/lib/types/article";
+import { ImportantArticle, Category } from "@/lib/types/article";
 import { buildArticleUrl } from "@/lib/utils/url-builder";
 import type { Locale } from "@/lib/types";
 
@@ -74,7 +74,7 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
   const gridArticles = importantArticles.slice(1, 5);
 
   // Helper function to get category title
-  const getCategoryTitle = (category: any): string => {
+  const getCategoryTitle = (category: Category | string | null): string => {
     if (typeof category === 'object' && category !== null && category.title) {
       return category.title;
     }

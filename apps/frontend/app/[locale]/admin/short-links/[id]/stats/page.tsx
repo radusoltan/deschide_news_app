@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getShortLinkStats } from '@/lib/api/short-links';
+import { getShortLinkStats, type ShortLinkStats } from '@/lib/api/short-links';
 import { getAccessToken } from '@/lib/dal';
 import ClicksOverTimeChart from './components/ClicksOverTimeChart';
 import DeviceTypesChart from './components/DeviceTypesChart';
@@ -21,7 +21,7 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
   const token = await getAccessToken();
 
   // Fetch statistics
-  let stats: any = null;
+  let stats: ShortLinkStats | null = null;
   let error: string | null = null;
 
   try {
@@ -63,7 +63,7 @@ export default async function ShortLinkStatsPage({ params }: StatsPageProps) {
 
   // Calculate total clicks from daily data
   const totalClicksFromDays = clicksPerDay.reduce(
-    (sum: number, day: any) => sum + day.clicks,
+    (sum: number, day: { clicks: number }) => sum + day.clicks,
     0
   );
 

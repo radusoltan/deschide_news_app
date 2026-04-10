@@ -19,7 +19,7 @@ export interface PostEngagement {
   time_spent?: number;
   scroll_depth?: number;
   clicked_element?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   created_at: string;
@@ -31,7 +31,7 @@ export interface TrackEngagementPayload {
   time_spent?: number;
   scroll_depth?: number;
   clicked_element?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -132,7 +132,7 @@ export interface VariantConfig {
   key: string;
   name: string;
   description?: string;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }
 
 export interface AbTestVariantMetrics {

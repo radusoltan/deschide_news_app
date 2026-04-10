@@ -5,6 +5,8 @@ import ArticleEditWrapper from './components/ArticleEditWrapper';
 import TranslationTabs from './components/TranslationTabs';
 import { getArticle, getCategories } from '@/lib/dal';
 import { getAuthors } from '@/lib/api/authors';
+import type { Article, Author, Category } from '@/lib/types/article';
+import type { Tag } from '@/lib/types/tag';
 
 interface EditArticlePageProps {
   params: Promise<{
@@ -31,17 +33,17 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
   }
 
   // Fetch categories for the select dropdown
-  let categories: any[] = [];
+  let categories: Category[] = [];
   try {
     const data = await getCategories({ locale, itemsPerPage: 100 });
-    categories = data.member.filter((cat: any) => cat.status === 'active');
+    categories = data.member.filter((cat: Category) => cat.status === 'active');
   } catch (error) {
     console.error('Failed to fetch categories:', error);
     categories = [];
   }
 
   // Fetch authors for the article form
-  let authors: any[] = [];
+  let authors: Author[] = [];
   try {
     authors = await getAuthors();
   } catch (error) {
@@ -64,7 +66,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
   // Extract author IRIs from article.authors
   let authorIris: string[] = [];
   if (article.authors && Array.isArray(article.authors)) {
-    authorIris = article.authors.map((author: any) => {
+    authorIris = article.authors.map((author: Author | string) => {
       if (typeof author === 'string') {
         return author; // Already an IRI
       } else if (typeof author === 'object' && author !== null && 'id' in author) {
@@ -75,22 +77,22 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
   }
 
   // Extract tags from article (already full Tag objects from eager loading)
-  let articleTags: any[] = [];
+  let articleTags: Tag[] = [];
   if (article.tags && Array.isArray(article.tags)) {
     articleTags = article.tags
-      .map((tag: any) => {
+      .map((tag: Tag | string) => {
         if (typeof tag === 'object' && tag !== null && 'id' in tag) {
           return tag;
         }
         return null;
       })
-      .filter((t: any) => t !== null);
+      .filter((t): t is Tag => t !== null);
   }
 
   // Extract related article IDs
   let relatedArticleIds: number[] = [];
   if (article.relatedArticles && Array.isArray(article.relatedArticles)) {
-    relatedArticleIds = article.relatedArticles.map((relatedArticle: any) => {
+    relatedArticleIds = article.relatedArticles.map((relatedArticle: Article | string) => {
       if (typeof relatedArticle === 'string') {
         // Extract ID from IRI like "/api/articles/123"
         const match = relatedArticle.match(/\/(\d+)$/);

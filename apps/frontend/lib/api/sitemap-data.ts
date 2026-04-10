@@ -94,7 +94,7 @@ export async function fetchAllArticlesForSitemap(): Promise<SitemapArticle[]> {
 
     // For each article, we need to fetch translations
     // In production, you might want to optimize this with a dedicated endpoint
-    return articles.map((article: any) => ({
+    return articles.map((article: { id: number; title?: string; slug: string; publishedAt?: string; updatedAt?: string; archivedAt?: string; isFeatured?: boolean; category?: { slug: string }; articleImages?: { image: { path: string } }[] }) => ({
       id: article.id,
       slug: article.slug,
       publishedAt: article.publishedAt,
@@ -305,7 +305,7 @@ export async function fetchArchivedArticlesForSitemap(): Promise<ArchivedArticle
       const articles = data['member'] ?? data['hydra:member'] ?? [];
 
       // Map to our interface
-      const mappedArticles = articles.map((article: any) => ({
+      const mappedArticles = articles.map((article: { id: number; title?: string; slug: string; publishedAt?: string; updatedAt?: string; archivedAt?: string; isFeatured?: boolean; category?: { slug: string }; articleImages?: { image: { path: string } }[] }) => ({
         id: article.id,
         slug: article.slug,
         updatedAt: article.updatedAt,

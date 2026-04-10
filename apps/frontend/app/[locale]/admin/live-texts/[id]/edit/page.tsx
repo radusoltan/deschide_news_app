@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getLiveTextById } from '@/lib/api';
 import { LiveTextForm } from '../../components/LiveTextForm';
+import type { LiveText } from '@/lib/types/livetext';
+import type { Category } from '@/lib/types/article';
 
 interface EditLiveTextPageProps {
   params: Promise<{
@@ -13,7 +15,7 @@ export default async function EditLiveTextPage({ params }: EditLiveTextPageProps
   const { locale, id } = await params;
 
   // Fetch LiveText data
-  let liveText: any = null;
+  let liveText: LiveText | null = null;
   try {
     liveText = await getLiveTextById(parseInt(id, 10), { locale, cache: 'no-store' });
   } catch (err) {
@@ -26,7 +28,7 @@ export default async function EditLiveTextPage({ params }: EditLiveTextPageProps
   }
 
   // Fetch categories for selection
-  let categories: any[] = [];
+  let categories: Category[] = [];
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
     const response = await fetch(`${apiUrl}/api/categories?itemsPerPage=100&status=active`, {

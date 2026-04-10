@@ -78,10 +78,11 @@ export async function POST(request: NextRequest) {
     const imageData = await uploadResponse.json();
 
     return NextResponse.json(imageData, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('Upload from URL error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to upload image from URL' },
+      { error: errMsg || 'Failed to upload image from URL' },
       { status: 500 }
     );
   }

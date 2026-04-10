@@ -3,7 +3,7 @@
  * Generates schema.org structured data for SEO
  */
 
-import type { Article } from '@/lib/types/article';
+import type { Article, Author } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 import { getCategorySlug, getCategoryTitle, getAuthorNames } from './metadata-generator';
 
@@ -47,13 +47,16 @@ export interface PersonSchema {
   url?: string;
 }
 
-export function generatePersonSchema(author: any, locale: Locale): PersonSchema {
+export function generatePersonSchema(author: Author | string, locale: Locale): PersonSchema {
+  if (typeof author === 'string') {
+    return { '@type': 'Person', name: author };
+  }
   const authorSlug = author.slug || '';
   const localePrefix = locale === 'ro' ? '' : `${locale}/`;
 
   return {
     '@type': 'Person',
-    name: author.fullName || author.name || 'Unknown Author',
+    name: author.fullName || 'Unknown Author',
     url: authorSlug ? `${SITE_URL}/${localePrefix}author/${authorSlug}` : undefined,
   };
 }
@@ -116,7 +119,7 @@ export function generateNewsArticleSchema(
 
   // Get keywords (category + authors + tags)
   const tagNames = (article.tags || [])
-    .map((tag: any) => (typeof tag === 'object' && tag?.name ? tag.name : null))
+    .map((tag) => (typeof tag === 'object' && tag?.name ? tag.name : null))
     .filter(Boolean);
   const keywords = [
     getCategoryTitle(article.category),
@@ -288,6 +291,6 @@ export function generateArticleStructuredData(
  * Render structured data as script tag content
  * Use this in a <script type="application/ld+json"> tag
  */
-export function renderStructuredData(schemas: any[]): string {
+export function renderStructuredData(schemas: object[]): string {
   return JSON.stringify(schemas, null, 2);
 }

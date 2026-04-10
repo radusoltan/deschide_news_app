@@ -49,7 +49,7 @@ async function DashboardContent({ locale }: { locale: string }) {
 
     try {
       // Fetch article counts by status
-      articleCounts = await apiRequest<any>('/api/admin/stats/article-counts', {
+      articleCounts = await apiRequest<Record<string, number>>('/api/admin/stats/article-counts', {
         token,
         next: { revalidate: 60 },
       });
@@ -66,7 +66,7 @@ async function DashboardContent({ locale }: { locale: string }) {
   // Get total categories count from API
   let totalCategories = 0;
   try {
-    const categoriesData = await apiRequest<any>('/api/categories?itemsPerPage=1', {
+    const categoriesData = await apiRequest<{ totalItems?: number }>('/api/categories?itemsPerPage=1', {
       next: { revalidate: 60 },
     });
     totalCategories = categoriesData?.totalItems ?? 0;

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { getTrendingArticles } from '@/lib/api/statistics';
 import { getSectionColor } from '@/components/cards/utils';
 import type { Locale } from '@/lib/types';
+import type { TrendingArticle } from '@/lib/api/statistics';
 
 /* ================================================================== */
 /*  Localized labels                                                   */
@@ -28,7 +29,7 @@ interface HomepageSidebarProps {
 }
 
 async function SidebarContent({ locale }: HomepageSidebarProps) {
-  let trending: any[] = [];
+  let trending: TrendingArticle[] = [];
 
   try {
     trending = await getTrendingArticles(10, locale as Locale);
@@ -51,7 +52,7 @@ async function SidebarContent({ locale }: HomepageSidebarProps) {
           </h2>
 
           <ul className="space-y-0">
-            {trending.slice(0, 10).map((article: any) => {
+            {trending.slice(0, 10).map((article) => {
               const catSlug = article.category?.slug || 'news';
               const sectionColor = getSectionColor(catSlug);
               const articleUrl = `/${locale}/${catSlug}/${article.slug}`;

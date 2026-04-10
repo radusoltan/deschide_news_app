@@ -136,7 +136,7 @@ export async function createArticleAction(
 
   // Create article via DAL
   try {
-    const articleData: any = {
+    const articleData: { title: string; slug: string; lead?: string; content: string; excerpt?: string; status?: string; category?: string; authors?: string[]; tags?: string[]; topics?: string[]; badge?: string | null; isFeatured?: boolean; metaTitle?: string | null; metaDescription?: string | null; publishAt?: string } = {
       title: title.trim(),
       slug: slug.trim(),
       lead: lead?.trim() || undefined,
@@ -283,7 +283,7 @@ export async function updateArticleAction(
 
   // Update article via DAL
   try {
-    const articleData: any = {
+    const articleData: { title: string; slug: string; lead?: string; content: string; excerpt?: string; status?: string; category?: string; authors?: string[]; tags?: string[]; topics?: string[]; badge?: string | null; isFeatured?: boolean; metaTitle?: string | null; metaDescription?: string | null; publishAt?: string } = {
       title: title.trim(),
       slug: slug.trim(),
       lead: lead?.trim() || undefined,

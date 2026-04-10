@@ -71,7 +71,7 @@ export async function createCategoryAction(
   }
 
   try {
-    const categoryData: any = {
+    const categoryData: Record<string, string | boolean | null> = {
       title: title.trim(),
       slug: slug.trim(),
       status: status || 'active',
@@ -140,7 +140,7 @@ export async function updateCategoryAction(
   const parentIdUpdate = formData.get('parent') as string;
 
   try {
-    const updateData: any = {
+    const updateData: Record<string, string | boolean | null> = {
       title: title.trim(),
       slug: slug.trim(),
       status: status || 'active',

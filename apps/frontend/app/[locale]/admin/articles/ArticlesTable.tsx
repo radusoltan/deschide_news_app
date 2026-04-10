@@ -103,12 +103,12 @@ export default async function ArticlesTable({ locale }: ArticlesTableProps) {
                 <td className="px-6 py-4">{getStatusBadge(article.status)}</td>
                 <td className="px-6 py-4">
                   {typeof article.category === 'object' && article.category !== null
-                    ? (article.category as any).name || '-'
+                    ? (article.category as { name?: string; title?: string }).name || (article.category as { title?: string }).title || '-'
                     : article.category || '-'}
                 </td>
                 <td className="px-6 py-4">
                   {typeof article.author === 'object' && article.author !== null
-                    ? (article.author as any).name || '-'
+                    ? (article.author as { name?: string; fullName?: string }).name || (article.author as { fullName?: string }).fullName || '-'
                     : article.author || '-'}
                 </td>
                 <td className="px-6 py-4">{formatDate(article.publishedAt)}</td>

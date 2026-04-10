@@ -4,7 +4,7 @@
  */
 
 import type { Metadata } from 'next';
-import type { Article } from '@/lib/types/article';
+import type { Article, Category } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
@@ -74,8 +74,8 @@ export function generateKeywords(article: Article): string[] {
 
   // Add author names
   if (article.authors && article.authors.length > 0) {
-    article.authors.forEach((author: any) => {
-      if (author.fullName) {
+    article.authors.forEach((author) => {
+      if (typeof author === 'object' && author.fullName) {
         keywords.push(author.fullName);
       }
     });
@@ -83,7 +83,7 @@ export function generateKeywords(article: Article): string[] {
 
   // Add tags if available (extract tag names from Tag objects or use string directly)
   if ('tags' in article && article.tags && Array.isArray(article.tags)) {
-    article.tags.forEach((tag: any) => {
+    article.tags.forEach((tag) => {
       if (typeof tag === 'string') {
         keywords.push(tag);
       } else if (tag && typeof tag === 'object' && tag.name) {
@@ -98,7 +98,7 @@ export function generateKeywords(article: Article): string[] {
 /**
  * Get category slug safely
  */
-export function getCategorySlug(category: any): string {
+export function getCategorySlug(category: Category | string | null | undefined): string {
   if (!category) return 'uncategorized';
   if (typeof category === 'object' && category?.slug) {
     return category.slug;
@@ -171,14 +171,14 @@ export function getAuthorNames(article: Article): string[] {
   }
 
   return article.authors
-    .map((author: any) => author.fullName || author.name)
+    .map((author) => typeof author === 'object' ? (author.fullName || '') : author)
     .filter(Boolean);
 }
 
 /**
  * Get category title safely
  */
-export function getCategoryTitle(category: any): string {
+export function getCategoryTitle(category: Category | string | null | undefined): string {
   if (!category) return 'News';
   if (typeof category === 'object' && category?.title) {
     return category.title;

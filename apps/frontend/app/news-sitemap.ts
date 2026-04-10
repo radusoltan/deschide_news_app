@@ -13,6 +13,7 @@ import { MetadataRoute } from 'next';
 import { fetchRecentArticlesForNewsSitemap } from '@/lib/api/sitemap-data';
 import { buildArticleUrl, parseDate } from '@/lib/seo/sitemap-utils';
 import { SITEMAP_CONFIG, Locale } from '@/lib/seo/sitemap-config';
+import type { ArticleImage } from '@/lib/types/image';
 
 export default async function newsSitemap(): Promise<MetadataRoute.Sitemap> {
   const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
@@ -34,7 +35,7 @@ export default async function newsSitemap(): Promise<MetadataRoute.Sitemap> {
 
         // Build image URLs from articleImages
         const imageUrls = article.articleImages?.map(
-          (ai: any) => `${CDN_URL}/uploads/${ai.image.path}`
+            (ai: ArticleImage) => `${CDN_URL}/uploads/${ai.image.path}`
         ) || [];
 
         entries.push({
