@@ -80,7 +80,7 @@ export async function fetchAllArticlesForSitemap(): Promise<SitemapArticle[]> {
           'Accept': 'application/ld+json',
           'Accept-Language': 'ro', // Start with default locale
         },
-        cache: 'no-store', // Ensure we get fresh data
+        next: { revalidate: 3600 }, // ISR: revalidate every hour
       }
     );
 
@@ -143,7 +143,7 @@ export async function fetchArticlesByLocale(locale: Locale): Promise<SitemapArti
           'Accept': 'application/ld+json',
           'Accept-Language': locale,
         },
-        cache: 'no-store',
+        next: { revalidate: 3600 }, // ISR: revalidate every hour
       }
     );
 
@@ -175,7 +175,7 @@ export async function fetchRecentArticlesForNewsSitemap(): Promise<SitemapArticl
           'Accept': 'application/ld+json',
           'Accept-Language': 'ro',
         },
-        cache: 'no-store',
+        next: { revalidate: 3600 }, // ISR: revalidate every hour
       }
     );
 
@@ -202,7 +202,7 @@ export async function fetchAllCategoriesForSitemap(): Promise<SitemapCategory[]>
         'Accept': 'application/ld+json',
         'Accept-Language': 'ro',
       },
-      cache: 'no-store',
+      next: { revalidate: 3600 }, // ISR: revalidate every hour
     });
 
     if (!response.ok) {
@@ -227,7 +227,7 @@ export async function fetchAllAuthorsForSitemap(): Promise<SitemapAuthor[]> {
       headers: {
         'Accept': 'application/ld+json',
       },
-      cache: 'no-store',
+      next: { revalidate: 3600 }, // ISR: revalidate every hour
     });
 
     if (!response.ok) {
@@ -254,7 +254,7 @@ export async function getArticleCount(): Promise<number> {
         headers: {
           'Accept': 'application/ld+json',
         },
-        cache: 'no-store',
+        next: { revalidate: 3600 }, // ISR: revalidate every hour
       }
     );
 
@@ -292,7 +292,7 @@ export async function fetchArchivedArticlesForSitemap(): Promise<ArchivedArticle
             'Accept': 'application/ld+json',
             'Accept-Language': 'ro', // Start with default locale
           },
-          cache: 'no-store',
+          next: { revalidate: 3600 }, // ISR: revalidate every hour
         }
       );
 
