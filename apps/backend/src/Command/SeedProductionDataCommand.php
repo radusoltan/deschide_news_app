@@ -39,14 +39,20 @@ class SeedProductionDataCommand extends Command
 
         $this->conn = $this->em->getConnection();
 
-        $this->seedCategories($io);
-        $this->seedUsers($io);
-        $this->seedMenuItems($io);
-        $this->printSummary($io);
+        try {
+            $this->seedCategories($io);
+            $this->seedUsers($io);
+            $this->seedMenuItems($io);
+            $this->printSummary($io);
 
-        $io->success('Production staging data seeded successfully!');
+            $io->success('Production staging data seeded successfully!');
 
-        return Command::SUCCESS;
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function seedCategories(SymfonyStyle $io): void

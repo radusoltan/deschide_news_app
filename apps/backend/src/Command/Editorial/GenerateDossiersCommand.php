@@ -67,6 +67,7 @@ final class GenerateDossiersCommand extends Command
             return Command::SUCCESS;
         }
 
+        try {
         $generated = 0;
 
         foreach ($topicNames as $topicName) {
@@ -106,5 +107,10 @@ final class GenerateDossiersCommand extends Command
         $io->success("Done: {$generated} dossier(s) generated");
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Dossier generation failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

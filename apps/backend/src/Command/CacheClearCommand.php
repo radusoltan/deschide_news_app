@@ -55,20 +55,32 @@ class CacheClearCommand extends Command
             }
         }
 
-        $deleted = match ($type) {
-            'articles' => $this->performance->deleteCachedPattern('api:articles:*'),
-            'categories' => $this->performance->deleteCachedPattern('api:categories:*'),
-            'all' => $this->performance->deleteCachedPattern('*'),
+        $pattern = match ($type) {
+            'articles' => 'api:articles:*',
+            'categories' => 'api:categories:*',
+            'all' => '*',
             default => throw new InvalidArgumentException("Invalid type: {$type}. Use: articles, categories, or all"),
         };
 
-        $io->success("Deleted {$deleted} cache keys");
+        try {
+            $deleted = $this->performance->deleteCachedPattern($pattern);
 
-        $this->logger->info('Cache cleared', [
-            'type' => $type,
-            'deleted_count' => $deleted,
-        ]);
+            $io->success("Deleted {$deleted} cache keys");
 
-        return Command::SUCCESS;
+            $this->logger->info('Cache cleared', [
+                'type' => $type,
+                'deleted_count' => $deleted,
+            ]);
+
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $this->logger->error('Cache clear failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'command' => $this->getName(),
+            ]);
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

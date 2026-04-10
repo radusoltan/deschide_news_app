@@ -69,59 +69,68 @@ class ClusterMergeCommand extends Command
             $source->getSourceCount(),
         ));
 
-        // Move all PressReleases from source to target
-        $moved = 0;
-        foreach ($source->getPressReleases()->toArray() as $pr) {
-            if (!$target->getPressReleases()->contains($pr)) {
-                $target->addPressRelease($pr);
-                $moved++;
-            }
-            $source->removePressRelease($pr);
+        try {
+            $newScore = $this->em->wrapInTransaction(function () use ($target, $source) {
+                // Move all PressReleases from source to target
+                $moved = 0;
+                foreach ($source->getPressReleases()->toArray() as $pr) {
+                    if (!$target->getPressReleases()->contains($pr)) {
+                        $target->addPressRelease($pr);
+                        $moved++;
+                    }
+                    $source->removePressRelease($pr);
+                }
+
+                // Move topics
+                foreach ($source->getTopics()->toArray() as $topic) {
+                    if (!$target->getTopics()->contains($topic)) {
+                        $target->addTopic($topic);
+                    }
+                    $source->removeTopic($topic);
+                }
+
+                // Recalculate counts
+                $target->recalculateCounts();
+
+                // Use earliest firstSeenAt
+                if ($source->getFirstSeenAt() < $target->getFirstSeenAt()) {
+                    $target->setFirstSeenAt($source->getFirstSeenAt());
+                }
+                $target->setLastUpdatedAt(new \DateTimeImmutable());
+
+                // Merge region tags
+                $targetTags = $target->getRegionTags() ?? [];
+                $sourceTags = $source->getRegionTags() ?? [];
+                $merged = array_values(array_unique(array_merge($targetTags, $sourceTags)));
+                sort($merged);
+                $target->setRegionTags($merged);
+
+                // Delete source cluster
+                $this->em->remove($source);
+                $this->em->flush();
+
+                // Re-score target
+                $newScore = $this->calculator->calculate($target);
+                $target->setImportanceScore($newScore);
+                $this->em->flush();
+
+                return $newScore;
+            });
+
+            $io->success(sprintf(
+                'Merged: cluster #%d now has %d articles, %d sources, score=%.4f. Cluster #%d deleted.',
+                $targetId,
+                $target->getArticleCount(),
+                $target->getSourceCount(),
+                $newScore,
+                $sourceId,
+            ));
+
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Cluster merge failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
         }
-
-        // Move topics
-        foreach ($source->getTopics()->toArray() as $topic) {
-            if (!$target->getTopics()->contains($topic)) {
-                $target->addTopic($topic);
-            }
-            $source->removeTopic($topic);
-        }
-
-        // Recalculate counts
-        $target->recalculateCounts();
-
-        // Use earliest firstSeenAt
-        if ($source->getFirstSeenAt() < $target->getFirstSeenAt()) {
-            $target->setFirstSeenAt($source->getFirstSeenAt());
-        }
-        $target->setLastUpdatedAt(new \DateTimeImmutable());
-
-        // Merge region tags
-        $targetTags = $target->getRegionTags() ?? [];
-        $sourceTags = $source->getRegionTags() ?? [];
-        $merged = array_values(array_unique(array_merge($targetTags, $sourceTags)));
-        sort($merged);
-        $target->setRegionTags($merged);
-
-        // Delete source cluster
-        $this->em->remove($source);
-        $this->em->flush();
-
-        // Re-score target
-        $newScore = $this->calculator->calculate($target);
-        $target->setImportanceScore($newScore);
-        $this->em->flush();
-
-        $io->success(sprintf(
-            'Merged: %d PRs moved, cluster #%d now has %d articles, %d sources, score=%.4f. Cluster #%d deleted.',
-            $moved,
-            $targetId,
-            $target->getArticleCount(),
-            $target->getSourceCount(),
-            $newScore,
-            $sourceId,
-        ));
-
-        return Command::SUCCESS;
     }
 }

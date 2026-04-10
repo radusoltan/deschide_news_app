@@ -47,6 +47,7 @@ final class WeeklySummaryCommand extends Command
 
         $io->title("Weekly Summary: {$weekStart->format('d.m.Y')} — {$weekEnd->format('d.m.Y')} ({$weekNumber})");
 
+        try {
         // Fetch articles for the period
         $articles = $this->summaryService->getArticlesForPeriod($weekStart, $weekEnd);
         $io->info(\count($articles) . ' published articles found');
@@ -88,6 +89,11 @@ final class WeeklySummaryCommand extends Command
         $io->success("Weekly summary saved as GeneratedContent #{$gc->getId()}");
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Weekly summary generation failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

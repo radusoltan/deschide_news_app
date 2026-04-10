@@ -53,12 +53,18 @@ class SeedTopicsCommand extends Command
 
         $io->title('Seeding topics from docs/topics-seed-data.json');
 
-        $this->processNodes($data, null, $io);
-        $this->em->flush();
+        try {
+            $this->processNodes($data, null, $io);
+            $this->em->flush();
 
-        $io->success(\sprintf('Done: %d created, %d skipped (already existed)', $this->created, $this->skipped));
+            $io->success(\sprintf('Done: %d created, %d skipped (already existed)', $this->created, $this->skipped));
 
-        return Command::SUCCESS;
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

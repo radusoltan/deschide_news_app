@@ -91,6 +91,7 @@ class ImportCsvLegacyArticlesCommand extends Command
             $io->warning('DRY RUN MODE — no database changes will be made');
         }
 
+        try {
         // Phase routing
         $runArticles = \in_array($phase, ['all', 'articles'], true);
         $runTranslations = \in_array($phase, ['all', 'translations'], true) && !$skipTranslations;
@@ -134,6 +135,11 @@ class ImportCsvLegacyArticlesCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('CSV import failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function runPhaseArticles(SymfonyStyle $io, string $csvPath, int $offset, int $limit, int $batchSize, bool $dryRun): void

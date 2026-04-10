@@ -43,31 +43,37 @@ class ClusterAutoPromoteCommand extends Command
         $io->title('StoryCluster: Auto-Promote');
         $io->writeln(sprintf('Threshold: %.2f%s', $effectiveThreshold, $dryRun ? ' (DRY RUN)' : ''));
 
-        $result = $this->autoPromoteService->promoteHighScoreClusters($threshold, $dryRun);
+        try {
+            $result = $this->autoPromoteService->promoteHighScoreClusters($threshold, $dryRun);
 
-        if (\count($result['clusters']) === 0) {
-            $io->info('No eligible clusters found above threshold');
-            return Command::SUCCESS;
-        }
+            if (\count($result['clusters']) === 0) {
+                $io->info('No eligible clusters found above threshold');
+                return Command::SUCCESS;
+            }
 
-        foreach ($result['clusters'] as $c) {
-            $io->writeln(sprintf(
-                '  %s #%d (score=%.4f) "%s"',
-                $dryRun ? '[ELIGIBLE]' : '[PROMOTED]',
-                $c['id'],
-                $c['score'],
-                mb_substr($c['headline'], 0, 70),
+            foreach ($result['clusters'] as $c) {
+                $io->writeln(sprintf(
+                    '  %s #%d (score=%.4f) "%s"',
+                    $dryRun ? '[ELIGIBLE]' : '[PROMOTED]',
+                    $c['id'],
+                    $c['score'],
+                    mb_substr($c['headline'], 0, 70),
+                ));
+            }
+
+            $io->success(sprintf(
+                '%s: %d cluster%s %s',
+                $dryRun ? 'DRY RUN' : 'Done',
+                $result['promoted'],
+                $result['promoted'] === 1 ? '' : 's',
+                $dryRun ? 'eligible' : 'promoted',
             ));
+
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Auto-promote failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
         }
-
-        $io->success(sprintf(
-            '%s: %d cluster%s %s',
-            $dryRun ? 'DRY RUN' : 'Done',
-            $result['promoted'],
-            $result['promoted'] === 1 ? '' : 's',
-            $dryRun ? 'eligible' : 'promoted',
-        ));
-
-        return Command::SUCCESS;
     }
 }

@@ -40,6 +40,7 @@ class SeedDiasporaSourcesCommand extends Command
 
         $io->title('Seeding Diaspora Media Sources');
 
+        try {
         $sources = $this->getSourceDefinitions();
         $created = 0;
         $updated = 0;
@@ -98,6 +99,11 @@ class SeedDiasporaSourcesCommand extends Command
         ));
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

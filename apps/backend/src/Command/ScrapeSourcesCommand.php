@@ -89,15 +89,21 @@ final class ScrapeSourcesCommand extends Command
             return Command::INVALID;
         }
 
-        if ($dryRun) {
-            return $this->executeDryRun($io, $sourcesToScrape, $language, $limit);
-        }
+        try {
+            if ($dryRun) {
+                return $this->executeDryRun($io, $sourcesToScrape, $language, $limit);
+            }
 
-        if ($async) {
-            return $this->executeAsync($io, $sourcesToScrape, $language, $limit);
-        }
+            if ($async) {
+                return $this->executeAsync($io, $sourcesToScrape, $language, $limit);
+            }
 
-        return $this->executeSync($io, $output, $sourcesToScrape, $language, $limit);
+            return $this->executeSync($io, $output, $sourcesToScrape, $language, $limit);
+        } catch (\Throwable $e) {
+            $io->error('Scraping failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

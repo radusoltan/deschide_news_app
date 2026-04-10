@@ -92,6 +92,7 @@ class SimulateTrafficCommand extends Command
 
         $io->title('Simulare Trafic - Deschide News');
 
+        try {
         // Load articles and categories
         $articles = $this->loadArticles();
         if (empty($articles)) {
@@ -150,6 +151,11 @@ class SimulateTrafficCommand extends Command
         $this->printSummary($io, $days);
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

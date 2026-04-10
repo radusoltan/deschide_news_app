@@ -75,118 +75,124 @@ class ArchiveOldArticlesCommand extends Command
             $io->warning('DRY-RUN MODE: No changes will be made');
         }
 
-        // Find all published articles older than threshold
-        $repository = $this->entityManager->getRepository(Article::class);
-        $qb = $repository->createQueryBuilder('a')
-            ->where('a.status = :published')
-            ->andWhere('a.publishedAt < :threshold')
-            ->setParameter('published', ArticleStatus::PUBLISHED)
-            ->setParameter('threshold', $thresholdDate)
-            ->orderBy('a.publishedAt', 'ASC');
+        try {
+            // Find all published articles older than threshold
+            $repository = $this->entityManager->getRepository(Article::class);
+            $qb = $repository->createQueryBuilder('a')
+                ->where('a.status = :published')
+                ->andWhere('a.publishedAt < :threshold')
+                ->setParameter('published', ArticleStatus::PUBLISHED)
+                ->setParameter('threshold', $thresholdDate)
+                ->orderBy('a.publishedAt', 'ASC');
 
-        $query = $qb->getQuery();
-        $articles = $query->getResult();
+            $query = $qb->getQuery();
+            $articles = $query->getResult();
 
-        $totalFound = \count($articles);
+            $totalFound = \count($articles);
 
-        if ($totalFound === 0) {
-            $io->success('No articles found to archive.');
+            if ($totalFound === 0) {
+                $io->success('No articles found to archive.');
 
-            return Command::SUCCESS;
-        }
+                return Command::SUCCESS;
+            }
 
-        $io->info(\sprintf('Found %d articles to archive', $totalFound));
+            $io->info(\sprintf('Found %d articles to archive', $totalFound));
 
-        if (!$dryRun && !$io->confirm('Do you want to proceed with archiving?', false)) {
-            $io->warning('Archiving cancelled by user.');
+            if (!$dryRun && !$io->confirm('Do you want to proceed with archiving?', false)) {
+                $io->warning('Archiving cancelled by user.');
 
-            return Command::SUCCESS;
-        }
+                return Command::SUCCESS;
+            }
 
-        $io->progressStart($totalFound);
+            $io->progressStart($totalFound);
 
-        $archived = 0;
-        $processed = 0;
+            $archived = 0;
+            $processed = 0;
 
-        foreach ($articles as $article) {
-            if ($dryRun) {
-                $io->text(\sprintf(
-                    '[DRY-RUN] Would archive: ID=%d, Title=%s, Published=%s',
-                    $article->getId(),
-                    $article->getTitle(),
-                    $article->getPublishedAt()->format('Y-m-d')
-                ));
-            } else {
-                // Archive the article
-                $article->archive(ArchiveReason::OLD_CONTENT);
-                ++$archived;
+            foreach ($articles as $article) {
+                if ($dryRun) {
+                    $io->text(\sprintf(
+                        '[DRY-RUN] Would archive: ID=%d, Title=%s, Published=%s',
+                        $article->getId(),
+                        $article->getTitle(),
+                        $article->getPublishedAt()->format('Y-m-d')
+                    ));
+                } else {
+                    // Archive the article
+                    $article->archive(ArchiveReason::OLD_CONTENT);
+                    ++$archived;
 
-                // Flush in batches to avoid memory issues
-                ++$processed;
-                if ($processed % $batchSize === 0) {
-                    $this->entityManager->flush();
-                    $this->entityManager->clear(); // Clear the entity manager to free memory
+                    // Flush in batches to avoid memory issues
+                    ++$processed;
+                    if ($processed % $batchSize === 0) {
+                        $this->entityManager->flush();
+                        $this->entityManager->clear(); // Clear the entity manager to free memory
 
-                    // Re-fetch remaining articles (since we cleared the EM)
-                    $qb = $repository->createQueryBuilder('a')
-                        ->where('a.status = :published')
-                        ->andWhere('a.publishedAt < :threshold')
-                        ->setParameter('published', ArticleStatus::PUBLISHED)
-                        ->setParameter('threshold', $thresholdDate)
-                        ->orderBy('a.publishedAt', 'ASC');
+                        // Re-fetch remaining articles (since we cleared the EM)
+                        $qb = $repository->createQueryBuilder('a')
+                            ->where('a.status = :published')
+                            ->andWhere('a.publishedAt < :threshold')
+                            ->setParameter('published', ArticleStatus::PUBLISHED)
+                            ->setParameter('threshold', $thresholdDate)
+                            ->orderBy('a.publishedAt', 'ASC');
 
-                    $articles = $qb->getQuery()->getResult();
+                        $articles = $qb->getQuery()->getResult();
 
-                    if (empty($articles)) {
-                        break;
+                        if (empty($articles)) {
+                            break;
+                        }
                     }
                 }
+
+                $io->progressAdvance();
             }
 
-            $io->progressAdvance();
-        }
-
-        // Final flush for remaining articles
-        if (!$dryRun && $processed % $batchSize !== 0) {
-            $this->entityManager->flush();
-        }
-
-        $io->progressFinish();
-
-        if ($dryRun) {
-            $io->success(\sprintf(
-                '[DRY-RUN] Would have archived %d articles published before %s',
-                $totalFound,
-                $thresholdDate->format('Y-m-d')
-            ));
-        } else {
-            $io->success(\sprintf(
-                'Successfully archived %d articles published before %s',
-                $archived,
-                $thresholdDate->format('Y-m-d')
-            ));
-        }
-
-        // Show statistics by year
-        $io->section('Statistics by Publication Year');
-
-        $qb = $repository->createQueryBuilder('a')
-            ->select('YEAR(a.publishedAt) as year, COUNT(a.id) as count')
-            ->where('a.status = :archived')
-            ->setParameter('archived', ArticleStatus::ARCHIVED)
-            ->groupBy('year')
-            ->orderBy('year', 'ASC');
-
-        $stats = $qb->getQuery()->getResult();
-
-        if (!empty($stats)) {
-            $table = [];
-            foreach ($stats as $stat) {
-                $table[] = [$stat['year'], $stat['count']];
+            // Final flush for remaining articles
+            if (!$dryRun && $processed % $batchSize !== 0) {
+                $this->entityManager->flush();
             }
-            $io->table(['Year', 'Archived Articles'], $table);
-        }
 
-        return Command::SUCCESS;
+            $io->progressFinish();
+
+            if ($dryRun) {
+                $io->success(\sprintf(
+                    '[DRY-RUN] Would have archived %d articles published before %s',
+                    $totalFound,
+                    $thresholdDate->format('Y-m-d')
+                ));
+            } else {
+                $io->success(\sprintf(
+                    'Successfully archived %d articles published before %s',
+                    $archived,
+                    $thresholdDate->format('Y-m-d')
+                ));
+            }
+
+            // Show statistics by year
+            $io->section('Statistics by Publication Year');
+
+            $qb = $repository->createQueryBuilder('a')
+                ->select('YEAR(a.publishedAt) as year, COUNT(a.id) as count')
+                ->where('a.status = :archived')
+                ->setParameter('archived', ArticleStatus::ARCHIVED)
+                ->groupBy('year')
+                ->orderBy('year', 'ASC');
+
+            $stats = $qb->getQuery()->getResult();
+
+            if (!empty($stats)) {
+                $table = [];
+                foreach ($stats as $stat) {
+                    $table[] = [$stat['year'], $stat['count']];
+                }
+                $io->table(['Year', 'Archived Articles'], $table);
+            }
+
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

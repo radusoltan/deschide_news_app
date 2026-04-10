@@ -41,6 +41,7 @@ final class SeedMenuItemsCommand extends Command
 
         $io->title('Seed Menu Items from Categories');
 
+        try {
         // Use a direct DQL query to bypass potential Gedmo Translatable interference
         // with boolean field hydration
         $categories = $this->em->createQuery('SELECT c FROM App\Entity\Category c ORDER BY c.id ASC')
@@ -163,6 +164,11 @@ final class SeedMenuItemsCommand extends Command
         ));
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

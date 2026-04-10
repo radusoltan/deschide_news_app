@@ -47,6 +47,7 @@ class CacheWarmCommand extends Command
 
         $io->title('Warming cache for popular content');
 
+        try {
         // Get popular articles (by views from trending)
         $trending = $this->analytics->getTrendingArticles($popularCount);
         $articleIds = array_column($trending, 'article_id');
@@ -78,6 +79,15 @@ class CacheWarmCommand extends Command
         ]);
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $this->logger->error('Cache warm failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'command' => $this->getName(),
+            ]);
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function warmArticles(array $articleIds, array $locales, SymfonyStyle $io): void

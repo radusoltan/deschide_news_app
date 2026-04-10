@@ -41,6 +41,7 @@ class SeedLiveTextTemplatesCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $force = $input->getOption('force');
 
+        try {
         // Check if templates already exist
         $existingCount = $this->entityManager->getRepository(LiveTextTemplate::class)
             ->count(['isSystem' => true]);
@@ -90,6 +91,11 @@ class SeedLiveTextTemplatesCommand extends Command
         $io->success(\sprintf('Successfully seeded %d LiveText templates!', $count));
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

@@ -48,51 +48,61 @@ class CleanupStatsCommand extends Command
         $cutoffDate = new DateTime("-{$days} days");
         $io->title("Cleaning up page_views older than {$cutoffDate->format('Y-m-d')}");
 
-        // Count records to delete
-        $count = $this->pageViewRepository->countViewsOlderThan($cutoffDate);
+        try {
+            // Count records to delete
+            $count = $this->pageViewRepository->countViewsOlderThan($cutoffDate);
 
-        if ($count === 0) {
-            $io->success('No old records to cleanup');
-
-            return Command::SUCCESS;
-        }
-
-        $io->warning("Found {$count} records to delete");
-
-        // Confirmation
-        if (!$force) {
-            $helper = $this->getHelper('question');
-            $question = new ConfirmationQuestion('Continue with deletion? (yes/no) ', false);
-
-            if (!$helper->ask($input, $output, $question)) {
-                $io->note('Operation cancelled');
+            if ($count === 0) {
+                $io->success('No old records to cleanup');
 
                 return Command::SUCCESS;
             }
+
+            $io->warning("Found {$count} records to delete");
+
+            // Confirmation
+            if (!$force) {
+                $helper = $this->getHelper('question');
+                $question = new ConfirmationQuestion('Continue with deletion? (yes/no) ', false);
+
+                if (!$helper->ask($input, $output, $question)) {
+                    $io->note('Operation cancelled');
+
+                    return Command::SUCCESS;
+                }
+            }
+
+            // Archive if requested
+            if ($archive) {
+                $io->section('Archiving data...');
+                $this->archivePageViews($cutoffDate, $io);
+            }
+
+            // Delete old records
+            $io->section('Deleting old records...');
+            $deleted = $this->pageViewRepository->deleteOlderThan($cutoffDate);
+
+            $io->success("Deleted {$deleted} old page_view records");
+
+            $this->logger->info('Page views cleaned up', [
+                'cutoff_date' => $cutoffDate->format('Y-m-d'),
+                'deleted_count' => $deleted,
+                'archived' => $archive,
+            ]);
+
+            // Note about aggregated stats
+            $io->note('Aggregated stats (article_stats_daily, site_stats_daily) were preserved');
+
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $this->logger->error('Stats cleanup failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'command' => $this->getName(),
+            ]);
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
         }
-
-        // Archive if requested
-        if ($archive) {
-            $io->section('Archiving data...');
-            $this->archivePageViews($cutoffDate, $io);
-        }
-
-        // Delete old records
-        $io->section('Deleting old records...');
-        $deleted = $this->pageViewRepository->deleteOlderThan($cutoffDate);
-
-        $io->success("Deleted {$deleted} old page_view records");
-
-        $this->logger->info('Page views cleaned up', [
-            'cutoff_date' => $cutoffDate->format('Y-m-d'),
-            'deleted_count' => $deleted,
-            'archived' => $archive,
-        ]);
-
-        // Note about aggregated stats
-        $io->note('Aggregated stats (article_stats_daily, site_stats_daily) were preserved');
-
-        return Command::SUCCESS;
     }
 
     private function archivePageViews(DateTime $cutoffDate, SymfonyStyle $io): void

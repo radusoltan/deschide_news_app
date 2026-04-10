@@ -73,24 +73,30 @@ class RecalculateTagCountsCommand extends Command
             $io->info('Recalculating usage counts for all tags...');
         }
 
-        // Dispatch message
-        $message = new RecalculateTagCountsMessage($tagId);
-        $this->messageBus->dispatch($message);
+        try {
+            // Dispatch message
+            $message = new RecalculateTagCountsMessage($tagId);
+            $this->messageBus->dispatch($message);
 
-        if ($async) {
-            $io->success('Recalculation task dispatched to message queue. Check logs for results.');
-        } else {
-            $io->success('Recalculation task completed. Check logs for details.');
+            if ($async) {
+                $io->success('Recalculation task dispatched to message queue. Check logs for results.');
+            } else {
+                $io->success('Recalculation task completed. Check logs for details.');
+            }
+
+            $io->comment('This command is useful after:');
+            $io->listing([
+                'Bulk data imports',
+                'Manual database modifications',
+                'Data integrity issues',
+                'Migration from legacy system',
+            ]);
+
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
         }
-
-        $io->comment('This command is useful after:');
-        $io->listing([
-            'Bulk data imports',
-            'Manual database modifications',
-            'Data integrity issues',
-            'Migration from legacy system',
-        ]);
-
-        return Command::SUCCESS;
     }
 }

@@ -56,6 +56,8 @@ class CleanupThumbnailsCommand extends Command
             $io->warning('DRY RUN MODE - No files or records will be deleted');
         }
 
+        try {
+
         $stats = [
             'orphaned_files' => 0,
             'broken_db_records' => 0,
@@ -237,5 +239,11 @@ class CleanupThumbnailsCommand extends Command
         }
 
         return Command::SUCCESS;
+
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

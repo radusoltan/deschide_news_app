@@ -80,29 +80,35 @@ class YouTubeSyncCommand extends Command
             $io->info(sprintf('Associating videos with show: %s', $videoShow->getName()));
         }
 
-        if ($isPlaylist) {
-            $io->info(sprintf('Syncing from playlist: %s', $source));
-            $stats = $this->youtubeSyncService->syncFromPlaylist($source, $videoShow, $maxResults);
-        } else {
-            // Resolve channel ID from URL or handle
-            $channelId = $this->youtubeSyncService->resolveChannelId($source);
-            if (!$channelId) {
-                $io->error(sprintf('Could not resolve channel ID from: %s', $source));
-                return Command::FAILURE;
+        try {
+            if ($isPlaylist) {
+                $io->info(sprintf('Syncing from playlist: %s', $source));
+                $stats = $this->youtubeSyncService->syncFromPlaylist($source, $videoShow, $maxResults);
+            } else {
+                // Resolve channel ID from URL or handle
+                $channelId = $this->youtubeSyncService->resolveChannelId($source);
+                if (!$channelId) {
+                    $io->error(sprintf('Could not resolve channel ID from: %s', $source));
+                    return Command::FAILURE;
+                }
+
+                $io->info(sprintf('Syncing from channel: %s (resolved: %s)', $source, $channelId));
+                $stats = $this->youtubeSyncService->syncFromChannel($channelId, $videoShow, $maxResults);
             }
 
-            $io->info(sprintf('Syncing from channel: %s (resolved: %s)', $source, $channelId));
-            $stats = $this->youtubeSyncService->syncFromChannel($channelId, $videoShow, $maxResults);
+            $io->success(sprintf(
+                'Sync completed: %d new, %d updated, %d errors',
+                $stats['new'],
+                $stats['updated'],
+                $stats['errors']
+            ));
+
+            return $stats['errors'] > 0 ? Command::FAILURE : Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('YouTube sync failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
         }
-
-        $io->success(sprintf(
-            'Sync completed: %d new, %d updated, %d errors',
-            $stats['new'],
-            $stats['updated'],
-            $stats['errors']
-        ));
-
-        return $stats['errors'] > 0 ? Command::FAILURE : Command::SUCCESS;
     }
 
     private function updateStats(SymfonyStyle $io): int

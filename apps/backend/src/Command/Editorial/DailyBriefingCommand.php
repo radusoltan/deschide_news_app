@@ -42,11 +42,17 @@ final class DailyBriefingCommand extends Command
             ? new \DateTimeImmutable($dateStr)
             : new \DateTimeImmutable('today');
 
-        if ($type === 'morning') {
-            return $this->executeMorning($io, $date, $input->getOption('dry-run'));
-        }
+        try {
+            if ($type === 'morning') {
+                return $this->executeMorning($io, $date, $input->getOption('dry-run'));
+            }
 
-        return $this->executeEvening($io, $date, $input->getOption('dry-run'));
+            return $this->executeEvening($io, $date, $input->getOption('dry-run'));
+        } catch (\Throwable $e) {
+            $io->error('Daily briefing failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function executeMorning(SymfonyStyle $io, \DateTimeImmutable $date, bool $dryRun): int

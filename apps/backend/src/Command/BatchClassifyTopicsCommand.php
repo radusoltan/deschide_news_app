@@ -56,6 +56,7 @@ class BatchClassifyTopicsCommand extends Command
 
         $io->title('Topic Batch Classification — Sprint 34');
 
+        try {
         // Show current state
         $totalArticles = $this->countArticles();
         $classified = $this->countClassified();
@@ -108,6 +109,11 @@ class BatchClassifyTopicsCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Topic classification failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function runRuleBased(SymfonyStyle $io, ?string $categoryFilter, int $offset, int $limit, bool $dryRun): int

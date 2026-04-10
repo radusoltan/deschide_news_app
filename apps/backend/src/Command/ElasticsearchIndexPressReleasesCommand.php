@@ -51,31 +51,37 @@ class ElasticsearchIndexPressReleasesCommand extends Command
 
         $io->title('PressRelease Elasticsearch Index');
 
-        // Create/recreate index
-        $this->indexManager->createIndex(deleteIfExists: $recreate);
-        $io->writeln($recreate ? 'Index recreated.' : 'Index ready.');
+        try {
+            // Create/recreate index
+            $this->indexManager->createIndex(deleteIfExists: $recreate);
+            $io->writeln($recreate ? 'Index recreated.' : 'Index ready.');
 
-        // Fetch PressReleases
-        $since = $sinceStr !== null ? $this->parseSince($sinceStr) : null;
+            // Fetch PressReleases
+            $since = $sinceStr !== null ? $this->parseSince($sinceStr) : null;
 
-        $qb = $this->pressReleaseRepository->createQueryBuilder('pr')
-            ->orderBy('pr.createdAt', 'ASC');
+            $qb = $this->pressReleaseRepository->createQueryBuilder('pr')
+                ->orderBy('pr.createdAt', 'ASC');
 
-        if ($since !== null) {
-            $qb->where('pr.createdAt >= :since')
-                ->setParameter('since', $since);
-            $io->writeln(sprintf('Indexing PRs since %s', $since->format('Y-m-d H:i:s')));
-        } else {
-            $io->writeln('Indexing ALL PressReleases');
+            if ($since !== null) {
+                $qb->where('pr.createdAt >= :since')
+                    ->setParameter('since', $since);
+                $io->writeln(sprintf('Indexing PRs since %s', $since->format('Y-m-d H:i:s')));
+            } else {
+                $io->writeln('Indexing ALL PressReleases');
+            }
+
+            $pressReleases = $qb->getQuery()->toIterable();
+
+            $indexed = $this->indexer->bulkIndex($pressReleases, $batchSize);
+
+            $io->success(sprintf('Indexed %d PressReleases into %s', $indexed, PressReleaseIndexManager::INDEX_NAME));
+
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('PressRelease indexing failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
         }
-
-        $pressReleases = $qb->getQuery()->toIterable();
-
-        $indexed = $this->indexer->bulkIndex($pressReleases, $batchSize);
-
-        $io->success(sprintf('Indexed %d PressReleases into %s', $indexed, PressReleaseIndexManager::INDEX_NAME));
-
-        return Command::SUCCESS;
     }
 
     private function parseSince(string $since): \DateTimeImmutable

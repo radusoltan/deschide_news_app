@@ -62,29 +62,35 @@ class ClusterSummarizeCommand extends Command
 
         $io->writeln(sprintf('Summarizing %d clusters...', \count($clusters)));
 
-        $success = 0;
-        $failed = 0;
+        try {
+            $success = 0;
+            $failed = 0;
 
-        foreach ($clusters as $cluster) {
-            $io->write(sprintf(
-                '  #%d "%.60s" ... ',
-                $cluster->getId(),
-                $cluster->getPrimaryHeadline(),
-            ));
+            foreach ($clusters as $cluster) {
+                $io->write(sprintf(
+                    '  #%d "%.60s" ... ',
+                    $cluster->getId(),
+                    $cluster->getPrimaryHeadline(),
+                ));
 
-            $result = $this->summaryService->summarize($cluster);
+                $result = $this->summaryService->summarize($cluster);
 
-            if ($result) {
-                $io->writeln('<info>OK</info>');
-                $success++;
-            } else {
-                $io->writeln('<error>FAILED</error>');
-                $failed++;
+                if ($result) {
+                    $io->writeln('<info>OK</info>');
+                    $success++;
+                } else {
+                    $io->writeln('<error>FAILED</error>');
+                    $failed++;
+                }
             }
+
+            $io->success(sprintf('Done: %d succeeded, %d failed', $success, $failed));
+
+            return $failed > 0 ? Command::FAILURE : Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Cluster summarization failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
         }
-
-        $io->success(sprintf('Done: %d succeeded, %d failed', $success, $failed));
-
-        return $failed > 0 ? Command::FAILURE : Command::SUCCESS;
     }
 }

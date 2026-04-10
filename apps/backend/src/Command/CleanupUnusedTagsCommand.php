@@ -89,20 +89,26 @@ class CleanupUnusedTagsCommand extends Command
             $days
         ));
 
-        // Dispatch message to message bus
-        $message = new CleanupUnusedTagsMessage($days, $dryRun);
-        $this->messageBus->dispatch($message);
+        try {
+            // Dispatch message to message bus
+            $message = new CleanupUnusedTagsMessage($days, $dryRun);
+            $this->messageBus->dispatch($message);
 
-        if ($async) {
-            $io->success('Cleanup task dispatched to message queue. Check logs for results.');
-        } else {
-            // When not async, the handler is executed synchronously
-            $io->success('Cleanup task completed. Check logs for details.');
+            if ($async) {
+                $io->success('Cleanup task dispatched to message queue. Check logs for results.');
+            } else {
+                // When not async, the handler is executed synchronously
+                $io->success('Cleanup task completed. Check logs for details.');
+            }
+
+            $io->comment('Tip: Use --dry-run to preview what would be deleted');
+            $io->comment('Tip: Use --async to run in background via message queue');
+
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
         }
-
-        $io->comment('Tip: Use --dry-run to preview what would be deleted');
-        $io->comment('Tip: Use --async to run in background via message queue');
-
-        return Command::SUCCESS;
     }
 }

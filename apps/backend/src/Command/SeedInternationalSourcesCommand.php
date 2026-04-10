@@ -40,6 +40,7 @@ class SeedInternationalSourcesCommand extends Command
 
         $io->title('Seeding International RSS Sources');
 
+        try {
         $sources = $this->getSourceDefinitions();
         $created = 0;
         $updated = 0;
@@ -100,6 +101,11 @@ class SeedInternationalSourcesCommand extends Command
         ));
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

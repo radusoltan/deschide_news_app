@@ -60,6 +60,7 @@ class RedirectConsolidateCommand extends Command
             ]
         );
 
+        try {
         // Find redirect chains
         $io->section('Finding Redirect Chains');
         $io->text('Analyzing redirects...');
@@ -227,5 +228,10 @@ class RedirectConsolidateCommand extends Command
         );
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Redirect consolidation failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

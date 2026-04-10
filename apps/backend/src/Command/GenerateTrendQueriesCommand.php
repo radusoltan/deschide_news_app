@@ -41,6 +41,7 @@ final class GenerateTrendQueriesCommand extends Command
 
         $io->title('Trend Query Generator');
 
+        try {
         // Show trending topics
         $trending = $this->scoringService->getTopTrendingTopics(days: 7, limit: $topN);
 
@@ -90,5 +91,10 @@ final class GenerateTrendQueriesCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Trend query generation failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

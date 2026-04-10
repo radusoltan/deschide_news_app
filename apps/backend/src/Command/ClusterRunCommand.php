@@ -45,15 +45,21 @@ class ClusterRunCommand extends Command
             $io->note('DRY RUN mode — no changes will be persisted');
         }
 
-        $processed = $this->clusteringService->clusterNewPressReleases($since, $dryRun);
+        try {
+            $processed = $this->clusteringService->clusterNewPressReleases($since, $dryRun);
 
-        $io->success(sprintf(
-            '%s: %d PressReleases processed',
-            $dryRun ? 'DRY RUN' : 'Done',
-            $processed,
-        ));
+            $io->success(sprintf(
+                '%s: %d PressReleases processed',
+                $dryRun ? 'DRY RUN' : 'Done',
+                $processed,
+            ));
 
-        return Command::SUCCESS;
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Clustering failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function parseSince(string $since): \DateTimeImmutable

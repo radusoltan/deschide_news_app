@@ -47,6 +47,7 @@ class SeedGoogleAlertsCommand extends Command
             return $this->addSingleAlert($addSingle, $dryRun, $io);
         }
 
+        try {
         $alerts = $this->getAlertDefinitions();
         $created = 0;
         $updated = 0;
@@ -95,6 +96,11 @@ class SeedGoogleAlertsCommand extends Command
         ));
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function addSingleAlert(string $spec, bool $dryRun, SymfonyStyle $io): int

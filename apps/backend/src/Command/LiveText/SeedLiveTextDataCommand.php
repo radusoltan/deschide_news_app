@@ -37,6 +37,7 @@ class SeedLiveTextDataCommand extends Command
 
         $io->title('Seeding LiveText Test Data');
 
+        try {
         // Get users
         $users = $this->entityManager->getRepository(User::class)->findAll();
         if (empty($users)) {
@@ -152,5 +153,10 @@ class SeedLiveTextDataCommand extends Command
         $io->success('✅ Successfully seeded 10 LiveTexts with posts and collaborators!');
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

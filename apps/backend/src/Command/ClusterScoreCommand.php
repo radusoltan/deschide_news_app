@@ -63,6 +63,7 @@ class ClusterScoreCommand extends Command
 
         $io->writeln(sprintf('Scoring %d clusters...', \count($clusters)));
 
+        try {
         $scored = 0;
         $promoted = 0;
 
@@ -102,6 +103,11 @@ class ClusterScoreCommand extends Command
         $io->success(sprintf('Scored %d clusters, promoted %d', $scored, $promoted));
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Cluster scoring failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function parseSince(string $since): \DateTimeImmutable
