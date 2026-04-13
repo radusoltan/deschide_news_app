@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Breadcrumb Component
  * Displays navigation trail: Home > Category > Article

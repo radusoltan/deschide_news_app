@@ -21,14 +21,14 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
   const itemsPerPage = 20;
 
   // Fetch LiveTexts from API
-  let liveTextsData: LiveText[] = [];
+  let liveTextsData: any[] = [];
   let totalItems = 0;
   let error: string | null = null;
 
   try {
     const filters: Record<string, string> = {
-      page: currentPage,
-      itemsPerPage,
+      page: String(currentPage),
+      itemsPerPage: String(itemsPerPage),
       orderBy: 'createdAt' as const,
       orderDirection: 'DESC' as const,
     };

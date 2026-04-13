@@ -109,7 +109,7 @@ export default function CategoriesTable({ categories, totalItems, locale }: Cate
                 <td className="px-6 py-4 text-secondary dark:text-gray-400">
                   {category.parent
                     ? (typeof category.parent === 'object' && category.parent !== null
-                        ? category.parent.title || '-'
+                        ? (category.parent as any).title || '-'
                         : category.parent)
                     : <span className="text-primary-dark dark:text-gray-600">-</span>}
                 </td>

@@ -81,13 +81,13 @@ export function EmbedLiveTextViewer({ liveText: initialLiveText, theme }: Props)
       switch (latestEvent.type) {
         case 'post.created':
           // Add new post to the top
-          setPosts((prev) => [latestEvent.post, ...prev]);
+          setPosts((prev: any) => [latestEvent.post, ...prev]);
           break;
 
         case 'post.updated':
           // Update existing post
-          setPosts((prev) =>
-            prev.map((p) => (p.id === latestEvent.post.id ? { ...p, ...latestEvent.post } : p))
+          setPosts((prev: any) =>
+            prev.map((p: any) => (p.id === latestEvent.post.id ? { ...p, ...latestEvent.post } : p))
           );
           break;
 

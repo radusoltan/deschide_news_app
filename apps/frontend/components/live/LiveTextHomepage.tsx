@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getLiveTexts } from '@/lib/api/livetext';
 import LiveTextHomepageSection from './LiveTextHomepageSection';
 

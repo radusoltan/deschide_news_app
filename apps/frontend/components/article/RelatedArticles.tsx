@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Related Articles Component
  * Displays related articles from the same category

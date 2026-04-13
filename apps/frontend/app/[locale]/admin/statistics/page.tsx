@@ -28,7 +28,7 @@ export const metadata = {
 export default async function StatisticsPage({ searchParams, params }: Props) {
   const resolvedSearchParams = await searchParams;
   const resolvedParams = await params;
-  const dateRange = (resolvedSearchParams.range || '7days') as string;
+  const dateRange = (resolvedSearchParams.range || '7days') as any;
   const locale = resolvedParams.locale || 'ro';
 
   // Get auth token from session

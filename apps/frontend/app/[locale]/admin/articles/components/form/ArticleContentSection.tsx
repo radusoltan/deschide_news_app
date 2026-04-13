@@ -112,7 +112,8 @@ export default function ArticleContentSection({
         <TinyEditor
           initialValue={formData.lead}
           onChange={(html) => setFormData((prev) => ({ ...prev, lead: html }))}
-          height={400}
+          minHeight={100}
+          maxHeight={250}
           imageList={imageList}
         />
         <p className="mt-1 text-xs text-secondary dark:text-gray-400">
@@ -132,7 +133,8 @@ export default function ArticleContentSection({
           <TinyEditor
             initialValue={formData.content}
             onChange={(html) => setFormData((prev) => ({ ...prev, content: html }))}
-            height={900}
+            minHeight={200}
+            maxHeight={500}
             imageList={imageList}
           />
         </div>

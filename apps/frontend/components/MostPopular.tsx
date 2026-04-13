@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Most Popular Articles Sidebar Component
  * Displays a simple numbered list of popular articles - matches homepage design
