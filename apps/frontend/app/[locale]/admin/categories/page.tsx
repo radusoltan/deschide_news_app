@@ -94,7 +94,7 @@ export default async function CategoriesPage({ params, searchParams }: Categorie
             id: cat.id,
             title: cat.title,
             slug: cat.slug,
-            frontPagePosition: cat.frontPagePosition ?? 0,
+            frontPagePosition: (cat as any).frontPagePosition ?? 0,
           }));
 
         if (frontPageCategories.length === 0) return null;

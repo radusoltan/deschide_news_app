@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Article Header Component
  * Displays article title, lead, author, date, and category

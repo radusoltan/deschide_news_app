@@ -96,7 +96,7 @@ async function fetchArticleBySlug(
 
     // Verify that the category slug in URL matches article's actual category
     // This prevents wrong URLs like /wrong-category/article-slug
-    const articleCategorySlug = article.category?.slug;
+    const articleCategorySlug = typeof article.category === 'object' ? article.category?.slug : undefined;
     if (articleCategorySlug !== categorySlug) {
       console.error(`Category mismatch: expected ${categorySlug}, got ${articleCategorySlug}`);
       return null;
@@ -213,7 +213,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
   // Fetch related articles by category
   const relatedArticles = await fetchRelatedArticles(
     article.id,
-    article.category.id,
+    typeof article.category === 'object' ? article.category.id : 0,
     locale,
     6
   );
@@ -252,11 +252,10 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
         {imageToUse && (
           <ArticleImage
             image={{
-              path: imageToUse.path,
-              width: imageToUse.width,
-              height: imageToUse.height,
-              alt: featuredImage?.alt,
-              title: featuredImage?.title,
+              path: imageToUse.path ?? '',
+              width: imageToUse.width ?? 0,
+              height: imageToUse.height ?? 0,
+              alt: featuredImage?.alt ?? '',
             }}
             priority
             enableLightbox

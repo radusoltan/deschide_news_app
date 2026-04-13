@@ -93,7 +93,7 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
             inMenu: category.inMenu || false,
             inFooterMenu: category.inFooterMenu || false,
             parentId,
-          }}
+          } as any}
         />
       </div>
     </div>

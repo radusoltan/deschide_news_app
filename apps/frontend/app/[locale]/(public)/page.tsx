@@ -233,7 +233,7 @@ export default async function HomePage({ params }: PageProps) {
                   key={category.id}
                   category={category}
                   locale={locale}
-                  layout={LAYOUT_MAP[category.frontPageLayout] || LAYOUT_CYCLE[index % LAYOUT_CYCLE.length]}
+                  layout={(category.frontPageLayout ? LAYOUT_MAP[category.frontPageLayout] : null) || LAYOUT_CYCLE[index % LAYOUT_CYCLE.length]}
                 />
               ))}
 

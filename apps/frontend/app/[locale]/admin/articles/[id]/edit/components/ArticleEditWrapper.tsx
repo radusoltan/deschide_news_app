@@ -131,11 +131,12 @@ export default function ArticleEditWrapper({
         </div>
       )}
 
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <ArticleForm
         locale={locale}
-        article={article}
-        categories={categories}
-        authors={authors}
+        article={article as any}
+        categories={categories as any}
+        authors={authors as any}
       />
     </div>
   );

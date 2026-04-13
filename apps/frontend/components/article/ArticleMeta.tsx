@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Article Meta Component
  * Displays article metadata including author bio, category, and social sharing

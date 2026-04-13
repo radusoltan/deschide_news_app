@@ -8,13 +8,17 @@ interface TinyEditorProps {
   initialValue?: string;
   onChange?: (html: string) => void;
   height?: number;
+  minHeight?: number;
+  maxHeight?: number;
   imageList?: Array<{ title: string; value: string }>;
 }
 
 export default function TinyEditor({
   initialValue = '',
   onChange,
-  height = 500,
+  height,
+  minHeight = 200,
+  maxHeight = 600,
   imageList = []
 }: TinyEditorProps) {
   const editorRef = useRef<TinyMCEEditor | null>(null);
@@ -57,8 +61,10 @@ export default function TinyEditor({
         base_url: '/tinymce',
         suffix: '.min',
 
-        // UI Configuration
-        height: height,
+        // UI Configuration — use min/max height with autoresize to avoid scroll traps
+        ...(height ? { height } : {}),
+        min_height: minHeight,
+        max_height: maxHeight,
         menubar: false,
 
         // Toolbar Configuration (two rows for better visibility)
@@ -72,6 +78,7 @@ export default function TinyEditor({
         plugins: [
           'advlist',
           'autolink',
+          'autoresize',
           'code',
           'lists',
           'link',

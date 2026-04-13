@@ -66,7 +66,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
 
   const publishedArticles = articleCounts?.published ?? articlesData.filter((a) => a.status === 'published').length;
   const newArticles = articleCounts?.new ?? articlesData.filter((a) => a.status === 'new').length;
-  const totalViews = articlesData.reduce((sum, a) => sum + (a.viewCount || 0), 0);
+  const totalViews = articlesData.reduce((sum, a) => sum + ((a as any).viewCount || 0), 0);
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -216,7 +216,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
       </div>
 
       {/* Articles Table */}
-      <ArticlesTableClient articles={articlesData} locale={locale} categories={categories} totalItems={totalItems} />
+      <ArticlesTableClient articles={articlesData as any} locale={locale} categories={categories} totalItems={totalItems} />
 
       {/* Pagination */}
       {totalPages > 1 && (

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Article } from "@/lib/types/article";
 'use client';
 

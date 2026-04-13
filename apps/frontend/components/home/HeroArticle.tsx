@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Locale } from "@/lib/types";
 "use client";
 

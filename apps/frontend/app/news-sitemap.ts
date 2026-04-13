@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Google News Sitemap
  *

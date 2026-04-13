@@ -222,11 +222,6 @@ services:
         tags:
             - { name: kernel.event_subscriber }
 
-    # Article Processor with dual cache invalidation (CacheService + Doctrine Result Cache)
-    App\State\ArticleProcessor:
-        arguments:
-            $doctrineResultCachePool: '@doctrine.result_cache_pool'
-
     # Test Cache Headers Subscriber (test environment only)
     App\EventSubscriber\TestCacheHeadersSubscriber:
         arguments:

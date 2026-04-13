@@ -328,6 +328,23 @@ class Article implements Translatable
     #[Groups(['article:read'])]
     private ?DateTimeImmutable $ingestedAt = null;
 
+    // AI generation metadata
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    #[Groups(['article:read'])]
+    private bool $aiGenerated = false;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Groups(['article:read'])]
+    private ?int $sourceClusterId = null;
+
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    #[Groups(['article:read'])]
+    private ?float $aiConfidenceScore = null;
+
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Groups(['article:read'])]
+    private ?int $aiSourceCount = null;
+
     /**
      * Non-persisted field populated by ArticleProvider / SlugController.
      * Contains slug translations for all locales: {"ro": "slug-ro", "en": "slug-en", "ru": "slug-ru"}
@@ -854,6 +871,54 @@ class Article implements Translatable
     public function setIngestedAt(?DateTimeImmutable $ingestedAt): self
     {
         $this->ingestedAt = $ingestedAt;
+
+        return $this;
+    }
+
+    public function isAiGenerated(): bool
+    {
+        return $this->aiGenerated;
+    }
+
+    public function setAiGenerated(bool $aiGenerated): self
+    {
+        $this->aiGenerated = $aiGenerated;
+
+        return $this;
+    }
+
+    public function getSourceClusterId(): ?int
+    {
+        return $this->sourceClusterId;
+    }
+
+    public function setSourceClusterId(?int $sourceClusterId): self
+    {
+        $this->sourceClusterId = $sourceClusterId;
+
+        return $this;
+    }
+
+    public function getAiConfidenceScore(): ?float
+    {
+        return $this->aiConfidenceScore;
+    }
+
+    public function setAiConfidenceScore(?float $aiConfidenceScore): self
+    {
+        $this->aiConfidenceScore = $aiConfidenceScore;
+
+        return $this;
+    }
+
+    public function getAiSourceCount(): ?int
+    {
+        return $this->aiSourceCount;
+    }
+
+    public function setAiSourceCount(?int $aiSourceCount): self
+    {
+        $this->aiSourceCount = $aiSourceCount;
 
         return $this;
     }
