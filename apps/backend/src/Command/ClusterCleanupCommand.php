@@ -84,7 +84,7 @@ class ClusterCleanupCommand extends Command
 
         // Show current state
         $conn = $this->em->getConnection();
-        $currentCount = (int) $conn->fetchOne('SELECT COUNT(*) FROM story_cluster');
+        $currentCount = (int) $conn->fetchOne('SELECT COUNT(*) FROM story_clusters');
         $io->writeln(sprintf('Current clusters: %d', $currentCount));
 
         if (!$dryRun) {
@@ -92,7 +92,7 @@ class ClusterCleanupCommand extends Command
 
             $conn->executeStatement('DELETE FROM story_cluster_press_release');
             $conn->executeStatement('DELETE FROM story_cluster_topic');
-            $conn->executeStatement('DELETE FROM story_cluster');
+            $conn->executeStatement('DELETE FROM story_clusters');
 
             $io->writeln('All clusters deleted.');
 
@@ -200,7 +200,7 @@ class ClusterCleanupCommand extends Command
                 ROUND(AVG(source_count)::numeric, 1) as avg_sources,
                 ROUND(AVG(importance_score)::numeric, 3) as avg_score,
                 ROUND(MAX(importance_score)::numeric, 3) as max_score
-            FROM story_cluster
+            FROM story_clusters
         ');
 
         if ($stats) {
