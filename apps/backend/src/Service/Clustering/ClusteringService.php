@@ -7,6 +7,7 @@ namespace App\Service\Clustering;
 use App\Entity\PressRelease;
 use App\Entity\StoryCluster;
 use App\Repository\AppSettingRepository;
+use App\Repository\PressReleaseRepository;
 use App\Repository\StoryClusterRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -27,6 +28,7 @@ class ClusteringService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly StoryClusterRepository $clusterRepository,
+        private readonly PressReleaseRepository $pressReleaseRepository,
         private readonly ElasticsearchClusterFinder $clusterFinder,
         private readonly PressReleaseIndexer $indexer,
         private readonly AppSettingRepository $appSettings,
@@ -139,6 +141,12 @@ class ClusteringService
      */
     private function findMatchingCluster(PressRelease $pr): ?StoryCluster
     {
+        // Step 0: Content hash dedup — skip MLT if an identical PR is already clustered
+        $dedupCluster = $this->findDuplicateCluster($pr);
+        if ($dedupCluster !== null) {
+            return $dedupCluster;
+        }
+
         // Step 1: Find similar PressReleases via ES MLT
         $similar = $this->clusterFinder->findSimilar(
             $pr->getTitle(),
@@ -183,5 +191,33 @@ class ClusteringService
     private function getTemporalWindowHours(): int
     {
         return $this->appSettings->getInt('cluster_temporal_window_hours', 48);
+    }
+
+    private function findDuplicateCluster(PressRelease $pr): ?StoryCluster
+    {
+        $hash = $pr->getContentHash();
+        if ($hash === null || $pr->getId() === null) {
+            return null;
+        }
+
+        $duplicate = $this->pressReleaseRepository->findClusteredDuplicateByHash($hash, $pr->getId());
+        if ($duplicate === null) {
+            return null;
+        }
+
+        $clusters = $duplicate->getStoryClusters();
+        if ($clusters->isEmpty()) {
+            return null;
+        }
+
+        $cluster = $clusters->first();
+
+        $this->logger->info('ClusteringService: content hash dedup — PR #{id} matches PR #{dupId} in cluster #{clusterId}', [
+            'id' => $pr->getId(),
+            'dupId' => $duplicate->getId(),
+            'clusterId' => $cluster->getId(),
+        ]);
+
+        return $cluster;
     }
 }

@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Service\Clustering;
 use App\Entity\PressRelease;
 use App\Entity\StoryCluster;
 use App\Repository\AppSettingRepository;
+use App\Repository\PressReleaseRepository;
 use App\Repository\StoryClusterRepository;
 use App\Service\Clustering\ClusteringService;
 use App\Service\Clustering\ElasticsearchClusterFinder;
@@ -21,6 +22,7 @@ class ClusteringServiceTest extends TestCase
 {
     private EntityManagerInterface&MockObject $em;
     private StoryClusterRepository&MockObject $clusterRepo;
+    private PressReleaseRepository&MockObject $prRepo;
     private ElasticsearchClusterFinder&MockObject $clusterFinder;
     private PressReleaseIndexer&MockObject $indexer;
     private AppSettingRepository&MockObject $appSettings;
@@ -30,6 +32,7 @@ class ClusteringServiceTest extends TestCase
     {
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->clusterRepo = $this->createMock(StoryClusterRepository::class);
+        $this->prRepo = $this->createMock(PressReleaseRepository::class);
         $this->clusterFinder = $this->createMock(ElasticsearchClusterFinder::class);
         $this->indexer = $this->createMock(PressReleaseIndexer::class);
         $this->appSettings = $this->createMock(AppSettingRepository::class);
@@ -38,6 +41,7 @@ class ClusteringServiceTest extends TestCase
         $this->service = new ClusteringService(
             $this->em,
             $this->clusterRepo,
+            $this->prRepo,
             $this->clusterFinder,
             $this->indexer,
             $this->appSettings,
