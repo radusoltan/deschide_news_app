@@ -12,6 +12,7 @@ use App\Repository\StoryClusterRepository;
 use App\Service\Clustering\ClusteringService;
 use App\Service\Clustering\ElasticsearchClusterFinder;
 use App\Service\Clustering\PressReleaseIndexer;
+use App\Service\Clustering\SemanticClusterVerifier;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -25,6 +26,7 @@ class ClusteringServiceTest extends TestCase
     private PressReleaseRepository&MockObject $prRepo;
     private ElasticsearchClusterFinder&MockObject $clusterFinder;
     private PressReleaseIndexer&MockObject $indexer;
+    private SemanticClusterVerifier&MockObject $verifier;
     private AppSettingRepository&MockObject $appSettings;
     private ClusteringService $service;
 
@@ -35,6 +37,9 @@ class ClusteringServiceTest extends TestCase
         $this->prRepo = $this->createMock(PressReleaseRepository::class);
         $this->clusterFinder = $this->createMock(ElasticsearchClusterFinder::class);
         $this->indexer = $this->createMock(PressReleaseIndexer::class);
+        $this->verifier = $this->createMock(SemanticClusterVerifier::class);
+        // Verification disabled by default in tests
+        $this->verifier->method('isEnabled')->willReturn(false);
         $this->appSettings = $this->createMock(AppSettingRepository::class);
         $this->appSettings->method('getInt')->willReturn(48);
 
@@ -44,6 +49,7 @@ class ClusteringServiceTest extends TestCase
             $this->prRepo,
             $this->clusterFinder,
             $this->indexer,
+            $this->verifier,
             $this->appSettings,
             new NullLogger(),
         );

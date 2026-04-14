@@ -31,6 +31,7 @@ class ClusteringService
         private readonly PressReleaseRepository $pressReleaseRepository,
         private readonly ElasticsearchClusterFinder $clusterFinder,
         private readonly PressReleaseIndexer $indexer,
+        private readonly SemanticClusterVerifier $verifier,
         private readonly AppSettingRepository $appSettings,
         private readonly LoggerInterface $logger,
     ) {}
@@ -168,15 +169,44 @@ class ClusteringService
             return null;
         }
 
-        // Step 3: Return the first cluster that passes temporal validation
+        // Step 3: Filter by temporal window
         $temporalWindowHours = $this->getTemporalWindowHours();
+        $temporalCandidates = [];
         foreach ($clusters as $cluster) {
             if ($this->isWithinTemporalWindow($pr, $cluster, $temporalWindowHours)) {
-                return $cluster;
+                $temporalCandidates[] = $cluster;
             }
         }
 
-        return null;
+        if ($temporalCandidates === []) {
+            return null;
+        }
+
+        // Step 4: Semantic verification gate (if enabled)
+        if ($this->verifier->isEnabled()) {
+            $minConfidence = $this->appSettings->getFloat('cluster_semantic_min_confidence', 0.70);
+
+            foreach ($temporalCandidates as $cluster) {
+                $result = $this->verifier->verify($pr->getTitle(), $cluster->getPrimaryHeadline());
+
+                if ($result->sameStory && $result->confidence >= $minConfidence) {
+                    return $cluster;
+                }
+
+                $this->logger->info('ClusteringService: semantic verification rejected PR #{prId} from cluster #{clusterId}', [
+                    'prId' => $pr->getId(),
+                    'clusterId' => $cluster->getId(),
+                    'clusterHeadline' => mb_substr($cluster->getPrimaryHeadline(), 0, 80),
+                    'reason' => $result->reason,
+                    'confidence' => $result->confidence,
+                    'sameStory' => $result->sameStory,
+                ]);
+            }
+
+            return null;
+        }
+
+        return $temporalCandidates[0];
     }
 
     private function isWithinTemporalWindow(PressRelease $pr, StoryCluster $cluster, int $windowHours): bool
