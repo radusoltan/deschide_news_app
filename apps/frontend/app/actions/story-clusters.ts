@@ -12,7 +12,7 @@ export interface StoryClusterItem {
   sourceCount: number;
   articleCount: number;
   regionTags: string[] | null;
-  status: 'auto' | 'reviewed' | 'approved' | 'rejected' | 'promoted';
+  status: 'auto' | 'reviewed' | 'approved' | 'rejected' | 'promoted' | 'archived';
   firstSeenAt: string;
   lastUpdatedAt: string;
   promotedToPressRelease: boolean;
@@ -212,6 +212,34 @@ export async function regenerateSummary(
   }
 
   return { success: true };
+}
+
+export async function removePressReleaseFromCluster(
+  clusterId: number,
+  pressReleaseId: number,
+): Promise<{ success: boolean; articleCount?: number; error?: string }> {
+  const token = await getAccessToken();
+  if (!token) return { success: false, error: 'Nu ești autentificat' };
+
+  const res = await fetch(
+    `${API_BASE_URL}/api/story-clusters/${clusterId}/remove-press-release`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ pressReleaseId }),
+    },
+  );
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    return { success: false, error: data.error ?? `API error: ${res.status}` };
+  }
+
+  const data = await res.json();
+  return { success: true, articleCount: data.articleCount };
 }
 
 export async function getAutoPromoteThreshold(): Promise<number> {
