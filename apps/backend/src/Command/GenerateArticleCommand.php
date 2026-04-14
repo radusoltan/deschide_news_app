@@ -128,6 +128,11 @@ class GenerateArticleCommand extends Command
         $pr->setCategorySlug('externe');
         $pr->setDetectedLanguage('ro');
 
+        // Store AI metadata for downstream propagation to Article on approval
+        $pr->setAiConfidenceScore($draft->confidenceScore);
+        $pr->setAiSourceCount(\count($draft->sourcePressReleaseIds));
+        $pr->setSourceClusterId($draft->clusterId);
+
         $this->em->persist($pr);
         $this->em->flush();
 
