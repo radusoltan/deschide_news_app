@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Clustering;
 
+use App\Repository\AppSettingRepository;
 use App\Service\Clustering\ElasticsearchClusterFinder;
 use App\Service\Clustering\PressReleaseIndexManager;
 use PHPUnit\Framework\Attributes\Test;
@@ -14,10 +15,12 @@ use Psr\Log\NullLogger;
 class ElasticsearchClusterFinderTest extends TestCase
 {
     private PressReleaseIndexManager&MockObject $indexManager;
+    private AppSettingRepository&MockObject $appSettings;
 
     protected function setUp(): void
     {
         $this->indexManager = $this->createMock(PressReleaseIndexManager::class);
+        $this->appSettings = $this->createMock(AppSettingRepository::class);
     }
 
     #[Test]
@@ -25,7 +28,7 @@ class ElasticsearchClusterFinderTest extends TestCase
     {
         $this->indexManager->method('isEnabled')->willReturn(false);
 
-        $finder = new ElasticsearchClusterFinder($this->indexManager, new NullLogger());
+        $finder = new ElasticsearchClusterFinder($this->indexManager, $this->appSettings, new NullLogger());
 
         $result = $finder->findSimilar('title', 'content');
 
@@ -38,7 +41,7 @@ class ElasticsearchClusterFinderTest extends TestCase
         $this->indexManager->method('isEnabled')->willReturn(true);
         $this->indexManager->method('getClient')->willReturn(null);
 
-        $finder = new ElasticsearchClusterFinder($this->indexManager, new NullLogger());
+        $finder = new ElasticsearchClusterFinder($this->indexManager, $this->appSettings, new NullLogger());
 
         $result = $finder->findSimilar('title', 'content');
 
@@ -50,7 +53,7 @@ class ElasticsearchClusterFinderTest extends TestCase
     {
         $this->indexManager->method('isEnabled')->willReturn(true);
 
-        $finder = new ElasticsearchClusterFinder($this->indexManager, new NullLogger());
+        $finder = new ElasticsearchClusterFinder($this->indexManager, $this->appSettings, new NullLogger());
 
         $this->assertTrue($finder->isEnabled());
     }

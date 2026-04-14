@@ -6,6 +6,7 @@ namespace App\Service\Clustering;
 
 use App\Entity\PressRelease;
 use App\Entity\StoryCluster;
+use App\Repository\AppSettingRepository;
 use App\Repository\StoryClusterRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -17,20 +18,18 @@ use Psr\Log\LoggerInterface;
  * 1. Find PressReleases not yet assigned to any cluster
  * 2. For each, search ES MLT against other indexed PressReleases
  * 3. Map matched PR IDs to their existing StoryCluster
- * 4. Temporal validation: articles must be within 48h of each other
+ * 4. Temporal validation: articles must be within configured window of each other
  * 5. If match → add to existing cluster
  * 6. If no match → create new StoryCluster
  */
 class ClusteringService
 {
-    private const SIMILARITY_THRESHOLD = 0.40;
-    private const TEMPORAL_WINDOW_HOURS = 48;
-
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly StoryClusterRepository $clusterRepository,
         private readonly ElasticsearchClusterFinder $clusterFinder,
         private readonly PressReleaseIndexer $indexer,
+        private readonly AppSettingRepository $appSettings,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -144,8 +143,7 @@ class ClusteringService
         $similar = $this->clusterFinder->findSimilar(
             $pr->getTitle(),
             $pr->getContent(),
-            self::SIMILARITY_THRESHOLD,
-            $pr->getId(), // exclude self
+            excludeId: $pr->getId(),
         );
 
         if ($similar === []) {
@@ -163,8 +161,9 @@ class ClusteringService
         }
 
         // Step 3: Return the first cluster that passes temporal validation
+        $temporalWindowHours = $this->getTemporalWindowHours();
         foreach ($clusters as $cluster) {
-            if ($this->isWithinTemporalWindow($pr, $cluster)) {
+            if ($this->isWithinTemporalWindow($pr, $cluster, $temporalWindowHours)) {
                 return $cluster;
             }
         }
@@ -172,12 +171,17 @@ class ClusteringService
         return null;
     }
 
-    private function isWithinTemporalWindow(PressRelease $pr, StoryCluster $cluster): bool
+    private function isWithinTemporalWindow(PressRelease $pr, StoryCluster $cluster, int $windowHours): bool
     {
         $prTime = $pr->getReceivedAt()->getTimestamp();
         $clusterTime = $cluster->getFirstSeenAt()->getTimestamp();
         $diffHours = abs($prTime - $clusterTime) / 3600;
 
-        return $diffHours <= self::TEMPORAL_WINDOW_HOURS;
+        return $diffHours <= $windowHours;
+    }
+
+    private function getTemporalWindowHours(): int
+    {
+        return $this->appSettings->getInt('cluster_temporal_window_hours', 48);
     }
 }
