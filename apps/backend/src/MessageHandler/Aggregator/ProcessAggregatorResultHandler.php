@@ -8,6 +8,7 @@ use App\Dto\Aggregator\AggregatorResult;
 use App\Enum\AggregatorSourceType;
 use App\Enum\DeduplicationResult;
 use App\Message\Aggregator\ProcessAggregatorResultMessage;
+use App\Repository\PressReleaseRepository;
 use App\Repository\SourceRepository;
 use App\Service\Aggregator\AggregatorStatsCollector;
 use App\Service\Aggregator\GoogleNewsUrlResolver;
@@ -26,6 +27,7 @@ final readonly class ProcessAggregatorResultHandler
         private PressReleaseAggregatorFactory $factory,
         private AggregatorTranslationService $translationService,
         private GoogleNewsUrlResolver $urlResolver,
+        private PressReleaseRepository $pressReleaseRepository,
         private SourceRepository $sourceRepository,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
@@ -39,6 +41,19 @@ final readonly class ProcessAggregatorResultHandler
             'source' => $message->sourceName,
             'language' => $message->sourceLanguage,
         ]);
+
+        // 0. Source URL dedup — skip if already imported from this URL
+        if ($message->sourceUrl !== null) {
+            $existing = $this->pressReleaseRepository->findBySourceUrl($message->sourceUrl);
+            if ($existing !== null) {
+                $this->logger->debug('ProcessAggregatorResultHandler: duplicate source_url, skipping', [
+                    'sourceUrl' => $message->sourceUrl,
+                    'existingId' => $existing->getId(),
+                ]);
+
+                return;
+            }
+        }
 
         // Check deduplication
         $dedupResult = $this->deduplicator->evaluate($message->title, $message->rawContent);
