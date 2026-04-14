@@ -413,6 +413,11 @@ services:
 
     App\Service\Clustering\ClusterSummaryService: ~
 
+    # Source Content Cleaner Registry (Sprint 43 — per-source noise removal)
+    App\Service\Cleaning\SourceContentCleanerRegistry:
+        arguments:
+            $cleaners: !tagged_iterator app.source_content_cleaner
+
 # Test environment specific configuration
 when@test:
     services:
