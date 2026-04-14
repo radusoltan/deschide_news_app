@@ -40,6 +40,11 @@ class PressReleaseRepository extends ServiceEntityRepository
         return $this->findOneBy(['contentHash' => $hash, 'sourceType' => $type]);
     }
 
+    public function findBySourceUrl(string $sourceUrl): ?PressRelease
+    {
+        return $this->findOneBy(['sourceUrl' => $sourceUrl]);
+    }
+
     public function countBySourceType(SourceType $type): int
     {
         return $this->count(['sourceType' => $type]);

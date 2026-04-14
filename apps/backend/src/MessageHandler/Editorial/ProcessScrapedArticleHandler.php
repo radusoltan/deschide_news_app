@@ -12,6 +12,7 @@ use App\Enum\SourceType;
 use App\Message\Editorial\ProcessScrapedArticleMessage;
 use App\Service\CategoryDetectorService;
 use App\Service\Cleaning\SourceContentCleanerRegistry;
+use App\Repository\PressReleaseRepository;
 use App\Service\ContentDeduplicator;
 use App\Service\ContentHasher;
 use App\Service\NotificationService;
@@ -32,6 +33,7 @@ final readonly class ProcessScrapedArticleHandler
         private SourceContentCleanerRegistry $sourceCleanerRegistry,
         private ContentHasher $contentHasher,
         private ContentDeduplicator $deduplicator,
+        private PressReleaseRepository $pressReleaseRepository,
         private CategoryDetectorService $categoryDetector,
         private SourceAuthorResolver $authorResolver,
         private NotificationService $notificationService,
@@ -44,6 +46,19 @@ final readonly class ProcessScrapedArticleHandler
 
     public function __invoke(ProcessScrapedArticleMessage $message): void
     {
+        // 0. Source URL dedup — skip if already imported from this URL
+        if ($message->sourceUrl !== null) {
+            $existing = $this->pressReleaseRepository->findBySourceUrl($message->sourceUrl);
+            if ($existing !== null) {
+                $this->logger->debug('ProcessScrapedArticleHandler: duplicate source_url, skipping', [
+                    'sourceUrl' => $message->sourceUrl,
+                    'existingId' => $existing->getId(),
+                ]);
+
+                return;
+            }
+        }
+
         // 1. Clean HTML content (generic sanitization)
         $cleanHtml = $this->contentCleaner->clean($message->bodyMarkdown);
 

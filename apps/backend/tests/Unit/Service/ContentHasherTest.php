@@ -61,4 +61,40 @@ class ContentHasherTest extends TestCase
 
         $this->assertSame($a, $b);
     }
+
+    #[Test]
+    public function viewCounterDifferenceProducesSameHash(): void
+    {
+        $html1 = '<p>Guvernul menține starea de urgență.</p><p>- 8 Apr 2026 148</p><p>Full content.</p>';
+        $html2 = '<p>Guvernul menține starea de urgență.</p><p>- 8 Apr 2026 168</p><p>Full content.</p>';
+
+        $this->assertSame($this->hasher->hash($html1), $this->hasher->hash($html2));
+    }
+
+    #[Test]
+    public function romanianViewCounterStripped(): void
+    {
+        $html1 = '<p>Articol important</p><p>148 vizualizări</p>';
+        $html2 = '<p>Articol important</p><p>203 vizualizări</p>';
+
+        $this->assertSame($this->hasher->hash($html1), $this->hasher->hash($html2));
+    }
+
+    #[Test]
+    public function russianViewCounterStripped(): void
+    {
+        $html1 = '<p>Важная статья</p><p>148 просмотров</p>';
+        $html2 = '<p>Важная статья</p><p>320 просмотров</p>';
+
+        $this->assertSame($this->hasher->hash($html1), $this->hasher->hash($html2));
+    }
+
+    #[Test]
+    public function differentContentStillProducesDifferentHash(): void
+    {
+        $html1 = '<p>Guvernul menține starea de urgență în energie.</p>';
+        $html2 = '<p>Parlamentul a votat amalgamarea voluntară.</p>';
+
+        $this->assertNotSame($this->hasher->hash($html1), $this->hasher->hash($html2));
+    }
 }
