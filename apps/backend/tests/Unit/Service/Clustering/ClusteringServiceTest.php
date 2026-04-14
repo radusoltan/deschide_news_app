@@ -6,10 +6,13 @@ namespace App\Tests\Unit\Service\Clustering;
 
 use App\Entity\PressRelease;
 use App\Entity\StoryCluster;
+use App\Repository\AppSettingRepository;
+use App\Repository\PressReleaseRepository;
 use App\Repository\StoryClusterRepository;
 use App\Service\Clustering\ClusteringService;
 use App\Service\Clustering\ElasticsearchClusterFinder;
 use App\Service\Clustering\PressReleaseIndexer;
+use App\Service\Clustering\SemanticClusterVerifier;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -20,22 +23,34 @@ class ClusteringServiceTest extends TestCase
 {
     private EntityManagerInterface&MockObject $em;
     private StoryClusterRepository&MockObject $clusterRepo;
+    private PressReleaseRepository&MockObject $prRepo;
     private ElasticsearchClusterFinder&MockObject $clusterFinder;
     private PressReleaseIndexer&MockObject $indexer;
+    private SemanticClusterVerifier&MockObject $verifier;
+    private AppSettingRepository&MockObject $appSettings;
     private ClusteringService $service;
 
     protected function setUp(): void
     {
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->clusterRepo = $this->createMock(StoryClusterRepository::class);
+        $this->prRepo = $this->createMock(PressReleaseRepository::class);
         $this->clusterFinder = $this->createMock(ElasticsearchClusterFinder::class);
         $this->indexer = $this->createMock(PressReleaseIndexer::class);
+        $this->verifier = $this->createMock(SemanticClusterVerifier::class);
+        // Verification disabled by default in tests
+        $this->verifier->method('isEnabled')->willReturn(false);
+        $this->appSettings = $this->createMock(AppSettingRepository::class);
+        $this->appSettings->method('getInt')->willReturn(48);
 
         $this->service = new ClusteringService(
             $this->em,
             $this->clusterRepo,
+            $this->prRepo,
             $this->clusterFinder,
             $this->indexer,
+            $this->verifier,
+            $this->appSettings,
             new NullLogger(),
         );
     }
@@ -244,6 +259,71 @@ class ClusteringServiceTest extends TestCase
         $result = $this->service->clusterSinglePressRelease($pr);
 
         // No cluster contains PR #99, so a new cluster should be created
+        $this->assertInstanceOf(StoryCluster::class, $result);
+    }
+
+    #[Test]
+    public function contentHashDedupSkipsMltForDuplicate(): void
+    {
+        $existingPr = $this->createPressRelease(1, 'Original article', 'Content');
+        $existingPr->setContentHash('abc123');
+        $newPr = $this->createPressRelease(2, 'Duplicate article', 'Same content');
+        $newPr->setContentHash('abc123');
+
+        $cluster = new StoryCluster();
+        $cluster->setPrimaryHeadline('Original article');
+        $cluster->addPressRelease($existingPr);
+        $cluster->setFirstSeenAt(new \DateTimeImmutable('-1 hour'));
+
+        // Set up the dedup to find the clustered duplicate
+        $this->prRepo->method('findClusteredDuplicateByHash')
+            ->with('abc123', 2)
+            ->willReturn($existingPr);
+
+        // Cluster repo returns the cluster containing the duplicate
+        $this->clusterRepo->method('findClustersContainingPressReleases')
+            ->with([1])
+            ->willReturn([$cluster]);
+
+        // ES should NOT be called (dedup bypasses MLT)
+        $this->clusterFinder->expects($this->never())->method('findSimilar');
+
+        $this->clusterRepo->method('findUnclusteredPressReleaseIds')->willReturn([2]);
+        $this->em->method('find')->willReturn($newPr);
+
+        $result = $this->service->clusterNewPressReleases();
+
+        $this->assertSame(1, $result);
+    }
+
+    #[Test]
+    public function uniqueHashProceedsToMlt(): void
+    {
+        $pr = $this->createPressRelease(1, 'Unique article', 'Content');
+        $pr->setContentHash('unique_hash');
+
+        // No duplicate found
+        $this->prRepo->method('findClusteredDuplicateByHash')->willReturn(null);
+
+        // Should proceed to ES MLT
+        $this->clusterFinder->expects($this->once())->method('findSimilar')->willReturn([]);
+
+        $result = $this->service->clusterSinglePressRelease($pr);
+
+        $this->assertInstanceOf(StoryCluster::class, $result);
+    }
+
+    #[Test]
+    public function nullHashProceedsToMlt(): void
+    {
+        $pr = $this->createPressRelease(1, 'No hash article', 'Content');
+        // contentHash is null by default
+
+        // Should proceed to ES MLT (hash is null, skip dedup)
+        $this->clusterFinder->expects($this->once())->method('findSimilar')->willReturn([]);
+
+        $result = $this->service->clusterSinglePressRelease($pr);
+
         $this->assertInstanceOf(StoryCluster::class, $result);
     }
 

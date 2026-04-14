@@ -18,6 +18,23 @@ class PressReleaseIndexManager
 {
     public const INDEX_NAME = 'deschide_press_releases';
 
+    /**
+     * High-frequency, non-discriminative terms for Moldovan news context.
+     * These words appear in nearly every article and provide no clustering signal.
+     */
+    public const CONTEXT_STOP_WORDS = [
+        // RO contextual
+        'moldova', 'republica', 'chișinău', 'chisinau', 'moldovei',
+        'guvernul', 'autoritățile', 'autoritatile', 'țara', 'tara',
+        'milioane', 'lei', 'mln',
+        // EN contextual
+        'republic', 'government',
+        // RU contextual
+        'молдова', 'республика', 'кишинев', 'правительство',
+        // Common noise
+        'www', 'http', 'https', 'foto', 'video', 'sursa', 'source',
+    ];
+
     private ?Client $client;
     private readonly bool $enabled;
 
@@ -172,12 +189,35 @@ class PressReleaseIndexManager
             'number_of_replicas' => 0,
             'analysis' => [
                 'analyzer' => [
-                    // Multilingual analyzer: works across ro/en/ru/fr/de
-                    // Uses standard tokenizer + asciifolding for diacritics insensitivity
                     'multilingual_standard' => [
                         'type' => 'custom',
                         'tokenizer' => 'standard',
-                        'filter' => ['lowercase', 'asciifolding'],
+                        'filter' => [
+                            'lowercase',
+                            'asciifolding',
+                            'ro_stop',
+                            'en_stop',
+                            'ru_stop',
+                            'context_stop',
+                        ],
+                    ],
+                ],
+                'filter' => [
+                    'ro_stop' => [
+                        'type' => 'stop',
+                        'stopwords' => '_romanian_',
+                    ],
+                    'en_stop' => [
+                        'type' => 'stop',
+                        'stopwords' => '_english_',
+                    ],
+                    'ru_stop' => [
+                        'type' => 'stop',
+                        'stopwords' => '_russian_',
+                    ],
+                    'context_stop' => [
+                        'type' => 'stop',
+                        'stopwords' => self::CONTEXT_STOP_WORDS,
                     ],
                 ],
             ],

@@ -6,6 +6,8 @@ namespace App\Service\Clustering;
 
 use App\Entity\PressRelease;
 use App\Entity\StoryCluster;
+use App\Repository\AppSettingRepository;
+use App\Repository\PressReleaseRepository;
 use App\Repository\StoryClusterRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -17,20 +19,20 @@ use Psr\Log\LoggerInterface;
  * 1. Find PressReleases not yet assigned to any cluster
  * 2. For each, search ES MLT against other indexed PressReleases
  * 3. Map matched PR IDs to their existing StoryCluster
- * 4. Temporal validation: articles must be within 48h of each other
+ * 4. Temporal validation: articles must be within configured window of each other
  * 5. If match → add to existing cluster
  * 6. If no match → create new StoryCluster
  */
 class ClusteringService
 {
-    private const SIMILARITY_THRESHOLD = 0.40;
-    private const TEMPORAL_WINDOW_HOURS = 48;
-
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly StoryClusterRepository $clusterRepository,
+        private readonly PressReleaseRepository $pressReleaseRepository,
         private readonly ElasticsearchClusterFinder $clusterFinder,
         private readonly PressReleaseIndexer $indexer,
+        private readonly SemanticClusterVerifier $verifier,
+        private readonly AppSettingRepository $appSettings,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -140,12 +142,17 @@ class ClusteringService
      */
     private function findMatchingCluster(PressRelease $pr): ?StoryCluster
     {
+        // Step 0: Content hash dedup — skip MLT if an identical PR is already clustered
+        $dedupCluster = $this->findDuplicateCluster($pr);
+        if ($dedupCluster !== null) {
+            return $dedupCluster;
+        }
+
         // Step 1: Find similar PressReleases via ES MLT
         $similar = $this->clusterFinder->findSimilar(
             $pr->getTitle(),
             $pr->getContent(),
-            self::SIMILARITY_THRESHOLD,
-            $pr->getId(), // exclude self
+            excludeId: $pr->getId(),
         );
 
         if ($similar === []) {
@@ -162,22 +169,86 @@ class ClusteringService
             return null;
         }
 
-        // Step 3: Return the first cluster that passes temporal validation
+        // Step 3: Filter by temporal window
+        $temporalWindowHours = $this->getTemporalWindowHours();
+        $temporalCandidates = [];
         foreach ($clusters as $cluster) {
-            if ($this->isWithinTemporalWindow($pr, $cluster)) {
-                return $cluster;
+            if ($this->isWithinTemporalWindow($pr, $cluster, $temporalWindowHours)) {
+                $temporalCandidates[] = $cluster;
             }
         }
 
-        return null;
+        if ($temporalCandidates === []) {
+            return null;
+        }
+
+        // Step 4: Semantic verification gate (if enabled)
+        if ($this->verifier->isEnabled()) {
+            $minConfidence = $this->appSettings->getFloat('cluster_semantic_min_confidence', 0.70);
+
+            foreach ($temporalCandidates as $cluster) {
+                $result = $this->verifier->verify($pr->getTitle(), $cluster->getPrimaryHeadline());
+
+                if ($result->sameStory && $result->confidence >= $minConfidence) {
+                    return $cluster;
+                }
+
+                $this->logger->info('ClusteringService: semantic verification rejected PR #{prId} from cluster #{clusterId}', [
+                    'prId' => $pr->getId(),
+                    'clusterId' => $cluster->getId(),
+                    'clusterHeadline' => mb_substr($cluster->getPrimaryHeadline(), 0, 80),
+                    'reason' => $result->reason,
+                    'confidence' => $result->confidence,
+                    'sameStory' => $result->sameStory,
+                ]);
+            }
+
+            return null;
+        }
+
+        return $temporalCandidates[0];
     }
 
-    private function isWithinTemporalWindow(PressRelease $pr, StoryCluster $cluster): bool
+    private function isWithinTemporalWindow(PressRelease $pr, StoryCluster $cluster, int $windowHours): bool
     {
         $prTime = $pr->getReceivedAt()->getTimestamp();
         $clusterTime = $cluster->getFirstSeenAt()->getTimestamp();
         $diffHours = abs($prTime - $clusterTime) / 3600;
 
-        return $diffHours <= self::TEMPORAL_WINDOW_HOURS;
+        return $diffHours <= $windowHours;
+    }
+
+    private function getTemporalWindowHours(): int
+    {
+        return $this->appSettings->getInt('cluster_temporal_window_hours', 48);
+    }
+
+    private function findDuplicateCluster(PressRelease $pr): ?StoryCluster
+    {
+        $hash = $pr->getContentHash();
+        if ($hash === null || $pr->getId() === null) {
+            return null;
+        }
+
+        $duplicate = $this->pressReleaseRepository->findClusteredDuplicateByHash($hash, $pr->getId());
+        if ($duplicate === null) {
+            return null;
+        }
+
+        // Find cluster via repository (reliable even without Doctrine hydration on inverse side)
+        $clusters = $this->clusterRepository->findClustersContainingPressReleases([$duplicate->getId()]);
+        if ($clusters === []) {
+            return null;
+        }
+
+        $cluster = $clusters[0];
+
+        $this->logger->info('ClusteringService: content hash dedup — PR #{id} matches PR #{dupId} in cluster #{clusterId}', [
+            'id' => $pr->getId(),
+            'dupId' => $duplicate->getId(),
+            'clusterId' => $cluster->getId(),
+        ]);
+
+        return $cluster;
     }
 }

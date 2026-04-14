@@ -11,4 +11,5 @@ enum StoryClusterStatus: string
     case APPROVED = 'approved';
     case REJECTED = 'rejected';
     case PROMOTED = 'promoted';
+    case ARCHIVED = 'archived';
 }

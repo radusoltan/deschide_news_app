@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Clustering;
 
+use App\Repository\AppSettingRepository;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -16,6 +17,7 @@ class ElasticsearchClusterFinder
 {
     public function __construct(
         private readonly PressReleaseIndexManager $indexManager,
+        private readonly AppSettingRepository $appSettings,
         private readonly LoggerInterface $logger = new \Psr\Log\NullLogger(),
     ) {}
 
@@ -25,12 +27,14 @@ class ElasticsearchClusterFinder
      * @param int|null $excludeId PressRelease ID to exclude from results (self-match prevention)
      * @return list<array{score: float, pressReleaseId: int, title: string}>
      */
-    public function findSimilar(string $title, string $content, float $minScore = 0.40, ?int $excludeId = null): array
+    public function findSimilar(string $title, string $content, ?float $minScore = null, ?int $excludeId = null): array
     {
         if (!$this->indexManager->isEnabled() || $this->indexManager->getClient() === null) {
             return [];
         }
 
+        $minScore ??= $this->getMinScore();
+        $minimumShouldMatch = $this->getMinimumShouldMatch();
         $indexName = $this->indexManager->getIndexName();
 
         try {
@@ -39,7 +43,7 @@ class ElasticsearchClusterFinder
                     'must' => [
                         [
                             'more_like_this' => [
-                                'fields' => ['title', 'content', 'lead'],
+                                'fields' => ['title^3.0', 'lead^2.0', 'content^1.0'],
                                 'like' => [
                                     [
                                         '_index' => $indexName,
@@ -49,10 +53,10 @@ class ElasticsearchClusterFinder
                                         ],
                                     ],
                                 ],
-                                'min_term_freq' => 1,
-                                'min_doc_freq' => 1,
-                                'minimum_should_match' => '25%',
-                                'max_query_terms' => 30,
+                                'min_term_freq' => 2,
+                                'min_doc_freq' => 2,
+                                'minimum_should_match' => $minimumShouldMatch,
+                                'max_query_terms' => 25,
                             ],
                         ],
                     ],
@@ -106,5 +110,15 @@ class ElasticsearchClusterFinder
     public function isEnabled(): bool
     {
         return $this->indexManager->isEnabled();
+    }
+
+    private function getMinScore(): float
+    {
+        return $this->appSettings->getFloat('cluster_mlt_min_score', 0.60);
+    }
+
+    private function getMinimumShouldMatch(): string
+    {
+        return $this->appSettings->get('cluster_mlt_minimum_should_match', '40') . '%';
     }
 }

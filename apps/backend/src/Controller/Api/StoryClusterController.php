@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\Entity\PressRelease;
 use App\Entity\StoryCluster;
 use App\Enum\StoryClusterStatus;
 use App\Message\Clustering\SummarizeClusterMessage;
+use App\Repository\PressReleaseRepository;
 use App\Repository\StoryClusterRepository;
 use App\Service\Clustering\AutoPromoteService;
 use App\Service\Clustering\ImportanceScoreCalculator;
@@ -23,6 +25,7 @@ class StoryClusterController extends AbstractController
 {
     public function __construct(
         private readonly StoryClusterRepository $clusterRepository,
+        private readonly PressReleaseRepository $pressReleaseRepository,
         private readonly EntityManagerInterface $em,
         private readonly ImportanceScoreCalculator $calculator,
         private readonly AutoPromoteService $autoPromoteService,
@@ -93,5 +96,38 @@ class StoryClusterController extends AbstractController
             'id' => $cluster->getId(),
             'message' => 'Summary regeneration dispatched',
         ], 202);
+    }
+
+    #[Route('/{id}/remove-press-release', name: 'api_story_clusters_remove_pr', methods: ['PATCH'])]
+    public function removePressRelease(StoryCluster $cluster, Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted('ROLE_EDITOR');
+
+        $data = json_decode($request->getContent(), true);
+        $pressReleaseId = $data['pressReleaseId'] ?? null;
+
+        if ($pressReleaseId === null) {
+            return $this->json(['error' => 'pressReleaseId required'], 400);
+        }
+
+        $pressRelease = $this->pressReleaseRepository->find($pressReleaseId);
+        if ($pressRelease === null || !$cluster->getPressReleases()->contains($pressRelease)) {
+            return $this->json(['error' => 'PressRelease not found in cluster'], 404);
+        }
+
+        $cluster->removePressRelease($pressRelease);
+        $cluster->recalculateCounts();
+
+        if ($cluster->getPressReleases()->isEmpty()) {
+            $cluster->setStatus(StoryClusterStatus::ARCHIVED);
+        }
+
+        $this->em->flush();
+
+        return $this->json([
+            'success' => true,
+            'articleCount' => $cluster->getArticleCount(),
+            'sourceCount' => $cluster->getSourceCount(),
+        ]);
     }
 }

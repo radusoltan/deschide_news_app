@@ -8,6 +8,7 @@ import {
   updateClusterBoost,
   promoteCluster,
   regenerateSummary,
+  removePressReleaseFromCluster,
   getAutoPromoteThreshold,
   setAutoPromoteThreshold,
   type StoryClusterItem,
@@ -20,6 +21,7 @@ const STATUS_COLORS: Record<string, string> = {
   approved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
   rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
   promoted: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  archived: 'bg-gray-200 text-gray-600 dark:bg-gray-600/30 dark:text-gray-400',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -28,6 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
   approved: 'Approved',
   rejected: 'Rejected',
   promoted: 'Promoted',
+  archived: 'Archived',
 };
 
 function ScoreBar({ score }: { score: number }) {
@@ -200,6 +203,21 @@ export default function StoryClustersPage() {
       setToast({ message: result.error || 'Eroare la regenerare', type: 'error' });
     }
     setProcessingId(null);
+  };
+
+  const handleRemovePR = async (clusterId: number, prId: number) => {
+    if (!confirm('Elimini acest articol din cluster?')) return;
+
+    const result = await removePressReleaseFromCluster(clusterId, prId);
+    if (result.success) {
+      setToast({ message: `Articol eliminat din cluster (${result.articleCount} rămase)`, type: 'success' });
+      // Refresh expanded detail
+      const detail = await fetchStoryClusterDetail(clusterId);
+      setExpandedDetail(detail);
+      loadData();
+    } else {
+      setToast({ message: result.error || 'Eroare la eliminare', type: 'error' });
+    }
   };
 
   const handleBoostChange = async (id: number, boost: number) => {
@@ -462,17 +480,29 @@ export default function StoryClustersPage() {
                                         {pr.sourceName ?? pr.sourceHostname ?? 'Unknown'} &middot; {pr.receivedAt ? formatDate(pr.receivedAt) : '—'}
                                       </div>
                                     </div>
-                                    {pr.sourceUrl && (
-                                      <a
-                                        href={pr.sourceUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-xs text-blue-600 dark:text-blue-400 ml-2 hover:underline"
-                                        onClick={(e) => e.stopPropagation()}
+                                    <div className="flex items-center gap-2 ml-2 shrink-0">
+                                      {pr.sourceUrl && (
+                                        <a
+                                          href={pr.sourceUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          Source
+                                        </a>
+                                      )}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (expandedId) handleRemovePR(expandedId, pr.id);
+                                        }}
+                                        className="text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 text-sm"
+                                        title="Elimină din cluster"
                                       >
-                                        Source
-                                      </a>
-                                    )}
+                                        &times;
+                                      </button>
+                                    </div>
                                   </div>
                                 ))}
                               </div>

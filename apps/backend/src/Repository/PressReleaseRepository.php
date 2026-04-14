@@ -48,6 +48,22 @@ class PressReleaseRepository extends ServiceEntityRepository
     /**
      * @return array<string, int> Pending count per source type, e.g. ['email' => 8, 'scrape' => 15]
      */
+    /**
+     * Find a PressRelease with the same content_hash that is already assigned to a cluster.
+     */
+    public function findClusteredDuplicateByHash(string $hash, int $excludeId): ?PressRelease
+    {
+        return $this->createQueryBuilder('pr')
+            ->innerJoin('pr.storyClusters', 'sc')
+            ->where('pr.contentHash = :hash')
+            ->andWhere('pr.id != :excludeId')
+            ->setParameter('hash', $hash)
+            ->setParameter('excludeId', $excludeId)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function countPendingBySourceType(): array
     {
         $rows = $this->createQueryBuilder('pr')
