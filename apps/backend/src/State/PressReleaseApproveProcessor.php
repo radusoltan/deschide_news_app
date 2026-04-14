@@ -8,7 +8,9 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\PressRelease;
 use App\Enum\PressReleaseStatus;
+use App\Enum\ArticleStatus;
 use App\Service\Editorial\ArticleFactoryService;
+use App\Service\Editorial\AutoPublishGateService;
 use App\Service\Editorial\PostApprovalDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -20,6 +22,7 @@ class PressReleaseApproveProcessor implements ProcessorInterface
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ArticleFactoryService $articleFactory,
+        private readonly AutoPublishGateService $autoPublishGate,
         private readonly PostApprovalDispatcher $postApprovalDispatcher,
         private readonly Security $security,
         private readonly LoggerInterface $logger,
@@ -39,6 +42,14 @@ class PressReleaseApproveProcessor implements ProcessorInterface
         // Create article from press release
         $article = $this->articleFactory->createFromPressRelease($data);
 
+        // Evaluate auto-publish gate
+        $decision = $this->autoPublishGate->evaluate($article, $data);
+        if ($decision->canPublish) {
+            $article->setStatus(ArticleStatus::PUBLISHED);
+        } else {
+            $article->setStatus(ArticleStatus::SUBMITTED);
+        }
+
         // Update press release status
         $data->setStatus(PressReleaseStatus::APPROVED);
         $data->setProcessedAt(new \DateTimeImmutable());
@@ -55,6 +66,8 @@ class PressReleaseApproveProcessor implements ProcessorInterface
             'articleId' => $article->getId(),
             'pressReleaseId' => $data->getId(),
             'sourceType' => $data->getSourceType()->value,
+            'autoPublishGate' => $decision->gate,
+            'gateReasons' => $decision->reasons,
         ]);
 
         // Dispatch post-approval messages
