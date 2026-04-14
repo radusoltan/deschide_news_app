@@ -17,6 +17,7 @@ use App\Service\ContentDeduplicator;
 use App\Service\ContentHasher;
 use App\Service\NotificationFilterService;
 use App\Service\NotificationService;
+use App\Service\Cleaning\SourceContentCleanerRegistry;
 use App\Service\ScrapedContentCleaner;
 use App\Service\Scraping\RelevanceFilterService;
 use App\Service\SourceAuthorResolver;
@@ -87,6 +88,7 @@ class ProcessScrapedArticleHandlerTest extends TestCase
 
         $this->handler = new ProcessScrapedArticleHandler(
             $contentCleaner,
+            new SourceContentCleanerRegistry([]),
             $contentHasher,
             $this->deduplicator,
             $categoryDetector,

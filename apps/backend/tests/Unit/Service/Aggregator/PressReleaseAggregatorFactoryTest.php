@@ -10,6 +10,7 @@ use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use App\Service\Aggregator\PressReleaseAggregatorFactory;
 use App\Service\CategoryDetectorService;
+use App\Service\Cleaning\SourceContentCleanerRegistry;
 use App\Service\ContentHasher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -22,7 +23,7 @@ class PressReleaseAggregatorFactoryTest extends TestCase
         $catDetector = $this->createMock(CategoryDetectorService::class);
         $catDetector->method('detectSlug')->willReturn('externe');
 
-        $factory = new PressReleaseAggregatorFactory($catDetector, new ContentHasher());
+        $factory = new PressReleaseAggregatorFactory($catDetector, new ContentHasher(), new SourceContentCleanerRegistry([]));
 
         $publishedAt = new \DateTimeImmutable('2026-04-06T10:00:00+00:00');
         $result = new AggregatorResult(
@@ -57,7 +58,7 @@ class PressReleaseAggregatorFactoryTest extends TestCase
         $catDetector = $this->createMock(CategoryDetectorService::class);
         $catDetector->method('detectSlug')->willReturn('externe');
 
-        $factory = new PressReleaseAggregatorFactory($catDetector, new ContentHasher());
+        $factory = new PressReleaseAggregatorFactory($catDetector, new ContentHasher(), new SourceContentCleanerRegistry([]));
 
         $result = new AggregatorResult(
             title: 'Test article',
@@ -81,7 +82,7 @@ class PressReleaseAggregatorFactoryTest extends TestCase
         $catDetector = $this->createMock(CategoryDetectorService::class);
         $catDetector->method('detectSlug')->willReturn('externe');
 
-        $factory = new PressReleaseAggregatorFactory($catDetector, new ContentHasher());
+        $factory = new PressReleaseAggregatorFactory($catDetector, new ContentHasher(), new SourceContentCleanerRegistry([]));
 
         $result = new AggregatorResult(
             title: 'Test article',
@@ -103,7 +104,7 @@ class PressReleaseAggregatorFactoryTest extends TestCase
         $catDetector = $this->createMock(CategoryDetectorService::class);
         $catDetector->method('detectSlug')->willReturn('societate');
 
-        $factory = new PressReleaseAggregatorFactory($catDetector, new ContentHasher());
+        $factory = new PressReleaseAggregatorFactory($catDetector, new ContentHasher(), new SourceContentCleanerRegistry([]));
 
         $longTitle = str_repeat('A very long title. ', 30);
         $result = new AggregatorResult(
