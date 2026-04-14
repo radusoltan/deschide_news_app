@@ -207,6 +207,10 @@ export interface Article {
   metaTitle?: string | null;
   metaDescription?: string | null;
   publishedLocales?: string[];
+  aiGenerated?: boolean;
+  aiConfidenceScore?: number | null;
+  aiSourceCount?: number | null;
+  sourceClusterId?: number | null;
 }
 
 export interface ArticlesCollection {

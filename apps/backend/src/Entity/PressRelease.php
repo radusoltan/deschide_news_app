@@ -216,6 +216,21 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?string $detectedLanguage = null;
 
+    /** AI confidence score from ArticleWriterService (0.0–1.0) */
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?float $aiConfidenceScore = null;
+
+    /** Number of unique sources used by AI to generate this PR */
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?int $aiSourceCount = null;
+
+    /** StoryCluster ID from which this AI PR was generated */
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?int $sourceClusterId = null;
+
     /** Link to the Source entity for credibility, country, and category metadata */
     #[ORM\ManyToOne(targetEntity: Source::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
@@ -346,6 +361,20 @@ class PressRelease
 
     /** @return Collection<int, StoryCluster> */
     public function getStoryClusters(): Collection { return $this->storyClusters; }
+
+    public function getAiConfidenceScore(): ?float { return $this->aiConfidenceScore; }
+    public function setAiConfidenceScore(?float $aiConfidenceScore): static { $this->aiConfidenceScore = $aiConfidenceScore; return $this; }
+
+    public function getAiSourceCount(): ?int { return $this->aiSourceCount; }
+    public function setAiSourceCount(?int $aiSourceCount): static { $this->aiSourceCount = $aiSourceCount; return $this; }
+
+    public function getSourceClusterId(): ?int { return $this->sourceClusterId; }
+    public function setSourceClusterId(?int $sourceClusterId): static { $this->sourceClusterId = $sourceClusterId; return $this; }
+
+    public function isAiGenerated(): bool
+    {
+        return $this->sourceName !== null && str_starts_with($this->sourceName, 'AI:');
+    }
 
     /**
      * Computed field: returns the publisher hostname.

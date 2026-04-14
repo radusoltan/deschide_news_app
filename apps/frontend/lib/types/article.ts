@@ -72,6 +72,10 @@ export interface Article {
   metaDescription?: string | null;
   publishedLocales?: string[];
   translatedSlugs?: { ro?: string; en?: string; ru?: string };
+  aiGenerated?: boolean;
+  aiConfidenceScore?: number | null;
+  aiSourceCount?: number | null;
+  sourceClusterId?: number | null;
 }
 
 export interface ArticleListResponse {

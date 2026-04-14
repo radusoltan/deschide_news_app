@@ -137,6 +137,35 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
         </p>
       </div>
 
+      {/* AI Generation Banner */}
+      {article.aiGenerated && (
+        <div className="mb-4 p-4 rounded-lg border bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl" role="img" aria-label="AI generated">&#x1F916;</span>
+            <div>
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Articol generat AI
+                {article.sourceClusterId && (
+                  <>
+                    {' '}din cluster{' '}
+                    <Link
+                      href={`/${locale}/admin/story-clusters?highlight=${article.sourceClusterId}`}
+                      className="underline hover:no-underline"
+                    >
+                      #{article.sourceClusterId}
+                    </Link>
+                  </>
+                )}
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                {article.aiSourceCount != null && `${article.aiSourceCount} surse`}
+                {article.aiConfidenceScore != null && ` \u2022 confidence: ${(article.aiConfidenceScore * 100).toFixed(0)}%`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Translation Language Tabs */}
       <TranslationTabs
         articleId={articleId}

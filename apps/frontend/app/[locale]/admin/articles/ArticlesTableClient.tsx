@@ -17,6 +17,10 @@ interface Article {
   publishedAt?: string;
   createdAt?: string;
   viewCount?: number;
+  aiGenerated?: boolean;
+  aiConfidenceScore?: number | null;
+  aiSourceCount?: number | null;
+  sourceClusterId?: number | null;
 }
 
 interface Category {
@@ -44,6 +48,20 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${style}`}>
       {status}
+    </span>
+  );
+}
+
+function AiBadge({ confidence }: { confidence?: number | null }) {
+  if (confidence == null) return null;
+  const isHigh = confidence >= 0.85;
+  const color = isHigh
+    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+
+  return (
+    <span className={`ml-1.5 px-1.5 py-0.5 inline-flex items-center text-xs font-medium rounded ${color}`} title={`AI confidence: ${(confidence * 100).toFixed(0)}%`}>
+      AI
     </span>
   );
 }
@@ -544,7 +562,12 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                       <td className="px-6 py-4 font-medium text-primary dark:text-primary-dark">
                         <div className="flex items-start gap-2">
                           <div className="flex-1">
-                            <div>{article.title}</div>
+                            <div className="flex items-center">
+                              <span>{article.title}</span>
+                              {article.aiGenerated && (
+                                <AiBadge confidence={article.aiConfidenceScore} />
+                              )}
+                            </div>
                             {isLocked && (
                               <div className="flex items-center gap-1.5 mt-1 text-xs text-yellow-700 dark:text-yellow-400">
                                 <HiLockClosed className="w-3.5 h-3.5 flex-shrink-0" />

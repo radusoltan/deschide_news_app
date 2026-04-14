@@ -64,6 +64,14 @@ class ArticleFactoryService
             }
         }
 
+        // Populate AI metadata if this is an AI-generated PressRelease
+        if ($pressRelease->isAiGenerated()) {
+            $article->setAiGenerated(true);
+            $article->setAiConfidenceScore($pressRelease->getAiConfidenceScore());
+            $article->setAiSourceCount($pressRelease->getAiSourceCount());
+            $article->setSourceClusterId($pressRelease->getSourceClusterId());
+        }
+
         // Map category
         $category = $this->categoryRepository->findOneBy(['slug' => $pressRelease->getCategorySlug()]);
         if ($category === null) {

@@ -11,6 +11,7 @@ use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use App\Message\Editorial\ProcessScrapedArticleMessage;
 use App\Service\CategoryDetectorService;
+use App\Service\Cleaning\SourceContentCleanerRegistry;
 use App\Service\ContentDeduplicator;
 use App\Service\ContentHasher;
 use App\Service\NotificationService;
@@ -28,6 +29,7 @@ final readonly class ProcessScrapedArticleHandler
 {
     public function __construct(
         private ScrapedContentCleaner $contentCleaner,
+        private SourceContentCleanerRegistry $sourceCleanerRegistry,
         private ContentHasher $contentHasher,
         private ContentDeduplicator $deduplicator,
         private CategoryDetectorService $categoryDetector,
@@ -42,8 +44,12 @@ final readonly class ProcessScrapedArticleHandler
 
     public function __invoke(ProcessScrapedArticleMessage $message): void
     {
-        // 1. Clean HTML content
+        // 1. Clean HTML content (generic sanitization)
         $cleanHtml = $this->contentCleaner->clean($message->bodyMarkdown);
+
+        // 1b. Apply per-source noise removal (Newsmaker, Agerpres, etc.)
+        $sourceName = 'scrape:' . $this->toSourceSlug($message->sourceName);
+        $cleanHtml = $this->sourceCleanerRegistry->clean($sourceName, $cleanHtml);
 
         // 2. Hash for deduplication
         $hash = $this->contentHasher->hash($cleanHtml);
@@ -65,9 +71,6 @@ final readonly class ProcessScrapedArticleHandler
 
         // 5. Detect category
         $categorySlug = $this->categoryDetector->detectSlug($message->title . ' ' . $lead);
-
-        // 6. Build source name slug
-        $sourceName = 'scrape:' . $this->toSourceSlug($message->sourceName);
 
         // 7. Create PressRelease (NOT Article)
         $pr = new PressRelease();
