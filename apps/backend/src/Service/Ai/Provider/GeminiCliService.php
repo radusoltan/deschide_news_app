@@ -15,7 +15,7 @@ use Symfony\Component\Process\Process;
  * execute() method. Each consumer retains its own prompt-building and
  * response-mapping logic; only the subprocess plumbing is shared here.
  */
-final class GeminiCliService
+class GeminiCliService
 {
     public function __construct(
         private readonly string $geminiCliPath,

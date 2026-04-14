@@ -235,12 +235,13 @@ class ClusteringService
             return null;
         }
 
-        $clusters = $duplicate->getStoryClusters();
-        if ($clusters->isEmpty()) {
+        // Find cluster via repository (reliable even without Doctrine hydration on inverse side)
+        $clusters = $this->clusterRepository->findClustersContainingPressReleases([$duplicate->getId()]);
+        if ($clusters === []) {
             return null;
         }
 
-        $cluster = $clusters->first();
+        $cluster = $clusters[0];
 
         $this->logger->info('ClusteringService: content hash dedup — PR #{id} matches PR #{dupId} in cluster #{clusterId}', [
             'id' => $pr->getId(),

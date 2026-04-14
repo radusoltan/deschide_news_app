@@ -262,6 +262,71 @@ class ClusteringServiceTest extends TestCase
         $this->assertInstanceOf(StoryCluster::class, $result);
     }
 
+    #[Test]
+    public function contentHashDedupSkipsMltForDuplicate(): void
+    {
+        $existingPr = $this->createPressRelease(1, 'Original article', 'Content');
+        $existingPr->setContentHash('abc123');
+        $newPr = $this->createPressRelease(2, 'Duplicate article', 'Same content');
+        $newPr->setContentHash('abc123');
+
+        $cluster = new StoryCluster();
+        $cluster->setPrimaryHeadline('Original article');
+        $cluster->addPressRelease($existingPr);
+        $cluster->setFirstSeenAt(new \DateTimeImmutable('-1 hour'));
+
+        // Set up the dedup to find the clustered duplicate
+        $this->prRepo->method('findClusteredDuplicateByHash')
+            ->with('abc123', 2)
+            ->willReturn($existingPr);
+
+        // Cluster repo returns the cluster containing the duplicate
+        $this->clusterRepo->method('findClustersContainingPressReleases')
+            ->with([1])
+            ->willReturn([$cluster]);
+
+        // ES should NOT be called (dedup bypasses MLT)
+        $this->clusterFinder->expects($this->never())->method('findSimilar');
+
+        $this->clusterRepo->method('findUnclusteredPressReleaseIds')->willReturn([2]);
+        $this->em->method('find')->willReturn($newPr);
+
+        $result = $this->service->clusterNewPressReleases();
+
+        $this->assertSame(1, $result);
+    }
+
+    #[Test]
+    public function uniqueHashProceedsToMlt(): void
+    {
+        $pr = $this->createPressRelease(1, 'Unique article', 'Content');
+        $pr->setContentHash('unique_hash');
+
+        // No duplicate found
+        $this->prRepo->method('findClusteredDuplicateByHash')->willReturn(null);
+
+        // Should proceed to ES MLT
+        $this->clusterFinder->expects($this->once())->method('findSimilar')->willReturn([]);
+
+        $result = $this->service->clusterSinglePressRelease($pr);
+
+        $this->assertInstanceOf(StoryCluster::class, $result);
+    }
+
+    #[Test]
+    public function nullHashProceedsToMlt(): void
+    {
+        $pr = $this->createPressRelease(1, 'No hash article', 'Content');
+        // contentHash is null by default
+
+        // Should proceed to ES MLT (hash is null, skip dedup)
+        $this->clusterFinder->expects($this->once())->method('findSimilar')->willReturn([]);
+
+        $result = $this->service->clusterSinglePressRelease($pr);
+
+        $this->assertInstanceOf(StoryCluster::class, $result);
+    }
+
     private function createPressRelease(int $id, string $title, string $content): PressRelease
     {
         $pr = new PressRelease();

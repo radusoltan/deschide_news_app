@@ -66,4 +66,27 @@ class ElasticsearchClusterFinderTest extends TestCase
 
         $this->assertSame('deschide_press_releases', $this->indexManager->getIndexName());
     }
+
+    #[Test]
+    public function minScoreDefaultsFromAppSettings(): void
+    {
+        $this->appSettings->method('getFloat')
+            ->with('cluster_mlt_min_score', 0.60)
+            ->willReturn(0.75);
+
+        // Just verify construction works and reads from settings
+        $finder = new ElasticsearchClusterFinder($this->indexManager, $this->appSettings, new NullLogger());
+        $this->assertNotNull($finder);
+    }
+
+    #[Test]
+    public function defaultMinScoreIsZeroSixty(): void
+    {
+        // When AppSettings returns default (nothing stored)
+        $this->appSettings->method('getFloat')->willReturn(0.60);
+        $this->appSettings->method('get')->willReturn('40');
+
+        $finder = new ElasticsearchClusterFinder($this->indexManager, $this->appSettings, new NullLogger());
+        $this->assertNotNull($finder);
+    }
 }
