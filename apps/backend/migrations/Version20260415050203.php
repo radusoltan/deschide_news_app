@@ -21,11 +21,11 @@ final class Version20260415050203 extends AbstractMigration
     {
         // Drop orphaned columns — properties were removed from StoryCluster entity
         // but no migration was created at that time.
-        $this->addSql('ALTER TABLE story_clusters DROP last_verified_at');
-        $this->addSql('ALTER TABLE story_clusters DROP score_breakdown');
-        $this->addSql('ALTER TABLE story_clusters DROP previous_summary');
-        $this->addSql('ALTER TABLE story_clusters DROP previous_key_facts');
-        $this->addSql('ALTER TABLE story_clusters DROP previous_snapshot_at');
+        $this->addSql('ALTER TABLE story_clusters DROP COLUMN IF EXISTS last_verified_at');
+        $this->addSql('ALTER TABLE story_clusters DROP COLUMN IF EXISTS score_breakdown');
+        $this->addSql('ALTER TABLE story_clusters DROP COLUMN IF EXISTS previous_summary');
+        $this->addSql('ALTER TABLE story_clusters DROP COLUMN IF EXISTS previous_key_facts');
+        $this->addSql('ALTER TABLE story_clusters DROP COLUMN IF EXISTS previous_snapshot_at');
 
         // NOTE: uniq_pr_source_url is a partial index (WHERE source_url IS NOT NULL)
         // that Doctrine cannot represent via attributes. We keep it intentionally —

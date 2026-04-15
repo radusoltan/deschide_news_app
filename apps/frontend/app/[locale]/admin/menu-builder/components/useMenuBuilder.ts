@@ -290,6 +290,10 @@ export interface UseMenuBuilderReturn {
   // Add dropdown form
   dropdownLabel: string;
   setDropdownLabel: (v: string) => void;
+  dropdownLabelEn: string;
+  setDropdownLabelEn: (v: string) => void;
+  dropdownLabelRu: string;
+  setDropdownLabelRu: (v: string) => void;
   handleAddDropdown: () => Promise<void>;
 
   // Delete
@@ -329,6 +333,8 @@ export function useMenuBuilder(locale: string): UseMenuBuilderReturn {
 
   // Form state - Add Dropdown
   const [dropdownLabel, setDropdownLabel] = useState('');
+  const [dropdownLabelEn, setDropdownLabelEn] = useState('');
+  const [dropdownLabelRu, setDropdownLabelRu] = useState('');
 
   // Form state - Delete
   const [deletingItem, setDeletingItem] = useState<MenuItem | null>(null);
@@ -867,12 +873,13 @@ export function useMenuBuilder(locale: string): UseMenuBuilderReturn {
 
       const nextPosition = getNextTopPosition();
 
+      // Create dropdown in default locale (ro)
       const response = await fetch(`${API_BASE_URL}/api/menu-items`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/ld+json',
           Authorization: `Bearer ${token}`,
-          'Accept-Language': locale,
+          'Accept-Language': 'ro',
         },
         body: JSON.stringify({
           menu: activeTab,
@@ -891,16 +898,47 @@ export function useMenuBuilder(locale: string): UseMenuBuilderReturn {
         );
       }
 
+      const created = await response.json();
+      const createdId = created.id;
+
+      // Add EN translation if provided
+      if (dropdownLabelEn.trim() && createdId) {
+        await fetch(`${API_BASE_URL}/api/menu-items/${createdId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/merge-patch+json',
+            Authorization: `Bearer ${token}`,
+            'Accept-Language': 'en',
+          },
+          body: JSON.stringify({ label: dropdownLabelEn.trim() }),
+        });
+      }
+
+      // Add RU translation if provided
+      if (dropdownLabelRu.trim() && createdId) {
+        await fetch(`${API_BASE_URL}/api/menu-items/${createdId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/merge-patch+json',
+            Authorization: `Bearer ${token}`,
+            'Accept-Language': 'ru',
+          },
+          body: JSON.stringify({ label: dropdownLabelRu.trim() }),
+        });
+      }
+
       showSuccessMessage('Dropdown added to menu');
       setShowAddDropdownModal(false);
       setDropdownLabel('');
+      setDropdownLabelEn('');
+      setDropdownLabelRu('');
       await fetchMenuItems();
     } catch (err) {
       showErrorMessage(err instanceof Error ? err.message : 'Failed to add dropdown');
     } finally {
       setSaving(false);
     }
-  }, [dropdownLabel, activeTab, locale, tree, fetchMenuItems, showSuccessMessage, showErrorMessage]);
+  }, [dropdownLabel, dropdownLabelEn, dropdownLabelRu, activeTab, tree, fetchMenuItems, showSuccessMessage, showErrorMessage]);
 
   // ==========================================================================
   // Delete
@@ -989,6 +1027,10 @@ export function useMenuBuilder(locale: string): UseMenuBuilderReturn {
     handleAddExternalLink,
     dropdownLabel,
     setDropdownLabel,
+    dropdownLabelEn,
+    setDropdownLabelEn,
+    dropdownLabelRu,
+    setDropdownLabelRu,
     handleAddDropdown,
     openDeleteModal,
     handleDelete,

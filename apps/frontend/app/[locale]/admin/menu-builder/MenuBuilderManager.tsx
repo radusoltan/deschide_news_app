@@ -118,6 +118,10 @@ export default function MenuBuilderManager({ locale }: MenuBuilderManagerProps) 
         saving={mb.saving}
         dropdownLabel={mb.dropdownLabel}
         setDropdownLabel={mb.setDropdownLabel}
+        dropdownLabelEn={mb.dropdownLabelEn}
+        setDropdownLabelEn={mb.setDropdownLabelEn}
+        dropdownLabelRu={mb.dropdownLabelRu}
+        setDropdownLabelRu={mb.setDropdownLabelRu}
         onSubmit={mb.handleAddDropdown}
       />
 

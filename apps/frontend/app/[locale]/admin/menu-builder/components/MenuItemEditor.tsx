@@ -291,6 +291,10 @@ interface AddDropdownModalProps {
   saving: boolean;
   dropdownLabel: string;
   setDropdownLabel: (v: string) => void;
+  dropdownLabelEn: string;
+  setDropdownLabelEn: (v: string) => void;
+  dropdownLabelRu: string;
+  setDropdownLabelRu: (v: string) => void;
   onSubmit: () => Promise<void>;
 }
 
@@ -300,16 +304,21 @@ export function AddDropdownModal({
   saving,
   dropdownLabel,
   setDropdownLabel,
+  dropdownLabelEn,
+  setDropdownLabelEn,
+  dropdownLabelRu,
+  setDropdownLabelRu,
   onSubmit,
 }: AddDropdownModalProps) {
+  const resetAndClose = () => {
+    onClose();
+    setDropdownLabel('');
+    setDropdownLabelEn('');
+    setDropdownLabelRu('');
+  };
+
   return (
-    <Modal
-      show={show}
-      onClose={() => {
-        onClose();
-        setDropdownLabel('');
-      }}
-    >
+    <Modal show={show} onClose={resetAndClose}>
       <ModalHeader>Add Dropdown Menu</ModalHeader>
       <ModalBody>
         <div className="space-y-4">
@@ -322,37 +331,66 @@ export function AddDropdownModal({
               htmlFor="dropdown-label"
               className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
             >
-              Label
+              Label (RO)
             </label>
             <input
               type="text"
               id="dropdown-label"
               value={dropdownLabel}
               onChange={(e) => setDropdownLabel(e.target.value)}
-              placeholder='e.g. "More" or "Topics"'
+              placeholder='e.g. "Știri" or "Mai mult"'
+              className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-primary-dark"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="dropdown-label-en"
+              className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
+            >
+              Label (EN)
+            </label>
+            <input
+              type="text"
+              id="dropdown-label-en"
+              value={dropdownLabelEn}
+              onChange={(e) => setDropdownLabelEn(e.target.value)}
+              placeholder='e.g. "News" or "More"'
+              className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-primary-dark"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="dropdown-label-ru"
+              className="block mb-2 text-sm font-medium text-primary dark:text-primary-dark"
+            >
+              Label (RU)
+            </label>
+            <input
+              type="text"
+              id="dropdown-label-ru"
+              value={dropdownLabelRu}
+              onChange={(e) => setDropdownLabelRu(e.target.value)}
+              placeholder='e.g. "Новости" or "Ещё"'
               className="bg-surface-sunken border border-gray-300 text-primary text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-primary-dark"
             />
           </div>
         </div>
       </ModalBody>
       <ModalFooter>
-        <Button
+        <button
           onClick={onSubmit}
           disabled={!dropdownLabel.trim() || saving}
-          color="warning"
+          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-amber-500 text-white hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed dark:disabled:bg-gray-700 dark:disabled:text-gray-500"
         >
           {saving ? <Spinner size="sm" className="mr-2" /> : null}
           Add Dropdown
-        </Button>
-        <Button
-          color="gray"
-          onClick={() => {
-            onClose();
-            setDropdownLabel('');
-          }}
+        </button>
+        <button
+          onClick={resetAndClose}
+          className="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
         >
           Cancel
-        </Button>
+        </button>
       </ModalFooter>
     </Modal>
   );

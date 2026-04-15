@@ -35,7 +35,7 @@ class LiveTextFixtures extends Fixture implements DependentFixtureInterface
         // Get admin user for author
         $adminUser = $manager->getRepository(\App\Entity\User::class)->findOneBy(['username' => 'admin']);
         $editorUser = $manager->getRepository(\App\Entity\User::class)->findOneBy(['username' => 'editor']);
-        $regularUser = $manager->getRepository(\App\Entity\User::class)->findOneBy(['username' => 'user']);
+        $regularUser = $manager->getRepository(\App\Entity\User::class)->findOneBy(['username' => 'ai_asistent']);
 
         // Get some categories
         $categories = $manager->getRepository(\App\Entity\Category::class)->findAll();

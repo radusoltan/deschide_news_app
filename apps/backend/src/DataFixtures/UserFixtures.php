@@ -24,49 +24,38 @@ class UserFixtures extends Fixture implements FixtureGroupInterface
 
     public function load(ObjectManager $manager): void
     {
-        // Create admin user
-        $admin = new User();
-        $admin->setUsername('admin');
-        $admin->setEmail('admin@deschide.local');
-        $admin->setRoles(['ROLE_ADMIN', 'ROLE_USER']);
+        $users = [
+            [
+                'username' => 'admin',
+                'email' => 'admin@news-app.local',
+                'roles' => ['ROLE_ADMIN', 'ROLE_USER'],
+            ],
+            [
+                'username' => 'editor',
+                'email' => 'editor@news-app.local',
+                'roles' => ['ROLE_EDITOR', 'ROLE_USER'],
+            ],
+            [
+                'username' => 'ai_asistent',
+                'email' => 'ai@news-app.local',
+                'roles' => ['ROLE_EDITOR', 'ROLE_USER'],
+            ],
+        ];
 
-        // Hash the password
-        $hashedPassword = $this->passwordHasher->hashPassword(
-            $admin,
-            'password'
-        );
-        $admin->setPassword($hashedPassword);
+        foreach ($users as $userData) {
+            $user = new User();
+            $user->setUsername($userData['username']);
+            $user->setEmail($userData['email']);
+            $user->setRoles($userData['roles']);
+            $user->setPassword(
+                $this->passwordHasher->hashPassword($user, 'password')
+            );
 
-        $manager->persist($admin);
-
-        // Create a regular editor user for testing
-        $editor = new User();
-        $editor->setUsername('editor');
-        $editor->setEmail('editor@deschide.local');
-        $editor->setRoles(['ROLE_EDITOR', 'ROLE_USER']);
-
-        $hashedPassword = $this->passwordHasher->hashPassword(
-            $editor,
-            'password'
-        );
-        $editor->setPassword($hashedPassword);
-
-        $manager->persist($editor);
-
-        // Create a regular user for testing
-        $user = new User();
-        $user->setUsername('user');
-        $user->setEmail('user@deschide.local');
-        $user->setRoles(['ROLE_USER']);
-
-        $hashedPassword = $this->passwordHasher->hashPassword(
-            $user,
-            'password'
-        );
-        $user->setPassword($hashedPassword);
-
-        $manager->persist($user);
+            $manager->persist($user);
+        }
 
         $manager->flush();
+
+        echo '✅ Created ' . \count($users) . " users (admin, editor, ai_asistent)\n";
     }
 }

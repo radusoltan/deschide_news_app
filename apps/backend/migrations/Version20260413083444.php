@@ -20,15 +20,13 @@ final class Version20260413083444 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->addSql('ALTER TABLE cluster_background_proposals DROP CONSTRAINT fk_e57ffc4de491c8b8');
-        $this->addSql('ALTER TABLE cluster_background_proposals DROP CONSTRAINT fk_e57ffc4d7294869c');
-        $this->addSql('DROP TABLE cluster_background_proposals');
+        $this->addSql('DROP TABLE IF EXISTS cluster_background_proposals');
         $this->addSql('ALTER TABLE articles ADD ai_generated BOOLEAN DEFAULT false NOT NULL');
         $this->addSql('ALTER TABLE articles ADD source_cluster_id INT DEFAULT NULL');
         $this->addSql('ALTER TABLE articles ADD ai_confidence_score DOUBLE PRECISION DEFAULT NULL');
         $this->addSql('ALTER TABLE articles ADD ai_source_count INT DEFAULT NULL');
-        $this->addSql('ALTER TABLE articles DROP background');
-        $this->addSql('ALTER TABLE story_clusters DROP background_generated');
+        $this->addSql('ALTER TABLE articles DROP COLUMN IF EXISTS background');
+        $this->addSql('ALTER TABLE story_clusters DROP COLUMN IF EXISTS background_generated');
     }
 
     public function down(Schema $schema): void

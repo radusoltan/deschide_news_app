@@ -17,9 +17,9 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
 {
     private const ARTICLE_COUNT = 80;
 
-    private const CATEGORY_COUNT = 8;
+    private const CATEGORY_COUNT = 11;
 
-    private const AUTHOR_COUNT = 12;
+    private const AUTHOR_COUNT = 19;
 
     public function getDependencies(): array
     {

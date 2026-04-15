@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  Button,
   Spinner,
   Alert,
 } from 'flowbite-react';
@@ -87,31 +86,29 @@ export function MenuToolbar({
 
       <div className="flex gap-2 flex-wrap">
         {activeTab === 'main' && (
-          <Button
-            size="sm"
-            color="warning"
+          <button
             onClick={onAddDropdown}
+            className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-amber-500 text-white hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700"
           >
             <HiFolder className="mr-2 h-4 w-4" />
             Add Dropdown
-          </Button>
+          </button>
         )}
-        <Button
-          size="sm"
+        <button
           onClick={onAddCategory}
           disabled={availableCategoriesCount === 0}
+          className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed dark:disabled:bg-gray-700 dark:disabled:text-gray-500"
         >
           <HiPlus className="mr-2 h-4 w-4" />
           Add Category
-        </Button>
-        <Button
-          size="sm"
-          color="purple"
+        </button>
+        <button
           onClick={onAddLink}
+          className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors bg-purple-600 text-white hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600"
         >
           <HiExternalLink className="mr-2 h-4 w-4" />
           Add External Link
-        </Button>
+        </button>
       </div>
     </div>
   );
