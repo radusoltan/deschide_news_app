@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Scheduler;
 
 use App\Message\Aggregator\TriggerAggregatorRunMessage;
+use App\Message\ArchiveStalePressReleasesMessage;
+use App\Message\Clustering\TriggerClusterCurationMessage;
 use App\Message\Clustering\TriggerClusterRunMessage;
 use App\Message\Clustering\TriggerClusterScoringMessage;
 use App\Message\Editorial\GenerateDailyBriefingMessage;
@@ -72,7 +74,21 @@ class EditorialScheduleProvider implements ScheduleProviderInterface
                 new TriggerAggregatorRunMessage(source: null, triggeredBy: 'scheduler'),
             ))
 
-            // === Clustering Schedules (Sprint 30) ===
+            // === Press Release Maintenance ===
+
+            // Archive rejected PRs older than 30 days — daily at 04:00
+            ->add(RecurringMessage::cron(
+                '0 4 * * *',
+                new ArchiveStalePressReleasesMessage(days: 30),
+            ))
+
+            // === Clustering Schedules (Sprint 30+47) ===
+
+            // Cluster curation suggestions — daily at 03:00
+            ->add(RecurringMessage::cron(
+                '0 3 * * *',
+                new TriggerClusterCurationMessage(),
+            ))
 
             // Cluster unclustered PressReleases every 30 minutes
             ->add(RecurringMessage::every('30 minutes',

@@ -69,6 +69,65 @@ class PressReleaseRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * Cursor-based pagination for press releases by status.
+     *
+     * @return array{items: PressRelease[], nextCursor: ?string, hasMore: bool}
+     */
+    public function findByStatusWithCursor(
+        PressReleaseStatus $status,
+        ?string $cursor = null,
+        int $limit = 20,
+        ?string $sourceType = null,
+        ?string $originalLanguage = null,
+    ): array {
+        $qb = $this->createQueryBuilder('pr')
+            ->where('pr.status = :status')
+            ->setParameter('status', $status)
+            ->orderBy('pr.createdAt', 'DESC')
+            ->addOrderBy('pr.id', 'DESC')
+            ->setMaxResults($limit + 1);
+
+        if ($cursor !== null) {
+            $decoded = base64_decode($cursor, true);
+            if ($decoded !== false && str_contains($decoded, ':')) {
+                [$cursorDate, $cursorId] = explode(':', $decoded, 2);
+                $qb->andWhere('(pr.createdAt < :cursorDate OR (pr.createdAt = :cursorDate AND pr.id < :cursorId))')
+                    ->setParameter('cursorDate', new \DateTimeImmutable($cursorDate))
+                    ->setParameter('cursorId', (int) $cursorId);
+            }
+        }
+
+        if ($sourceType !== null) {
+            $qb->andWhere('pr.sourceType = :sourceType')
+                ->setParameter('sourceType', $sourceType);
+        }
+
+        if ($originalLanguage !== null) {
+            $qb->andWhere('pr.originalLanguage = :lang')
+                ->setParameter('lang', $originalLanguage);
+        }
+
+        $results = $qb->getQuery()->getResult();
+        $hasMore = \count($results) > $limit;
+
+        if ($hasMore) {
+            array_pop($results);
+        }
+
+        $nextCursor = null;
+        if ($hasMore && \count($results) > 0) {
+            $last = end($results);
+            $nextCursor = base64_encode($last->getCreatedAt()->format('Y-m-d H:i:s') . ':' . $last->getId());
+        }
+
+        return [
+            'items' => $results,
+            'nextCursor' => $nextCursor,
+            'hasMore' => $hasMore,
+        ];
+    }
+
     public function countPendingBySourceType(): array
     {
         $rows = $this->createQueryBuilder('pr')

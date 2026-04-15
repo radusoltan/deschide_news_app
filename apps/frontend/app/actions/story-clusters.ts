@@ -101,6 +101,39 @@ export async function fetchStoryClusterDetail(
   return res.json();
 }
 
+export async function searchStoryClusters(
+  query: string,
+  limit: number = 20,
+): Promise<StoryClusterListResult> {
+  const token = await getAccessToken();
+  if (!token) {
+    return { items: [], totalItems: 0, error: 'Nu ești autentificat' };
+  }
+
+  const params = new URLSearchParams({
+    q: query,
+    limit: String(limit),
+  });
+
+  const res = await fetch(`${API_BASE_URL}/api/story-clusters/search?${params}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    return { items: [], totalItems: 0, error: `API error: ${res.status}` };
+  }
+
+  const data = await res.json();
+  return {
+    items: data.items ?? [],
+    totalItems: data.totalItems ?? 0,
+  };
+}
+
 export async function fetchTopClusters(
   limit: number = 10,
   sinceHours: number = 24,
@@ -258,6 +291,92 @@ export async function getAutoPromoteThreshold(): Promise<number> {
 
   const data = await res.json();
   return data.threshold ?? 0.7;
+}
+
+// === Curation Suggestions ===
+
+export interface CurationSuggestionItem {
+  id: number;
+  type: 'merge' | 'archive' | 'retag';
+  status: 'pending' | 'accepted' | 'rejected';
+  clusterIds: number[];
+  targetClusterId: number | null;
+  reason: string;
+  suggestedTopic: string | null;
+  confidence: number;
+  suggestedAt: string;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+  clusterHeadlines: string[] | null;
+}
+
+export async function fetchCurationSuggestions(
+  status: string = 'pending',
+): Promise<{ items: CurationSuggestionItem[]; totalItems: number; error?: string }> {
+  const token = await getAccessToken();
+  if (!token) return { items: [], totalItems: 0, error: 'Nu ești autentificat' };
+
+  const params = new URLSearchParams({ status, itemsPerPage: '30' });
+
+  const res = await fetch(`${API_BASE_URL}/api/curation_suggestions?${params}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/ld+json',
+    },
+    cache: 'no-store',
+  });
+
+  if (!res.ok) return { items: [], totalItems: 0, error: `API error: ${res.status}` };
+
+  const data = await res.json();
+  return {
+    items: data['member'] ?? data['hydra:member'] ?? [],
+    totalItems: data['totalItems'] ?? data['hydra:totalItems'] ?? 0,
+  };
+}
+
+export async function acceptCurationSuggestion(
+  id: number,
+): Promise<{ success: boolean; error?: string }> {
+  const token = await getAccessToken();
+  if (!token) return { success: false, error: 'Nu ești autentificat' };
+
+  const res = await fetch(`${API_BASE_URL}/api/curation-suggestions/${id}/accept`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    return { success: false, error: data.error ?? `API error: ${res.status}` };
+  }
+
+  return { success: true };
+}
+
+export async function rejectCurationSuggestion(
+  id: number,
+): Promise<{ success: boolean; error?: string }> {
+  const token = await getAccessToken();
+  if (!token) return { success: false, error: 'Nu ești autentificat' };
+
+  const res = await fetch(`${API_BASE_URL}/api/curation-suggestions/${id}/reject`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    },
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    return { success: false, error: data.error ?? `API error: ${res.status}` };
+  }
+
+  return { success: true };
 }
 
 export async function setAutoPromoteThreshold(
