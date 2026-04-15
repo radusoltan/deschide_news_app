@@ -7,6 +7,7 @@ namespace App\Service\Scraping;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * Invokes the Python deschide-scraper CLI via Symfony Process.
@@ -139,5 +140,37 @@ class PythonScraperService
     public static function getValidTypes(): array
     {
         return self::VALID_TYPES;
+    }
+
+    /**
+     * Get configured sources from YAML, optionally filtered by type.
+     *
+     * @return array<string, array{name: string, url: string, type: string, frequency: int, language: string, credibility: float, enabled: bool}>
+     */
+    public function getConfiguredSources(?string $type = null): array
+    {
+        $configPath = $this->scraperPath . '/config/sources.yaml';
+
+        if (!file_exists($configPath)) {
+            $this->logger->warning('PythonScraper: sources.yaml not found at {path}', [
+                'path' => $configPath,
+            ]);
+
+            return [];
+        }
+
+        $config = Yaml::parseFile($configPath);
+        $sources = $config['sources'] ?? [];
+
+        if ($type !== null) {
+            $sources = array_filter($sources, static fn (array $s): bool => ($s['type'] ?? '') === $type);
+        }
+
+        return array_filter($sources, static fn (array $s): bool => ($s['enabled'] ?? false) === true);
+    }
+
+    public function getScraperPath(): string
+    {
+        return $this->scraperPath;
     }
 }
