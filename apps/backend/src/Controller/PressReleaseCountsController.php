@@ -21,6 +21,7 @@ class PressReleaseCountsController extends AbstractController
             'email' => $counts['email'] ?? 0,
             'scrape' => $counts['scrape'] ?? 0,
             'manual' => $counts['manual'] ?? 0,
+            'aggregator' => $counts['aggregator'] ?? 0,
             'total' => $total,
         ]);
     }

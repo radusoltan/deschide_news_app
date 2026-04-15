@@ -30,6 +30,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Index(name: 'idx_press_release_received', columns: ['received_at'])]
 #[ORM\Index(name: 'idx_press_release_content_hash', columns: ['content_hash'])]
 #[ORM\Index(name: 'idx_press_release_source_type', columns: ['source_type'])]
+#[ORM\Index(name: 'idx_pr_status_created', columns: ['status', 'created_at'])]
 #[ORM\UniqueConstraint(name: 'uniq_content_hash_source_type', columns: ['content_hash', 'source_type'])]
 #[ORM\UniqueConstraint(name: 'uniq_pr_source_url', columns: ['source_url'])]
 #[UniqueEntity('sourceEmailId', message: 'This email has already been imported.')]
@@ -232,6 +233,11 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?int $sourceClusterId = null;
 
+    /** When content was enriched via remote scraping */
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    #[Groups(['press:read'])]
+    private ?\DateTimeImmutable $enrichedAt = null;
+
     /** Link to the Source entity for credibility, country, and category metadata */
     #[ORM\ManyToOne(targetEntity: Source::class)]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
@@ -356,6 +362,9 @@ class PressRelease
 
     public function getDetectedLanguage(): ?string { return $this->detectedLanguage; }
     public function setDetectedLanguage(?string $detectedLanguage): static { $this->detectedLanguage = $detectedLanguage; return $this; }
+
+    public function getEnrichedAt(): ?\DateTimeImmutable { return $this->enrichedAt; }
+    public function setEnrichedAt(?\DateTimeImmutable $enrichedAt): static { $this->enrichedAt = $enrichedAt; return $this; }
 
     public function getSource(): ?Source { return $this->source; }
     public function setSource(?Source $source): static { $this->source = $source; return $this; }

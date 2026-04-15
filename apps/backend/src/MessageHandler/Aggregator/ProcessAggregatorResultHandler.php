@@ -10,6 +10,7 @@ use App\Enum\DeduplicationResult;
 use App\Message\Aggregator\ProcessAggregatorResultMessage;
 use App\Repository\PressReleaseRepository;
 use App\Repository\SourceRepository;
+use App\Message\Scraping\ScrapeFullContentMessage;
 use App\Service\Aggregator\AggregatorStatsCollector;
 use App\Service\Aggregator\GoogleNewsUrlResolver;
 use App\Service\Aggregator\PressReleaseAggregatorFactory;
@@ -19,6 +20,7 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsMessageHandler]
 final readonly class ProcessAggregatorResultHandler
@@ -33,6 +35,7 @@ final readonly class ProcessAggregatorResultHandler
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
         private AggregatorStatsCollector $statsCollector,
+        private MessageBusInterface $messageBus,
     ) {}
 
     public function __invoke(ProcessAggregatorResultMessage $message): void
@@ -125,6 +128,25 @@ final readonly class ProcessAggregatorResultHandler
         }
 
         $this->statsCollector->invalidateCache();
+
+        // Auto-enrich thin content from credible sources
+        $sourceCredibility = $pressRelease->getSource()?->getCredibilityWeight() ?? 0.0;
+        $sourceUrl = $pressRelease->getSourceUrl();
+        if (
+            $sourceCredibility >= 0.70
+            && $pressRelease->getContentLength() < 500
+            && $sourceUrl !== null
+            && filter_var($sourceUrl, \FILTER_VALIDATE_URL) !== false
+        ) {
+            $this->messageBus->dispatch(
+                new ScrapeFullContentMessage($pressRelease->getId(), $sourceUrl)
+            );
+            $this->logger->debug('ProcessAggregatorResultHandler: dispatched content enrichment', [
+                'id' => $pressRelease->getId(),
+                'credibility' => $sourceCredibility,
+                'contentLength' => $pressRelease->getContentLength(),
+            ]);
+        }
 
         $this->logger->info('ProcessAggregatorResultHandler: saved PressRelease #{id}', [
             'id' => $pressRelease->getId(),

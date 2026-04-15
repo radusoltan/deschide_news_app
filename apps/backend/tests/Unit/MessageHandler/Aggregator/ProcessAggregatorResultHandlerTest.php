@@ -19,6 +19,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[CoversClass(ProcessAggregatorResultHandler::class)]
 class ProcessAggregatorResultHandlerTest extends TestCase
@@ -42,7 +44,9 @@ class ProcessAggregatorResultHandlerTest extends TestCase
         $urlResolver = $this->createMock(GoogleNewsUrlResolver::class);
 
         $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector, $messageBus);
         $handler($this->createMessage());
     }
 
@@ -70,7 +74,9 @@ class ProcessAggregatorResultHandlerTest extends TestCase
         $urlResolver = $this->createMock(GoogleNewsUrlResolver::class);
 
         $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector, $messageBus);
         $handler($this->createMessage(sourceLanguage: 'en'));
     }
 
@@ -98,7 +104,9 @@ class ProcessAggregatorResultHandlerTest extends TestCase
         $urlResolver = $this->createMock(GoogleNewsUrlResolver::class);
 
         $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector, $messageBus);
         $handler($this->createMessage(sourceLanguage: 'ro'));
     }
 
@@ -125,7 +133,9 @@ class ProcessAggregatorResultHandlerTest extends TestCase
         $urlResolver = $this->createMock(GoogleNewsUrlResolver::class);
 
         $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector, $messageBus);
         $handler($this->createMessage());
     }
 
@@ -156,7 +166,9 @@ class ProcessAggregatorResultHandlerTest extends TestCase
             ->willReturn('https://reuters.com/real-article');
 
         $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector, $messageBus);
         $handler($this->createMessage());
 
         self::assertSame('https://reuters.com/real-article', $pr->getSourceUrl());
@@ -181,7 +193,9 @@ class ProcessAggregatorResultHandlerTest extends TestCase
         $urlResolver->expects(self::never())->method('resolveUrl');
 
         $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturn(new Envelope(new \stdClass()));
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector, $messageBus);
         $handler($this->createMessage(sourceLanguage: 'en', sourceName: 'Bing News'));
     }
 

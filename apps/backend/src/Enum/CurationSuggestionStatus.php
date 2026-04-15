@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Enum;
 
-enum PressReleaseStatus: string
+enum CurationSuggestionStatus: string
 {
     case PENDING = 'pending';
-    case APPROVED = 'approved';
+    case ACCEPTED = 'accepted';
     case REJECTED = 'rejected';
-    case ARCHIVED = 'archived';
 }
