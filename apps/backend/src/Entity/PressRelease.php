@@ -31,6 +31,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Index(name: 'idx_press_release_content_hash', columns: ['content_hash'])]
 #[ORM\Index(name: 'idx_press_release_source_type', columns: ['source_type'])]
 #[ORM\UniqueConstraint(name: 'uniq_content_hash_source_type', columns: ['content_hash', 'source_type'])]
+#[ORM\UniqueConstraint(name: 'uniq_pr_source_url', columns: ['source_url'])]
 #[UniqueEntity('sourceEmailId', message: 'This email has already been imported.')]
 #[ORM\HasLifecycleCallbacks]
 #[ApiFilter(SearchFilter::class, properties: ['status' => 'exact', 'categorySlug' => 'exact', 'senderAddress' => 'partial', 'sourceType' => 'exact'])]

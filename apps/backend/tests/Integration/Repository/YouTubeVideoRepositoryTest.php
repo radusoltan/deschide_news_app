@@ -52,11 +52,16 @@ class YouTubeVideoRepositoryTest extends KernelTestCase
 
         $this->em->flush();
 
-        $results = $this->repository->findForHomepageSlider(100);
+        $visibleId = $visible->getId();
+        $hiddenId = $hidden->getId();
+
+        $this->em->clear();
+
+        $results = $this->repository->findForHomepageSlider(5000);
 
         $ids = array_map(fn (YouTubeVideo $v) => $v->getId(), $results);
-        $this->assertContains($visible->getId(), $ids);
-        $this->assertNotContains($hidden->getId(), $ids);
+        $this->assertContains($visibleId, $ids);
+        $this->assertNotContains($hiddenId, $ids);
     }
 
     public function testFindForHomepageSliderRespectsLimit(): void

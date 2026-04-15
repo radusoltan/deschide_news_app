@@ -21,6 +21,7 @@ use App\Service\Scraping\RelevanceFilterService;
 use App\Service\SourceAuthorResolver;
 use App\Service\TopicDetectorService;
 use App\Service\Translation\AggregatorTranslationService;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -136,9 +137,19 @@ final readonly class ProcessScrapedArticleHandler
             $this->translationService->translateToRomanian($pr);
         }
 
-        // 9. Persist
-        $this->em->persist($pr);
-        $this->em->flush();
+        // 9. Persist (with race-condition safety net for concurrent duplicate URLs)
+        try {
+            $this->em->persist($pr);
+            $this->em->flush();
+        } catch (UniqueConstraintViolationException $e) {
+            $this->logger->info('ProcessScrapedArticleHandler: duplicate detected on flush, skipping', [
+                'sourceUrl' => $message->sourceUrl,
+                'error' => $e->getMessage(),
+            ]);
+            $this->em->clear();
+
+            return;
+        }
 
         $this->logger->info('ProcessScrapedArticleHandler: PressRelease created (pending review)', [
             'pressReleaseId' => $pr->getId(),

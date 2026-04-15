@@ -19,5 +19,6 @@ final readonly class ProcessAggregatorResultMessage
         public string $rawContent,
         public array $keywords,
         public string $aggregatorSourceType,
+        public ?string $sourcePublisherDomain = null,
     ) {}
 }

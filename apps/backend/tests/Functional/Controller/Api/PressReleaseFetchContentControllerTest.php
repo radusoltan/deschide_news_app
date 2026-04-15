@@ -126,7 +126,7 @@ class PressReleaseFetchContentControllerTest extends WebTestCase
         $pr->setContent(str_repeat('Long content paragraph. ', 50));
         $pr->setCategorySlug('societate');
         $pr->setSourceType(SourceType::AGGREGATOR);
-        $pr->setSourceUrl('https://example.com/article');
+        $pr->setSourceUrl('https://example.com/article-fetch-content-test-' . uniqid());
         $pr->setStatus(PressReleaseStatus::PENDING);
         $em->persist($pr);
         $em->flush();

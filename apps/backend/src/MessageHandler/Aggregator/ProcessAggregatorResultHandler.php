@@ -15,6 +15,7 @@ use App\Service\Aggregator\GoogleNewsUrlResolver;
 use App\Service\Aggregator\PressReleaseAggregatorFactory;
 use App\Service\Aggregator\SemanticDeduplicatorService;
 use App\Service\Translation\AggregatorTranslationService;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -110,8 +111,18 @@ final readonly class ProcessAggregatorResultHandler
             }
         }
 
-        $this->em->persist($pressRelease);
-        $this->em->flush();
+        try {
+            $this->em->persist($pressRelease);
+            $this->em->flush();
+        } catch (UniqueConstraintViolationException $e) {
+            $this->logger->info('ProcessAggregatorResultHandler: duplicate detected on flush, skipping', [
+                'sourceUrl' => $message->sourceUrl,
+                'error' => $e->getMessage(),
+            ]);
+            $this->em->clear();
+
+            return;
+        }
 
         $this->statsCollector->invalidateCache();
 

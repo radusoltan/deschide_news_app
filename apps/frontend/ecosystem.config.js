@@ -34,7 +34,7 @@ module.exports = {
     {
       // Development configuration (next dev)
       name: 'deschide-frontend-dev',
-      script: 'node_modules/.bin/next',
+      script: 'node_modules/next/dist/bin/next',
       args: 'dev --port 3005',
       cwd: '/var/www/deschide_news_app/apps/frontend',
       instances: 1,
