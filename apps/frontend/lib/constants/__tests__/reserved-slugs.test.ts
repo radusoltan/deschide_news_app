@@ -8,8 +8,8 @@ import { isReservedSlug, validateSlug, getReservedSlugs, RESERVED_SLUGS } from '
 
 describe('Reserved Slugs', () => {
   describe('RESERVED_SLUGS constant', () => {
-    it('should contain all 17 reserved slugs', () => {
-      expect(RESERVED_SLUGS).toHaveLength(17);
+    it('should contain all 18 reserved slugs', () => {
+      expect(RESERVED_SLUGS).toHaveLength(18);
     });
 
     it('should include critical system routes', () => {
@@ -68,7 +68,7 @@ describe('Reserved Slugs', () => {
   describe('getReservedSlugs', () => {
     it('should return all reserved slugs', () => {
       const slugs = getReservedSlugs();
-      expect(slugs).toHaveLength(17);
+      expect(slugs).toHaveLength(18);
       expect(slugs).toEqual(RESERVED_SLUGS);
     });
 
@@ -155,14 +155,15 @@ describe('Reserved Slugs', () => {
 
   describe('Backend compatibility', () => {
     it('should match backend reserved slugs count', () => {
-      // Backend has 19 reserved slugs in ReservedSlug.php (including 's' for short links)
-      // Frontend excludes 's' (handled by Next.js route) and 'login' is handled separately
-      expect(RESERVED_SLUGS).toHaveLength(17);
+      // Backend has 19 reserved slugs in ReservedSlug.php
+      // Frontend includes 's' for short links and all system routes
+      expect(RESERVED_SLUGS).toHaveLength(18);
     });
 
     it('should include all backend reserved slugs', () => {
       // These must match the backend validation
       const backendSlugs = [
+        's',
         'all',
         'search',
         'trending',
