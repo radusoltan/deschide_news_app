@@ -80,6 +80,17 @@ framework:
                     multiplier: 3
                     max_delay: 120000
 
+            # Python scraper transport (Sprint 46)
+            python_scraper:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: python_scraper
+                retry_strategy:
+                    max_retries: 2
+                    delay: 5000
+                    multiplier: 3
+                    max_delay: 60000
+
             # Editorial processing transport (Sprint 16)
             editorial:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
@@ -142,6 +153,9 @@ framework:
             'App\Message\Clustering\TriggerClusterRunMessage': editorial
             'App\Message\Clustering\TriggerClusterScoringMessage': editorial
             'App\Message\Clustering\SummarizeClusterMessage': ai_async
+
+            # Python scraper pipeline (Sprint 46)
+            'App\Message\Scraping\PythonScrapeMessage': python_scraper
 
             # Mercure real-time updates (Sprint 20)
             'Symfony\Component\Mercure\Update': async

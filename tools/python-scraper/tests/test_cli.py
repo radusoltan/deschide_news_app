@@ -108,3 +108,37 @@ class TestCliEntryPoint:
         )
         assert result.returncode == 0
         assert "deschide-scraper" in result.stdout or "fetch" in result.stdout
+
+    def test_list_subcommand(self):
+        result = subprocess.run(
+            [sys.executable, "-m", "deschide_scraper", "list"],
+            capture_output=True,
+            text=True,
+            cwd="/var/www/deschide_news_app/tools/python-scraper",
+        )
+        assert result.returncode == 0
+        data = json.loads(result.stdout)
+        assert isinstance(data, list)
+        assert len(data) > 0
+        assert all("key" in entry for entry in data)
+        assert all("type" in entry for entry in data)
+
+    def test_list_filtered_by_type(self):
+        result = subprocess.run(
+            [sys.executable, "-m", "deschide_scraper", "list", "--type=gov-rss"],
+            capture_output=True,
+            text=True,
+            cwd="/var/www/deschide_news_app/tools/python-scraper",
+        )
+        assert result.returncode == 0
+        data = json.loads(result.stdout)
+        assert all(entry["type"] == "gov-rss" for entry in data)
+
+    def test_run_unknown_source_fails(self):
+        result = subprocess.run(
+            [sys.executable, "-m", "deschide_scraper", "run", "--source=nonexistent_xyz"],
+            capture_output=True,
+            text=True,
+            cwd="/var/www/deschide_news_app/tools/python-scraper",
+        )
+        assert result.returncode != 0
