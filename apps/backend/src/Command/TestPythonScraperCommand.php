@@ -142,6 +142,7 @@ class TestPythonScraperCommand extends Command
         $created = 0;
         $skippedUrl = 0;
         $skippedHash = 0;
+        $batchHashes = [];
 
         $io->section($dryRun ? 'Dry Run — PressRelease Preview' : 'Persisting PressReleases');
 
@@ -155,13 +156,14 @@ class TestPythonScraperCommand extends Command
                 continue;
             }
 
-            // Dedup: contentHash
+            // Dedup: contentHash (DB + within-batch)
             $hash = $this->contentHasher->hash($item['content']);
-            if ($this->pressReleaseRepository->findByContentHash($hash) !== null) {
+            if (isset($batchHashes[$hash]) || $this->pressReleaseRepository->findByContentHash($hash) !== null) {
                 $io->text(sprintf('  SKIP (hash exists): %s', $title));
                 ++$skippedHash;
                 continue;
             }
+            $batchHashes[$hash] = true;
 
             if ($dryRun) {
                 $io->text(sprintf('  WOULD CREATE: %s [hash=%s]', $title, mb_substr($hash, 0, 12)));

@@ -10,6 +10,7 @@ use App\Service\Scraping\PressReleaseFromScraperFactory;
 use App\Service\Scraping\PythonScraperException;
 use App\Service\Scraping\PythonScraperService;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -24,13 +25,18 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class ScrapePythonSourcesCommand extends Command
 {
+    private EntityManagerInterface $em;
+
     public function __construct(
         private readonly PythonScraperService $scraperService,
         private readonly PressReleaseFromScraperFactory $factory,
         private readonly PressReleaseRepository $pressReleaseRepository,
         private readonly ContentHasher $contentHasher,
-        private readonly EntityManagerInterface $em,
+        private readonly ManagerRegistry $doctrine,
     ) {
+        /** @var EntityManagerInterface $em */
+        $em = $doctrine->getManager();
+        $this->em = $em;
         parent::__construct();
     }
 
@@ -105,6 +111,7 @@ class ScrapePythonSourcesCommand extends Command
                 $result = $this->scraperService->fetch($cfg['url'], $cfg['type'], $limit);
                 $items = $result['items'];
                 $scraped = \count($items);
+                $batchHashes = [];
 
                 foreach ($items as $item) {
                     // Dedup: sourceUrl
@@ -113,12 +120,13 @@ class ScrapePythonSourcesCommand extends Command
                         continue;
                     }
 
-                    // Dedup: contentHash
+                    // Dedup: contentHash (DB + within-batch)
                     $hash = $this->contentHasher->hash($item['content']);
-                    if ($this->pressReleaseRepository->findByContentHash($hash) !== null) {
+                    if (isset($batchHashes[$hash]) || $this->pressReleaseRepository->findByContentHash($hash) !== null) {
                         ++$skippedHash;
                         continue;
                     }
+                    $batchHashes[$hash] = true;
 
                     if (!$dryRun) {
                         $pr = $this->factory->create($item);
@@ -137,6 +145,13 @@ class ScrapePythonSourcesCommand extends Command
             } catch (\Throwable $e) {
                 $error = $e->getMessage();
                 ++$totalErrors;
+                // Reset EntityManager so subsequent sources can persist
+                if (!$this->em->isOpen()) {
+                    $this->doctrine->resetManager();
+                    /** @var EntityManagerInterface $em */
+                    $em = $this->doctrine->getManager();
+                    $this->em = $em;
+                }
             }
 
             $sourceResults[] = [
