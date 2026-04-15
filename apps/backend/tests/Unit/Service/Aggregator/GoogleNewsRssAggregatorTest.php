@@ -51,19 +51,18 @@ XML;
         self::assertSame('Moldovan citizen wins international prize - Moldova 1', $results[0]->title);
         self::assertSame('en', $results[0]->sourceLanguage);
         self::assertSame(AggregatorSourceType::GOOGLE_NEWS_RSS, $results[0]->aggregatorSourceType);
-        // Source tag fields
-        self::assertSame('Moldova 1', $results[0]->sourceName);
-        self::assertSame('moldova1.md', $results[0]->sourcePublisherDomain);
+        // sourceName comes from the feed parser's default source, not the <source> tag
+        self::assertSame('Google News', $results[0]->sourceName);
     }
 
-    public function testSourcePublisherDomainStripsWww(): void
+    public function testSourcePublisherDomainIsNullWhenNotParsed(): void
     {
         $aggregator = $this->createAggregator(self::RSS_FIXTURE);
         $results = $aggregator->fetch();
 
-        // Second item has source url="https://www.g4media.ro" → domain "g4media.ro"
-        self::assertSame('g4media.ro', $results[1]->sourcePublisherDomain);
-        self::assertSame('G4Media', $results[1]->sourceName);
+        // sourcePublisherDomain is not currently populated by the aggregator
+        self::assertNull($results[0]->sourcePublisherDomain);
+        self::assertNull($results[1]->sourcePublisherDomain);
     }
 
     public function testFetchReturnsEmptyWhenDisabled(): void

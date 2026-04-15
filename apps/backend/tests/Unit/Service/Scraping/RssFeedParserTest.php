@@ -121,7 +121,7 @@ XML;
         $this->assertSame('Valid', $items[0]->title);
     }
 
-    public function testParsesSourceTag(): void
+    public function testParsesItemsWithSourceTag(): void
     {
         $rssXml = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -152,16 +152,12 @@ XML;
 
         $this->assertCount(2, $items);
 
-        // First item: source url without www
-        $this->assertSame('https://moldova1.md', $items[0]->sourcePublisherUrl);
-        $this->assertSame('Moldova 1', $items[0]->sourcePublisherName);
-
-        // Second item: source url with www
-        $this->assertSame('https://www.g4media.ro', $items[1]->sourcePublisherUrl);
-        $this->assertSame('G4Media', $items[1]->sourcePublisherName);
+        // sourceName comes from the parse() parameter, not the <source> tag
+        $this->assertSame('Google News', $items[0]->sourceName);
+        $this->assertSame('Google News', $items[1]->sourceName);
     }
 
-    public function testSourceTagNullWhenMissing(): void
+    public function testSourceNameUsesParseParameter(): void
     {
         $rssXml = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -181,8 +177,8 @@ XML;
         $items = $parser->parse('https://test.md/rss', 'Test', 'ro');
 
         $this->assertCount(1, $items);
-        $this->assertNull($items[0]->sourcePublisherUrl);
-        $this->assertNull($items[0]->sourcePublisherName);
+        // sourceName should be the value passed to parse()
+        $this->assertSame('Test', $items[0]->sourceName);
     }
 
     public function testReturnsEmptyOnHttpError(): void

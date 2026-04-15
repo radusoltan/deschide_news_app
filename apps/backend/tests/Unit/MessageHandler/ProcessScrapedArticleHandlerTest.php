@@ -12,6 +12,7 @@ use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use App\Message\Editorial\ProcessScrapedArticleMessage;
 use App\MessageHandler\Editorial\ProcessScrapedArticleHandler;
+use App\Repository\PressReleaseRepository;
 use App\Service\CategoryDetectorService;
 use App\Service\ContentDeduplicator;
 use App\Service\ContentHasher;
@@ -86,11 +87,14 @@ class ProcessScrapedArticleHandlerTest extends TestCase
 
         $this->translationService = $this->createMock(AggregatorTranslationService::class);
 
+        $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
+
         $this->handler = new ProcessScrapedArticleHandler(
             $contentCleaner,
             new SourceContentCleanerRegistry([]),
             $contentHasher,
             $this->deduplicator,
+            $pressReleaseRepo,
             $categoryDetector,
             $authorResolver,
             $notificationService,

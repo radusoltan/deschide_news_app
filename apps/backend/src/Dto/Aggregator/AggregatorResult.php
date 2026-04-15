@@ -21,5 +21,6 @@ final readonly class AggregatorResult
         public string $rawContent,
         public array $keywords = [],
         public ?AggregatorSourceType $aggregatorSourceType = null,
+        public ?string $sourcePublisherDomain = null,
     ) {}
 }

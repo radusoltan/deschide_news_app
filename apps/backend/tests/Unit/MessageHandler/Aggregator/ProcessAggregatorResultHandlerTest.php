@@ -8,11 +8,12 @@ use App\Entity\PressRelease;
 use App\Enum\DeduplicationResult;
 use App\Message\Aggregator\ProcessAggregatorResultMessage;
 use App\MessageHandler\Aggregator\ProcessAggregatorResultHandler;
+use App\Repository\PressReleaseRepository;
+use App\Repository\SourceRepository;
 use App\Service\Aggregator\AggregatorStatsCollector;
 use App\Service\Aggregator\GoogleNewsUrlResolver;
 use App\Service\Aggregator\PressReleaseAggregatorFactory;
 use App\Service\Aggregator\SemanticDeduplicatorService;
-use App\Repository\SourceRepository;
 use App\Service\Translation\AggregatorTranslationService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -40,7 +41,8 @@ class ProcessAggregatorResultHandlerTest extends TestCase
 
         $urlResolver = $this->createMock(GoogleNewsUrlResolver::class);
 
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
         $handler($this->createMessage());
     }
 
@@ -67,7 +69,8 @@ class ProcessAggregatorResultHandlerTest extends TestCase
 
         $urlResolver = $this->createMock(GoogleNewsUrlResolver::class);
 
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
         $handler($this->createMessage(sourceLanguage: 'en'));
     }
 
@@ -94,7 +97,8 @@ class ProcessAggregatorResultHandlerTest extends TestCase
 
         $urlResolver = $this->createMock(GoogleNewsUrlResolver::class);
 
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
         $handler($this->createMessage(sourceLanguage: 'ro'));
     }
 
@@ -120,7 +124,8 @@ class ProcessAggregatorResultHandlerTest extends TestCase
 
         $urlResolver = $this->createMock(GoogleNewsUrlResolver::class);
 
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
         $handler($this->createMessage());
     }
 
@@ -150,7 +155,8 @@ class ProcessAggregatorResultHandlerTest extends TestCase
             ->with('https://news.google.com/rss/articles/CBMi123')
             ->willReturn('https://reuters.com/real-article');
 
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
         $handler($this->createMessage());
 
         self::assertSame('https://reuters.com/real-article', $pr->getSourceUrl());
@@ -174,7 +180,8 @@ class ProcessAggregatorResultHandlerTest extends TestCase
         $urlResolver = $this->createMock(GoogleNewsUrlResolver::class);
         $urlResolver->expects(self::never())->method('resolveUrl');
 
-        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
+        $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
+        $handler = new ProcessAggregatorResultHandler($dedup, $factory, $translation, $urlResolver, $pressReleaseRepo, $this->createMock(SourceRepository::class), $em, new NullLogger(), $statsCollector);
         $handler($this->createMessage(sourceLanguage: 'en', sourceName: 'Bing News'));
     }
 

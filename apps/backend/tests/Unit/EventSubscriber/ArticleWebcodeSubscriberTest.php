@@ -119,7 +119,7 @@ class ArticleWebcodeSubscriberTest extends TestCase
     public function generateWebcodeHandlesExceptionGracefully(): void
     {
         $shortCodeGenerator = $this->createStub(ShortCodeGenerator::class);
-        $shortCodeGenerator->method('generate')
+        $shortCodeGenerator->method('generateWebcode')
             ->willThrowException(new \Exception('Generation failed'));
 
         $logger = $this->createMock(LoggerInterface::class);

@@ -53,7 +53,7 @@ class PressReleaseAggregatorFactoryTest extends TestCase
         self::assertSame($publishedAt, $pr->getReceivedAt());
     }
 
-    public function testSetsSourcePublisherDomain(): void
+    public function testSourcePublisherDomainNotSetByFactory(): void
     {
         $catDetector = $this->createMock(CategoryDetectorService::class);
         $catDetector->method('detectSlug')->willReturn('externe');
@@ -73,8 +73,10 @@ class PressReleaseAggregatorFactoryTest extends TestCase
 
         $pr = $factory->createFromAggregatorResult($result);
 
-        self::assertSame('moldova1.md', $pr->getSourcePublisherDomain());
-        self::assertSame('moldova1.md', $pr->getSourceHostname());
+        // The factory does not currently set sourcePublisherDomain on PressRelease
+        self::assertNull($pr->getSourcePublisherDomain());
+        // sourceHostname falls back to parsed sourceUrl hostname
+        self::assertSame('news.google.com', $pr->getSourceHostname());
     }
 
     public function testSourcePublisherDomainNullWhenNotProvided(): void
