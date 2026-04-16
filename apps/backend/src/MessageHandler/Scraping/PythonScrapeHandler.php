@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\MessageHandler\Scraping;
 
 use App\Message\Scraping\PythonScrapeMessage;
+use App\Message\Topic\DetectTopicsForPressReleaseMessage;
 use App\Repository\PressReleaseRepository;
 use App\Service\ContentHasher;
 use App\Service\Scraping\PressReleaseFromScraperFactory;
@@ -13,6 +14,7 @@ use App\Service\Scraping\PythonScraperService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Handles PythonScrapeMessage: runs the Python scraper for a single source
@@ -28,6 +30,7 @@ class PythonScrapeHandler
         private readonly ContentHasher $contentHasher,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
+        private readonly MessageBusInterface $messageBus,
     ) {}
 
     public function __invoke(PythonScrapeMessage $message): void
@@ -58,6 +61,7 @@ class PythonScrapeHandler
         $created = 0;
         $skippedUrl = 0;
         $skippedHash = 0;
+        $newPressReleases = [];
 
         foreach ($items as $item) {
             // Dedup: sourceUrl
@@ -75,6 +79,7 @@ class PythonScrapeHandler
 
             $pr = $this->factory->create($item);
             $this->em->persist($pr);
+            $newPressReleases[] = $pr;
             ++$created;
         }
 
@@ -89,6 +94,13 @@ class PythonScrapeHandler
                 $this->em->clear();
 
                 return;
+            }
+
+            // Dispatch async topic detection for each new PR (ADR-015)
+            foreach ($newPressReleases as $pr) {
+                if ($pr->getId() !== null) {
+                    $this->messageBus->dispatch(new DetectTopicsForPressReleaseMessage($pr->getId()));
+                }
             }
         }
 

@@ -91,6 +91,18 @@ framework:
                     multiplier: 3
                     max_delay: 60000
 
+            # Topic detection transport — separate from ai_async to avoid
+            # competing with translation/generation workload (ADR-015)
+            topic_detection:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: topic_detection
+                retry_strategy:
+                    max_retries: 2
+                    delay: 5000
+                    multiplier: 3
+                    max_delay: 60000
+
             # Editorial processing transport (Sprint 16)
             editorial:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
@@ -156,6 +168,9 @@ framework:
 
             # Python scraper pipeline (Sprint 46)
             'App\Message\Scraping\PythonScrapeMessage': python_scraper
+
+            # Topic detection pipeline (Sprint 49, ADR-015)
+            'App\Message\Topic\DetectTopicsForPressReleaseMessage': topic_detection
 
             # Mercure real-time updates (Sprint 20)
             'Symfony\Component\Mercure\Update': async

@@ -166,6 +166,9 @@ class TopicRepository extends NestedTreeRepository
                 'lvl' => $topic->getLvl(),
                 'position' => $topic->getPosition(),
                 'isActive' => $topic->isActive(),
+                'status' => $topic->getStatus()->value,
+                'isSensitive' => $topic->isSensitive(),
+                'isStoryLeaf' => $topic->isStoryLeaf(),
                 'children' => [],
             ];
 

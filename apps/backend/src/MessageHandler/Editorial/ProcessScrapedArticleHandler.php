@@ -19,12 +19,14 @@ use App\Service\NotificationService;
 use App\Service\ScrapedContentCleaner;
 use App\Service\Scraping\RelevanceFilterService;
 use App\Service\SourceAuthorResolver;
+use App\Message\Topic\DetectTopicsForPressReleaseMessage;
 use App\Service\TopicDetectorService;
 use App\Service\Translation\AggregatorTranslationService;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsMessageHandler]
 final readonly class ProcessScrapedArticleHandler
@@ -43,6 +45,7 @@ final readonly class ProcessScrapedArticleHandler
         private AggregatorTranslationService $translationService,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
+        private MessageBusInterface $messageBus,
     ) {}
 
     public function __invoke(ProcessScrapedArticleMessage $message): void
@@ -149,6 +152,11 @@ final readonly class ProcessScrapedArticleHandler
             $this->em->clear();
 
             return;
+        }
+
+        // 9b. Dispatch async topic detection (ADR-015)
+        if ($pr->getId() !== null) {
+            $this->messageBus->dispatch(new DetectTopicsForPressReleaseMessage($pr->getId()));
         }
 
         $this->logger->info('ProcessScrapedArticleHandler: PressRelease created (pending review)', [

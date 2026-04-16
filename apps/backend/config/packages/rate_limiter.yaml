@@ -29,3 +29,9 @@ framework:
             policy: 'fixed_window'
             limit: 30
             interval: '1 hour'
+
+        # Topic detection rate limit (1/sec to avoid Gemini saturation)
+        topic_detection:
+            policy: 'fixed_window'
+            limit: 1
+            interval: '1 second'

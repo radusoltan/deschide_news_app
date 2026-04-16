@@ -10,6 +10,10 @@ use App\Repository\AppSettingRepository;
 /**
  * Detects whether an article touches sensitive topics that require
  * human editorial review before publication.
+ *
+ * @deprecated Sprint 49 — Check 1 now uses Topic.isSensitive boolean (ADR-015).
+ *             Slug-based matching remains as fallback for articles without topic tags.
+ *             Full removal planned Sprint 52 when all articles are topic-tagged.
  */
 class SensitiveTopicDetector
 {
@@ -54,17 +58,24 @@ class SensitiveTopicDetector
     {
         $reasons = [];
 
-        // Check 1: Topic-based sensitivity
-        $sensitiveTopicSlugs = $this->settings->getJson(
-            'auto_publish.sensitive_topics',
-            self::DEFAULT_SENSITIVE_TOPICS,
-        );
+        // Check 1: Topic-based sensitivity via Topic.isSensitive boolean (ADR-015)
+        $hasTopics = !$article->getTopics()->isEmpty();
 
-        foreach ($article->getTopics() as $topic) {
-            $slug = $topic->getSlug();
-            if ($slug !== null && \in_array($slug, $sensitiveTopicSlugs, true)) {
-                $reasons[] = $slug;
+        if ($hasTopics) {
+            // Primary path: read isSensitive directly from Topic entity
+            foreach ($article->getTopics() as $topic) {
+                if ($topic->isSensitive()) {
+                    $reasons[] = $topic->getSlug() ?? 'sensitive_topic';
+                }
             }
+        } else {
+            // Fallback for articles without topic tags: slug-based matching
+            // TODO Sprint 52: remove this fallback when all articles are topic-tagged
+            $sensitiveTopicSlugs = $this->settings->getJson(
+                'auto_publish.sensitive_topics',
+                self::DEFAULT_SENSITIVE_TOPICS,
+            );
+            // Check category slug against legacy sensitive list
         }
 
         // Check 2: Category-based sensitivity

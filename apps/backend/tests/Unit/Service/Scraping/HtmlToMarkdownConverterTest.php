@@ -102,4 +102,48 @@ class HtmlToMarkdownConverterTest extends TestCase
         $this->assertStringContainsString('Молдова', $result);
         $this->assertStringContainsString('реформах', $result);
     }
+
+    public function testPreservesCommaBelowDiacritics(): void
+    {
+        // U+0219 ș (comma below) and U+021B ț (comma below) must be preserved
+        $html = '<p>Președintele a anunțat măsuri pentru protecția cetățenilor.</p>';
+        $result = $this->converter->convert($html);
+
+        // Comma-below forms (correct Romanian)
+        $this->assertStringContainsString("\u{0219}", $result); // ș
+        $this->assertStringContainsString("\u{021B}", $result); // ț
+        // Must NOT convert to cedilla forms
+        $this->assertStringNotContainsString("\u{015F}", $result); // ş (cedilla)
+        $this->assertStringNotContainsString("\u{0163}", $result); // ţ (cedilla)
+    }
+
+    public function testStripImagesOption(): void
+    {
+        $html = '<p>Before image</p><figure><img src="photo.jpg" alt="Photo"><figcaption>Caption</figcaption></figure><p>After image</p>';
+        $result = $this->converter->convert($html, ['strip_images' => true]);
+
+        $this->assertStringContainsString('Before image', $result);
+        $this->assertStringContainsString('After image', $result);
+        $this->assertStringNotContainsString('photo.jpg', $result);
+        $this->assertStringNotContainsString('Caption', $result);
+    }
+
+    public function testStripLinksOption(): void
+    {
+        $html = '<p>Visit <a href="https://example.com">our site</a> for more info.</p>';
+        $result = $this->converter->convert($html, ['strip_links' => true]);
+
+        $this->assertStringContainsString('our site', $result);
+        $this->assertStringNotContainsString('https://example.com', $result);
+        $this->assertStringNotContainsString('[our site]', $result);
+    }
+
+    public function testDefaultOptionsPreserveImagesAndLinks(): void
+    {
+        $html = '<p><a href="https://example.com">Link</a> and <img src="photo.jpg" alt="Alt"></p>';
+        $result = $this->converter->convert($html);
+
+        $this->assertStringContainsString('[Link]', $result);
+        $this->assertStringContainsString('photo.jpg', $result);
+    }
 }

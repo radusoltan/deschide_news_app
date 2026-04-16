@@ -21,11 +21,24 @@ final class HtmlToMarkdownConverter
 
     /**
      * Convert HTML to clean Markdown with UTF-8 NFC normalization.
+     *
+     * @param array{strip_images?: bool, strip_links?: bool} $options
      */
-    public function convert(string $html): string
+    public function convert(string $html, array $options = []): string
     {
         // Pre-clean: remove unwanted elements and attributes
         $html = $this->cleanHtml($html);
+
+        // Strip images before conversion if requested (removes <img>, <figure>, <figcaption>)
+        if ($options['strip_images'] ?? false) {
+            $html = preg_replace('/<figure[^>]*>.*?<\/figure>/si', '', $html);
+            $html = preg_replace('/<img[^>]*\/?>/i', '', $html);
+        }
+
+        // Strip links if requested (keep text, remove <a> tags)
+        if ($options['strip_links'] ?? false) {
+            $html = preg_replace('/<a[^>]*>(.*?)<\/a>/si', '$1', $html);
+        }
 
         // Convert to Markdown
         $markdown = $this->converter->convert($html);
