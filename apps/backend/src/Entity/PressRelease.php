@@ -248,11 +248,17 @@ class PressRelease
     #[ORM\ManyToMany(targetEntity: StoryCluster::class, mappedBy: 'pressReleases')]
     private Collection $storyClusters;
 
+    /** @var Collection<int, PressReleaseTopic> */
+    #[ORM\OneToMany(targetEntity: PressReleaseTopic::class, mappedBy: 'pressRelease', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['press:detail'])]
+    private Collection $pressReleaseTopics;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->receivedAt = new \DateTimeImmutable();
         $this->storyClusters = new ArrayCollection();
+        $this->pressReleaseTopics = new ArrayCollection();
     }
 
     public function getId(): ?int { return $this->id; }
@@ -371,6 +377,18 @@ class PressRelease
 
     /** @return Collection<int, StoryCluster> */
     public function getStoryClusters(): Collection { return $this->storyClusters; }
+
+    /** @return Collection<int, PressReleaseTopic> */
+    public function getPressReleaseTopics(): Collection { return $this->pressReleaseTopics; }
+
+    public function addPressReleaseTopic(PressReleaseTopic $prt): static
+    {
+        if (!$this->pressReleaseTopics->contains($prt)) {
+            $this->pressReleaseTopics->add($prt);
+        }
+
+        return $this;
+    }
 
     public function getAiConfidenceScore(): ?float { return $this->aiConfidenceScore; }
     public function setAiConfidenceScore(?float $aiConfidenceScore): static { $this->aiConfidenceScore = $aiConfidenceScore; return $this; }

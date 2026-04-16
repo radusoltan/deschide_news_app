@@ -197,6 +197,10 @@ class Topic implements Translatable
     #[ORM\JoinTable(name: 'article_topics')]
     private Collection $articles;
 
+    /** @var Collection<int, PressReleaseTopic> */
+    #[ORM\OneToMany(targetEntity: PressReleaseTopic::class, mappedBy: 'topic', cascade: ['remove'], orphanRemoval: true)]
+    private Collection $pressReleaseTopics;
+
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['topic:read'])]
@@ -222,6 +226,7 @@ class Topic implements Translatable
     {
         $this->children = new ArrayCollection();
         $this->articles = new ArrayCollection();
+        $this->pressReleaseTopics = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -377,6 +382,12 @@ class Topic implements Translatable
         $this->articles->removeElement($article);
 
         return $this;
+    }
+
+    /** @return Collection<int, PressReleaseTopic> */
+    public function getPressReleaseTopics(): Collection
+    {
+        return $this->pressReleaseTopics;
     }
 
     public function getCreatedAt(): ?DateTimeImmutable
