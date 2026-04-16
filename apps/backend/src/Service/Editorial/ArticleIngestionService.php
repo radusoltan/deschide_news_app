@@ -19,8 +19,6 @@ final class ArticleIngestionService
         private readonly GeminiCliService $geminiCli,
         private readonly NotebookLMService $notebookLMService,
         private readonly LoggerInterface $logger,
-        /** @var array<string, string> */
-        private readonly array $notebooks = [],
     ) {}
 
     /**
@@ -71,7 +69,7 @@ final class ArticleIngestionService
     }
 
     /**
-     * Feed article to the appropriate NotebookLM notebook.
+     * Feed article to the appropriate NotebookLM notebook (resolved via Topic).
      */
     public function feedNotebookLM(Article $article): bool
     {
@@ -79,12 +77,20 @@ final class ArticleIngestionService
             return false;
         }
 
-        $category = $article->getCategory()?->getTitle() ?? '';
-        $notebookId = $this->notebookLMService->resolveNotebookId($category, $this->notebooks);
+        $topic = $article->getTopics()->first() ?: null;
+        if ($topic === null) {
+            $this->logger->debug('ArticleIngestion: article has no topics, skipping NotebookLM feed', [
+                'articleId' => $article->getId(),
+            ]);
+
+            return false;
+        }
+
+        $notebookId = $this->notebookLMService->resolveNotebookId($topic);
 
         if ($notebookId === null) {
-            $this->logger->debug('ArticleIngestion: no notebook mapped for category', [
-                'category' => $category,
+            $this->logger->debug('ArticleIngestion: no notebook mapped for topic', [
+                'topicId' => $topic->getId(),
             ]);
 
             return false;

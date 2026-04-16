@@ -304,9 +304,7 @@ services:
             $cliPath: '%notebooklm.cli_path%'
 
     # Article Ingestion Service (uses GeminiCliService — Sprint 17)
-    App\Service\Editorial\ArticleIngestionService:
-        arguments:
-            $notebooks: '%notebooklm.notebooks%'
+    App\Service\Editorial\ArticleIngestionService: ~
 
     # Dossier Generation Service (uses GeminiCliService — Sprint 17)
     App\Service\Editorial\DossierGenerationService: ~

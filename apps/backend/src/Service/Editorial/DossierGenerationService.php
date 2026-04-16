@@ -6,6 +6,7 @@ namespace App\Service\Editorial;
 
 use App\Entity\Article;
 use App\Entity\GeneratedContent;
+use App\Entity\Topic;
 use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\Ai\Provider\GeminiCliException;
@@ -155,17 +156,15 @@ PROMPT;
     /**
      * @param list<Article> $articles
      */
-    private function enrichWithNotebookLM(string $topicName, array $articles): ?string
+    private function enrichWithNotebookLM(string $topicName, array $articles, ?Topic $topic = null): ?string
     {
         if (!$this->notebookLMService->isAvailable()) {
             return null;
         }
 
-        $notebooks = []; // Would need to be injected — use resolveNotebookId pattern
-        $notebookId = $this->notebookLMService->resolveNotebookId(
-            $this->slugify($topicName),
-            $notebooks,
-        );
+        $notebookId = $topic !== null
+            ? $this->notebookLMService->resolveNotebookId($topic)
+            : null;
 
         if ($notebookId === null) {
             return null;
