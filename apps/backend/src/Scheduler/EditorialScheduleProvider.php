@@ -14,6 +14,7 @@ use App\Message\Editorial\GenerateDailyBriefingMessage;
 use App\Message\Editorial\GenerateDossiersMessage;
 use App\Message\Editorial\GenerateWeeklySummaryMessage;
 use App\Message\Editorial\ScrapeSourceMessage;
+use App\Message\NotebookLM\TriggerTopicNotebookSyncMessage;
 use App\Message\Topic\TriggerTopicBriefingRunMessage;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
@@ -117,6 +118,14 @@ class EditorialScheduleProvider implements ScheduleProviderInterface
             // Recalculate importance scores every 15 minutes
             ->add(RecurringMessage::every('15 minutes',
                 new TriggerClusterScoringMessage(since: '48h', autoPromote: true),
+            ))
+
+            // === NotebookLM Sync (Sprint 51a) ===
+
+            // Sync topic sources to NotebookLM notebooks — daily at 02:00
+            ->add(RecurringMessage::cron(
+                '0 2 * * *',
+                new TriggerTopicNotebookSyncMessage(),
             ));
     }
 }

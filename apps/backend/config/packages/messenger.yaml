@@ -188,6 +188,9 @@ framework:
             'App\Message\Topic\TriggerTopicBriefingRunMessage': briefing
             'App\Message\Topic\GenerateTopicBriefingMessage': briefing
 
+            # NotebookLM sync (Sprint 51a)
+            'App\Message\NotebookLM\TriggerTopicNotebookSyncMessage': editorial
+
             # Mercure real-time updates (Sprint 20)
             'Symfony\Component\Mercure\Update': async
 
