@@ -138,10 +138,36 @@ function TreeNode({ node, onEdit, onDelete, onAddChild, onMove, depth }: TreeNod
           {node.title}
         </span>
 
+        {/* Status badge */}
+        {node.status === 'archived' && (
+          <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+            Arhivat
+          </span>
+        )}
+        {node.status === 'proposed' && (
+          <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">
+            Propus
+          </span>
+        )}
+
         {/* Inactive badge */}
         {!node.isActive && (
           <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
             Inactiv
+          </span>
+        )}
+
+        {/* Sensitive badge */}
+        {node.isSensitive && (
+          <span className="text-xs px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+            Sensibil
+          </span>
+        )}
+
+        {/* Story leaf badge */}
+        {node.isStoryLeaf && (
+          <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+            Poveste
           </span>
         )}
 
