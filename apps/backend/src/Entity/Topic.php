@@ -201,6 +201,21 @@ class Topic implements Translatable
     #[ORM\OneToMany(targetEntity: PressReleaseTopic::class, mappedBy: 'topic', cascade: ['remove'], orphanRemoval: true)]
     private Collection $pressReleaseTopics;
 
+    /** NotebookLM notebook ID for this topic (provisioned by ensureNotebookForTopic) */
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    #[Groups(['topic:read', 'topic:write'])]
+    private ?string $notebookLmId = null;
+
+    /** When sources were last synced to the NotebookLM notebook */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['topic:read'])]
+    private ?DateTimeImmutable $notebookLastSyncedAt = null;
+
+    /** Number of sources currently in the NotebookLM notebook */
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    #[Groups(['topic:read'])]
+    private int $notebookSourceCount = 0;
+
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[Groups(['topic:read'])]
@@ -508,6 +523,42 @@ class Topic implements Translatable
     public function setKeywords(?array $keywords): self
     {
         $this->keywords = $keywords;
+
+        return $this;
+    }
+
+    public function getNotebookLmId(): ?string
+    {
+        return $this->notebookLmId;
+    }
+
+    public function setNotebookLmId(?string $notebookLmId): self
+    {
+        $this->notebookLmId = $notebookLmId;
+
+        return $this;
+    }
+
+    public function getNotebookLastSyncedAt(): ?DateTimeImmutable
+    {
+        return $this->notebookLastSyncedAt;
+    }
+
+    public function setNotebookLastSyncedAt(?DateTimeImmutable $notebookLastSyncedAt): self
+    {
+        $this->notebookLastSyncedAt = $notebookLastSyncedAt;
+
+        return $this;
+    }
+
+    public function getNotebookSourceCount(): int
+    {
+        return $this->notebookSourceCount;
+    }
+
+    public function setNotebookSourceCount(int $notebookSourceCount): self
+    {
+        $this->notebookSourceCount = $notebookSourceCount;
 
         return $this;
     }
