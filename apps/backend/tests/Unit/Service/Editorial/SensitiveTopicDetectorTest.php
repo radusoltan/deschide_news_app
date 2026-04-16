@@ -34,7 +34,7 @@ class SensitiveTopicDetectorTest extends TestCase
 
     public function testPoliticaTopicIsSensitive(): void
     {
-        $article = $this->createArticleWithTopic('politica', 'Noi legi adoptate');
+        $article = $this->createArticleWithTopic('politica', 'Noi legi adoptate', isSensitive: true);
 
         $this->assertTrue($this->detector->isSensitive($article));
         $this->assertContains('politica', $this->detector->getSensitiveTopics($article));
@@ -90,13 +90,14 @@ class SensitiveTopicDetectorTest extends TestCase
         $this->assertTrue($this->detector->isSensitive($article));
     }
 
-    private function createArticleWithTopic(string $topicSlug, string $title): Article
+    private function createArticleWithTopic(string $topicSlug, string $title, bool $isSensitive = false): Article
     {
         $article = new Article();
         $article->setTitle($title);
         $article->setContent('Some content about the topic at hand');
 
         $topic = new Topic();
+        $topic->setIsSensitive($isSensitive);
         $ref = new \ReflectionClass($topic);
         if ($ref->hasProperty('slug')) {
             $prop = $ref->getProperty('slug');
