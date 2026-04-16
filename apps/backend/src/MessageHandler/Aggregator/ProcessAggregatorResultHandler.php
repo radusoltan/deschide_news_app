@@ -11,6 +11,7 @@ use App\Message\Aggregator\ProcessAggregatorResultMessage;
 use App\Repository\PressReleaseRepository;
 use App\Repository\SourceRepository;
 use App\Message\Scraping\ScrapeFullContentMessage;
+use App\Message\Topic\DetectTopicsForPressReleaseMessage;
 use App\Service\Aggregator\AggregatorStatsCollector;
 use App\Service\Aggregator\GoogleNewsUrlResolver;
 use App\Service\Aggregator\PressReleaseAggregatorFactory;
@@ -128,6 +129,11 @@ final readonly class ProcessAggregatorResultHandler
         }
 
         $this->statsCollector->invalidateCache();
+
+        // Dispatch async topic detection (ADR-015)
+        if ($pressRelease->getId() !== null) {
+            $this->messageBus->dispatch(new DetectTopicsForPressReleaseMessage($pressRelease->getId()));
+        }
 
         // Auto-enrich thin content from credible sources
         $sourceCredibility = $pressRelease->getSource()?->getCredibilityWeight() ?? 0.0;

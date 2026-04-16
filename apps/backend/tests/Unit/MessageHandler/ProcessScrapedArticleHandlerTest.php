@@ -28,6 +28,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -103,6 +104,7 @@ class ProcessScrapedArticleHandlerTest extends TestCase
             $this->translationService,
             $this->em,
             new NullLogger(),
+            $this->createMock(MessageBusInterface::class),
         );
     }
 

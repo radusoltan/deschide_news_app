@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 class PythonScrapeHandlerTest extends TestCase
 {
@@ -41,6 +42,7 @@ class PythonScrapeHandlerTest extends TestCase
             $this->contentHasher,
             $this->em,
             new NullLogger(),
+            $this->createMock(MessageBusInterface::class),
         );
     }
 
