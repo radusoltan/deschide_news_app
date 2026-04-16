@@ -1974,6 +1974,18 @@ parameters:
 			path: src/Entity/Topic.php
 
 		-
+			message: '#^Property App\\Entity\\TopicBriefing\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TopicBriefing.php
+
+		-
+			message: '#^Property App\\Entity\\TopicBriefing\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TopicBriefing.php
+
+		-
 			message: '#^Property App\\Entity\\Topic\:\:\$title type mapping mismatch\: property can contain string\|null but database expects string\.$#'
 			identifier: doctrine.columnType
 			count: 1
