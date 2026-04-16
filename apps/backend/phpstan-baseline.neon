@@ -1974,6 +1974,18 @@ parameters:
 			path: src/Entity/Topic.php
 
 		-
+			message: '#^Property App\\Entity\\TopicBriefing\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TopicBriefing.php
+
+		-
+			message: '#^Property App\\Entity\\TopicBriefing\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TopicBriefing.php
+
+		-
 			message: '#^Property App\\Entity\\Topic\:\:\$title type mapping mismatch\: property can contain string\|null but database expects string\.$#'
 			identifier: doctrine.columnType
 			count: 1
@@ -3999,6 +4011,20 @@ parameters:
 			identifier: identical.alwaysTrue
 			count: 2
 			path: src/State/UserProcessor.php
+
+		# Sprint 50: GenerateDailyBriefingMessage is deprecated but kept in scheduler
+		# until Sprint 52 removal (ADR-016 D7). Intentional usage during transition.
+		-
+			message: '#^Call to method __construct\(\) of deprecated class App\\Message\\Editorial\\GenerateDailyBriefingMessage#'
+			identifier: method.deprecatedClass
+			count: 2
+			path: src/Scheduler/EditorialScheduleProvider.php
+
+		-
+			message: '#^Instantiation of deprecated class App\\Message\\Editorial\\GenerateDailyBriefingMessage#'
+			identifier: new.deprecatedClass
+			count: 2
+			path: src/Scheduler/EditorialScheduleProvider.php
 
 		-
 			message: '#^Class App\\Transformer\\Article\\ReadingTimeTransformer implements generic interface Symfony\\Component\\ObjectMapper\\TransformCallableInterface but does not specify its types\: T, T2$#'
