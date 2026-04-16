@@ -103,6 +103,18 @@ framework:
                     multiplier: 3
                     max_delay: 60000
 
+            # Briefing generation transport — isolated from editorial/ai_async
+            # to prevent long AI calls blocking curation UX (ADR-016 D3/D8)
+            briefing:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: briefing
+                retry_strategy:
+                    max_retries: 3
+                    delay: 5000
+                    multiplier: 3
+                    max_delay: 120000
+
             # Editorial processing transport (Sprint 16)
             editorial:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
@@ -171,6 +183,10 @@ framework:
 
             # Topic detection pipeline (Sprint 49, ADR-015)
             'App\Message\Topic\DetectTopicsForPressReleaseMessage': topic_detection
+
+            # Topic briefing pipeline (Sprint 50, ADR-016)
+            'App\Message\Topic\TriggerTopicBriefingRunMessage': briefing
+            'App\Message\Topic\GenerateTopicBriefingMessage': briefing
 
             # Mercure real-time updates (Sprint 20)
             'Symfony\Component\Mercure\Update': async
