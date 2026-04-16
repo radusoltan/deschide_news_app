@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use App\Enum\BriefingCadence;
 use App\Enum\BriefingStatus;
 use App\Repository\TopicBriefingRepository;
@@ -19,6 +25,31 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Index(name: 'idx_tb_cadence_status', columns: ['cadence', 'status'])]
 #[ORM\Index(name: 'idx_tb_created', columns: ['created_at'])]
 #[ORM\Index(name: 'idx_tb_period', columns: ['period_from', 'period_to'])]
+#[ApiResource(
+    operations: [
+        new Get(
+            uriTemplate: '/admin/briefings/{id}',
+            normalizationContext: ['groups' => ['briefing:read']],
+            security: "is_granted('ROLE_ADMIN')",
+        ),
+        new GetCollection(
+            uriTemplate: '/admin/briefings',
+            normalizationContext: ['groups' => ['briefing:read']],
+            security: "is_granted('ROLE_ADMIN')",
+            paginationItemsPerPage: 20,
+            paginationClientEnabled: true,
+            paginationClientItemsPerPage: true,
+        ),
+    ],
+    order: ['createdAt' => 'DESC'],
+)]
+#[ApiFilter(SearchFilter::class, properties: [
+    'cadence' => 'exact',
+    'status' => 'exact',
+    'topic.id' => 'exact',
+    'topic.title' => 'partial',
+])]
+#[ApiFilter(OrderFilter::class, properties: ['createdAt', 'prCount'])]
 class TopicBriefing
 {
     #[ORM\Id]
