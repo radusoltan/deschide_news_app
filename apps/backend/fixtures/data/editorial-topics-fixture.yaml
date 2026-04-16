@@ -1,0 +1,3781 @@
+# =============================================================================
+# Deschide.md — Editorial Topic Fixture (v2 — CONSOLIDATED)
+# =============================================================================
+# Structure: Domain → Sub-group → Topic (3-level hierarchy)
+# Translations: RO / EN / RU (per node)
+# Keywords: Elasticsearch matching (title + content + summary)
+# is_sensitive: flag for SensitiveTopicDetector / AutoPublishGate
+#
+# Totals (verified by YAML load + assertion):
+#   - 10 domains (9 international + 1 Republic of Moldova)
+#   - 38 sub-groups (28 international + 10 Moldova)
+#   - 116 topics (56 international + 60 Moldova)
+#   - 43 sensitive topics (37%) — block auto-publish gate
+#   - ~1,790 unique tags after slug-dedup from ~1,920 keyword entries
+#
+# Sources consolidated (4 independent research outputs):
+#   - Claude research — 44 Moldova topics
+#   - Gemini-1 research — 32 Moldova topics
+#   - Gemini-2 research — 34 Moldova topics
+#   - GPT-5 research — 35 Moldova topics
+#   → 60 unique Moldova topics after cross-source deduplication
+#   → 68% of Moldova topics are confirmed by 2+ sources
+#
+# Usage: loaded by src/DataFixtures/EditorialTopicFixture.php
+# Tag derivation: src/DataFixtures/TagFixture.php (from topic keywords)
+# Docs: Obsidian vault, 30_Engineering_Context/Fixtures/Fixtures_Topics_and_Tags.md
+# =============================================================================
+
+domains:
+  - slug: security-armed-conflicts
+    translations:
+      ro: Securitate și Conflicte Armate
+      en: Security & Armed Conflicts
+      ru: Безопасность и вооружённые конфликты
+    sort_order: 1
+    sub_groups:
+      - slug: russia-ukraine-war
+        translations:
+          ro: Războiul Ruso-Ucrainean
+          en: Russia-Ukraine War
+          ru: Российско-украинская война
+        topics:
+          - slug: drone-warfare-innovation
+            translations:
+              ro:
+                name: Războiul dronelor și inovația tactică
+                description: Dronele FPV, fibra optică, vehicule terestre fără pilot, asistență tehnică internațională
+              en:
+                name: Drone Warfare & Tactical Innovation
+                description: FPV drones, fiber optic, unmanned ground vehicles, international tech assistance
+              ru:
+                name: Война дронов и тактические инновации
+                description: FPV-дроны, оптоволокно, наземные беспилотники, международная техпомощь
+            is_sensitive: true
+            keywords:
+              - drone
+              - dronă
+              - FPV
+              - fibră optică
+              - fiber optic
+              - оптоволокно
+              - UAV
+              - беспилотник
+              - Peaky Blinders
+              - vehicul terestru fără pilot
+              - pachet drone
+              - drone package
+          - slug: ukraine-peace-diplomacy
+            translations:
+              ro:
+                name: Diplomația păcii și negocierile
+                description: Negocierile de pace, emisarii Trump, acorduri teritoriale, plan de pace
+              en:
+                name: Peace Diplomacy & Negotiations
+                description: Peace negotiations, Trump envoys, territorial agreements, peace plan
+              ru:
+                name: Мирная дипломатия и переговоры
+                description: Мирные переговоры, эмиссары Трампа, территориальные соглашения
+            is_sensitive: true
+            keywords:
+              - negocieri pace
+              - peace negotiations
+              - мирные переговоры
+              - Witkoff
+              - acord pace
+              - peace deal
+              - cessez-le-feu
+              - ceasefire
+              - прекращение огня
+              - Crimeea
+              - Crimea
+              - Крым
+              - concesii teritoriale
+          - slug: russia-strategic-exhaustion
+            translations:
+              ro:
+                name: Epuizarea strategică și demografia rusă
+                description: Pierderi militare, criza demografică, eludarea sancțiunilor, decolonizare
+              en:
+                name: Russian Strategic Exhaustion & Demographics
+                description: Military losses, demographic crisis, sanctions evasion, decolonization
+              ru:
+                name: Стратегическое истощение и демография России
+                description: Военные потери, демографический кризис, обход санкций, деколонизация
+            is_sensitive: true
+            keywords:
+              - demografie Rusia
+              - Russian demographics
+              - демография России
+              - pierderi militare
+              - military losses
+              - военные потери
+              - sancțiuni
+              - sanctions
+              - санкции
+              - decolonizare
+              - Kara-Murza
+              - bombă demografică
+          - slug: ukraine-energy-infrastructure
+            translations:
+              ro:
+                name: Infrastructura energetică ucraineană
+                description: Atacuri asupra rețelei energetice, Cernobîl, reconstrucție, blackout
+              en:
+                name: Ukrainian Energy Infrastructure
+                description: Energy grid attacks, Chernobyl, reconstruction, blackouts
+              ru:
+                name: Энергетическая инфраструктура Украины
+                description: Атаки на энергосистему, Чернобыль, восстановление, блэкауты
+            is_sensitive: true
+            keywords:
+              - infrastructură energetică
+              - energy infrastructure
+              - энергетическая инфраструктура
+              - Cernobîl
+              - Chernobyl
+              - Чернобыль
+              - rețea electrică
+              - power grid
+              - blackout
+              - блэкаут
+          - slug: ukraine-domestic-politics
+            translations:
+              ro:
+                name: Politica internă a Ucrainei
+                description: Alegeri, Yermak, anticorupție, societate civilă, Zelenski
+              en:
+                name: Ukraine Domestic Politics
+                description: Elections, Yermak, anti-corruption, civil society, Zelensky
+              ru:
+                name: Внутренняя политика Украины
+                description: Выборы, Ермак, антикоррупция, гражданское общество, Зеленский
+            is_sensitive: true
+            keywords:
+              - Zelenski
+              - Zelensky
+              - Зеленский
+              - Yermak
+              - Ермак
+              - alegeri Ucraina
+              - Ukraine elections
+              - выборы Украина
+              - anticorupție Ucraina
+              - anticorruption Ukraine
+      - slug: middle-east
+        translations:
+          ro: Orientul Mijlociu
+          en: Middle East
+          ru: Ближний Восток
+        topics:
+          - slug: israel-palestine-conflict
+            translations:
+              ro:
+                name: Conflictul Israel-Palestina
+                description: Gaza, Cisiordania, operațiuni militare, criza umanitară, coloniști
+              en:
+                name: Israel-Palestine Conflict
+                description: Gaza, West Bank, military operations, humanitarian crisis, settlers
+              ru:
+                name: Израильско-палестинский конфликт
+                description: Газа, Западный берег, военные операции, гуманитарный кризис
+            is_sensitive: true
+            keywords:
+              - Gaza
+              - Газа
+              - Cisiordania
+              - West Bank
+              - Западный берег
+              - Israel
+              - Израиль
+              - Palestina
+              - Palestine
+              - Палестина
+              - Hamas
+              - ХАМАС
+              - coloniști
+              - settlers
+          - slug: israel-iran-nuclear
+            translations:
+              ro:
+                name: Confruntarea Israel-Iran și dosarul nuclear
+                description: Lovituri aeriene Fordow/Natanz, negocieri Islamabad, Garda Revoluționară
+              en:
+                name: Israel-Iran Confrontation & Nuclear Dossier
+                description: Fordow/Natanz airstrikes, Islamabad negotiations, IRGC
+              ru:
+                name: Противостояние Израиль-Иран и ядерное досье
+                description: Удары по Фордоу/Натанзу, переговоры в Исламабаде, КСИР
+            is_sensitive: true
+            keywords:
+              - Iran
+              - Иран
+              - nuclear
+              - nuclear Iran
+              - ядерный
+              - Fordow
+              - Natanz
+              - Натанз
+              - Islamabad
+              - IRGC
+              - Garda Revoluționară
+              - Revolutionary Guard
+              - КСИР
+          - slug: strait-of-hormuz-crisis
+            translations:
+              ro:
+                name: Criza Strâmtorii Ormuz
+                description: Blocada petrolieră, mine marine, securitatea navigației, trafic petrolier
+              en:
+                name: Strait of Hormuz Crisis
+                description: Oil blockade, naval mines, shipping security, oil traffic
+              ru:
+                name: Кризис Ормузского пролива
+                description: Нефтяная блокада, морские мины, безопасность судоходства
+            is_sensitive: true
+            keywords:
+              - Ormuz
+              - Hormuz
+              - Ормуз
+              - petrolier
+              - oil tanker
+              - нефтяной танкер
+              - mine marine
+              - naval mines
+              - морские мины
+              - blocadă
+              - blockade
+              - блокада
+      - slug: regional-conflicts
+        translations:
+          ro: Conflicte Regionale
+          en: Regional Conflicts
+          ru: Региональные конфликты
+        topics:
+          - slug: sudan-civil-war
+            translations:
+              ro:
+                name: Războiul civil din Sudan
+                description: RSF, El Fasher, criză umanitară, deplasări masive, Darfur
+              en:
+                name: Sudan Civil War
+                description: RSF, El Fasher, humanitarian crisis, mass displacement, Darfur
+              ru:
+                name: Гражданская война в Судане
+                description: Силы быстрого реагирования, Эль-Фашир, гуманитарный кризис, Дарфур
+            is_sensitive: true
+            keywords:
+              - Sudan
+              - Судан
+              - RSF
+              - Rapid Support Forces
+              - El Fasher
+              - Эль-Фашир
+              - Darfur
+              - Дарфур
+              - criză umanitară Sudan
+          - slug: southeast-asia-tensions
+            translations:
+              ro:
+                name: Tensiuni în Asia de Sud-Est
+                description: Conflict Cambodgia-Thailanda, templu Prasat Ta Muen Thom, ASEAN
+              en:
+                name: Southeast Asia Tensions
+                description: Cambodia-Thailand conflict, Prasat Ta Muen Thom temple, ASEAN
+              ru:
+                name: Напряжённость в Юго-Восточной Азии
+                description: Конфликт Камбоджа-Таиланд, храм Прасат Та Муэн Том, АСЕАН
+            is_sensitive: false
+            keywords:
+              - Cambodgia
+              - Cambodia
+              - Камбоджа
+              - Thailanda
+              - Thailand
+              - Таиланд
+              - ASEAN
+              - АСЕАН
+              - Prasat Ta Muen Thom
+          - slug: us-latin-america-operations
+            translations:
+              ro:
+                name: Operațiuni antidrog SUA în America Latină
+                description: Narcoterorism, Venezuela, Marea Caraibelor, intervenție militară
+              en:
+                name: US Anti-Narcotics Operations in Latin America
+                description: Narco-terrorism, Venezuela, Caribbean, military intervention
+              ru:
+                name: Антинаркотические операции США в Латинской Америке
+                description: Наркотерроризм, Венесуэла, Карибы, военное вмешательство
+            is_sensitive: true
+            keywords:
+              - narcoterorism
+              - narco-terrorism
+              - наркотерроризм
+              - Venezuela
+              - Венесуэла
+              - Caraibe
+              - Caribbean
+              - Карибы
+      - slug: european-defense
+        translations:
+          ro: Apărare Europeană
+          en: European Defense
+          ru: Европейская оборона
+        topics:
+          - slug: european-rearmament
+            translations:
+              ro:
+                name: Reînarmare europeană și industria de apărare
+                description: ReArm Europe, cheltuieli militare, industrie de apărare, NATO 2%
+              en:
+                name: European Rearmament & Defense Industry
+                description: ReArm Europe, military spending, defense industry, NATO 2%
+              ru:
+                name: Перевооружение Европы и оборонная промышленность
+                description: ReArm Europe, военные расходы, оборонная промышленность, НАТО 2%
+            is_sensitive: false
+            keywords:
+              - reînarmare
+              - rearmament
+              - перевооружение
+              - ReArm Europe
+              - industrie de apărare
+              - defense industry
+              - оборонная промышленность
+              - cheltuieli militare
+              - military spending
+              - военные расходы
+              - NATO 2%
+          - slug: baltic-eastern-flank-security
+            translations:
+              ro:
+                name: Mobilizarea Baltice și securitatea flancului estic
+                description: Lituania, Estonia, buncăre, Narva, pregătiri NATO
+              en:
+                name: Baltic Mobilization & Eastern Flank Security
+                description: Lithuania, Estonia, bunkers, Narva, NATO preparations
+              ru:
+                name: Мобилизация стран Балтии и безопасность восточного фланга
+                description: Литва, Эстония, бункеры, Нарва, подготовка НАТО
+            is_sensitive: true
+            keywords:
+              - Baltice
+              - Baltic
+              - Балтия
+              - Lituania
+              - Lithuania
+              - Литва
+              - Estonia
+              - Эстония
+              - Narva
+              - Нарва
+              - buncăr
+              - bunker
+              - бункер
+              - flanc estic
+              - eastern flank
+  - slug: geopolitics-diplomacy
+    translations:
+      ro: Geopolitică și Diplomație
+      en: Geopolitics & Diplomacy
+      ru: Геополитика и дипломатия
+    sort_order: 2
+    sub_groups:
+      - slug: us-foreign-policy
+        translations:
+          ro: Politica Externă a SUA
+          en: US Foreign Policy
+          ru: Внешняя политика США
+        topics:
+          - slug: trump-doctrine-executive-orders
+            translations:
+              ro:
+                name: Doctrina Trump 2.0 și ordinele executive
+                description: Al doilea mandat Trump, ordine executive, politica externă, unilateralism
+              en:
+                name: Trump Doctrine 2.0 & Executive Orders
+                description: Trump second term, executive orders, foreign policy, unilateralism
+              ru:
+                name: Доктрина Трампа 2.0 и исполнительные указы
+                description: Второй срок Трампа, исполнительные указы, внешняя политика
+            is_sensitive: true
+            keywords:
+              - Trump
+              - Трамп
+              - ordine executive
+              - executive order
+              - исполнительный указ
+              - Casa Albă
+              - White House
+              - Белый дом
+          - slug: doge-government-restructuring
+            translations:
+              ro:
+                name: DOGE și restructurarea statului federal
+                description: Elon Musk, Department of Government Efficiency, reduceri personal federal
+              en:
+                name: DOGE & Federal Government Restructuring
+                description: Elon Musk, Department of Government Efficiency, federal workforce cuts
+              ru:
+                name: DOGE и реструктуризация федерального правительства
+                description: Илон Маск, Департамент государственной эффективности, сокращения
+            is_sensitive: false
+            keywords:
+              - DOGE
+              - Department of Government Efficiency
+              - Musk
+              - Маск
+              - eficiență guvernamentală
+              - government efficiency
+              - госэффективность
+              - reduceri federale
+              - federal cuts
+          - slug: usaid-foreign-aid-cuts
+            translations:
+              ro:
+                name: Desmantelarea USAID și asistența externă
+                description: Tăieri USAID, asistență externă, impact Moldova, ajutor internațional
+              en:
+                name: USAID Dismantling & Foreign Aid Cuts
+                description: USAID cuts, foreign assistance, Moldova impact, international aid
+              ru:
+                name: Ликвидация USAID и сокращение иностранной помощи
+                description: Сокращения USAID, иностранная помощь, влияние на Молдову
+            is_sensitive: true
+            keywords:
+              - USAID
+              - asistență externă
+              - foreign aid
+              - иностранная помощь
+              - ajutor internațional
+              - international aid
+              - международная помощь
+      - slug: european-union
+        translations:
+          ro: Uniunea Europeană
+          en: European Union
+          ru: Европейский Союз
+        topics:
+          - slug: eu-enlargement
+            translations:
+              ro:
+                name: Extinderea UE — Moldova, Ucraina, Balcani
+                description: Aderare UE, negocieri, acquis, screening, clustere de negociere
+              en:
+                name: EU Enlargement — Moldova, Ukraine, Balkans
+                description: EU accession, negotiations, acquis, screening, negotiation clusters
+              ru:
+                name: Расширение ЕС — Молдова, Украина, Балканы
+                description: Вступление в ЕС, переговоры, аcquis, скрининг
+            is_sensitive: true
+            keywords:
+              - extindere UE
+              - EU enlargement
+              - расширение ЕС
+              - aderare
+              - accession
+              - вступление
+              - acquis
+              - screening
+              - скрининг
+          - slug: eu-institutional-reform
+            translations:
+              ro:
+                name: Reforma instituțională a UE
+                description: Competitivitate, simplificare, buget UE, coeziune
+              en:
+                name: EU Institutional Reform
+                description: Competitiveness, simplification, EU budget, cohesion
+              ru:
+                name: Институциональная реформа ЕС
+                description: Конкурентоспособность, упрощение, бюджет ЕС, сплочённость
+            is_sensitive: false
+            keywords:
+              - reformă UE
+              - EU reform
+              - реформа ЕС
+              - competitivitate
+              - competitiveness
+              - конкурентоспособность
+              - buget UE
+              - EU budget
+              - бюджет ЕС
+      - slug: asia-global-south
+        translations:
+          ro: Asia și Global South
+          en: Asia & Global South
+          ru: Азия и Глобальный Юг
+        topics:
+          - slug: china-taiwan-semiconductors
+            translations:
+              ro:
+                name: Tensiunile China-Taiwan și semiconductoare
+                description: Strâmtoarea Taiwan, export chipuri, TSMC, securitate tech
+              en:
+                name: China-Taiwan Tensions & Semiconductors
+                description: Taiwan Strait, chip exports, TSMC, tech security
+              ru:
+                name: Напряжённость Китай-Тайвань и полупроводники
+                description: Тайваньский пролив, экспорт чипов, TSMC, техбезопасность
+            is_sensitive: true
+            keywords:
+              - Taiwan
+              - Тайвань
+              - semiconductoare
+              - semiconductors
+              - полупроводники
+              - TSMC
+              - chipuri
+              - chips
+              - чипы
+              - China
+              - Китай
+          - slug: india-global-south
+            translations:
+              ro:
+                name: India și repoziționarea Global South
+                description: AI Summit India, diplomație indiană, G20, economie emergentă
+              en:
+                name: India & Global South Repositioning
+                description: AI Summit India, Indian diplomacy, G20, emerging economy
+              ru:
+                name: Индия и репозиционирование Глобального Юга
+                description: AI Summit Индия, индийская дипломатия, G20, развивающаяся экономика
+            is_sensitive: false
+            keywords:
+              - India
+              - Индия
+              - Global South
+              - Глобальный Юг
+              - G20
+              - Г20
+              - Modi
+              - Моди
+          - slug: brics-multilateral-order
+            translations:
+              ro:
+                name: BRICS și ordinea multilaterală
+                description: Extindere BRICS, de-dolarizare, alternativă la G7, BRICS+
+              en:
+                name: BRICS & Multilateral Order
+                description: BRICS expansion, de-dollarization, G7 alternative, BRICS+
+              ru:
+                name: БРИКС и многосторонний порядок
+                description: Расширение БРИКС, де-долларизация, альтернатива G7
+            is_sensitive: false
+            keywords:
+              - BRICS
+              - БРИКС
+              - de-dolarizare
+              - de-dollarization
+              - дедолларизация
+              - G7
+              - Г7
+              - multilateral
+              - многосторонний
+  - slug: politics-governance
+    translations:
+      ro: Politică și Guvernare
+      en: Politics & Governance
+      ru: Политика и управление
+    sort_order: 3
+    sub_groups:
+      - slug: us-politics
+        translations:
+          ro: Politică Americană
+          en: US Politics
+          ru: Американская политика
+        topics:
+          - slug: us-political-polarization
+            translations:
+              ro:
+                name: Polarizare și violență politică în SUA
+                description: Extremism, asasinat Charlie Kirk, shutdown federal, clivaje ideologice
+              en:
+                name: US Political Polarization & Violence
+                description: Extremism, Charlie Kirk assassination, government shutdown, ideological divides
+              ru:
+                name: Политическая поляризация и насилие в США
+                description: Экстремизм, убийство Чарли Кирка, правительственный шатдаун
+            is_sensitive: true
+            keywords:
+              - polarizare
+              - polarization
+              - поляризация
+              - extremism
+              - экстремизм
+              - Charlie Kirk
+              - Чарли Кирк
+              - shutdown
+              - шатдаун
+              - violență politică
+              - political violence
+              - политическое насилие
+          - slug: us-tariffs-protectionism
+            translations:
+              ro:
+                name: Tarife comerciale și protecționism
+                description: Liberation Day, tarife globale, impact economic, comerț internațional
+              en:
+                name: Trade Tariffs & Protectionism
+                description: Liberation Day, global tariffs, economic impact, international trade
+              ru:
+                name: Торговые тарифы и протекционизм
+                description: День освобождения, глобальные тарифы, экономическое влияние
+            is_sensitive: false
+            keywords:
+              - tarife
+              - tariffs
+              - тарифы
+              - protecționism
+              - protectionism
+              - протекционизм
+              - Liberation Day
+              - comerț
+              - trade
+              - торговля
+      - slug: european-politics
+        translations:
+          ro: Politică Europeană
+          en: European Politics
+          ru: Европейская политика
+        topics:
+          - slug: european-leadership-changes
+            translations:
+              ro:
+                name: Schimbări de leadership în Europa
+                description: Peter Magyar Ungaria, Friedrich Merz Germania, alegeri europene
+              en:
+                name: European Leadership Changes
+                description: Peter Magyar Hungary, Friedrich Merz Germany, European elections
+              ru:
+                name: Смена лидерства в Европе
+                description: Петер Мадьяр Венгрия, Фридрих Мерц Германия, европейские выборы
+            is_sensitive: false
+            keywords:
+              - Peter Magyar
+              - Петер Мадьяр
+              - Merz
+              - Мерц
+              - alegeri
+              - elections
+              - выборы
+              - leadership
+              - лидерство
+              - Ungaria
+              - Hungary
+              - Венгрия
+              - Germania
+              - Germany
+              - Германия
+          - slug: vatican-pope-leo-xiv
+            translations:
+              ro:
+                name: Vatican — Papa Leo XIV
+                description: Conclav, Cardinal Prevost, primul papă nord-american, Rerum Novarum
+              en:
+                name: Vatican — Pope Leo XIV
+                description: Conclave, Cardinal Prevost, first North American pope, Rerum Novarum
+              ru:
+                name: Ватикан — Папа Лев XIV
+                description: Конклав, кардинал Прево, первый североамериканский папа
+            is_sensitive: false
+            keywords:
+              - Vatican
+              - Ватикан
+              - Papa
+              - Pope
+              - Папа
+              - Leo XIV
+              - Лев XIV
+              - Prevost
+              - Прево
+              - conclav
+              - conclave
+              - конклав
+      - slug: global-politics
+        translations:
+          ro: Politică Globală
+          en: Global Politics
+          ru: Глобальная политика
+        topics:
+          - slug: south-korea-constitutional-crisis
+            translations:
+              ro:
+                name: Criza constituțională din Coreea de Sud
+                description: Yoon Suk Yeol, lege marțială, destituire, insurecție
+              en:
+                name: South Korea Constitutional Crisis
+                description: Yoon Suk Yeol, martial law, impeachment, insurrection
+              ru:
+                name: Конституционный кризис в Южной Корее
+                description: Юн Сок Ёль, военное положение, импичмент, мятеж
+            is_sensitive: true
+            keywords:
+              - Coreea de Sud
+              - South Korea
+              - Южная Корея
+              - Yoon Suk Yeol
+              - Юн Сок Ёль
+              - lege marțială
+              - martial law
+              - военное положение
+              - destituire
+              - impeachment
+              - импичмент
+      - slug: migration-asylum
+        translations:
+          ro: Migrație și Azil
+          en: Migration & Asylum
+          ru: Миграция и убежище
+        topics:
+          - slug: eu-migration-asylum-pact
+            translations:
+              ro:
+                name: Pactul UE pe migrație și azil (2026)
+                description: Regulamentul deportărilor, huburi de returnare, EES, ETIAS, Frontex
+              en:
+                name: EU Migration & Asylum Pact (2026)
+                description: Return regulation, return hubs, EES, ETIAS, Frontex
+              ru:
+                name: Пакт ЕС по миграции и убежищу (2026)
+                description: Регламент депортаций, центры возврата, EES, ETIAS, Frontex
+            is_sensitive: true
+            keywords:
+              - migrație
+              - migration
+              - миграция
+              - azil
+              - asylum
+              - убежище
+              - Pact migrație
+              - Migration Pact
+              - Пакт миграция
+              - Frontex
+              - Фронтекс
+              - EES
+              - ETIAS
+              - deportare
+              - deportation
+              - депортация
+              - returnare
+              - return hub
+          - slug: us-immigration-deportations
+            translations:
+              ro:
+                name: Politica anti-imigrație SUA și deportări
+                description: ICE, deportări masive, dreptul la cetățenie, vize, imigrație SUA
+              en:
+                name: US Anti-Immigration Policy & Deportations
+                description: ICE, mass deportations, birthright citizenship, visas, US immigration
+              ru:
+                name: Антииммиграционная политика США и депортации
+                description: ICE, массовые депортации, право на гражданство, визы
+            is_sensitive: true
+            keywords:
+              - ICE
+              - deportare
+              - deportation
+              - депортация
+              - imigrație SUA
+              - US immigration
+              - иммиграция США
+              - cetățenie
+              - citizenship
+              - гражданство
+  - slug: economy-finance
+    translations:
+      ro: Economie și Finanțe
+      en: Economy & Finance
+      ru: Экономика и финансы
+    sort_order: 4
+    sub_groups:
+      - slug: global-trade
+        translations:
+          ro: Comerț Global
+          en: Global Trade
+          ru: Мировая торговля
+        topics:
+          - slug: us-china-eu-trade-war
+            translations:
+              ro:
+                name: Războiul comercial SUA-China-UE
+                description: Tarife reciproce, sancțiuni comerciale, decuplare economică
+              en:
+                name: US-China-EU Trade War
+                description: Reciprocal tariffs, trade sanctions, economic decoupling
+              ru:
+                name: Торговая война США-Китай-ЕС
+                description: Взаимные тарифы, торговые санкции, экономическое разъединение
+            is_sensitive: false
+            keywords:
+              - război comercial
+              - trade war
+              - торговая война
+              - tarife
+              - tariffs
+              - тарифы
+              - sancțiuni comerciale
+              - trade sanctions
+              - торговые санкции
+              - decuplare
+              - decoupling
+          - slug: supply-chains-nearshoring
+            translations:
+              ro:
+                name: Lanțuri de aprovizionare și nearshoring
+                description: Relocare producție, friend-shoring, diversificare furnizori
+              en:
+                name: Supply Chains & Nearshoring
+                description: Production relocation, friend-shoring, supplier diversification
+              ru:
+                name: Цепочки поставок и ниаршоринг
+                description: Перенос производства, френд-шоринг, диверсификация поставщиков
+            is_sensitive: false
+            keywords:
+              - lanțuri de aprovizionare
+              - supply chains
+              - цепочки поставок
+              - nearshoring
+              - ниаршоринг
+              - friend-shoring
+              - relocare
+              - relocation
+      - slug: markets-crypto
+        translations:
+          ro: Piețe și Crypto
+          en: Markets & Crypto
+          ru: Рынки и криптовалюты
+        topics:
+          - slug: bitcoin-etf-crypto-regulation
+            translations:
+              ro:
+                name: Bitcoin, ETF-uri și reglementare crypto
+                description: ATH Bitcoin, SEC, adoptare instituțională, piață crypto
+              en:
+                name: Bitcoin, ETFs & Crypto Regulation
+                description: Bitcoin ATH, SEC, institutional adoption, crypto market
+              ru:
+                name: Биткоин, ETF и криптовалютное регулирование
+                description: ATH биткоина, SEC, институциональное принятие, крипторынок
+            is_sensitive: false
+            keywords:
+              - Bitcoin
+              - Биткоин
+              - crypto
+              - крипто
+              - ETF
+              - SEC
+              - criptomonedă
+              - cryptocurrency
+              - криптовалюта
+              - ATH
+          - slug: financial-markets-central-banks
+            translations:
+              ro:
+                name: Piețe financiare și politici ale băncilor centrale
+                description: Dobânzi, Fed, BCE, inflație, piețe bursiere
+              en:
+                name: Financial Markets & Central Bank Policies
+                description: Interest rates, Fed, ECB, inflation, stock markets
+              ru:
+                name: Финансовые рынки и политика центральных банков
+                description: Процентные ставки, ФРС, ЕЦБ, инфляция, фондовые рынки
+            is_sensitive: false
+            keywords:
+              - dobândă
+              - interest rate
+              - процентная ставка
+              - Fed
+              - ФРС
+              - BCE
+              - ECB
+              - ЕЦБ
+              - inflație
+              - inflation
+              - инфляция
+              - bursă
+              - stock market
+              - фондовый рынок
+      - slug: energy-resources
+        translations:
+          ro: Energie și Resurse
+          en: Energy & Resources
+          ru: Энергетика и ресурсы
+        topics:
+          - slug: strategic-minerals
+            translations:
+              ro:
+                name: Minerale strategice — litiu, titan, pământuri rare
+                description: Acord SUA-Ucraina minerale, dependență China, lanțuri critice
+              en:
+                name: Strategic Minerals — Lithium, Titanium, Rare Earths
+                description: US-Ukraine minerals deal, China dependency, critical supply chains
+              ru:
+                name: Стратегические минералы — литий, титан, редкоземельные
+                description: Соглашение США-Украина по минералам, зависимость от Китая
+            is_sensitive: false
+            keywords:
+              - litiu
+              - lithium
+              - литий
+              - titan
+              - titanium
+              - титан
+              - pământuri rare
+              - rare earths
+              - редкоземельные
+              - minerale strategice
+              - strategic minerals
+              - стратегические минералы
+          - slug: european-energy-market
+            translations:
+              ro:
+                name: Piața energetică europeană
+                description: Prețuri gaz, tranziție energetică, dependență Rusia, energie regenerabilă
+              en:
+                name: European Energy Market
+                description: Gas prices, energy transition, Russia dependency, renewable energy
+              ru:
+                name: Европейский энергетический рынок
+                description: Цены на газ, энергопереход, зависимость от России, возобновляемая энергия
+            is_sensitive: false
+            keywords:
+              - energie
+              - energy
+              - энергетика
+              - gaz
+              - gas
+              - газ
+              - prețuri energie
+              - energy prices
+              - цены на энергию
+              - regenerabil
+              - renewable
+              - возобновляемый
+              - tranziție energetică
+  - slug: technology-digital
+    translations:
+      ro: Tehnologie și Digital
+      en: Technology & Digital
+      ru: Технологии и цифровая сфера
+    sort_order: 5
+    sub_groups:
+      - slug: artificial-intelligence
+        translations:
+          ro: Inteligență Artificială
+          en: Artificial Intelligence
+          ru: Искусственный интеллект
+        topics:
+          - slug: ai-investment-race
+            translations:
+              ro:
+                name: Investiții AI și cursa tehnologică
+                description: Nvidia, OpenAI, Google, Meta, 375 miliarde cheltuieli, centre de date
+              en:
+                name: AI Investment & Tech Race
+                description: Nvidia, OpenAI, Google, Meta, $375B spending, data centers
+              ru:
+                name: Инвестиции в ИИ и технологическая гонка
+                description: Nvidia, OpenAI, Google, Meta, расходы $375 млрд, дата-центры
+            is_sensitive: false
+            keywords:
+              - inteligență artificială
+              - artificial intelligence
+              - искусственный интеллект
+              - AI
+              - ИИ
+              - Nvidia
+              - OpenAI
+              - investiții AI
+              - AI investment
+              - инвестиции ИИ
+              - ChatGPT
+              - centre de date
+              - data center
+              - дата-центр
+          - slug: eu-ai-act-regulation
+            translations:
+              ro:
+                name: AI Act UE și reglementare globală
+                description: AI Act, transparență, sisteme de risc înalt, etichetare conținut AI
+              en:
+                name: EU AI Act & Global Regulation
+                description: AI Act, transparency, high-risk systems, AI content labeling
+              ru:
+                name: Закон ЕС об ИИ и глобальное регулирование
+                description: AI Act, прозрачность, системы высокого риска, маркировка ИИ-контента
+            is_sensitive: false
+            keywords:
+              - AI Act
+              - Закон ИИ
+              - reglementare AI
+              - AI regulation
+              - регулирование ИИ
+              - transparență
+              - transparency
+              - прозрачность
+              - risc înalt
+              - high risk
+              - высокий риск
+      - slug: disinformation-media
+        translations:
+          ro: Dezinformare și Media
+          en: Disinformation & Media
+          ru: Дезинформация и медиа
+        topics:
+          - slug: deepfakes-ai-manipulation
+            translations:
+              ro:
+                name: Deepfakes și manipulare prin AI
+                description: Imagini sintetice, Grok, conținut NCII, detectare deepfake
+              en:
+                name: Deepfakes & AI Manipulation
+                description: Synthetic images, Grok, NCII content, deepfake detection
+              ru:
+                name: Дипфейки и манипуляция через ИИ
+                description: Синтетические изображения, Grok, контент NCII, обнаружение дипфейков
+            is_sensitive: true
+            keywords:
+              - deepfake
+              - дипфейк
+              - Grok
+              - manipulare
+              - manipulation
+              - манипуляция
+              - imagine sintetică
+              - synthetic image
+              - синтетическое изображение
+              - NCII
+          - slug: electoral-disinformation
+            translations:
+              ro:
+                name: Dezinformare electorală și interferență externă
+                description: Interferență rusă, Storm-1516, anulare alegeri România, Telegram, TikTok
+              en:
+                name: Electoral Disinformation & Foreign Interference
+                description: Russian interference, Storm-1516, Romania election annulment, Telegram, TikTok
+              ru:
+                name: Электоральная дезинформация и внешнее вмешательство
+                description: Российское вмешательство, Storm-1516, аннулирование выборов в Румынии
+            is_sensitive: true
+            keywords:
+              - dezinformare
+              - disinformation
+              - дезинформация
+              - interferență
+              - interference
+              - вмешательство
+              - Storm-1516
+              - alegeri
+              - elections
+              - выборы
+              - România
+              - Romania
+              - Румыния
+              - Telegram
+              - TikTok
+              - propagandă
+              - propaganda
+              - пропаганда
+          - slug: social-platforms-factchecking
+            translations:
+              ro:
+                name: Platforme sociale și criza fact-checking
+                description: Meta eliminare fact-checking, moderare conținut, DSA, libertate online
+              en:
+                name: Social Platforms & Fact-Checking Crisis
+                description: Meta fact-checking removal, content moderation, DSA, online freedom
+              ru:
+                name: Социальные платформы и кризис фактчекинга
+                description: Отмена фактчекинга Meta, модерация контента, DSA
+            is_sensitive: false
+            keywords:
+              - Meta
+              - Facebook
+              - Фейсбук
+              - fact-checking
+              - фактчекинг
+              - moderare conținut
+              - content moderation
+              - модерация контента
+              - Zuckerberg
+              - Цукерберг
+              - Instagram
+              - Инстаграм
+      - slug: cybersecurity
+        translations:
+          ro: Securitate Cibernetică
+          en: Cybersecurity
+          ru: Кибербезопасность
+        topics:
+          - slug: state-sponsored-cyberattacks
+            translations:
+              ro:
+                name: Atacuri cibernetice state-sponsored
+                description: Hackeri ruși/chinezi, spionaj cibernetic, telecomunicații, APT
+              en:
+                name: State-Sponsored Cyberattacks
+                description: Russian/Chinese hackers, cyber espionage, telecommunications, APT
+              ru:
+                name: Государственные кибератаки
+                description: Российские/китайские хакеры, кибершпионаж, телекоммуникации, APT
+            is_sensitive: true
+            keywords:
+              - atac cibernetic
+              - cyberattack
+              - кибератака
+              - hacker
+              - хакер
+              - spionaj
+              - espionage
+              - шпионаж
+              - APT
+              - ransomware
+          - slug: critical-digital-infrastructure
+            translations:
+              ro:
+                name: Protecția infrastructurii critice digitale
+                description: Securitate rețele, NIS2, CISA, reziliență cibernetică
+              en:
+                name: Critical Digital Infrastructure Protection
+                description: Network security, NIS2, CISA, cyber resilience
+              ru:
+                name: Защита критической цифровой инфраструктуры
+                description: Сетевая безопасность, NIS2, CISA, киберустойчивость
+            is_sensitive: false
+            keywords:
+              - infrastructură critică
+              - critical infrastructure
+              - критическая инфраструктура
+              - NIS2
+              - CISA
+              - reziliență
+              - resilience
+              - устойчивость
+  - slug: space-science
+    translations:
+      ro: Spațiu și Știință
+      en: Space & Science
+      ru: Космос и наука
+    sort_order: 6
+    sub_groups:
+      - slug: space-exploration
+        translations:
+          ro: Explorare Spațială
+          en: Space Exploration
+          ru: Освоение космоса
+        topics:
+          - slug: artemis-lunar-program
+            translations:
+              ro:
+                name: Artemis II și programul lunar
+                description: Capsulă Orion, zbor circumlunar, NASA, Polul Sud lunar
+              en:
+                name: Artemis II & Lunar Program
+                description: Orion capsule, lunar flyby, NASA, lunar South Pole
+              ru:
+                name: Артемида II и лунная программа
+                description: Капсула Орион, облёт Луны, НАСА, южный полюс Луны
+            is_sensitive: false
+            keywords:
+              - Artemis
+              - Артемида
+              - Orion
+              - Орион
+              - Lună
+              - Moon
+              - Луна
+              - NASA
+              - НАСА
+              - lunar
+          - slug: spacex-starlink-commercial
+            translations:
+              ro:
+                name: SpaceX, Starlink și logistica spațială comercială
+                description: Starship, Raptor, Starlink, lansări orbitale, SpaceX
+              en:
+                name: SpaceX, Starlink & Commercial Space Logistics
+                description: Starship, Raptor, Starlink, orbital launches, SpaceX
+              ru:
+                name: SpaceX, Starlink и коммерческая космическая логистика
+                description: Starship, Raptor, Starlink, орбитальные запуски, SpaceX
+            is_sensitive: false
+            keywords:
+              - SpaceX
+              - Starlink
+              - Старлинк
+              - Starship
+              - Старшип
+              - Musk
+              - Маск
+              - lansare orbitală
+              - orbital launch
+          - slug: robotic-space-missions
+            translations:
+              ro:
+                name: Misiuni robotice — Dragonfly, JUICE, Roman
+                description: Telescop Roman, Dragonfly Titan, JUICE Jupiter, sonde autonome
+              en:
+                name: Robotic Missions — Dragonfly, JUICE, Roman
+                description: Roman telescope, Dragonfly Titan, JUICE Jupiter, autonomous probes
+              ru:
+                name: Роботизированные миссии — Dragonfly, JUICE, Roman
+                description: Телескоп Роман, Dragonfly Титан, JUICE Юпитер, автономные зонды
+            is_sensitive: false
+            keywords:
+              - Dragonfly
+              - JUICE
+              - Roman
+              - Titan
+              - Титан
+              - Jupiter
+              - Юпитер
+              - telescop
+              - telescope
+              - телескоп
+              - sondă
+              - probe
+              - зонд
+      - slug: space-innovation
+        translations:
+          ro: Inovație Spațială
+          en: Space Innovation
+          ru: Космические инновации
+        topics:
+          - slug: orbital-data-centers
+            translations:
+              ro:
+                name: Centre de date orbitale și infrastructură AI spațială
+                description: Răcire cosmică, energie solară permanentă, PExT, roaming spațial
+              en:
+                name: Orbital Data Centers & Space AI Infrastructure
+                description: Cosmic cooling, permanent solar energy, PExT, space roaming
+              ru:
+                name: Орбитальные дата-центры и космическая ИИ-инфраструктура
+                description: Космическое охлаждение, постоянная солнечная энергия, PExT
+            is_sensitive: false
+            keywords:
+              - centre de date orbitale
+              - orbital data center
+              - орбитальный дата-центр
+              - PExT
+              - infrastructură spațială
+              - space infrastructure
+              - космическая инфраструктура
+  - slug: climate-environment
+    translations:
+      ro: Climă și Mediu
+      en: Climate & Environment
+      ru: Климат и окружающая среда
+    sort_order: 7
+    sub_groups:
+      - slug: climate-diplomacy
+        translations:
+          ro: Diplomație Climatică
+          en: Climate Diplomacy
+          ru: Климатическая дипломатия
+        topics:
+          - slug: us-paris-withdrawal-cop30
+            translations:
+              ro:
+                name: Retragerea SUA din Paris și eșecul COP30
+                description: Acord Paris, COP30 Brazilia, combustibili fosili, diplomație climatică
+              en:
+                name: US Paris Withdrawal & COP30 Failure
+                description: Paris Agreement, COP30 Brazil, fossil fuels, climate diplomacy
+              ru:
+                name: Выход США из Парижского соглашения и провал COP30
+                description: Парижское соглашение, COP30 Бразилия, ископаемое топливо
+            is_sensitive: true
+            keywords:
+              - Paris
+              - Париж
+              - COP30
+              - climă
+              - climate
+              - климат
+              - combustibili fosili
+              - fossil fuels
+              - ископаемое топливо
+          - slug: high-seas-treaty
+            translations:
+              ro:
+                name: Tratatul Mărilor Libere
+                description: Arii Marine Protejate, 30% ape internaționale, ONU, biodiversitate marină
+              en:
+                name: High Seas Treaty
+                description: Marine Protected Areas, 30% international waters, UN, marine biodiversity
+              ru:
+                name: Договор об открытом море
+                description: Морские охраняемые районы, 30% международных вод, ООН
+            is_sensitive: false
+            keywords:
+              - mări libere
+              - high seas
+              - открытое море
+              - tratat marin
+              - marine treaty
+              - морской договор
+              - arii protejate
+              - protected areas
+              - охраняемые районы
+      - slug: natural-disasters
+        translations:
+          ro: Dezastre Naturale
+          en: Natural Disasters
+          ru: Стихийные бедствия
+        topics:
+          - slug: hurricanes-floods-heat-records
+            translations:
+              ro:
+                name: Uragane, inundații și recorduri termice
+                description: Uragan Melissa, inundații Texas, anomalie termică +1.48°C
+              en:
+                name: Hurricanes, Floods & Heat Records
+                description: Hurricane Melissa, Texas floods, +1.48°C thermal anomaly
+              ru:
+                name: Ураганы, наводнения и температурные рекорды
+                description: Ураган Мелисса, наводнения в Техасе, температурная аномалия +1,48°C
+            is_sensitive: true
+            keywords:
+              - uragan
+              - hurricane
+              - ураган
+              - inundație
+              - flood
+              - наводнение
+              - temperatură record
+              - record temperature
+              - рекордная температура
+              - Melissa
+              - Мелисса
+              - dezastru natural
+              - natural disaster
+              - стихийное бедствие
+      - slug: ecosystems
+        translations:
+          ro: Ecosisteme
+          en: Ecosystems
+          ru: Экосистемы
+        topics:
+          - slug: coral-bleaching-marine-biodiversity
+            translations:
+              ro:
+                name: Albirea coralilor și biodiversitate marină
+                description: 84% recife afectate, Marea Barieră de Corali, necroză termică
+              en:
+                name: Coral Bleaching & Marine Biodiversity
+                description: 84% reefs affected, Great Barrier Reef, thermal necrosis
+              ru:
+                name: Обесцвечивание кораллов и морское биоразнообразие
+                description: 84% рифов затронуты, Большой Барьерный риф, термический некроз
+            is_sensitive: false
+            keywords:
+              - corali
+              - coral
+              - кораллы
+              - albire
+              - bleaching
+              - обесцвечивание
+              - recif
+              - reef
+              - риф
+              - biodiversitate
+              - biodiversity
+              - биоразнообразие
+  - slug: public-health
+    translations:
+      ro: Sănătate Publică
+      en: Public Health
+      ru: Общественное здоровье
+    sort_order: 8
+    sub_groups:
+      - slug: pandemics-emerging-diseases
+        translations:
+          ro: Pandemii și Boli Emergente
+          en: Pandemics & Emerging Diseases
+          ru: Пандемии и новые заболевания
+        topics:
+          - slug: h5n1-bird-flu-pandemic-risk
+            translations:
+              ro:
+                name: Gripa aviară H5N1 și riscul pandemic
+                description: Gripă aviară, vaci de lapte SUA, mutații zoonotice, supraveghere
+              en:
+                name: H5N1 Bird Flu & Pandemic Risk
+                description: Avian influenza, US dairy cattle, zoonotic mutations, surveillance
+              ru:
+                name: Птичий грипп H5N1 и пандемический риск
+                description: Птичий грипп, молочный скот США, зоонозные мутации, эпиднадзор
+            is_sensitive: true
+            keywords:
+              - H5N1
+              - gripă aviară
+              - bird flu
+              - птичий грипп
+              - aviar
+              - avian
+              - pandemic
+              - пандемия
+              - zoonotic
+              - зоонозный
+              - vaci lapte
+              - dairy cattle
+              - молочный скот
+      - slug: food-security
+        translations:
+          ro: Securitate Alimentară
+          en: Food Security
+          ru: Продовольственная безопасность
+        topics:
+          - slug: food-prices-poultry-crisis
+            translations:
+              ro:
+                name: Criza prețurilor alimentare și avicultura
+                description: Prețuri ouă record, crizele avicole, inflație alimentară, securitate
+              en:
+                name: Food Prices & Poultry Crisis
+                description: Record egg prices, poultry crises, food inflation, security
+              ru:
+                name: Кризис цен на продовольствие и птицеводство
+                description: Рекордные цены на яйца, птицеводческие кризисы, продовольственная инфляция
+            is_sensitive: false
+            keywords:
+              - prețuri alimente
+              - food prices
+              - цены на продукты
+              - ouă
+              - eggs
+              - яйца
+              - avicultură
+              - poultry
+              - птицеводство
+              - inflație alimentară
+              - food inflation
+              - продовольственная инфляция
+      - slug: global-health
+        translations:
+          ro: Sănătate Globală
+          en: Global Health
+          ru: Глобальное здоровье
+        topics:
+          - slug: pepfar-global-health-cuts
+            translations:
+              ro:
+                name: Tăieri PEPFAR/USAID și impactul sanitar global
+                description: HIV/SIDA, malarie, tuberculoză, reduceri asistență sanitară
+              en:
+                name: PEPFAR/USAID Cuts & Global Health Impact
+                description: HIV/AIDS, malaria, tuberculosis, health assistance cuts
+              ru:
+                name: Сокращения PEPFAR/USAID и влияние на глобальное здоровье
+                description: ВИЧ/СПИД, малярия, туберкулёз, сокращение медпомощи
+            is_sensitive: true
+            keywords:
+              - PEPFAR
+              - HIV
+              - ВИЧ
+              - SIDA
+              - AIDS
+              - СПИД
+              - sănătate globală
+              - global health
+              - глобальное здоровье
+              - malarie
+              - malaria
+              - малярия
+  - slug: society-rights
+    translations:
+      ro: Societate și Drepturi
+      en: Society & Rights
+      ru: Общество и права
+    sort_order: 9
+    sub_groups:
+      - slug: digital-rights
+        translations:
+          ro: Drepturi Digitale
+          en: Digital Rights
+          ru: Цифровые права
+        topics:
+          - slug: dsa-dma-platform-regulation
+            translations:
+              ro:
+                name: DSA, DMA și reglementarea platformelor
+                description: Digital Services Act, Digital Markets Act, amenzi Apple/Meta, platforme
+              en:
+                name: DSA, DMA & Platform Regulation
+                description: Digital Services Act, Digital Markets Act, Apple/Meta fines, platforms
+              ru:
+                name: DSA, DMA и регулирование платформ
+                description: Закон о цифровых услугах, Закон о цифровых рынках, штрафы Apple/Meta
+            is_sensitive: false
+            keywords:
+              - DSA
+              - DMA
+              - Digital Services Act
+              - Digital Markets Act
+              - platforme
+              - platforms
+              - платформы
+              - amendă
+              - fine
+              - штраф
+              - Apple
+              - Meta
+          - slug: privacy-digital-surveillance
+            translations:
+              ro:
+                name: Confidențialitate și supraveghere digitală
+                description: GDPR, Palantir, biometrie, supraveghere masivă, date personale
+              en:
+                name: Privacy & Digital Surveillance
+                description: GDPR, Palantir, biometrics, mass surveillance, personal data
+              ru:
+                name: Конфиденциальность и цифровое наблюдение
+                description: GDPR, Palantir, биометрия, массовое наблюдение, персональные данные
+            is_sensitive: false
+            keywords:
+              - confidențialitate
+              - privacy
+              - конфиденциальность
+              - supraveghere
+              - surveillance
+              - наблюдение
+              - GDPR
+              - biometrie
+              - biometrics
+              - биометрия
+              - Palantir
+              - date personale
+              - personal data
+              - персональные данные
+      - slug: education-culture
+        translations:
+          ro: Educație și Cultură
+          en: Education & Culture
+          ru: Образование и культура
+        topics:
+          - slug: ai-education-academic-integrity
+            translations:
+              ro:
+                name: AI în educație și integritate academică
+                description: Plagiat AI, politici universitare, digital literacy, transformare educațională
+              en:
+                name: AI in Education & Academic Integrity
+                description: AI plagiarism, university policies, digital literacy, educational transformation
+              ru:
+                name: ИИ в образовании и академическая честность
+                description: ИИ-плагиат, университетские политики, цифровая грамотность
+            is_sensitive: false
+            keywords:
+              - educație
+              - education
+              - образование
+              - plagiat
+              - plagiarism
+              - плагиат
+              - universitate
+              - university
+              - университет
+              - integritate academică
+              - academic integrity
+              - академическая честность
+      - slug: equality-rights
+        translations:
+          ro: Egalitate și Drepturi
+          en: Equality & Rights
+          ru: Равенство и права
+        topics:
+          - slug: womens-rights-ncii
+            translations:
+              ro:
+                name: Drepturile femeilor și conținut intim non-consensual
+                description: NCII, deepfakes sexuale, violență de gen, legislație UE
+              en:
+                name: Women's Rights & Non-Consensual Intimate Content
+                description: NCII, sexual deepfakes, gender-based violence, EU legislation
+              ru:
+                name: Права женщин и неконсенсуальный интимный контент
+                description: NCII, сексуальные дипфейки, гендерное насилие, законодательство ЕС
+            is_sensitive: true
+            keywords:
+              - drepturi femei
+              - women's rights
+              - права женщин
+              - NCII
+              - violență de gen
+              - gender violence
+              - гендерное насилие
+              - deepfake sexual
+              - sexual deepfake
+  - slug: republic-of-moldova
+    translations:
+      ro: Republica Moldova
+      en: Republic of Moldova
+      ru: Республика Молдова
+    sort_order: 10
+    sub_groups:
+      - slug: moldova-domestic-politics
+        translations:
+          ro: Politică Internă
+          en: Domestic Politics
+          ru: Внутренняя политика
+        sort_order: 1
+        topics:
+          - slug: moldova-eu-referendum-2024
+            translations:
+              ro:
+                name: Referendumul UE din 20 octombrie 2024
+                description: 'Referendumul constituțional privind consacrarea direcției europene a trecut la limită (50,4% „Da"), transformând aderarea din mesaj electoral în ancoră constituțională. În 2026 rămâne activ prin modul în care fiecare reformă este reambalată ca „îndeplinire a mandatului referendumului" sau, invers, ca „dezamăgire a promisiunii europene".
+
+                  '
+              en:
+                name: EU Referendum of October 20, 2024
+                description: 'Constitutional referendum on enshrining European direction passed narrowly (50.4% "Yes"), transforming EU accession from an electoral message into a constitutional anchor. In 2026 remains active as every reform is repackaged as "fulfillment of the referendum mandate" or, conversely, as "disappointment of the European promise".
+
+                  '
+              ru:
+                name: Референдум о ЕС 20 октября 2024
+                description: 'Конституционный референдум о европейском курсе прошёл на пределе (50,4% «Да»), превратив вступление в ЕС из электорального посыла в конституционный якорь. В 2026 остаётся активным — каждая реформа подаётся как «выполнение мандата референдума» или, наоборот, как «разочарование европейским обещанием».
+
+                  '
+            is_sensitive: false
+            keywords:
+              - referendum UE
+              - EU referendum
+              - референдум ЕС
+              - 20 octombrie 2024
+              - October 20 2024
+              - 20 октября 2024
+              - 50,4%
+              - integrare europeană
+              - European integration
+              - европейская интеграция
+              - ancoră constituțională
+              - constitutional anchor
+              - конституционный якорь
+              - mandat electoral
+              - electoral mandate
+              - электоральный мандат
+              - polarizare electorală
+              - electoral polarization
+              - электоральная поляризация
+              - diaspora
+              - диаспора
+              - vot 2024
+              - 2024 vote
+              - голосование 2024
+          - slug: moldova-presidential-elections-2024
+            translations:
+              ro:
+                name: Prezidențialele 2024 & duelul Maia Sandu — Alexandr Stoianoglo
+                description: 'Alegerile prezidențiale din toamna 2024 au fixat pentru doi ani agenda politică internă: Maia Sandu a obținut un nou mandat într-o confruntare polarizată cu Alexandr Stoianoglo. Scrutinul a fost citit simultan ca referendum asupra guvernării, test de reziliență instituțională și diagnostic al influenței rusești. În 2026, orice subiect mare de politică internă se citește prin filtrul acestui duel.
+
+                  '
+              en:
+                name: 2024 Presidential Elections & Sandu — Stoianoglo Duel
+                description: 'Autumn 2024 presidential elections set the domestic political agenda for two years: Maia Sandu won a new mandate in a polarized confrontation with Alexandr Stoianoglo. The vote was read simultaneously as a referendum on governance, a test of institutional resilience and a diagnosis of Russian influence. In 2026, every major domestic political topic is read through the filter of this duel.
+
+                  '
+              ru:
+                name: Президентские выборы 2024 & дуэль Санду — Стояногло
+                description: 'Президентские выборы осени 2024 задали внутриполитическую повестку на два года: Майя Санду получила новый мандат в поляризованном противостоянии с Александром Стояногло. Голосование читалось одновременно как референдум о власти, тест институциональной устойчивости и диагноз российского влияния.
+
+                  '
+            is_sensitive: false
+            keywords:
+              - prezidențiale 2024
+              - presidential elections 2024
+              - президентские выборы 2024
+              - Maia Sandu
+              - Майя Санду
+              - Alexandr Stoianoglo
+              - Александр Стояногло
+              - turul doi
+              - second round
+              - второй тур
+              - mandat 2
+              - second mandate
+              - второй срок
+              - vot diaspora
+              - diaspora vote
+              - голосование диаспоры
+              - polarizare
+              - polarization
+              - поляризация
+              - opoziție
+              - opposition
+              - оппозиция
+              - PSRM
+              - ПСРМ
+          - slug: moldova-parliamentary-elections-2025
+            translations:
+              ro:
+                name: Alegerile parlamentare 2025 & ciclul PAS
+                description: Scrutinul din 28 septembrie 2025, victoria PAS (50,20%), continuitatea cursului pro-european, opoziția parlamentară.
+              en:
+                name: 2025 Parliamentary Elections & PAS Cycle
+                description: September 28, 2025 elections, PAS victory (50.20%), continuation of pro-European course, parliamentary opposition.
+              ru:
+                name: Парламентские выборы 2025 & цикл PAS
+                description: Выборы 28 сентября 2025, победа PAS (50,20%), продолжение проевропейского курса, парламентская оппозиция.
+            is_sensitive: false
+            keywords:
+              - alegeri parlamentare 2025
+              - parliamentary elections 2025
+              - парламентские выборы 2025
+              - PAS
+              - Maia Sandu
+              - Майя Санду
+              - Igor Grosu
+              - Игорь Гросу
+              - 28 septembrie
+              - September 28
+              - 28 сентября
+              - 50,20%
+              - 55 mandate
+              - mandates
+              - blocuri electorale
+              - electoral blocs
+              - избирательные блоки
+              - ciclu politic 2025-2029
+              - political cycle 2025-2029
+              - политический цикл 2025-2029
+              - majoritate parlamentară
+              - parliamentary majority
+              - парламентское большинство
+          - slug: moldova-patriotic-bloc-opposition
+            translations:
+              ro:
+                name: Blocul Patriotic & opoziția prorusă
+                description: PSRM-PCRM-Inima Moldovei-Viitorul Moldovei, Igor Dodon, Vladimir Voronin, Irina Vlah, Vasile Tarlev, Alternativa lui Ion Ceban.
+              en:
+                name: Patriotic Bloc & Pro-Russian Opposition
+                description: PSRM-PCRM-Inima Moldovei-Viitorul Moldovei coalition, Igor Dodon, Vladimir Voronin, Irina Vlah, Ion Ceban's Alternativa.
+              ru:
+                name: Патриотический блок & пророссийская оппозиция
+                description: ПСРМ-ПКРМ-Сердце Молдовы-Будущее Молдовы, Игорь Додон, Владимир Воронин, Ирина Влах, Альтернатива Иона Чебана.
+            is_sensitive: false
+            keywords:
+              - Blocul Patriotic
+              - Patriotic Bloc
+              - Патриотический блок
+              - PSRM
+              - PCRM
+              - ПСРМ
+              - ПКРМ
+              - Igor Dodon
+              - Игорь Додон
+              - Vladimir Voronin
+              - Владимир Воронин
+              - Irina Vlah
+              - Ирина Влах
+              - Vasile Tarlev
+              - Василе Тарлев
+              - Alternativa
+              - Ion Ceban
+              - Ион Чебан
+              - Renato Usatîi
+              - Vasile Costiuc
+              - Democrația Acasă
+          - slug: moldova-shor-network-satellite-parties
+            translations:
+              ro:
+                name: Rețeaua Șor & partidele-satelit excluse
+                description: Ilan Șor, blocul Victorie, partidele Șansă/FASM/Victoria/Renaștere/Moldova Mare excluse, Victoria Furtună, Alexei Lungu.
+              en:
+                name: Shor Network & Excluded Satellite Parties
+                description: Ilan Shor, Victorie bloc, Chance/FASM/Victoria/Renaissance/Moldova Mare parties excluded, Victoria Furtună, Alexei Lungu.
+              ru:
+                name: Сеть Шора & исключённые партии-сателлиты
+                description: Илан Шор, блок Победа, исключённые партии Шанс/ФАСМ/Виктория/Возрождение/Молдова Маре, Виктория Фуртунэ.
+            is_sensitive: true
+            keywords:
+              - Ilan Șor
+              - Ilan Shor
+              - Илан Шор
+              - blocul Victorie
+              - Victorie bloc
+              - блок Победа
+              - Șansă
+              - Chance
+              - Шанс
+              - FASM
+              - ФАСМ
+              - Moldova Mare
+              - Молдова Маре
+              - Victoria Furtună
+              - Виктория Фуртунэ
+              - Alexei Lungu
+              - Алексей Лунгу
+              - Renaștere
+              - Renaissance
+              - Возрождение
+              - partide excluse
+              - excluded parties
+              - исключённые партии
+              - corupere electorală
+              - electoral corruption
+              - электоральная коррупция
+              - finanțare ilegală
+              - illegal financing
+              - незаконное финансирование
+              - capturarea statului
+              - state capture
+              - захват государства
+          - slug: moldova-promsvyazbank-vote-buying
+            translations:
+              ro:
+                name: Schema Promsvyazbank & cumpărarea industrială de voturi
+                description: 138.000 de cetățeni plătiți prin banca rusească sancționată, rețele „Evrazia", Nelli Parutenco, Anton Tregub, acțiunile SIS și IGP.
+              en:
+                name: Promsvyazbank Scheme & Industrial Vote Buying
+                description: 138,000 citizens paid through sanctioned Russian bank, "Evrazia" networks, Nelli Parutenco, Anton Tregub, SIS/IGP actions.
+              ru:
+                name: Схема Промсвязьбанка & массовая покупка голосов
+                description: 138 000 граждан, получивших выплаты через санкционный российский банк, сети «Евразия», Нелли Парутенко, Антон Трегуб.
+            is_sensitive: true
+            keywords:
+              - Promsvyazbank
+              - Промсвязьбанк
+              - cumpărare voturi
+              - vote buying
+              - покупка голосов
+              - 138 000
+              - Evrazia
+              - Евразия
+              - Nelli Parutenco
+              - Нелли Парутенко
+              - Anton Tregub
+              - Антон Трегуб
+              - SIS
+              - СИБ
+              - IGP
+              - Viorel Cernăuțeanu
+              - Virorel Cernăuțeanu
+              - interferență electorală
+              - electoral interference
+              - электоральное вмешательство
+              - anticorupție electorală
+              - electoral anti-corruption
+              - электоральная антикоррупция
+              - corupere industrială
+              - industrial corruption
+              - промышленная коррупция
+              - integritate electorală
+              - electoral integrity
+              - электоральная целостность
+          - slug: moldova-cec-diaspora-voting
+            translations:
+              ro:
+                name: CEC, legislație electorală & votul diasporei
+                description: Votul prin corespondență pentru 10 țări, Comisia Electorală Centrală, secții diasporă, contestări rezultate.
+              en:
+                name: CEC, Electoral Law & Diaspora Voting
+                description: Mail voting for 10 countries, Central Electoral Commission, diaspora polling stations, result challenges.
+              ru:
+                name: ЦИК, электоральное законодательство & голосование диаспоры
+                description: Голосование по почте для 10 стран, Центральная избирательная комиссия, участки диаспоры, оспаривание результатов.
+            is_sensitive: false
+            keywords:
+              - CEC
+              - ЦИК
+              - Central Electoral Commission
+              - vot corespondență
+              - mail voting
+              - голосование по почте
+              - vot diaspora
+              - diaspora voting
+              - голосование диаспоры
+              - secții de votare
+              - polling stations
+              - избирательные участки
+              - legislație electorală
+              - electoral law
+              - избирательное право
+          - slug: moldova-munteanu-government
+            translations:
+              ro:
+                name: Guvernul Munteanu & tranziția tehnocrată
+                description: Alexandru Munteanu, cabinet format pe 31 octombrie 2025, 14 ministere, programul „UE, pace, dezvoltare", angajamentul 2028.
+              en:
+                name: Munteanu Government & Technocratic Transition
+                description: Alexandru Munteanu, cabinet formed October 31, 2025, 14 ministries, "EU, peace, development" programme, 2028 commitment.
+              ru:
+                name: Правительство Мунтяну & технократический переход
+                description: Александру Мунтяну, кабинет 31 октября 2025, 14 министерств, программа «ЕС, мир, развитие», обязательство 2028.
+            is_sensitive: false
+            keywords:
+              - Alexandru Munteanu
+              - Александру Мунтяну
+              - Guvernul Munteanu
+              - Munteanu government
+              - правительство Мунтяну
+              - Cristina Gherasimov
+              - Кристина Герасимов
+              - Mihai Popșoi
+              - Михаил Попшой
+              - Dorin Recean
+              - Дорин Речан
+              - cabinet
+              - кабинет министров
+              - program guvernare
+              - government programme
+              - программа правительства
+          - slug: moldova-administrative-reform-amalgamation
+            translations:
+              ro:
+                name: Reforma administrativă — amalgamarea raioanelor
+                description: Tranziția de la 32 la 10 raioane, standard NUTS 3 UE, amalgamare voluntară, triplare alocații investiții 1.000→3.000 lei/locuitor.
+              en:
+                name: Administrative Reform — District Amalgamation
+                description: Transition from 32 to 10 districts, EU NUTS 3 standard, voluntary amalgamation, investment allocation tripled 1,000→3,000 MDL/capita.
+              ru:
+                name: Административная реформа — объединение районов
+                description: Переход с 32 до 10 районов, стандарт NUTS 3 ЕС, добровольное объединение, утроение инвестиционных ассигнований.
+            is_sensitive: true
+            keywords:
+              - reforma APL
+              - administrative reform
+              - административная реформа
+              - amalgamare raioane
+              - district amalgamation
+              - объединение районов
+              - descentralizare
+              - decentralization
+              - децентрализация
+              - NUTS 3
+              - Primării Puternice
+              - Strong Municipalities
+              - 32 raioane
+              - 10 raioane
+          - slug: moldova-taraclia-bulgarian-autonomy
+            translations:
+              ro:
+                name: Cazul Taraclia & autonomia bulgară
+                description: Municipiul de nivelul II, 65% etnici bulgari, conservarea identității culturale și lingvistice, concesie politică majoră.
+              en:
+                name: Taraclia Case & Bulgarian Autonomy
+                description: Level II municipality status, 65% ethnic Bulgarians, cultural and linguistic identity preservation, major political concession.
+              ru:
+                name: Случай Тараклия & болгарская автономия
+                description: Муниципалитет II уровня, 65% этнических болгар, сохранение культурной и языковой идентичности, крупная политическая уступка.
+            is_sensitive: true
+            keywords:
+              - Taraclia
+              - Тараклия
+              - municipiul Taraclia
+              - Taraclia municipality
+              - муниципалитет Тараклия
+              - minoritate bulgară
+              - Bulgarian minority
+              - болгарское меньшинство
+              - etnici bulgari
+              - ethnic Bulgarians
+              - этнические болгары
+              - autonomie culturală
+              - cultural autonomy
+              - культурная автономия
+      - slug: moldova-eu-integration-foreign-policy
+        translations:
+          ro: Integrare Europeană & Politică Externă
+          en: European Integration & Foreign Policy
+          ru: Европейская интеграция & внешняя политика
+        sort_order: 2
+        topics:
+          - slug: moldova-eu-accession-clusters
+            translations:
+              ro:
+                name: Negocierile de aderare UE — clustere
+                description: Screening finalizat 22 septembrie 2025, Clustere 1-6 deschise 17 martie 2026, Planul Național de Aderare 2025-2029, Cristina Gherasimov.
+              en:
+                name: EU Accession Negotiations — Clusters
+                description: Screening finalized September 22, 2025, Clusters 1-6 opened March 17, 2026, National Accession Plan 2025-2029, Cristina Gherasimov.
+              ru:
+                name: Переговоры о вступлении в ЕС — кластеры
+                description: Скрининг завершён 22 сентября 2025, Кластеры 1-6 открыты 17 марта 2026, Национальный план вступления 2025-2029.
+            is_sensitive: false
+            keywords:
+              - aderare UE
+              - EU accession
+              - вступление в ЕС
+              - clustere negociere
+              - negotiation clusters
+              - кластеры переговоров
+              - screening
+              - Cluster 1
+              - Cluster 2
+              - Cluster 6
+              - acquis
+              - Cristina Gherasimov
+              - Кристина Герасимов
+              - PNA
+              - Plan Național Aderare
+              - National Accession Plan
+              - '2028'
+              - '2029'
+              - screening bilateral
+              - bilateral screening
+              - двусторонний скрининг
+              - negocieri aderare
+              - accession negotiations
+              - переговоры о вступлении
+          - slug: moldova-eu-growth-plan-financial-package
+            translations:
+              ro:
+                name: Pachetul financiar UE 1,9 miliarde euro & Planul de Creștere
+                description: 400 mln granturi + 1,5 mld împrumuturi concesionale, 56 reforme structurale, 153 măsuri, debursări condiționate.
+              en:
+                name: EU €1.9 Billion Financial Package & Growth Plan
+                description: €400M grants + €1.5B concessional loans, 56 structural reforms, 153 measures, conditional disbursements.
+              ru:
+                name: Финансовый пакет ЕС 1,9 млрд евро & План роста
+                description: 400 млн грантов + 1,5 млрд льготных кредитов, 56 структурных реформ, 153 меры, условные выплаты.
+            is_sensitive: false
+            keywords:
+              - pachet financiar UE
+              - EU financial package
+              - финансовый пакет ЕС
+              - 1,9 miliarde euro
+              - 1.9 billion euros
+              - 1,9 млрд евро
+              - Plan de Creștere
+              - Growth Plan
+              - План роста
+              - Agenda de Reforme
+              - Reforms Agenda
+              - debursare
+              - disbursement
+              - выплата
+              - granturi
+              - grants
+              - гранты
+              - Planul de Creștere
+              - Facilitatea de Reformă
+              - Reform and Growth Facility
+              - Механизм реформ и роста
+              - condiționalitate UE
+              - EU conditionality
+              - условность ЕС
+              - Reform Agenda
+              - повестка реформ
+          - slug: moldova-eu-enlargement-report
+            translations:
+              ro:
+                name: Raportul anual de Extindere UE
+                description: Evaluarea Comisiei Europene, progrese pe 33 capitole, Clusterul Verde, linii roșii justiție și anticorupție.
+              en:
+                name: Annual EU Enlargement Report
+                description: European Commission assessment, progress on 33 chapters, Green Cluster, red lines on justice and anti-corruption.
+              ru:
+                name: Ежегодный доклад ЕС о расширении
+                description: Оценка Еврокомиссии, прогресс по 33 главам, Зелёный кластер, красные линии по юстиции и антикоррупции.
+            is_sensitive: false
+            keywords:
+              - Raport Extindere
+              - Enlargement Report
+              - доклад о расширении
+              - Comisia Europeană
+              - European Commission
+              - Еврокомиссия
+              - 33 capitole
+              - 33 chapters
+              - 33 главы
+              - evaluare anuală
+              - annual assessment
+              - ежегодная оценка
+              - Programul Național Aderare
+              - National Accession Programme
+              - Национальная программа вступления
+              - PNA 2025-2029
+              - capitole UE
+              - EU chapters
+              - главы ЕС
+              - monitorizare Comisie
+              - Commission monitoring
+              - мониторинг Комиссии
+          - slug: moldova-romania-bilateral
+            translations:
+              ro:
+                name: Relația Moldova-România — interconectori, Bolojan, Nicușor Dan
+                description: Interconectori energetici, pod Ungheni A8, vizita președintelui Dan, guvernul Bolojan, cooperare strategică.
+              en:
+                name: Moldova-Romania Relations — Interconnectors, Bolojan, Nicușor Dan
+                description: Energy interconnectors, Ungheni A8 bridge, President Dan's visit, Bolojan government, strategic cooperation.
+              ru:
+                name: Отношения Молдова-Румыния — интерконнекторы, Боложан, Николай Дан
+                description: Энергетические интерконнекторы, мост Унгены A8, визит президента Дана, правительство Боложана, стратегическое сотрудничество.
+            is_sensitive: false
+            keywords:
+              - Moldova România
+              - Moldova Romania
+              - Молдова Румыния
+              - Nicușor Dan
+              - Николай Дан
+              - Bolojan
+              - Боложан
+              - interconnector
+              - interconectori
+              - интерконнекторы
+              - Ungheni
+              - Унгены
+              - A8
+              - pod Prut
+              - Prut bridge
+              - мост через Прут
+          - slug: moldova-csi-withdrawal
+            translations:
+              ro:
+                name: Retragerea din CSI & emanciparea post-sovietică
+                description: Denunțarea Acordului CSI 1991, Protocolului și Statutului 1993, economii 3,1 mln lei, abrogarea a peste 70 acorduri subsecvente.
+              en:
+                name: CIS Withdrawal & Post-Soviet Emancipation
+                description: Denunciation of 1991 CIS Agreement, 1993 Protocol and Statute, 3.1M MDL savings, abrogation of 70+ subsequent agreements.
+              ru:
+                name: Выход из СНГ & постсоветская эмансипация
+                description: Денонсация Соглашения СНГ 1991, Протокола и Устава 1993, экономия 3,1 млн леев, отмена более 70 соглашений.
+            is_sensitive: false
+            keywords:
+              - CSI
+              - CIS
+              - СНГ
+              - retragere CSI
+              - CIS withdrawal
+              - выход из СНГ
+              - denunțare acord
+              - treaty denunciation
+              - денонсация договора
+              - spațiu post-sovietic
+              - post-Soviet space
+              - постсоветское пространство
+              - Moscova
+              - Moscow
+              - Москва
+          - slug: moldova-ukraine-border-security
+            translations:
+              ro:
+                name: Moldova-Ucraina — frontieră, refugiați, securitate
+                description: Minarea frontierei transnistrene de către Ucraina, eradicarea contrabandei, cooperare EUBAM, impactul războiului.
+              en:
+                name: Moldova-Ukraine — Border, Refugees, Security
+                description: Ukrainian mining of Transnistrian border, contraband eradication, EUBAM cooperation, war impact.
+              ru:
+                name: Молдова-Украина — граница, беженцы, безопасность
+                description: Минирование Украиной приднестровской границы, ликвидация контрабанды, сотрудничество EUBAM, последствия войны.
+            is_sensitive: false
+            keywords:
+              - Moldova Ucraina
+              - Moldova Ukraine
+              - Молдова Украина
+              - frontieră
+              - border
+              - граница
+              - EUBAM
+              - minare frontieră
+              - border mining
+              - минирование границы
+              - contrabandă
+              - contraband
+              - контрабанда
+              - GOTR
+              - Odesa
+              - Одесса
+          - slug: moldova-russia-sanctions-hybrid-pressure
+            translations:
+              ro:
+                name: Relația cu Rusia — sancțiuni, Gazprom, datoria Moldovagaz, presiuni hibride
+                description: Datoria istorică de 11 miliarde dolari, sancțiuni bilaterale, presiuni diplomatice și informaționale, ambasade închise.
+              en:
+                name: Russia Relations — Sanctions, Gazprom, Moldovagaz Debt, Hybrid Pressure
+                description: Historic $11 billion debt, bilateral sanctions, diplomatic and informational pressure, closed embassies.
+              ru:
+                name: Отношения с Россией — санкции, Газпром, долг Молдовагаз, гибридное давление
+                description: Исторический долг 11 млрд долларов, двусторонние санкции, дипломатическое и информационное давление, закрытые посольства.
+            is_sensitive: true
+            keywords:
+              - Rusia
+              - Russia
+              - Россия
+              - sancțiuni
+              - sanctions
+              - санкции
+              - Gazprom
+              - Газпром
+              - Moldovagaz
+              - Молдовагаз
+              - datoria istorică
+              - historic debt
+              - исторический долг
+              - 11 miliarde
+              - 11 billion
+              - 11 миллиардов
+              - presiuni hibride
+              - hybrid pressure
+              - гибридное давление
+      - slug: moldova-transnistria-gagauzia
+        translations:
+          ro: Transnistria & Găgăuzia
+          en: Transnistria & Gagauzia
+          ru: Приднестровье & Гагаузия
+        sort_order: 3
+        topics:
+          - slug: transnistria-gas-crisis-met-gas
+            translations:
+              ro:
+                name: Criza gazului Transnistria & schema MET Gas/Dubai
+                description: Sistarea Gazprom 1 ianuarie 2025, MGRES pe cărbune, schema plăți Dubai, episodul martie 2026, livrări via Ungaria.
+              en:
+                name: Transnistria Gas Crisis & MET Gas/Dubai Scheme
+                description: Gazprom cutoff January 1, 2025, MGRES on coal, Dubai payment scheme, March 2026 episode, Hungary deliveries.
+              ru:
+                name: Газовый кризис Приднестровья & схема MET Gas/Дубай
+                description: Прекращение Газпрома 1 января 2025, МГРЭС на угле, схема платежей Дубай, эпизод март 2026, поставки через Венгрию.
+            is_sensitive: true
+            keywords:
+              - criză gaz Transnistria
+              - Transnistria gas crisis
+              - газовый кризис Приднестровья
+              - Gazprom
+              - Газпром
+              - MGRES
+              - МГРЭС
+              - Cuciurgan
+              - Кучурган
+              - MET Gas
+              - Dubai
+              - Дубай
+              - Ungaria
+              - Hungary
+              - Венгрия
+              - Tiraspol
+              - Тирасполь
+              - Vadim Krasnoselski
+              - Вадим Красносельский
+              - tranzit gaz
+              - gas transit
+              - транзит газа
+              - 1 ianuarie 2025
+              - January 1 2025
+              - 1 января 2025
+              - criza umanitară
+              - humanitarian crisis
+              - гуманитарный кризис
+              - colaps energetic
+              - energy collapse
+              - энергетический коллапс
+          - slug: transnistria-reintegration-strategy
+            translations:
+              ro:
+                name: Strategia reintegrării 1+1, trupele ruse, fiscalitate unitară
+                description: Format nou 1+1 înlocuind 5+2, retragerea Operativnaia Grupa (GOTR), integrare vamală, noul Cod Vamal, Valeriu Chiveri.
+              en:
+                name: Reintegration Strategy 1+1, Russian Troops, Unified Taxation
+                description: New 1+1 format replacing 5+2, Operational Group (GOTR) withdrawal demand, customs integration, new Customs Code, Valeriu Chiveri.
+              ru:
+                name: Стратегия реинтеграции 1+1, российские войска, единое налогообложение
+                description: Новый формат 1+1 вместо 5+2, требование вывода ОГВР, таможенная интеграция, новый Таможенный кодекс.
+            is_sensitive: true
+            keywords:
+              - reintegrare
+              - reintegration
+              - реинтеграция
+              - 1+1
+              - 5+2
+              - format negocieri
+              - negotiations format
+              - формат переговоров
+              - GOTR
+              - ОГВР
+              - trupe ruse
+              - Russian troops
+              - российские войска
+              - Valeriu Chiveri
+              - Валериу Кивери
+              - cod vamal
+              - Customs Code
+              - таможенный кодекс
+              - fiscalitate unitară
+              - unified taxation
+          - slug: transnistria-economic-decline
+            translations:
+              ro:
+                name: Economia transnistreană în declin structural
+                description: PIB cu -18%, producția industrială -30%, Sheriff, Moldova Steel Works, Uzina Metalurgică Rîbnița, salarii neplătite.
+              en:
+                name: Transnistrian Economy in Structural Decline
+                description: -18% GDP, -30% industrial production, Sheriff, Moldova Steel Works, Rîbnița Metallurgical, unpaid wages.
+              ru:
+                name: Структурный упадок приднестровской экономики
+                description: -18% ВВП, -30% промышленности, Sheriff, Moldova Steel Works, Рыбницкий Металлургический, невыплаченные зарплаты.
+            is_sensitive: false
+            keywords:
+              - economie Transnistria
+              - Transnistria economy
+              - экономика Приднестровья
+              - Sheriff
+              - Moldova Steel Works
+              - Rîbnița
+              - Рыбница
+              - Uzina Metalurgică
+              - Tirotex
+              - declin economic
+              - economic decline
+              - экономический спад
+              - șomaj tehnic
+              - technical unemployment
+              - техническая безработица
+              - MGRES cărbune
+              - MGRES coal
+              - МГРЭС уголь
+              - uzine Rîbnița
+              - Rîbnița plants
+              - заводы Рыбница
+              - colaps industrial
+              - industrial collapse
+              - промышленный коллапс
+              - model economic
+              - economic model
+              - экономическая модель
+          - slug: gagauzia-gutul-autonomy-crisis
+            translations:
+              ro:
+                name: Evghenia Guțul & criza autonomiei Găgăuziei
+                description: Condamnare 5 august 2025 la 7 ani închisoare, 40 mln lei restituire, Adunarea Populară Comrat, dizolvare CEC regional.
+              en:
+                name: Evghenia Guțul & Gagauzia Autonomy Crisis
+                description: August 5, 2025 conviction - 7 years imprisonment, 40M MDL restitution, Comrat People's Assembly, regional CEC dissolution.
+              ru:
+                name: Евгения Гуцул & кризис автономии Гагаузии
+                description: Осуждение 5 августа 2025 на 7 лет, возврат 40 млн леев, Народное собрание Комрата, роспуск регионального ЦИК.
+            is_sensitive: true
+            keywords:
+              - Evghenia Guțul
+              - Evghenia Gutul
+              - Евгения Гуцул
+              - bașcan
+              - bashkan
+              - башкан
+              - Găgăuzia
+              - Gagauzia
+              - Гагаузия
+              - Comrat
+              - Комрат
+              - Adunarea Populară
+              - People's Assembly
+              - Народное собрание
+              - autonomie Găgăuzia
+              - Gagauz autonomy
+              - гагаузская автономия
+              - 7 ani închisoare
+              - 7 years imprisonment
+              - 7 лет тюрьмы
+          - slug: gagauzia-romanian-language-requirement
+            translations:
+              ro:
+                name: Limba română — condiție obligatorie pentru bașcanul Găgăuziei
+                description: Propunerea CEC aprilie 2026, bașcan membru din oficiu al Guvernului, integrare instituțională, critici Comrat.
+              en:
+                name: Romanian Language — Mandatory Requirement for Gagauzia Bashkan
+                description: CEC proposal April 2026, ex officio government member, institutional integration, Comrat criticism.
+              ru:
+                name: Румынский язык — обязательное условие для башкана Гагаузии
+                description: Предложение ЦИК апрель 2026, башкан как член правительства, институциональная интеграция, критика Комрата.
+            is_sensitive: true
+            keywords:
+              - limba română Găgăuzia
+              - Romanian language Gagauzia
+              - румынский язык Гагаузия
+              - bașcan
+              - bashkan
+              - башкан
+              - legislație electorală
+              - electoral law
+              - избирательное право
+              - integrare instituțională
+              - institutional integration
+              - институциональная интеграция
+              - suveranitate
+              - sovereignty
+              - суверенитет
+      - slug: moldova-justice-anticorruption
+        translations:
+          ro: Justiție & Anticorupție
+          en: Justice & Anti-Corruption
+          ru: Юстиция & антикоррупция
+        sort_order: 4
+        topics:
+          - slug: moldova-judicial-vetting
+            translations:
+              ro:
+                name: Vetting-ul judecătorilor și procurorilor
+                description: Evaluare externă extraordinară (Legea 65/2023), CSJ, CSM, criză de cadre, rată succes sub 40%, peste 100 posturi vacante.
+              en:
+                name: Vetting of Judges and Prosecutors
+                description: Extraordinary external evaluation (Law 65/2023), Supreme Court, CSM, staff crisis, success rate below 40%, 100+ vacancies.
+              ru:
+                name: Веттинг судей и прокуроров
+                description: Внешняя чрезвычайная оценка (Закон 65/2023), Верховный суд, ВСМ, кадровый кризис, показатель успеха ниже 40%.
+            is_sensitive: false
+            keywords:
+              - vetting
+              - веттинг
+              - evaluare externă
+              - external evaluation
+              - внешняя оценка
+              - judecători
+              - judges
+              - судьи
+              - procurori
+              - prosecutors
+              - прокуроры
+              - CSJ
+              - Supreme Court
+              - Верховный суд
+              - CSM
+              - ВСМ
+              - CSP
+              - integritate
+              - integrity
+              - честность
+              - Legea 65/2023
+              - criza de cadre
+              - staff crisis
+              - кадровый кризис
+              - demisii magistrați
+              - magistrate resignations
+              - отставки магистратов
+              - rezistență corporatistă
+              - corporate resistance
+              - корпоративное сопротивление
+          - slug: moldova-plahotniuc-billion-theft
+            translations:
+              ro:
+                name: Plahotniuc — extrădare din Grecia & dosarul „furtul miliardului"
+                description: Reținere iulie 2025, extrădare 25 septembrie 2025, Penitenciar nr. 13, audieri 2026, frauda bancară 2014.
+              en:
+                name: Plahotniuc — Greek Extradition & "Billion Theft" Case
+                description: July 2025 arrest, September 25, 2025 extradition, Penitentiary No. 13, 2026 hearings, 2014 bank fraud.
+              ru:
+                name: Плахотнюк — экстрадиция из Греции & дело «кражи миллиарда»
+                description: Задержание июль 2025, экстрадиция 25 сентября 2025, Пенитенциарий №13, слушания 2026, банковское мошенничество 2014.
+            is_sensitive: true
+            keywords:
+              - Vladimir Plahotniuc
+              - Владимир Плахотнюк
+              - furtul miliardului
+              - billion theft
+              - кража миллиарда
+              - extrădare Grecia
+              - Greek extradition
+              - экстрадиция Греция
+              - Penitenciar 13
+              - Penitentiary 13
+              - frauda bancară
+              - bank fraud
+              - банковское мошенничество
+              - Banca de Economii
+              - Procuratura Anticorupție
+              - Anti-Corruption Prosecution
+              - capturarea statului
+              - state capture
+              - захват государства
+              - cooperare judiciară
+              - judicial cooperation
+              - судебное сотрудничество
+              - timing electoral
+              - electoral timing
+              - электоральный тайминг
+          - slug: moldova-major-corruption-cases
+            translations:
+              ro:
+                name: Dosarele mari — Șor, Filat, Dodon, Andronachi, Gacikevici
+                description: Cazuri emblematice tergiversate 13+ ani, risc prescripție, Vlad Filat, Igor Dodon dosarul Kuliok, Andronachi.
+              en:
+                name: Major Corruption Cases — Shor, Filat, Dodon, Andronachi, Gacikevici
+                description: Landmark cases delayed 13+ years, statute of limitations risk, Vlad Filat, Igor Dodon Kuliok case, Andronachi.
+              ru:
+                name: Крупные коррупционные дела — Шор, Филат, Додон, Андронаки, Гацикевич
+                description: Знаковые дела, затянутые более 13 лет, риск срока давности, Влад Филат, Игорь Додон дело Кулька.
+            is_sensitive: true
+            keywords:
+              - Vlad Filat
+              - Влад Филат
+              - Igor Dodon
+              - Игорь Додон
+              - Kuliok
+              - Кулёк
+              - Vladimir Andronachi
+              - Владимир Андронаки
+              - Grigore Gacikevici
+              - Григорий Гацикевич
+              - Banca de Economii
+              - prescripție
+              - statute of limitations
+              - срок давности
+              - tergiversare
+              - delay
+              - затягивание
+          - slug: moldova-cna-ani-civil-confiscation
+            translations:
+              ro:
+                name: CNA, ANI & mecanismul de confiscare civilă
+                description: Centrul Național Anticorupție, Autoritatea Națională de Integritate, confiscare extinsă, declarații de avere, anti-oligarhizare.
+              en:
+                name: CNA, ANI & Civil Confiscation Mechanism
+                description: National Anti-Corruption Center, National Integrity Authority, extended confiscation, wealth declarations, anti-oligarchization.
+              ru:
+                name: CNA, ANI & механизм гражданской конфискации
+                description: Национальный антикоррупционный центр, Национальное управление по целостности, расширенная конфискация, декларации о доходах.
+            is_sensitive: false
+            keywords:
+              - CNA
+              - НАЦ
+              - Centrul Anticorupție
+              - Anti-Corruption Center
+              - антикоррупционный центр
+              - ANI
+              - ANI
+              - Autoritatea Integritate
+              - Integrity Authority
+              - confiscare civilă
+              - civil confiscation
+              - гражданская конфискация
+              - declarații avere
+              - wealth declarations
+              - декларации о доходах
+          - slug: moldova-treason-fugitive-agents
+            translations:
+              ro:
+                name: Trădare de patrie & agenți fugari (Nesterovschi, Creangă, Lozovan)
+                description: Condamnări Alexandr Nesterovschi și Irina Lozovan, Ion Creangă în proces, agentură rusă în Parlament.
+              en:
+                name: High Treason & Fugitive Agents (Nesterovschi, Creangă, Lozovan)
+                description: Alexandr Nesterovschi and Irina Lozovan convictions, Ion Creangă on trial, Russian agents in Parliament.
+              ru:
+                name: Государственная измена & беглые агенты (Нестеровский, Крянгэ, Лозован)
+                description: Осуждения Александра Нестеровского и Ирины Лозован, суд над Ионом Крянгэ, российские агенты в Парламенте.
+            is_sensitive: true
+            keywords:
+              - trădare de patrie
+              - high treason
+              - государственная измена
+              - Alexandr Nesterovschi
+              - Александр Нестеровский
+              - Irina Lozovan
+              - Ирина Лозован
+              - Ion Creangă
+              - Ион Крянгэ
+              - agentură rusă
+              - Russian agents
+              - российская агентура
+              - deputați fugari
+              - fugitive deputies
+              - беглые депутаты
+      - slug: moldova-economy-finance
+        translations:
+          ro: Economie & Finanțe
+          en: Economy & Finance
+          ru: Экономика & финансы
+        sort_order: 5
+        topics:
+          - slug: moldova-bnm-inflation-monetary-policy
+            translations:
+              ro:
+                name: BNM, inflația & politica monetară
+                description: Inflație 5,8% aprilie 2026, rată de bază 5%, Anca Dragu guvernator, curs 20,12 MDL/EUR, rating Fitch stabil.
+              en:
+                name: NBM, Inflation & Monetary Policy
+                description: 5.8% inflation April 2026, 5% base rate, Governor Anca Dragu, 20.12 MDL/EUR exchange rate, Fitch stable rating.
+              ru:
+                name: НБМ, инфляция & монетарная политика
+                description: Инфляция 5,8% апрель 2026, базовая ставка 5%, Анка Драгу глава, курс 20,12 MDL/EUR, стабильный рейтинг Fitch.
+            is_sensitive: false
+            keywords:
+              - BNM
+              - NBM
+              - НБМ
+              - Banca Națională
+              - National Bank
+              - Национальный банк
+              - inflație
+              - inflation
+              - инфляция
+              - rata de bază
+              - base rate
+              - базовая ставка
+              - Anca Dragu
+              - Анка Драгу
+              - curs valutar
+              - exchange rate
+              - валютный курс
+              - leu moldovenesc
+              - Moldovan leu
+              - молдавский лей
+              - Fitch
+              - rating
+          - slug: moldova-budget-2026-imf
+            translations:
+              ro:
+                name: Bugetul 2026 — „Investițiilor Responsabile" & relația FMI
+                description: Bugetul Andrian Gavriliță, deficit, suspendare programul FMI 170 mln dolari, rectificări bugetare, finanțare externă.
+              en:
+                name: 2026 Budget — "Responsible Investments" & IMF Relations
+                description: Andrian Gavriliță budget, deficit, IMF $170M programme suspension, budget amendments, external financing.
+              ru:
+                name: Бюджет 2026 — «Ответственных инвестиций» & отношения с МВФ
+                description: Бюджет Андриана Гаврилицы, дефицит, приостановление программы МВФ 170 млн долларов, бюджетные поправки.
+            is_sensitive: false
+            keywords:
+              - buget 2026
+              - 2026 budget
+              - бюджет 2026
+              - Andrian Gavriliță
+              - Андриан Гаврилица
+              - Ministerul Finanțelor
+              - Ministry of Finance
+              - Министерство финансов
+              - FMI
+              - IMF
+              - МВФ
+              - deficit bugetar
+              - budget deficit
+              - бюджетный дефицит
+              - datorie publică
+              - public debt
+              - государственный долг
+          - slug: moldova-pensions-cnas-social-protection
+            translations:
+              ro:
+                name: Pensii, CNAS & sistemul de protecție socială
+                description: Indexare 6,84% aprilie 2026, pensie minimă 3.264 lei, vârsta pensionare, Ministerul Muncii, coșul minim de existență.
+              en:
+                name: Pensions, CNAS & Social Protection System
+                description: 6.84% indexation April 2026, minimum pension 3,264 MDL, retirement age, Ministry of Labour, minimum existence basket.
+              ru:
+                name: Пенсии, CNAS & система социальной защиты
+                description: Индексация 6,84% апрель 2026, минимальная пенсия 3264 лея, пенсионный возраст, Министерство труда.
+            is_sensitive: false
+            keywords:
+              - pensii
+              - pensions
+              - пенсии
+              - CNAS
+              - CNAS
+              - КНАС
+              - Casa Națională Asigurări
+              - Social Insurance House
+              - Национальная касса страхования
+              - indexare
+              - indexation
+              - индексация
+              - vârsta pensionare
+              - retirement age
+              - пенсионный возраст
+              - asistență socială
+              - social assistance
+              - социальная помощь
+          - slug: moldova-it-park-digital-nomads
+            translations:
+              ro:
+                name: Sectorul IT, Moldova IT Park & nomazii digitali
+                description: Impozit unic 7%, rezidenți străini, creștere TIC 5,5%, nomazi digitali, export servicii IT, reziliență sector.
+              en:
+                name: IT Sector, Moldova IT Park & Digital Nomads
+                description: 7% single tax, foreign residents, 5.5% ICT growth, digital nomads, IT services export, sector resilience.
+              ru:
+                name: IT-сектор, Moldova IT Park & цифровые кочевники
+                description: Единый налог 7%, иностранные резиденты, рост ИКТ 5,5%, цифровые кочевники, экспорт IT-услуг.
+            is_sensitive: false
+            keywords:
+              - Moldova IT Park
+              - IT Park
+              - sectorul IT
+              - IT sector
+              - ИТ-сектор
+              - nomazi digitali
+              - digital nomads
+              - цифровые кочевники
+              - TIC
+              - ICT
+              - ИКТ
+              - impozit unic 7%
+              - 7% single tax
+              - единый налог 7%
+              - export servicii IT
+              - IT services export
+              - экспорт IT-услуг
+          - slug: moldova-remittances-purchasing-power
+            translations:
+              ro:
+                name: Remitențele diasporei & puterea de cumpărare
+                description: 1,66 miliarde dolari transferuri bancare 2025, estimare totală 3,5 miliarde, Mămăliga Index, salariu mediu 16.355 MDL.
+              en:
+                name: Diaspora Remittances & Purchasing Power
+                description: $1.66B bank transfers 2025, total estimate $3.5B, Mămăliga Index, average salary 16,355 MDL.
+              ru:
+                name: Денежные переводы диаспоры & покупательная способность
+                description: 1,66 млрд долларов банковских переводов 2025, общая оценка 3,5 млрд, Mămăliga Index, средняя зарплата 16 355 MDL.
+            is_sensitive: false
+            keywords:
+              - remitențe
+              - remittances
+              - денежные переводы
+              - diaspora
+              - диаспора
+              - transferuri bancare
+              - bank transfers
+              - банковские переводы
+              - Mămăliga Index
+              - putere cumpărare
+              - purchasing power
+              - покупательная способность
+              - salariu mediu
+              - average salary
+              - средняя зарплата
+          - slug: moldova-agriculture-wine-drought
+            translations:
+              ro:
+                name: Agricultura, vinificația & criza secetei
+                description: Grâu +33%, rapiță +240%, porumb/floarea-soarelui compromise 50-70%, vinificație 12,3 mln decalitri, export SUA +900%.
+              en:
+                name: Agriculture, Viticulture & Drought Crisis
+                description: Wheat +33%, rapeseed +240%, corn/sunflower 50-70% damaged, wine 12.3M decalitres, US export +900%.
+              ru:
+                name: Сельское хозяйство, виноделие & засуха
+                description: Пшеница +33%, рапс +240%, кукуруза/подсолнечник повреждены на 50-70%, виноделие 12,3 млн декалитров.
+            is_sensitive: false
+            keywords:
+              - agricultură
+              - agriculture
+              - сельское хозяйство
+              - secetă
+              - drought
+              - засуха
+              - grâu
+              - wheat
+              - пшеница
+              - rapiță
+              - rapeseed
+              - рапс
+              - porumb
+              - corn
+              - кукуруза
+              - vinificație
+              - viticulture
+              - виноделие
+              - Oficiul Viei și Vinului
+              - Wine Office
+              - AIPA
+              - irigații
+              - irrigation
+              - ирригация
+      - slug: moldova-energy-infrastructure
+        translations:
+          ro: Energie & Infrastructură
+          en: Energy & Infrastructure
+          ru: Энергетика & инфраструктура
+        sort_order: 6
+        topics:
+          - slug: moldova-vulcanesti-chisinau-energy-line
+            translations:
+              ro:
+                name: Linia Vulcănești-Chișinău & interconectori România
+                description: LEA 400 kV, 27 mln euro Banca Mondială, 157 km, 507 piloni, termen mai-iunie 2026, eliminarea dependenței Cuciurgan.
+              en:
+                name: Vulcănești-Chișinău Line & Romania Interconnectors
+                description: 400 kV transmission line, €27M World Bank, 157 km, 507 pylons, deadline May-June 2026, Cuciurgan dependency elimination.
+              ru:
+                name: Линия Вулкэнешть-Кишинёв & интерконнекторы Румыния
+                description: ЛЭП 400 кВ, 27 млн евро Всемирный банк, 157 км, 507 опор, срок май-июнь 2026, устранение зависимости от Кучургана.
+            is_sensitive: false
+            keywords:
+              - Vulcănești Chișinău
+              - Vulcanesti Chisinau
+              - Вулкэнешть Кишинёв
+              - linie electrică
+              - power line
+              - ЛЭП
+              - 400 kV
+              - 400 кВ
+              - interconnector
+              - interconector
+              - интерконнектор
+              - Iași Ungheni
+              - gazoduct
+              - gas pipeline
+              - газопровод
+              - securitate energetică
+              - energy security
+              - энергетическая безопасность
+          - slug: moldova-moldovagaz-energocom-reform
+            translations:
+              ro:
+                name: Moldovagaz, Energocom & reforma gazelor
+                description: Unbundling vertical, separarea operatorilor, stocuri de securitate 15% consum anual, Vadim Ceban, datoria istorică Gazprom.
+              en:
+                name: Moldovagaz, Energocom & Gas Sector Reform
+                description: Vertical unbundling, operator separation, security stocks 15% annual consumption, Vadim Ceban, historic Gazprom debt.
+              ru:
+                name: Молдовагаз, Энергоком & реформа газовой отрасли
+                description: Вертикальный анбандлинг, разделение операторов, запасы безопасности 15% годового потребления, Вадим Чебан.
+            is_sensitive: false
+            keywords:
+              - Moldovagaz
+              - Молдовагаз
+              - Energocom
+              - Энергоком
+              - unbundling
+              - анбандлинг
+              - reformă gaze
+              - gas reform
+              - газовая реформа
+              - Vadim Ceban
+              - Вадим Чебан
+              - stocuri securitate
+              - security stocks
+              - резервы безопасности
+              - datoria Gazprom
+              - Gazprom debt
+              - долг Газпрому
+          - slug: moldova-anre-tariffs-winter-compensation
+            translations:
+              ro:
+                name: ANRE, tarife & compensații iarnă
+                description: Agenția Națională Reglementare Energie, liberalizare piață gaze non-casnici 1 aprilie 2026, BRM East Moldova, Termoelectrica.
+              en:
+                name: ANRE, Tariffs & Winter Compensation
+                description: National Energy Regulation Agency, non-household gas market liberalization April 1, 2026, BRM East Moldova, Termoelectrica.
+              ru:
+                name: ANRE, тарифы & зимние компенсации
+                description: Национальное агентство регулирования энергетики, либерализация газового рынка с 1 апреля 2026, BRM East Moldova.
+            is_sensitive: false
+            keywords:
+              - ANRE
+              - АНРЕ
+              - tarife energie
+              - energy tariffs
+              - энергетические тарифы
+              - compensații iarnă
+              - winter compensation
+              - зимние компенсации
+              - liberalizare piață
+              - market liberalization
+              - либерализация рынка
+              - BRM East Moldova
+              - Termoelectrica
+              - Термоэлектрика
+              - facturi
+              - bills
+              - счета
+          - slug: moldova-digitalization-evo-mpay-msign
+            translations:
+              ro:
+                name: Digitalizare — EVO, MPay, MSign, e-guvernare
+                description: Ecosistem EVO lansat ianuarie 2026, 620 servicii publice, portofel digital, MPower, semnătură electronică, AGE.
+              en:
+                name: Digitalization — EVO, MPay, MSign, e-Government
+                description: EVO ecosystem launched January 2026, 620 public services, digital wallet, MPower, electronic signature, AGE.
+              ru:
+                name: Цифровизация — EVO, MPay, MSign, электронное правительство
+                description: Экосистема EVO запущена январь 2026, 620 госуслуг, цифровой кошелёк, MPower, электронная подпись.
+            is_sensitive: false
+            keywords:
+              - EVO
+              - MPay
+              - MSign
+              - MPower
+              - Agenția Guvernare Electronică
+              - AGE
+              - e-Government Agency
+              - Агентство электронного правительства
+              - digitalizare
+              - digitalization
+              - цифровизация
+              - e-servicii
+              - e-services
+              - электронные услуги
+              - portofel digital
+              - digital wallet
+              - цифровой кошелёк
+              - semnătură electronică
+              - electronic signature
+              - электронная подпись
+          - slug: moldova-prut-bridges-a8-highway
+            translations:
+              ro:
+                name: Poduri peste Prut & Autostrada Unirii A8
+                description: Pod Ungheni 4 benzi, 5,1 km autostradă MD, Stânca-Costești, Răducăneni-Bărboieni, Bumbăta-Leova, Fălciu-Leca, CEF.
+              en:
+                name: Prut Bridges & A8 Union Highway
+                description: Ungheni 4-lane bridge, 5.1 km highway MD side, Stânca-Costești, Răducăneni-Bărboieni, Bumbăta-Leova, Fălciu-Leca, CEF.
+              ru:
+                name: Мосты через Прут & автомагистраль Единения A8
+                description: Мост Унгены 4 полосы, 5,1 км шоссе на стороне Молдовы, Стынка-Костешть, Рэдукэнени-Бэрбоень, CEF.
+            is_sensitive: false
+            keywords:
+              - pod Prut
+              - Prut bridge
+              - мост через Прут
+              - Ungheni
+              - Унгены
+              - Autostrada A8
+              - A8 Highway
+              - автомагистраль A8
+              - Autostrada Unirii
+              - Union Highway
+              - Stânca Costești
+              - Răducăneni
+              - Bumbăta Leova
+              - Fălciu Leca
+              - CEF
+              - Mecanismul Interconectare Europeană
+              - infrastructură rutieră
+              - road infrastructure
+              - дорожная инфраструктура
+          - slug: moldova-sepa-roaming-eu-connectivity
+            translations:
+              ro:
+                name: SEPA, Roaming UE & conectivitatea digitală cu piața unică
+                description: 'Integrarea graduală în piața unică europeană a început să producă beneficii tangibile: aderarea la SEPA și roaming-ul „Roam like at home" (1 ianuarie 2026) — exemple de beneficii pre-aderare. Pentru cetățean și mediul de afaceri, asta înseamnă comisioane mai mici, transferuri mai simple și costuri de comunicare predictibile. În 2026, orice întârziere operațională sau extindere a serviciilor financiare transfrontaliere merită tratată ca subiect economic major.
+
+                  '
+              en:
+                name: SEPA, EU Roaming & Digital Connectivity with Single Market
+                description: 'Gradual integration into the European single market started producing tangible connectivity benefits: SEPA accession and "Roam like at home" advancement (January 1, 2026) — examples of pre-accession benefits. For citizens and businesses, this means lower fees, simpler transfers and predictable communication costs. In 2026, any operational delay or cross-border financial services expansion deserves major coverage.
+
+                  '
+              ru:
+                name: SEPA, роуминг ЕС & цифровая связанность с единым рынком
+                description: 'Постепенная интеграция в европейский единый рынок начала приносить ощутимые преимущества связанности: присоединение к SEPA и продвижение «Роуминг как дома» (1 января 2026) — примеры предвступительных выгод. Для граждан и бизнеса это означает меньшие комиссии, более простые переводы и предсказуемые коммуникационные расходы.
+
+                  '
+            is_sensitive: false
+            keywords:
+              - SEPA
+              - Single Euro Payments Area
+              - единая зона платежей в евро
+              - roaming UE
+              - EU roaming
+              - роуминг ЕС
+              - Roam like at home
+              - 1 ianuarie 2026
+              - January 1 2026
+              - 1 января 2026
+              - piața unică
+              - single market
+              - единый рынок
+              - plăți transfrontaliere
+              - cross-border payments
+              - трансграничные платежи
+              - servicii financiare
+              - financial services
+              - финансовые услуги
+              - beneficii aderare
+              - accession benefits
+              - преимущества вступления
+              - convergență
+              - convergence
+              - конвергенция
+              - digitalizare
+              - digitalization
+              - цифровизация
+          - slug: moldova-cfm-railway-reform
+            translations:
+              ro:
+                name: Reforma CFM — Calea Ferată din Moldova
+                description: Datorii 500 mln lei, restanțe salariale 6 luni, proteste feroviari, dezmembrare în 2 societăți, 30% personal concediat.
+              en:
+                name: CFM Reform — Moldovan Railway
+                description: 500M MDL debt, 6-month wage arrears, railway worker protests, split into 2 companies, 30% staff reduction.
+              ru:
+                name: Реформа CFM — Молдавская железная дорога
+                description: Долги 500 млн леев, задолженности по зарплате 6 месяцев, протесты железнодорожников, разделение на 2 компании.
+            is_sensitive: true
+            keywords:
+              - CFM
+              - Calea Ferată Moldova
+              - Moldovan Railway
+              - Молдавская железная дорога
+              - feroviari
+              - railway workers
+              - железнодорожники
+              - restanțe salariale
+              - wage arrears
+              - задолженность по зарплате
+              - Ocnița
+              - Basarabeasca
+              - transport marfă
+              - freight transport
+              - грузовые перевозки
+              - reformă feroviară
+              - railway reform
+              - железнодорожная реформа
+      - slug: moldova-society-demographics
+        translations:
+          ro: Societate & Demografie
+          en: Society & Demographics
+          ru: Общество & демография
+        sort_order: 7
+        topics:
+          - slug: moldova-depopulation-census-2024
+            translations:
+              ro:
+                name: Depopularea & recensământul 2024
+                description: Contracție -13% vs 2014, vârsta medie 40,6 ani, raport masculinitate 89/100, 15.000 ucraineni rezidenți, BNS.
+              en:
+                name: Depopulation & 2024 Census
+                description: -13% contraction vs 2014, average age 40.6, masculinity ratio 89/100, 15,000 Ukrainian residents, NBS.
+              ru:
+                name: Депопуляция & перепись 2024
+                description: Сокращение -13% по сравнению с 2014, средний возраст 40,6, коэффициент маскулинности 89/100, 15 000 украинских резидентов.
+            is_sensitive: false
+            keywords:
+              - depopulare
+              - depopulation
+              - депопуляция
+              - recensământ 2024
+              - 2024 census
+              - перепись 2024
+              - BNS
+              - NBS
+              - НБС
+              - demografie
+              - demographics
+              - демография
+              - îmbătrânire populație
+              - population ageing
+              - старение населения
+              - emigrație
+              - emigration
+              - эмиграция
+              - vârstă medie
+              - average age
+              - средний возраст
+          - slug: moldova-diaspora-communities-rights
+            translations:
+              ro:
+                name: Diaspora — comunități, drepturi politice, remitențe
+                description: 1 milion moldoveni în străinătate, Italia/Germania/Franța/UK/Israel/Rusia, drepturi politice, Biroul pentru Diaspora.
+              en:
+                name: Diaspora — Communities, Political Rights, Remittances
+                description: 1 million Moldovans abroad, Italy/Germany/France/UK/Israel/Russia, political rights, Diaspora Bureau.
+              ru:
+                name: Диаспора — сообщества, политические права, переводы
+                description: 1 миллион молдаван за рубежом, Италия/Германия/Франция/Великобритания/Израиль/Россия, политические права.
+            is_sensitive: false
+            keywords:
+              - diaspora
+              - диаспора
+              - Italia
+              - Italy
+              - Италия
+              - Germania
+              - Germany
+              - Германия
+              - Franța
+              - France
+              - Франция
+              - Marea Britanie
+              - United Kingdom
+              - Великобритания
+              - Israel
+              - Израиль
+              - Biroul Diaspora
+              - Diaspora Bureau
+              - Бюро диаспоры
+              - recunoaștere permise
+              - license recognition
+              - признание прав
+          - slug: moldova-healthcare-doctor-exodus
+            translations:
+              ro:
+                name: Sistemul de sănătate — exodul medicilor & criza resurselor umane
+                description: Medici plecați România/UE, USMF formare, salarii mici, sub-finanțare, tuberculoză, HIV/SIDA.
+              en:
+                name: Healthcare System — Doctor Exodus & Human Resources Crisis
+                description: Doctors leaving for Romania/EU, USMF training, low salaries, underfunding, tuberculosis, HIV/AIDS.
+              ru:
+                name: Система здравоохранения — исход врачей & кадровый кризис
+                description: Врачи уезжают в Румынию/ЕС, обучение USMF, низкие зарплаты, недофинансирование, туберкулёз, ВИЧ/СПИД.
+            is_sensitive: false
+            keywords:
+              - medici plecați
+              - doctors leaving
+              - отъезд врачей
+              - sistemul sănătate
+              - healthcare system
+              - система здравоохранения
+              - USMF
+              - Ministerul Sănătății
+              - Ministry of Health
+              - Министерство здравоохранения
+              - tuberculoză
+              - tuberculosis
+              - туберкулёз
+              - HIV
+              - ВИЧ
+              - SIDA
+              - AIDS
+              - СПИД
+              - telemedicină
+              - telemedicine
+              - телемедицина
+          - slug: moldova-regional-hospitals-balti-cahul
+            translations:
+              ro:
+                name: Spitalele regionale Bălți & Cahul
+                description: Proiecte majore 38.000 mp fiecare, finanțare BEI/CEB, amânări până în 2031, chimioterapie, neurochirurgie, cardiologie.
+              en:
+                name: Regional Hospitals Bălți & Cahul
+                description: Major 38,000 sqm projects each, EIB/CEB financing, delays until 2031, chemotherapy, neurosurgery, cardiology.
+              ru:
+                name: Региональные больницы Бэлць & Кахул
+                description: Крупные проекты по 38 000 кв.м каждый, финансирование ЕИБ/CEB, задержки до 2031, химиотерапия, нейрохирургия.
+            is_sensitive: false
+            keywords:
+              - spitale regionale
+              - regional hospitals
+              - региональные больницы
+              - Bălți
+              - Balti
+              - Бэлць
+              - Cahul
+              - Кахул
+              - BEI
+              - EIB
+              - ЕИБ
+              - CEB
+              - infrastructură medicală
+              - medical infrastructure
+              - медицинская инфраструктура
+              - chimioterapie
+              - chemotherapy
+              - химиотерапия
+              - neurochirurgie
+              - neurosurgery
+              - нейрохирургия
+          - slug: moldova-education-reform-curriculum
+            translations:
+              ro:
+                name: Reforma educației — curriculum, limba română, ÎPT, salarii
+                description: Dan Perciun, echivalare salarii profesori cu media pe economie, rețeaua școlilor model, ÎPT, incluziune copii diaspora.
+              en:
+                name: Education Reform — Curriculum, Romanian Language, Vocational, Salaries
+                description: Dan Perciun, teacher salary parity with economy average, model schools network, vocational training, diaspora children inclusion.
+              ru:
+                name: Реформа образования — учебная программа, румынский язык, ПТО, зарплаты
+                description: Дан Перчун, выравнивание зарплат учителей со средней по экономике, сеть образцовых школ, ПТО.
+            is_sensitive: false
+            keywords:
+              - reforma educației
+              - education reform
+              - реформа образования
+              - Dan Perciun
+              - Дан Перчун
+              - Ministerul Educației
+              - Ministry of Education
+              - Министерство образования
+              - salarii profesori
+              - teacher salaries
+              - зарплаты учителей
+              - PISA
+              - rețeaua școli model
+              - model schools network
+              - universitati
+              - universities
+              - университеты
+              - ÎPT
+              - vocational training
+              - профобразование
+          - slug: moldova-poverty-regional-inequality
+            translations:
+              ro:
+                name: Sărăcie, inegalitate regională & protecție socială
+                description: Decalaj Chișinău/raioane, salariu mediu 16.355 lei vs. rural sub 10.000, asistență socială, coșul minim existență.
+              en:
+                name: Poverty, Regional Inequality & Social Protection
+                description: Chișinău/districts gap, 16,355 MDL average salary vs. rural below 10,000, social assistance, minimum existence basket.
+              ru:
+                name: Бедность, региональное неравенство & социальная защита
+                description: Разрыв Кишинёв/районы, средняя зарплата 16 355 леев против сельской ниже 10 000, социальная помощь.
+            is_sensitive: false
+            keywords:
+              - sărăcie
+              - poverty
+              - бедность
+              - inegalitate
+              - inequality
+              - неравенство
+              - regiuni
+              - regions
+              - регионы
+              - asistență socială
+              - social assistance
+              - социальная помощь
+              - coșul minim
+              - minimum basket
+              - минимальная потребительская корзина
+              - salariu mediu
+              - average wage
+              - средняя зарплата
+          - slug: moldova-ukrainian-refugees-integration
+            translations:
+              ro:
+                name: Refugiații ucraineni — integrare pe termen lung
+                description: 15.000+ rezidenți stabili (96,5% ucraineni), protecție temporară, UNHCR, IOM, piața muncii, educație bilingvă.
+              en:
+                name: Ukrainian Refugees — Long-Term Integration
+                description: 15,000+ stable residents (96.5% Ukrainian), temporary protection, UNHCR, IOM, labour market, bilingual education.
+              ru:
+                name: Украинские беженцы — долгосрочная интеграция
+                description: 15 000+ стабильных резидентов (96,5% украинцев), временная защита, УВКБ, МОМ, рынок труда, двуязычное образование.
+            is_sensitive: false
+            keywords:
+              - refugiați ucraineni
+              - Ukrainian refugees
+              - украинские беженцы
+              - protecție temporară
+              - temporary protection
+              - временная защита
+              - UNHCR
+              - УВКБ
+              - IOM
+              - МОМ
+              - integrare
+              - integration
+              - интеграция
+              - educație bilingvă
+              - bilingual education
+              - двуязычное образование
+              - piața muncii
+              - labour market
+              - рынок труда
+      - slug: moldova-culture-identity-media
+        translations:
+          ro: Cultură, Identitate & Media
+          en: Culture, Identity & Media
+          ru: Культура, идентичность & медиа
+        sort_order: 8
+        topics:
+          - slug: moldova-romanian-language-legalization
+            translations:
+              ro:
+                name: Limba română — legalizare post-2023, identitate națională
+                description: Recensământ 2024 - 31,8% români / 48,1% moldovenești, substituire „limbă moldovenească", 76,7% etnici moldoveni.
+              en:
+                name: Romanian Language — Post-2023 Legalization, National Identity
+                description: 2024 Census - 31.8% Romanian / 48.1% Moldovan, "Moldovan language" substitution, 76.7% ethnic Moldovans.
+              ru:
+                name: Румынский язык — легализация после 2023, национальная идентичность
+                description: Перепись 2024 - 31,8% румыны / 48,1% молдаване, замена «молдавский язык», 76,7% этнических молдаван.
+            is_sensitive: true
+            keywords:
+              - limba română
+              - Romanian language
+              - румынский язык
+              - limba moldovenească
+              - Moldovan language
+              - молдавский язык
+              - identitate națională
+              - national identity
+              - национальная идентичность
+              - moldovenism
+              - Moldovanism
+              - молдовенизм
+              - recensământ 2024
+              - 2024 census
+              - перепись 2024
+              - etnici moldoveni
+              - ethnic Moldovans
+              - этнические молдаване
+          - slug: moldova-press-freedom-civic-space
+            translations:
+              ro:
+                name: Libertatea presei — suspendări licențe, presiuni asupra jurnaliștilor
+                description: RSF World Press Freedom Index, Consiliul Audiovizualului, rețeaua Plahotniuc-Șor, lipsa de acces la informație publică.
+              en:
+                name: Press Freedom — License Suspensions, Pressure on Journalists
+                description: RSF World Press Freedom Index, Audiovisual Council, Plahotniuc-Shor network, lack of public information access.
+              ru:
+                name: Свобода прессы — приостановление лицензий, давление на журналистов
+                description: Индекс свободы прессы RSF, Аудиовизуальный совет, сеть Плахотнюк-Шор, отсутствие доступа к публичной информации.
+            is_sensitive: true
+            keywords:
+              - libertatea presei
+              - press freedom
+              - свобода прессы
+              - RSF
+              - Reporters Without Borders
+              - Репортёры без границ
+              - Consiliul Audiovizualului
+              - Audiovisual Council
+              - Аудиовизуальный совет
+              - licențe TV
+              - TV licenses
+              - телелицензии
+              - Plahotniuc
+              - Плахотнюк
+              - presiuni jurnaliști
+              - journalist pressure
+              - давление на журналистов
+              - spațiu civic
+              - civic space
+              - гражданское пространство
+              - societate civilă
+              - civil society
+              - гражданское общество
+              - atacuri asupra jurnaliștilor
+              - attacks on journalists
+              - атаки на журналистов
+              - reziliență
+              - resilience
+              - устойчивость
+          - slug: moldova-ccsd-information-defense
+            translations:
+              ro:
+                name: CCSCD & arhitectura națională de apărare informațională
+                description: Centrul Comunicare Strategică și Combatere a Dezinformării, Ana Revenco, operațiuni Matrioska, deepfakes, botnet Telegram.
+              en:
+                name: CCSCD & National Information Defense Architecture
+                description: Strategic Communication and Counter-Disinformation Center, Ana Revenco, Matryoshka operations, deepfakes, Telegram botnet.
+              ru:
+                name: CCSCD & национальная архитектура информационной защиты
+                description: Центр стратегической коммуникации и противодействия дезинформации, Анна Ревенко, операция Матрёшка, дипфейки.
+            is_sensitive: false
+            keywords:
+              - CCSCD
+              - Centrul Comunicare Strategică
+              - Strategic Communication Center
+              - Центр стратегической коммуникации
+              - Ana Revenco
+              - Анна Ревенко
+              - Matrioska
+              - Matryoshka
+              - Матрёшка
+              - dezinformare
+              - disinformation
+              - дезинформация
+              - propagandă rusă
+              - Russian propaganda
+              - российская пропаганда
+              - deepfake
+              - дипфейк
+              - botnet Telegram
+              - Telegram botnet
+          - slug: moldova-culture-music-cinema-heritage
+            translations:
+              ro:
+                name: Cultură — muzică, cinema, literatură, patrimoniu, doliu cultural
+                description: Gheorghe Urschi (doliu național aprilie 2026), cinematografie, literatură contemporană, patrimoniu UNESCO, festivaluri.
+              en:
+                name: Culture — Music, Cinema, Literature, Heritage, Cultural Mourning
+                description: Gheorghe Urschi (national mourning April 2026), cinematography, contemporary literature, UNESCO heritage, festivals.
+              ru:
+                name: Культура — музыка, кино, литература, наследие, культурный траур
+                description: Георге Урски (национальный траур апрель 2026), кинематография, современная литература, наследие ЮНЕСКО.
+            is_sensitive: false
+            keywords:
+              - cultură
+              - culture
+              - культура
+              - muzică
+              - music
+              - музыка
+              - cinema
+              - кино
+              - literatură
+              - literature
+              - литература
+              - patrimoniu
+              - heritage
+              - наследие
+              - UNESCO
+              - ЮНЕСКО
+              - Gheorghe Urschi
+              - Георге Урски
+              - doliu național
+              - national mourning
+              - национальный траур
+          - slug: moldova-media-literacy-cji
+            translations:
+              ro:
+                name: Educația pentru media — CJI, digital literacy, curriculum școlar
+                description: Centrul Jurnalism Independent, 3.200 elevi, 100+ pedagogi, platforma emi.cji.md, deconstrucție deepfakes, verificare surse.
+              en:
+                name: Media Literacy Education — CJI, Digital Literacy, School Curriculum
+                description: Independent Journalism Center, 3,200 students, 100+ educators, emi.cji.md platform, deepfake deconstruction, source verification.
+              ru:
+                name: Медиаобразование — CJI, цифровая грамотность, школьная программа
+                description: Центр независимой журналистики, 3200 учеников, 100+ педагогов, платформа emi.cji.md, разбор дипфейков.
+            is_sensitive: false
+            keywords:
+              - CJI
+              - Centrul Jurnalism Independent
+              - Independent Journalism Center
+              - Центр независимой журналистики
+              - educație media
+              - media literacy
+              - медиаграмотность
+              - curriculum școlar
+              - school curriculum
+              - школьная программа
+              - gândire critică
+              - critical thinking
+              - критическое мышление
+              - verificare surse
+              - source verification
+              - проверка источников
+              - alfabetizare informațională
+              - information literacy
+              - информационная грамотность
+              - FIMI
+              - foreign information manipulation
+              - иностранные информационные манипуляции
+              - botnet Telegram
+              - телеграм-ботнет
+              - narațiuni toxice
+              - toxic narratives
+              - токсичные нарративы
+      - slug: moldova-security-defense
+        translations:
+          ro: Securitate & Apărare
+          en: Security & Defense
+          ru: Безопасность & оборона
+        sort_order: 9
+        topics:
+          - slug: moldova-military-strategy-2025-2035
+            translations:
+              ro:
+                name: Strategia Militară 2025-2035 & modernizarea Armatei Naționale
+                description: Buget 0,65% PIB, Anatolie Nosatîi, tranziție Kalașnikov→armament NATO 5,56 mm, încorporare 1.200 recruți primăvară 2026.
+              en:
+                name: Military Strategy 2025-2035 & National Army Modernization
+                description: 0.65% GDP budget, Anatolie Nosatîi, Kalashnikov→NATO 5.56mm transition, 1,200 recruits spring 2026.
+              ru:
+                name: Военная стратегия 2025-2035 & модернизация Национальной армии
+                description: Бюджет 0,65% ВВП, Анатолие Носатый, переход АК→НАТО 5,56 мм, призыв 1200 рекрутов весна 2026.
+            is_sensitive: false
+            keywords:
+              - Strategia Militară
+              - Military Strategy
+              - военная стратегия
+              - Armata Națională
+              - National Army
+              - Национальная армия
+              - Anatolie Nosatîi
+              - Анатолие Носатый
+              - buget apărare
+              - defense budget
+              - оборонный бюджет
+              - neutralitate
+              - neutrality
+              - нейтралитет
+              - NATO
+              - НАТО
+              - Kalașnikov
+              - Kalashnikov
+              - Калашников
+          - slug: moldova-russian-drones-air-defense
+            translations:
+              ro:
+                name: Drone rusești & apărarea aeriană
+                description: Incursiuni drone rusești pe teritoriul MD, radare tridimensionale, European Peace Facility, Ground Master.
+              en:
+                name: Russian Drones & Air Defense
+                description: Russian drone incursions on MD territory, 3D radars, European Peace Facility, Ground Master system.
+              ru:
+                name: Российские дроны & ПВО
+                description: Вторжения российских дронов на территорию МД, 3D радары, European Peace Facility, Ground Master.
+            is_sensitive: false
+            keywords:
+              - drone rusești
+              - Russian drones
+              - российские дроны
+              - incursiune
+              - incursion
+              - вторжение
+              - apărare aeriană
+              - air defense
+              - ПВО
+              - radar
+              - радар
+              - Ground Master
+              - European Peace Facility
+              - EPF
+              - Instrumentul European Pace
+              - spațiu aerian
+              - airspace
+              - воздушное пространство
+              - suveranitate aeriană
+              - air sovereignty
+              - воздушный суверенитет
+              - aviație civilă
+              - civil aviation
+              - гражданская авиация
+              - alertă națională
+              - national alert
+              - национальная тревога
+          - slug: moldova-sis-hybrid-threats
+            translations:
+              ro:
+                name: SIS & amenințările hibride
+                description: Serviciul de Informații și Securitate, STISC, sabotaj, atacuri cibernetice, FIMI, operațiuni informaționale.
+              en:
+                name: SIS & Hybrid Threats
+                description: Security and Intelligence Service, STISC, sabotage, cyberattacks, FIMI, information operations.
+              ru:
+                name: СИБ & гибридные угрозы
+                description: Служба информации и безопасности, STISC, саботаж, кибератаки, FIMI, информационные операции.
+            is_sensitive: true
+            keywords:
+              - SIS
+              - СИБ
+              - Serviciul Informații Securitate
+              - Security Intelligence Service
+              - Служба информации и безопасности
+              - STISC
+              - amenințări hibride
+              - hybrid threats
+              - гибридные угрозы
+              - sabotaj
+              - sabotage
+              - саботаж
+              - atacuri cibernetice
+              - cyberattacks
+              - кибератаки
+              - FIMI
+              - operațiuni informaționale
+              - information operations
+              - информационные операции
+          - slug: moldova-nato-pfp-epf-security
+            translations:
+              ro:
+                name: NATO (PfP) & cooperarea bilaterală de securitate
+                description: Parteneriatul pentru Pace, donații SUA/Franța/Germania, blindate, radare, CBRN, exerciții comune.
+              en:
+                name: NATO (PfP) & Bilateral Security Cooperation
+                description: Partnership for Peace, US/France/Germany donations, armored vehicles, radars, CBRN, joint exercises.
+              ru:
+                name: НАТО (ПзМ) & двустороннее сотрудничество по безопасности
+                description: Партнёрство ради мира, пожертвования США/Франции/Германии, бронетехника, радары, CBRN.
+            is_sensitive: false
+            keywords:
+              - NATO
+              - НАТО
+              - PfP
+              - Parteneriat pentru Pace
+              - Partnership for Peace
+              - Партнёрство ради мира
+              - ПзМ
+              - cooperare militară
+              - military cooperation
+              - военное сотрудничество
+              - donații militare
+              - military donations
+              - военные пожертвования
+              - blindate
+              - armored vehicles
+              - бронетехника
+              - CBRN
+              - ХБРЯ
+              - USAID
+              - EPF
+              - European Peace Facility
+              - Европейский фонд мира
+              - 60 milioane euro
+              - 60 million euros
+              - 60 миллионов евро
+              - ajutor UE apărare
+              - EU defense aid
+              - помощь ЕС обороне
+              - interoperabilitate
+              - interoperability
+              - совместимость
+              - apărare aeriană scurtă rază
+              - short-range air defense
+              - ПВО малой дальности
+      - slug: moldova-environment-climate
+        translations:
+          ro: Mediu & Schimbări Climatice
+          en: Environment & Climate Change
+          ru: Окружающая среда & изменение климата
+        sort_order: 10
+        topics:
+          - slug: moldova-drought-water-crisis-irrigation
+            translations:
+              ro:
+                name: Secetă, criza apei & irigații
+                description: Seceta 2024-2025, 33.000 hectare compromise, poluarea Nistrului, iazuri blocate ilegal, proiecte irigații.
+              en:
+                name: Drought, Water Crisis & Irrigation
+                description: 2024-2025 drought, 33,000 hectares damaged, Dniester pollution, illegally blocked ponds, irrigation projects.
+              ru:
+                name: Засуха, водный кризис & ирригация
+                description: Засуха 2024-2025, 33 000 гектаров повреждено, загрязнение Днестра, незаконно заблокированные пруды.
+            is_sensitive: false
+            keywords:
+              - secetă
+              - drought
+              - засуха
+              - criza apei
+              - water crisis
+              - водный кризис
+              - irigații
+              - irrigation
+              - ирригация
+              - Nistru
+              - Dniester
+              - Днестр
+              - AGGRI
+              - schimbări climatice
+              - climate change
+              - изменение климата
+              - desertificare
+              - desertification
+              - опустынивание
+              - inflație alimentară
+              - food inflation
+              - продовольственная инфляция
+              - risc sistemic
+              - systemic risk
+              - системный риск
+              - adaptare climatică
+              - climate adaptation
+              - климатическая адаптация
+              - prețuri alimentare
+              - food prices
+              - цены на продукты
+          - slug: moldova-waste-pesticides-protected-areas
+            translations:
+              ro:
+                name: Deșeuri, pesticide stocate & arii protejate
+                description: Proiect deșeuri solide BERD/BEI, EMAS, pesticide sovietice, arii protejate 6-10% teritoriu, reciclare.
+              en:
+                name: Waste, Stored Pesticides & Protected Areas
+                description: Solid waste project EBRD/EIB, EMAS, Soviet pesticides, protected areas 6-10% territory, recycling.
+              ru:
+                name: Отходы, складированные пестициды & охраняемые территории
+                description: Проект твёрдых отходов ЕБРР/ЕИБ, EMAS, советские пестициды, охраняемые территории 6-10% территории.
+            is_sensitive: false
+            keywords:
+              - deșeuri
+              - waste
+              - отходы
+              - gestionare deșeuri
+              - waste management
+              - управление отходами
+              - pesticide
+              - pesticides
+              - пестициды
+              - arii protejate
+              - protected areas
+              - охраняемые территории
+              - BERD
+              - EBRD
+              - ЕБРР
+              - BEI
+              - EIB
+              - ЕИБ
+              - EMAS
+              - reciclare
+              - recycling
+              - переработка
+              - biodiversitate
+              - biodiversity
+              - биоразнообразие
+              - zone regionale
+              - regional zones
+              - региональные зоны
+              - zona 1
+              - zona 5
+              - zona 8
+              - economie circulară
+              - circular economy
+              - циркулярная экономика
+              - servicii publice
+              - public services
+              - государственные услуги
+          - slug: moldova-forestry-generatia-padurii
+            translations:
+              ro:
+                name: „Generația Pădurii" — împăduriri naționale
+                description: Program 145.000 hectare până 2032, 7.200 ha/an, 33 mln puieți, Moldsilva, BEI 200 mln euro, Bugeac deșertificare.
+              en:
+                name: Forest Generation — National Afforestation Programme
+                description: 145,000 hectares programme by 2032, 7,200 ha/year, 33M saplings, Moldsilva, EIB €200M, Bugeac desertification.
+              ru:
+                name: «Поколение Леса» — национальная лесовосстановительная программа
+                description: Программа 145 000 гектаров до 2032, 7200 га/год, 33 млн саженцев, Молдсилва, ЕИБ 200 млн евро, опустынивание.
+            is_sensitive: false
+            keywords:
+              - Generația Pădurii
+              - Forest Generation
+              - Поколение Леса
+              - împăduriri
+              - afforestation
+              - лесовосстановление
+              - Moldsilva
+              - Молдсилва
+              - Ministerul Mediului
+              - Ministry of Environment
+              - Министерство окружающей среды
+              - puieți
+              - saplings
+              - саженцы
+              - Bugeac
+              - Буджак
+              - BEI 200 milioane
+              - EIB 200 million
+              - rata prindere
+              - survival rate
+              - показатель приживаемости
+              - 145000 hectare
+              - 145,000 hectares
+              - 145 000 гектаров
+              - reîmpădurire
+              - reforestation
+              - retenție apă
+              - water retention
+              - удержание воды
+              - eroziune sol
+              - soil erosion
+              - эрозия почвы
+              - infrastructură verde
+              - green infrastructure
+              - зелёная инфраструктура
+          - slug: moldova-renewable-energy-green-transition
+            translations:
+              ro:
+                name: Energia regenerabilă & tranziția verde
+                description: Parcul fotovoltaic Rădeni, Energocom, subvenții prosumatori, acquis Mediu, tranziție verde.
+              en:
+                name: Renewable Energy & Green Transition
+                description: Rădeni photovoltaic park, Energocom, prosumer subsidies, Environment acquis, green transition.
+              ru:
+                name: Возобновляемая энергия & зелёный переход
+                description: Фотоэлектрический парк Рэдень, Энергоком, субсидии просьюмеров, экологический acquis, зелёный переход.
+            is_sensitive: false
+            keywords:
+              - regenerabil
+              - renewable
+              - возобновляемый
+              - fotovoltaic
+              - photovoltaic
+              - фотоэлектрический
+              - eolian
+              - wind
+              - ветровой
+              - Rădeni
+              - Рэдень
+              - Energocom
+              - prosumator
+              - prosumer
+              - просьюмер
+              - tranziție verde
+              - green transition
+              - зелёный переход
+              - Acord Paris
+              - Paris Agreement
+              - Парижское соглашение

@@ -17,7 +17,10 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
 {
     private const ARTICLE_COUNT = 80;
 
-    private const CATEGORY_COUNT = 11;
+    private const CATEGORY_SLUGS = [
+        'politica', 'societate', 'externe', 'economie', 'romania',
+        'cultura', 'sport', 'editoriale', 'opinii', 'advertorial', 'anti-fake',
+    ];
 
     private const AUTHOR_COUNT = 19;
 
@@ -41,8 +44,8 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
             $article = new Article();
 
             // Assign category (uniform distribution)
-            $categoryIndex = ($i - 1) % self::CATEGORY_COUNT;
-            $category = $this->getReference('category_' . $categoryIndex, \App\Entity\Category::class);
+            $categorySlug = self::CATEGORY_SLUGS[($i - 1) % \count(self::CATEGORY_SLUGS)];
+            $category = $this->getReference('category-' . $categorySlug, \App\Entity\Category::class);
             $article->setCategory($category);
 
             // Assign 1-3 authors
