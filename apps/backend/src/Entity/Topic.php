@@ -154,6 +154,21 @@ class Topic implements Translatable
     #[Groups(['topic:read', 'topic:write'])]
     private float $weight = 0.5;
 
+    /** Blocks auto-publish gate when true (e.g. conflict zones, elections) */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    #[Groups(['topic:read', 'topic:write'])]
+    private bool $isSensitive = false;
+
+    /**
+     * Keywords for Elasticsearch matching (title + content + summary).
+     * Populated from YAML fixture; used by topic detection pipeline.
+     *
+     * @var list<string>|null
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(['topic:read', 'topic:write'])]
+    private ?array $keywords = null;
+
     /** @var Collection<int, Article> */
     #[ORM\ManyToMany(targetEntity: Article::class, inversedBy: 'topics')]
     #[ORM\JoinTable(name: 'article_topics')]
@@ -371,6 +386,41 @@ class Topic implements Translatable
     public function setWeight(float $weight): self
     {
         $this->weight = $weight;
+
+        return $this;
+    }
+
+    public function isSensitive(): bool
+    {
+        return $this->isSensitive;
+    }
+
+    public function getIsSensitive(): bool
+    {
+        return $this->isSensitive;
+    }
+
+    public function setIsSensitive(bool $isSensitive): self
+    {
+        $this->isSensitive = $isSensitive;
+
+        return $this;
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    public function getKeywords(): ?array
+    {
+        return $this->keywords;
+    }
+
+    /**
+     * @param list<string>|null $keywords
+     */
+    public function setKeywords(?array $keywords): self
+    {
+        $this->keywords = $keywords;
 
         return $this;
     }
