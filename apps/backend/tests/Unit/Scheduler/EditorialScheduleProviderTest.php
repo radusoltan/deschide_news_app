@@ -33,8 +33,8 @@ class EditorialScheduleProviderTest extends TestCase
         $messages = $schedule->getRecurringMessages();
 
         // 4 content generation + 3 scraping + 1 aggregator + 1 archive
-        // + 3 clustering + 3 topic briefing (Sprint 50) = 15
-        $this->assertCount(15, $messages);
+        // + 3 clustering + 3 topic briefing (Sprint 50) + 1 notebook sync (Sprint 51a) = 16
+        $this->assertCount(16, $messages);
     }
 
     public function testScheduleContainsThreeTopicBriefingTriggers(): void

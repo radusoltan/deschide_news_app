@@ -39,7 +39,7 @@ final class NotebookLmFactCheckService
 
         $question ??= $this->buildDefaultQuestion($article);
         $question = mb_substr($question, 0, self::MAX_QUESTION_LENGTH);
-        $topicId = $topic->getId();
+        $topicId = $topic->getId() ?? 0;
 
         $cacheKey = $this->buildCacheKey($topicId, $question);
 

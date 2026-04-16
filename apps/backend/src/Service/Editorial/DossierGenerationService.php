@@ -228,16 +228,4 @@ PROMPT;
         }
     }
 
-    private function slugify(string $text): string
-    {
-        $text = mb_strtolower($text);
-        $text = str_replace(
-            ['ă', 'â', 'î', 'ș', 'ț', 'ş', 'ţ', ' '],
-            ['a', 'a', 'i', 's', 't', 's', 't', '-'],
-            $text,
-        );
-        $text = preg_replace('/[^a-z0-9\-]/', '', $text);
-
-        return preg_replace('/-+/', '-', trim($text, '-'));
-    }
 }

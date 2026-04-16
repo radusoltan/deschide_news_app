@@ -18,7 +18,7 @@ use Symfony\Component\Yaml\Yaml;
  * The markdown output includes YAML frontmatter with metadata and
  * chronologically ordered content sections for articles and press releases.
  */
-final class TopicMarkdownExporter
+class TopicMarkdownExporter
 {
     public function __construct(
         private readonly EntityManagerInterface $em,

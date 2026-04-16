@@ -8,7 +8,7 @@ use App\Entity\Topic;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
 
-final class NotebookLMService
+class NotebookLMService
 {
     private const DEFAULT_TIMEOUT = 120;
     private const AUDIO_TIMEOUT = 300;
