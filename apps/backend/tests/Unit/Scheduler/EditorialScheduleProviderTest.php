@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Scheduler;
 
 use App\Message\Aggregator\TriggerAggregatorRunMessage;
+use App\Message\Topic\TriggerTopicBriefingRunMessage;
 use App\Scheduler\EditorialScheduleProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Scheduler\Generator\MessageContext;
@@ -31,8 +32,22 @@ class EditorialScheduleProviderTest extends TestCase
         $schedule = $this->provider->getSchedule();
         $messages = $schedule->getRecurringMessages();
 
-        // 4 content generation + 3 scraping + 1 aggregator + 2 clustering = 10
-        $this->assertCount(10, $messages);
+        // 4 content generation + 3 scraping + 1 aggregator + 1 archive
+        // + 3 clustering + 3 topic briefing (Sprint 50) = 15
+        $this->assertCount(15, $messages);
+    }
+
+    public function testScheduleContainsThreeTopicBriefingTriggers(): void
+    {
+        $schedule = $this->provider->getSchedule();
+        $messages = $schedule->getRecurringMessages();
+
+        $briefingMessages = array_filter(
+            $messages,
+            fn ($recurring) => str_contains((string) $recurring->getProvider(), TriggerTopicBriefingRunMessage::class),
+        );
+
+        $this->assertCount(3, $briefingMessages, 'Schedule must contain 3 TriggerTopicBriefingRunMessage (hourly/daily/weekly)');
     }
 
     public function testScheduleContainsTriggerAggregatorRunMessage(): void

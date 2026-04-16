@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Scheduler;
 
+use App\Enum\BriefingCadence;
 use App\Message\Aggregator\TriggerAggregatorRunMessage;
 use App\Message\ArchiveStalePressReleasesMessage;
 use App\Message\Clustering\TriggerClusterCurationMessage;
@@ -13,6 +14,7 @@ use App\Message\Editorial\GenerateDailyBriefingMessage;
 use App\Message\Editorial\GenerateDossiersMessage;
 use App\Message\Editorial\GenerateWeeklySummaryMessage;
 use App\Message\Editorial\ScrapeSourceMessage;
+use App\Message\Topic\TriggerTopicBriefingRunMessage;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
 use Symfony\Component\Scheduler\RecurringMessage;
 use Symfony\Component\Scheduler\Schedule;
@@ -80,6 +82,24 @@ class EditorialScheduleProvider implements ScheduleProviderInterface
             ->add(RecurringMessage::cron(
                 '0 4 * * *',
                 new ArchiveStalePressReleasesMessage(days: 30),
+            ))
+
+            // === Topic Briefing Schedules (Sprint 50, ADR-016) ===
+
+            // Hourly briefing at minute 5 (avoids top-of-hour burst with other crons)
+            ->add(RecurringMessage::cron(
+                '5 * * * *',
+                new TriggerTopicBriefingRunMessage(BriefingCadence::HOURLY),
+            ))
+            // Daily briefing at 22:00 Europe/Chisinau
+            ->add(RecurringMessage::cron(
+                '0 22 * * *',
+                new TriggerTopicBriefingRunMessage(BriefingCadence::DAILY),
+            ))
+            // Weekly briefing on Sunday at 21:00 Europe/Chisinau
+            ->add(RecurringMessage::cron(
+                '0 21 * * 0',
+                new TriggerTopicBriefingRunMessage(BriefingCadence::WEEKLY),
             ))
 
             // === Clustering Schedules (Sprint 30+47) ===
