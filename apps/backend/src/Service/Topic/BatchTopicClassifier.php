@@ -18,7 +18,9 @@ use Psr\Log\LoggerInterface;
 class BatchTopicClassifier
 {
     private const TIMEOUT = 300;
-    private const SLEEP_BETWEEN_BATCHES = 10;
+    // Sprint 51c: pilot validated Flash RPM budget handles 2s cadence safely.
+    // Bumped back to 5s by CLI if a 429 burst is seen.
+    private const SLEEP_BETWEEN_BATCHES = 2;
     private const MAX_TOPICS_PER_ARTICLE = 3;
 
     /** @var array<int, Topic> id → Topic entity cache */
