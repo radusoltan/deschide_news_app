@@ -17,6 +17,30 @@ use Symfony\Component\Process\Process;
  */
 class GeminiCliService
 {
+    /**
+     * USD cost per 1M tokens for each Gemini model (input, output).
+     *
+     * Pricing as published on ai.google.dev (April 2026). Flash is the
+     * workhorse for Sprint 51c backfill; Pro listed for cross-workload use
+     * (e.g. Sprint 51b audio, future fact-check refinement).
+     *
+     * @var array<string, array{in: float, out: float}>
+     */
+    private const MODEL_PRICING_PER_M = [
+        'gemini-2.5-flash' => ['in' => 0.075, 'out' => 0.30],
+        'gemini-2.5-pro'   => ['in' => 1.25,  'out' => 5.00],
+    ];
+
+    /** Fallback heuristic when the CLI envelope lacks usage metadata. */
+    private const CHARS_PER_TOKEN = 4;
+
+    private const DEFAULT_MODEL = 'gemini-2.5-flash';
+
+    private int $sessionCalls = 0;
+    private int $sessionInputTokens = 0;
+    private int $sessionOutputTokens = 0;
+    private float $sessionCostUsd = 0.0;
+
     public function __construct(
         private readonly string $geminiCliPath,
         private readonly string $homeDir,
@@ -77,6 +101,8 @@ class GeminiCliService
             'hasStdin' => isset($options['stdin']),
         ]);
 
+        $startedAt = microtime(true);
+
         try {
             $process->run();
         } catch (ProcessTimedOutException $e) {
@@ -107,11 +133,101 @@ class GeminiCliService
 
         $output = trim($process->getOutput());
 
+        $durationMs = (int) round((microtime(true) - $startedAt) * 1000);
+        $model = $options['model'] ?? self::DEFAULT_MODEL;
+        $stdinLen = isset($options['stdin']) ? mb_strlen((string) $options['stdin']) : 0;
+        [$inputTokens, $outputTokens] = $this->extractTokenCounts(
+            $output,
+            mb_strlen($prompt) + $stdinLen,
+        );
+        $costUsd = $this->calculateCost($model, $inputTokens, $outputTokens);
+
+        ++$this->sessionCalls;
+        $this->sessionInputTokens += $inputTokens;
+        $this->sessionOutputTokens += $outputTokens;
+        $this->sessionCostUsd += $costUsd;
+
+        $this->logger->info('gemini_call', [
+            'model' => $model,
+            'duration_ms' => $durationMs,
+            'input_tokens' => $inputTokens,
+            'output_tokens' => $outputTokens,
+            'cost_usd' => round($costUsd, 6),
+        ]);
+
         $this->logger->debug('GeminiCli: completed', [
             'outputLength' => mb_strlen($output),
         ]);
 
         return $output;
+    }
+
+    /**
+     * Aggregated stats for this service instance (one per request/CLI run
+     * under Symfony's default service scope).
+     *
+     * @return array{
+     *     total_calls: int,
+     *     total_input_tokens: int,
+     *     total_output_tokens: int,
+     *     total_cost_usd: float,
+     * }
+     */
+    public function getSessionStats(): array
+    {
+        return [
+            'total_calls' => $this->sessionCalls,
+            'total_input_tokens' => $this->sessionInputTokens,
+            'total_output_tokens' => $this->sessionOutputTokens,
+            'total_cost_usd' => $this->sessionCostUsd,
+        ];
+    }
+
+    /**
+     * @return array{0: int, 1: int} [inputTokens, outputTokens]
+     */
+    private function extractTokenCounts(string $output, int $promptChars): array
+    {
+        // Prefer the Gemini CLI envelope metadata when present.
+        $decoded = json_decode($output, true);
+        if (\is_array($decoded)) {
+            $usage = $decoded['response']['usageMetadata']
+                ?? $decoded['usageMetadata']
+                ?? $decoded['stats']['usageMetadata']
+                ?? null;
+
+            if (\is_array($usage)) {
+                $input = (int) ($usage['promptTokenCount'] ?? 0);
+                $output = (int) (
+                    $usage['candidatesTokenCount']
+                    ?? $usage['responseTokenCount']
+                    ?? 0
+                );
+
+                if ($input > 0 || $output > 0) {
+                    return [$input, $output];
+                }
+            }
+        }
+
+        // Fallback: chars / 4 — documented heuristic used by Gemini pricing docs.
+        $outputChars = mb_strlen($output);
+
+        return [
+            (int) ceil($promptChars / self::CHARS_PER_TOKEN),
+            (int) ceil($outputChars / self::CHARS_PER_TOKEN),
+        ];
+    }
+
+    private function calculateCost(string $model, int $inputTokens, int $outputTokens): float
+    {
+        $pricing = self::MODEL_PRICING_PER_M[$model] ?? null;
+        if ($pricing === null) {
+            return 0.0;
+        }
+
+        return ($inputTokens / 1_000_000) * $pricing['in']
+             + ($outputTokens / 1_000_000) * $pricing['out'];
     }
 
     /**

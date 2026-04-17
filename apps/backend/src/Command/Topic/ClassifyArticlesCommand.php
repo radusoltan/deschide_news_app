@@ -6,6 +6,7 @@ namespace App\Command\Topic;
 
 use App\Entity\Article;
 use App\Enum\ArticleStatus;
+use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Topic\BatchResult;
 use App\Service\Topic\BatchTopicClassifier;
 use Doctrine\ORM\EntityManagerInterface;
@@ -36,6 +37,7 @@ class ClassifyArticlesCommand extends Command
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly BatchTopicClassifier $classifier,
+        private readonly ?GeminiCliService $geminiCli = null,
     ) {
         parent::__construct();
     }
@@ -164,18 +166,25 @@ class ClassifyArticlesCommand extends Command
         // Per-topic hit counts (top 10)
         $topTopics = $this->loadTopTopicsHitDuringSession($articles);
 
+        $summaryRows = [
+            ['Articles targeted', (string) $total],
+            ['Classified', (string) $result->classified],
+            ['Skipped (already classified mid-run)', (string) $result->skipped],
+            ['Total topic assignments', (string) $result->totalAssignments],
+            ['Failed chunks', (string) $result->failedChunks],
+            ['Wall time', sprintf('%ds', $wallSeconds)],
+        ];
+
+        if ($this->geminiCli !== null) {
+            $session = $this->geminiCli->getSessionStats();
+            $summaryRows[] = ['Gemini calls', (string) $session['total_calls']];
+            $summaryRows[] = ['Gemini input tokens', (string) $session['total_input_tokens']];
+            $summaryRows[] = ['Gemini output tokens', (string) $session['total_output_tokens']];
+            $summaryRows[] = ['Gemini cost (USD)', sprintf('$%.4f', $session['total_cost_usd'])];
+        }
+
         $io->section('Backfill Summary');
-        $io->table(
-            ['Metric', 'Value'],
-            [
-                ['Articles targeted', (string) $total],
-                ['Classified', (string) $result->classified],
-                ['Skipped (already classified mid-run)', (string) $result->skipped],
-                ['Total topic assignments', (string) $result->totalAssignments],
-                ['Failed chunks', (string) $result->failedChunks],
-                ['Wall time', sprintf('%ds', $wallSeconds)],
-            ],
-        );
+        $io->table(['Metric', 'Value'], $summaryRows);
 
         if ($topTopics !== []) {
             $io->section('Top topics hit');
