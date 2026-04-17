@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\PressRelease;
+use App\Entity\Topic;
 use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -50,9 +51,6 @@ class PressReleaseRepository extends ServiceEntityRepository
         return $this->count(['sourceType' => $type]);
     }
 
-    /**
-     * @return array<string, int> Pending count per source type, e.g. ['email' => 8, 'scrape' => 15]
-     */
     /**
      * Find a PressRelease with the same content_hash that is already assigned to a cluster.
      */
@@ -128,6 +126,47 @@ class PressReleaseRepository extends ServiceEntityRepository
         ];
     }
 
+    /**
+     * Find PressReleases linked to the given Topic whose topic-link
+     * detection timestamp falls within [start, end). Excludes REJECTED
+     * and ARCHIVED press releases.
+     *
+     * Backed by the (topic_id, detected_at) index on press_release_topics
+     * (`idx_prt_topic_created`). Supersedes the cluster-based context
+     * lookup that ArticleWriterService used pre-Sprint 52 (ADR-019).
+     *
+     * @return list<PressRelease> Ordered newest-first by detection time
+     */
+    public function findByTopicInWindow(
+        Topic $topic,
+        \DateTimeImmutable $start,
+        \DateTimeImmutable $end,
+        ?int $limit = null,
+    ): array {
+        $qb = $this->createQueryBuilder('pr')
+            ->innerJoin('pr.pressReleaseTopics', 'prt')
+            ->where('prt.topic = :topic')
+            ->andWhere('prt.detectedAt >= :start')
+            ->andWhere('prt.detectedAt < :end')
+            ->andWhere('pr.status NOT IN (:excluded)')
+            ->setParameter('topic', $topic)
+            ->setParameter('start', $start)
+            ->setParameter('end', $end)
+            ->setParameter('excluded', [PressReleaseStatus::REJECTED, PressReleaseStatus::ARCHIVED])
+            ->orderBy('prt.detectedAt', 'DESC')
+            ->addOrderBy('pr.id', 'DESC');
+
+        if ($limit !== null && $limit > 0) {
+            $qb->setMaxResults($limit);
+        }
+
+        /** @var list<PressRelease> */
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return array<string, int> Pending count per source type, e.g. ['email' => 8, 'scrape' => 15]
+     */
     public function countPendingBySourceType(): array
     {
         $rows = $this->createQueryBuilder('pr')
