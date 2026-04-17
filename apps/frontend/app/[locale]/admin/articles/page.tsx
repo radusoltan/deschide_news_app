@@ -13,17 +13,19 @@ interface ArticlesPageProps {
     page?: string;
     category?: string;
     status?: string;
+    unclassified?: string;
   }>;
 }
 
 export default async function ArticlesPage({ params, searchParams }: ArticlesPageProps) {
   const { locale } = await params;
-  const { page: pageParam, category: categoryParam, status: statusParam } = await searchParams;
+  const { page: pageParam, category: categoryParam, status: statusParam, unclassified: unclassifiedParam } = await searchParams;
 
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
   const itemsPerPage = 20; // 20 articles per page
   const categoryFilter = categoryParam ? parseInt(categoryParam, 10) : undefined;
   const statusFilter = statusParam || undefined;
+  const unclassifiedFilter = unclassifiedParam === '1' || unclassifiedParam === 'true';
 
   // Fetch articles from API
   let articlesData: Article[] = [];
@@ -31,7 +33,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
   let error: string | null = null;
 
   try {
-    const data = await getArticles({ locale, page: currentPage, itemsPerPage, category: categoryFilter, status: statusFilter });
+    const data = await getArticles({ locale, page: currentPage, itemsPerPage, category: categoryFilter, status: statusFilter, unclassified: unclassifiedFilter });
     articlesData = data.member;
     totalItems = data.totalItems || 0;
   } catch (err) {

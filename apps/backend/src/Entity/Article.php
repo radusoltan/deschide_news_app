@@ -147,6 +147,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
     'title' => 'ASC',
 ])]
 #[ApiFilter(BooleanFilter::class, properties: ['isFeatured'])]
+#[ApiFilter(\App\Filter\ArticleUnclassifiedFilter::class)]
 class Article implements Translatable
 {
     #[ORM\Id]
