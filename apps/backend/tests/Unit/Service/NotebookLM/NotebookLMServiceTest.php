@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\NotebookLM;
 
+use App\Entity\Topic;
 use App\Service\NotebookLM\NotebookLMService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -87,7 +88,7 @@ class NotebookLMServiceTest extends TestCase
         self::assertNull($service->generateMindMap('notebook-123'));
     }
 
-    public function testResolveNotebookIdDirectMatch(): void
+    public function testResolveNotebookIdReturnsIdFromTopic(): void
     {
         $service = new NotebookLMService(
             enabled: true,
@@ -95,16 +96,14 @@ class NotebookLMServiceTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $notebooks = [
-            'politica' => 'nb-001',
-            'economie' => 'nb-002',
-        ];
+        $topic = new Topic();
+        $topic->setTitle('Politica');
+        $topic->setNotebookLmId('nb-001');
 
-        self::assertSame('nb-001', $service->resolveNotebookId('politica', $notebooks));
-        self::assertSame('nb-002', $service->resolveNotebookId('economie', $notebooks));
+        self::assertSame('nb-001', $service->resolveNotebookId($topic));
     }
 
-    public function testResolveNotebookIdFuzzyMatch(): void
+    public function testResolveNotebookIdReturnsNullWhenTopicHasNoNotebook(): void
     {
         $service = new NotebookLMService(
             enabled: true,
@@ -112,16 +111,13 @@ class NotebookLMServiceTest extends TestCase
             logger: new NullLogger(),
         );
 
-        $notebooks = [
-            'politica' => 'nb-001',
-            'integrare_ue' => 'nb-003',
-        ];
+        $topic = new Topic();
+        $topic->setTitle('Economie');
 
-        self::assertSame('nb-001', $service->resolveNotebookId('politică', $notebooks));
-        self::assertSame('nb-003', $service->resolveNotebookId('integrare-ue', $notebooks));
+        self::assertNull($service->resolveNotebookId($topic));
     }
 
-    public function testResolveNotebookIdReturnsNullForUnknown(): void
+    public function testEnsureNotebookForTopicReturnsExistingId(): void
     {
         $service = new NotebookLMService(
             enabled: true,
@@ -129,17 +125,24 @@ class NotebookLMServiceTest extends TestCase
             logger: new NullLogger(),
         );
 
-        self::assertNull($service->resolveNotebookId('unknown-category', ['politica' => 'nb-001']));
+        $topic = new Topic();
+        $topic->setTitle('Politica');
+        $topic->setNotebookLmId('existing-notebook-id');
+
+        self::assertSame('existing-notebook-id', $service->ensureNotebookForTopic($topic));
     }
 
-    public function testResolveNotebookIdSkipsEmptyIds(): void
+    public function testEnsureNotebookForTopicReturnsNullWhenDisabled(): void
     {
         $service = new NotebookLMService(
-            enabled: true,
+            enabled: false,
             cliPath: '/usr/bin/notebooklm',
             logger: new NullLogger(),
         );
 
-        self::assertNull($service->resolveNotebookId('politica', ['politica' => '']));
+        $topic = new Topic();
+        $topic->setTitle('Politica');
+
+        self::assertNull($service->ensureNotebookForTopic($topic));
     }
 }

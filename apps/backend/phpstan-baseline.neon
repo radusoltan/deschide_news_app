@@ -2184,12 +2184,6 @@ parameters:
 			path: src/MessageHandler/Editorial/EvaluateTranslationHandler.php
 
 		-
-			message: '#^Call to an undefined method App\\Entity\\Topic\:\:getName\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/MessageHandler/Editorial/GenerateDossiersHandler.php
-
-		-
 			message: '#^Property App\\MessageHandler\\Editorial\\ProcessScrapedArticleHandler\:\:\$authorResolver is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
@@ -2664,34 +2658,10 @@ parameters:
 			path: src/Service/Editorial/ConnectionDetectionService.php
 
 		-
-			message: '#^Property App\\Service\\Editorial\\DailyBriefingService\:\:\$briefingNotebookId is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Service/Editorial/DailyBriefingService.php
-
-		-
-			message: '#^Property App\\Service\\Editorial\\DailyBriefingService\:\:\$notebookLMService is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Service/Editorial/DailyBriefingService.php
-
-		-
 			message: '#^Method App\\Service\\Editorial\\DossierGenerationService\:\:buildDossierFrontmatter\(\) is unused\.$#'
 			identifier: method.unused
 			count: 1
 			path: src/Service/Editorial/DossierGenerationService.php
-
-		-
-			message: '#^Property App\\Service\\Editorial\\WeeklySummaryService\:\:\$notebookLMService is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Service/Editorial/WeeklySummaryService.php
-
-		-
-			message: '#^Property App\\Service\\Editorial\\WeeklySummaryService\:\:\$weeklyNotebookId is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Service/Editorial/WeeklySummaryService.php
 
 		-
 			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:buildSortArray\(\) has parameter \$sort with no value type specified in iterable type array\.$#'

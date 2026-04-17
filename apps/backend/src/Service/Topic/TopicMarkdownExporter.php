@@ -18,7 +18,7 @@ use Symfony\Component\Yaml\Yaml;
  * The markdown output includes YAML frontmatter with metadata and
  * chronologically ordered content sections for articles and press releases.
  */
-final class TopicMarkdownExporter
+class TopicMarkdownExporter
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -46,6 +46,57 @@ final class TopicMarkdownExporter
         $sections[] = $this->buildPressReleasesSection($pressReleases, $stripImages);
 
         return implode("\n\n", array_filter($sections)) . "\n";
+    }
+
+    /**
+     * Returns array of individual sources suitable for NotebookLM addTextSource() calls.
+     * Each entry: ['title' => string, 'content' => string].
+     *
+     * @return list<array{title: string, content: string}>
+     */
+    public function exportSources(
+        Topic $topic,
+        ?DateRange $range = null,
+        int $maxSources = 300,
+        int $maxCharsPerItem = 1000,
+    ): array {
+        $range ??= DateRange::lastDays(30);
+
+        $sources = [];
+
+        // Articles linked to topic
+        $articles = $this->findArticles($topic, $range);
+        foreach ($articles as $article) {
+            if (\count($sources) >= $maxSources) {
+                break;
+            }
+            $date = $article->getPublishedAt()?->format('Y-m-d') ?? 'N/A';
+            $content = $article->getContent() ?? '';
+            $md = $content !== '' ? $this->converter->convert($content, ['strip_images' => true]) : '';
+
+            $sources[] = [
+                'title' => sprintf('Article: %s (%s)', $article->getTitle() ?? 'Untitled', $date),
+                'content' => mb_substr($md, 0, $maxCharsPerItem),
+            ];
+        }
+
+        // Press releases linked to topic via PressReleaseTopic
+        $pressReleases = $this->findPressReleases($topic, $range);
+        foreach ($pressReleases as $pr) {
+            if (\count($sources) >= $maxSources) {
+                break;
+            }
+            $date = $pr->getReceivedAt()->format('Y-m-d');
+            $content = $pr->getContent();
+            $md = $content !== '' ? $this->converter->convert($content, ['strip_images' => true]) : '';
+
+            $sources[] = [
+                'title' => sprintf('Source: %s (%s)', $pr->getTitle(), $date),
+                'content' => mb_substr($md, 0, $maxCharsPerItem),
+            ];
+        }
+
+        return $sources;
     }
 
     /**

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import moment from 'moment';
 import ArticleEditWrapper from './components/ArticleEditWrapper';
+import FactCheckPanel from './components/FactCheckPanel';
 import TranslationTabs from './components/TranslationTabs';
 import { getArticle, getCategories } from '@/lib/dal';
 import { getAuthors } from '@/lib/api/authors';
@@ -198,6 +199,9 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
           authors={authors as any}
         />
       </div>
+
+      {/* Fact-Check Panel (NotebookLM — Sprint 51a) */}
+      <FactCheckPanel articleId={articleId} />
     </div>
   );
 }

@@ -35,3 +35,9 @@ framework:
             policy: 'fixed_window'
             limit: 1
             interval: '1 second'
+
+        # NotebookLM fact-check (20 req/min per user — Sprint 51a)
+        factcheck:
+            policy: 'fixed_window'
+            limit: 20
+            interval: '1 minute'

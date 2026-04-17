@@ -7,7 +7,6 @@ namespace App\Tests\Unit\Service\Editorial;
 use App\Entity\GeneratedContent;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\WeeklySummaryService;
-use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -20,12 +19,9 @@ class WeeklySummaryServiceTest extends TestCase
         $em->expects($this->once())->method('persist')->with($this->isInstanceOf(GeneratedContent::class));
         $em->expects($this->once())->method('flush');
 
-        $nlm = new NotebookLMService(enabled: false, cliPath: '/nonexistent', logger: new NullLogger());
-
         $service = new WeeklySummaryService(
             geminiCli: new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()),
             em: $em,
-            notebookLMService: $nlm,
             logger: new NullLogger(),
         );
 
@@ -51,12 +47,10 @@ class WeeklySummaryServiceTest extends TestCase
     public function testSaveSummaryReturnsGeneratedContent(): void
     {
         $em = $this->createMock(EntityManagerInterface::class);
-        $nlm = new NotebookLMService(enabled: false, cliPath: '/nonexistent', logger: new NullLogger());
 
         $service = new WeeklySummaryService(
             geminiCli: new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()),
             em: $em,
-            notebookLMService: $nlm,
             logger: new NullLogger(),
         );
 
