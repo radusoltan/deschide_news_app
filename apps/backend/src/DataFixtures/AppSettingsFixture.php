@@ -14,9 +14,9 @@ use Doctrine\Persistence\ObjectManager;
  *
  * Adds the `article_generation.*` family used by the topic-window article
  * generator that supersedes StoryCluster-based generation in Sprint 52
- * (ADR-019). Defaults mirror the constants previously hard-coded in
- * ArticleWriterService and the cluster equivalents from
- * ClusteringService::cluster_temporal_window_hours.
+ * (ADR-019). Defaults follow ADR-019 D1 + D7 (empirically chosen against
+ * historical PressRelease/cluster distributions); see commit message for
+ * the T52.9 amendment for the per-key rationale.
  *
  * ────────────────────────────────────────────────────────────────────────
  * REMOVAL MANIFEST FOR T52.11 (StoryCluster hard-drop migration)
@@ -53,6 +53,9 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
      * because AppSetting.value is TEXT; AppSettingRepository::get*() coerces
      * on read.
      *
+     * Defaults per ADR-019 D1 + D7. Values amended in T52.9 follow-up
+     * after spec divergence was caught; see commit log for audit trail.
+     *
      * @var array<string, string>
      */
     private const ARTICLE_GENERATION_DEFAULTS = [
@@ -62,21 +65,31 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         'article_generation.use_topic_window' => 'true',
 
         // Lookback window when collecting PressReleases for a topic-driven
-        // generation run. Mirrors the legacy cluster_temporal_window_hours.
-        'article_generation.window_hours' => '48',
+        // generation run. ADR-019 D7: 24h chosen empirically — covers the
+        // full daily news cycle on Moldovan sources without bleeding into
+        // unrelated next-day stories.
+        'article_generation.window_hours' => '24',
 
         // Eligibility floor: minimum distinct PressReleases linked to the
-        // topic in window before generation is attempted. Mirrors the
-        // legacy ArticleWriterService::MIN_SOURCES_FOR_AI constant.
-        'article_generation.min_sources' => '3',
+        // topic in window before generation is attempted. ADR-019 D1:
+        // 1 (singletons allowed) — 80.5% of historical clusters were
+        // singletons; gating at 3 would discard the majority of valid
+        // generation targets.
+        'article_generation.min_pr_count' => '1',
+
+        // Eligibility floor: minimum average detection-confidence across
+        // PressReleaseTopic links in the batch. ADR-019 D1: 2.0 floors
+        // out weak topic associations (e.g. broad-keyword false positives)
+        // before they reach the LLM.
+        'article_generation.min_topic_relevance' => '2.0',
 
         // Eligibility floor: minimum average content length across the
-        // batch. Mirrors ArticleWriterService::MIN_AVG_CONTENT_LENGTH.
+        // batch. Preserved guardrail from the legacy
+        // ArticleWriterService::MIN_AVG_CONTENT_LENGTH constant — keeps
+        // the LLM from generating articles off thin/headline-only PRs.
+        // ADR-019 amendment will document this as a preserved-from-legacy
+        // decision rather than an empirical re-derivation.
         'article_generation.min_avg_content_length' => '1500',
-
-        // Hard cap on PressReleases passed to the LLM in one prompt to
-        // prevent runaway prompts on heavily-covered topics.
-        'article_generation.max_sources' => '20',
     ];
 
     public static function getGroups(): array
