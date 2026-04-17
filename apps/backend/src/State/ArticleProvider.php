@@ -175,6 +175,22 @@ final class ArticleProvider implements ProviderInterface
                 }
             }
 
+            // Filter: unclassified (?unclassified=1) — articles with no article_topics rows.
+            // Declared on Article via ArticleUnclassifiedFilter for OpenAPI /
+            // IriTemplate discoverability; the actual predicate lives here because
+            // this provider builds its own query and bypasses API Platform filter
+            // chain (same pattern as category/status/isFeatured above).
+            if ($request->query->has('unclassified')) {
+                $raw = $request->query->get('unclassified');
+                $truthy = \in_array(strtolower((string) $raw), ['1', 'true', 'yes'], true);
+                if ($truthy) {
+                    $queryBuilder->andWhere(
+                        'NOT EXISTS (SELECT 1 FROM App\\Entity\\Article a_sub '
+                        . 'JOIN a_sub.topics t_sub WHERE a_sub.id = a.id)'
+                    );
+                }
+            }
+
             // Filter by badge (breaking, alert, flash)
             if ($badge = $request->query->get('badge')) {
                 // Validate badge value against enum values

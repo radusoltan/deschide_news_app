@@ -211,6 +211,7 @@ export interface Article {
   aiConfidenceScore?: number | null;
   aiSourceCount?: number | null;
   sourceClusterId?: number | null;
+  topics?: Array<string | { id?: number; title?: string; slug?: string }>;
 }
 
 export interface ArticlesCollection {
@@ -227,6 +228,7 @@ export interface GetArticlesParams {
   locale?: string;
   category?: number;
   status?: string;
+  unclassified?: boolean;
 }
 
 /**
@@ -236,13 +238,14 @@ export interface GetArticlesParams {
 export async function getArticles(
   params: GetArticlesParams = {}
 ): Promise<ArticlesCollection> {
-  const { page = 1, itemsPerPage = 30, locale = 'ro', category, status } = params;
+  const { page = 1, itemsPerPage = 30, locale = 'ro', category, status, unclassified } = params;
 
   const queryParams = new URLSearchParams();
   queryParams.set('page', page.toString());
   queryParams.set('itemsPerPage', itemsPerPage.toString());
   if (category) queryParams.set('category', category.toString());
   if (status) queryParams.set('status', status);
+  if (unclassified) queryParams.set('unclassified', '1');
 
   const response = await authenticatedFetch(
     `/api/articles?${queryParams.toString()}`,

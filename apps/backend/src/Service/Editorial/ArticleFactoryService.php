@@ -84,6 +84,13 @@ class ArticleFactoryService
         // Resolve author based on source type
         $this->assignAuthor($article, $pressRelease);
 
+        // Propagate topics detected on the press release to the new article.
+        // Safety net for the PR approval pipeline: topic classification on PRs
+        // flows to Articles without requiring a second pass.
+        foreach ($pressRelease->getPressReleaseTopics() as $pressReleaseTopic) {
+            $article->addTopic($pressReleaseTopic->getTopic());
+        }
+
         $this->em->persist($article);
 
         // Attach image if press release has one (email attachment)
