@@ -38,14 +38,17 @@ final readonly class GenerateDossiersHandler
         $generated = 0;
 
         foreach ($topics as $topic) {
-            $topicName = $topic->getName();
+            $topicName = $topic->getTitle();
+            if ($topicName === null) {
+                continue;
+            }
             $articles = $this->dossierService->getRecentArticlesForTopic($topicName, $message->days);
 
             if (\count($articles) < $message->threshold) {
                 continue;
             }
 
-            $result = $this->dossierService->generateDossier($topicName, $articles);
+            $result = $this->dossierService->generateDossier($topicName, $articles, $topic);
 
             if ($result !== null) {
                 ++$generated;

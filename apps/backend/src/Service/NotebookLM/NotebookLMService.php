@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\NotebookLM;
 
 use App\Entity\Topic;
+use App\Repository\AppSettingRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
 
@@ -17,14 +18,23 @@ class NotebookLMService
         private readonly bool $enabled,
         private readonly string $cliPath,
         private readonly LoggerInterface $logger,
+        private readonly ?AppSettingRepository $settings = null,
     ) {}
 
     /**
      * Check if NotebookLM CLI is available and authenticated.
+     *
+     * Gated by BOTH the env var (%notebooklm.enabled%) AND the AppSettings
+     * runtime flag (`notebooklm.enabled`). When AppSettings is not wired
+     * (unit tests), only the env var applies.
      */
     public function isAvailable(): bool
     {
         if (!$this->enabled) {
+            return false;
+        }
+
+        if ($this->settings !== null && !$this->settings->getBool('notebooklm.enabled', false)) {
             return false;
         }
 

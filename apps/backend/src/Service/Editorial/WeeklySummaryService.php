@@ -7,7 +7,6 @@ namespace App\Service\Editorial;
 use App\Entity\Article;
 use App\Entity\GeneratedContent;
 use App\Enum\ArticleStatus;
-use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\Ai\Provider\GeminiCliException;
 use App\Service\Ai\Provider\GeminiCliService;
@@ -20,9 +19,7 @@ class WeeklySummaryService
     public function __construct(
         private readonly GeminiCliService $geminiCli,
         private readonly EntityManagerInterface $em,
-        private readonly NotebookLMService $notebookLMService,
         private readonly LoggerInterface $logger,
-        private readonly string $weeklyNotebookId = '',
     ) {}
 
     /**

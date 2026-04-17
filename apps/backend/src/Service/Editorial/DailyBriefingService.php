@@ -10,7 +10,6 @@ use App\Entity\PressRelease;
 use App\Enum\ArticleStatus;
 use App\Enum\PressReleaseStatus;
 use App\Repository\StoryClusterRepository;
-use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\Ai\Provider\GeminiCliException;
 use App\Service\Ai\Provider\GeminiCliService;
@@ -24,9 +23,7 @@ class DailyBriefingService
         private readonly GeminiCliService $geminiCli,
         private readonly EntityManagerInterface $em,
         private readonly StoryClusterRepository $clusterRepository,
-        private readonly NotebookLMService $notebookLMService,
         private readonly LoggerInterface $logger,
-        private readonly string $briefingNotebookId = '',
     ) {}
 
     /**

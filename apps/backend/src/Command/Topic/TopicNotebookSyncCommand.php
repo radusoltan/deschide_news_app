@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command\Topic;
 
+use App\Repository\AppSettingRepository;
 use App\Repository\TopicRepository;
 use App\Service\Topic\TopicNotebookSyncService;
 use App\ValueObject\DateRange;
@@ -23,6 +24,7 @@ final class TopicNotebookSyncCommand extends Command
     public function __construct(
         private readonly TopicNotebookSyncService $syncService,
         private readonly TopicRepository $topicRepository,
+        private readonly AppSettingRepository $settings,
     ) {
         parent::__construct();
     }
@@ -32,8 +34,8 @@ final class TopicNotebookSyncCommand extends Command
         $this
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be synced without making changes')
             ->addOption('topic', null, InputOption::VALUE_REQUIRED, 'Sync only this topic (by slug)')
-            ->addOption('since', null, InputOption::VALUE_REQUIRED, 'Look back period (e.g. 30d, 7d)', '30d')
-            ->addOption('max-sources', null, InputOption::VALUE_REQUIRED, 'Maximum sources per topic notebook', '300')
+            ->addOption('since', null, InputOption::VALUE_REQUIRED, 'Look back period (e.g. 30d, 7d) — default from notebooklm.sync.date_range_days')
+            ->addOption('max-sources', null, InputOption::VALUE_REQUIRED, 'Maximum sources per topic notebook — default from notebooklm.sync.max_sources_per_notebook')
             ->addOption('force', null, InputOption::VALUE_NONE, 'Force sync even if recently synced');
     }
 
@@ -42,10 +44,17 @@ final class TopicNotebookSyncCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $dryRun = (bool) $input->getOption('dry-run');
         $topicSlug = $input->getOption('topic');
-        $sinceStr = $input->getOption('since');
-        $maxSources = (int) $input->getOption('max-sources');
 
-        $range = $this->parseDateRange($sinceStr);
+        // AppSettings-driven defaults (Sprint 51a wiring).
+        $defaultDays = $this->settings->getInt('notebooklm.sync.date_range_days', 30);
+        $defaultMaxSources = $this->settings->getInt('notebooklm.sync.max_sources_per_notebook', 300);
+
+        $sinceStr = $input->getOption('since') ?? "{$defaultDays}d";
+        $maxSources = $input->getOption('max-sources') !== null
+            ? (int) $input->getOption('max-sources')
+            : $defaultMaxSources;
+
+        $range = $this->parseDateRange($sinceStr, $defaultDays);
 
         if ($dryRun) {
             $io->note('DRY RUN — no changes will be made');
@@ -123,12 +132,12 @@ final class TopicNotebookSyncCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function parseDateRange(string $since): DateRange
+    private function parseDateRange(string $since, int $defaultDays): DateRange
     {
         if (preg_match('/^(\d+)d$/', $since, $matches)) {
             return DateRange::lastDays((int) $matches[1]);
         }
 
-        return DateRange::lastDays(30);
+        return DateRange::lastDays($defaultDays);
     }
 }

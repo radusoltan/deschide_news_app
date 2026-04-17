@@ -7,11 +7,12 @@ namespace App\Service\NotebookLM;
 use App\Dto\NotebookLM\FactCheckResult;
 use App\Entity\Article;
 use App\Entity\Topic;
+use App\Repository\AppSettingRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
-final class NotebookLmFactCheckService
+class NotebookLmFactCheckService
 {
     private const DEFAULT_CACHE_TTL = 3600;
     private const MAX_QUESTION_LENGTH = 500;
@@ -21,6 +22,7 @@ final class NotebookLmFactCheckService
         private readonly CacheInterface $cache,
         private readonly LoggerInterface $logger,
         private readonly int $cacheTtl = self::DEFAULT_CACHE_TTL,
+        private readonly ?AppSettingRepository $settings = null,
     ) {}
 
     /**
@@ -28,6 +30,12 @@ final class NotebookLmFactCheckService
      */
     public function factCheck(Article $article, Topic $topic, ?string $question = null): ?FactCheckResult
     {
+        if ($this->settings !== null && !$this->settings->getBool('notebooklm.factcheck.enabled', false)) {
+            $this->logger->debug('FactCheck: disabled via AppSettings (notebooklm.factcheck.enabled=false)');
+
+            return null;
+        }
+
         $notebookId = $this->notebookLM->resolveNotebookId($topic);
         if ($notebookId === null) {
             $this->logger->debug('FactCheck: topic has no notebook', [
@@ -42,9 +50,10 @@ final class NotebookLmFactCheckService
         $topicId = $topic->getId() ?? 0;
 
         $cacheKey = $this->buildCacheKey($topicId, $question);
+        $effectiveTtl = $this->settings?->getInt('notebooklm.factcheck.cache_ttl', $this->cacheTtl) ?? $this->cacheTtl;
 
-        return $this->cache->get($cacheKey, function (ItemInterface $item) use ($notebookId, $question, $topicId): ?FactCheckResult {
-            $item->expiresAfter($this->cacheTtl);
+        return $this->cache->get($cacheKey, function (ItemInterface $item) use ($notebookId, $question, $topicId, $effectiveTtl): ?FactCheckResult {
+            $item->expiresAfter($effectiveTtl);
 
             $this->logger->info('FactCheck: querying NotebookLM', [
                 'topicId' => $topicId,
@@ -75,6 +84,10 @@ final class NotebookLmFactCheckService
      */
     public function isAvailableForTopic(Topic $topic): bool
     {
+        if ($this->settings !== null && !$this->settings->getBool('notebooklm.factcheck.enabled', false)) {
+            return false;
+        }
+
         return $this->notebookLM->isAvailable()
             && $topic->getNotebookLmId() !== null;
     }

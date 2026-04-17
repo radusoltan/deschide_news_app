@@ -310,14 +310,10 @@ services:
     App\Service\Editorial\DossierGenerationService: ~
 
     # Weekly Summary Service (uses GeminiCliService — Sprint 17)
-    App\Service\Editorial\WeeklySummaryService:
-        arguments:
-            $weeklyNotebookId: '%notebooklm.weekly_notebook_id%'
+    App\Service\Editorial\WeeklySummaryService: ~
 
     # Daily Briefing Service (uses GeminiCliService — Sprint 17)
-    App\Service\Editorial\DailyBriefingService:
-        arguments:
-            $briefingNotebookId: '%notebooklm.briefing_notebook_id%'
+    App\Service\Editorial\DailyBriefingService: ~
 
     # AI Newsroom: Anthropic API Client (for production with API key)
     App\Service\Ai\AnthropicApiClient:

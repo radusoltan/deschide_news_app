@@ -4,6 +4,20 @@ import { getAccessToken } from '@/lib/dal';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
+export type FactCheckStatus =
+  | 'fresh'
+  | 'cached'
+  | 'no_topics'
+  | 'no_notebook'
+  | 'disabled'
+  | 'unavailable'
+  | 'failed'
+  | 'validation'
+  | 'rate_limited'
+  | 'not_found'
+  | 'network'
+  | 'timeout';
+
 export interface FactCheckResult {
   answer: string;
   question: string;
@@ -13,9 +27,16 @@ export interface FactCheckResult {
   checkedAt: string;
 }
 
+export interface FactCheckViolation {
+  field: string;
+  message: string;
+}
+
 export interface FactCheckResponse {
+  status: FactCheckStatus;
   data?: FactCheckResult;
   error?: string;
+  violations?: FactCheckViolation[];
 }
 
 export async function runFactCheck(
@@ -24,7 +45,7 @@ export async function runFactCheck(
 ): Promise<FactCheckResponse> {
   const token = await getAccessToken();
   if (!token) {
-    return { error: 'Nu ești autentificat' };
+    return { status: 'network', error: 'Nu ești autentificat' };
   }
 
   const body: Record<string, string> = {};
@@ -52,17 +73,25 @@ export async function runFactCheck(
     );
 
     const json = await res.json();
+    const status = (json.status as FactCheckStatus) ?? (res.ok ? 'fresh' : 'failed');
 
     if (!res.ok) {
-      return { error: json.error ?? `API error: ${res.status}` };
+      return {
+        status,
+        error: json.error ?? `API error: ${res.status}`,
+        violations: json.violations,
+      };
     }
 
-    return { data: json.data };
+    return { status, data: json.data };
   } catch (err: unknown) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      return { error: 'Timeout: NotebookLM nu a răspuns în 60 de secunde.' };
+      return {
+        status: 'timeout',
+        error: 'Timeout: NotebookLM nu a răspuns în 60 de secunde.',
+      };
     }
-    return { error: 'Eroare de rețea. Încearcă din nou.' };
+    return { status: 'network', error: 'Eroare de rețea. Încearcă din nou.' };
   } finally {
     clearTimeout(timeout);
   }

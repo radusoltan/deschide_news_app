@@ -29,7 +29,7 @@ final class DossierGenerationService
      *
      * @param list<Article> $recentArticles
      */
-    public function generateDossier(string $topicName, array $recentArticles): ?GeneratedContent
+    public function generateDossier(string $topicName, array $recentArticles, ?Topic $topic = null): ?GeneratedContent
     {
         // Build article summaries for the prompt
         $articleSummaries = $this->buildArticleSummaries($recentArticles);
@@ -45,8 +45,8 @@ final class DossierGenerationService
             return null;
         }
 
-        // Enrich with NotebookLM insights if available
-        $insights = $this->enrichWithNotebookLM($topicName, $recentArticles);
+        // Enrich with NotebookLM insights if available (requires Topic with notebookLmId)
+        $insights = $this->enrichWithNotebookLM($recentArticles, $topic);
 
         $fullContent = $dossierContent;
         if ($insights !== null) {
@@ -156,15 +156,17 @@ PROMPT;
     /**
      * @param list<Article> $articles
      */
-    private function enrichWithNotebookLM(string $topicName, array $articles, ?Topic $topic = null): ?string
+    private function enrichWithNotebookLM(array $articles, ?Topic $topic): ?string
     {
+        if ($topic === null) {
+            return null;
+        }
+
         if (!$this->notebookLMService->isAvailable()) {
             return null;
         }
 
-        $notebookId = $topic !== null
-            ? $this->notebookLMService->resolveNotebookId($topic)
-            : null;
+        $notebookId = $this->notebookLMService->resolveNotebookId($topic);
 
         if ($notebookId === null) {
             return null;
