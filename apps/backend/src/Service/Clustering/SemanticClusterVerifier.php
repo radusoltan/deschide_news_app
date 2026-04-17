@@ -16,6 +16,12 @@ use Psr\Log\LoggerInterface;
  * candidate is about the SAME specific event/decision/incident as the cluster.
  *
  * Fail-open design: if Gemini is unavailable, all candidates are accepted.
+ *
+ * @deprecated since Sprint 52 (T52.8) — superseded by
+ *             {@see \App\Service\Verification\SemanticVerifierService}
+ *             which operates at the Topic + time-window level instead of
+ *             cluster headlines. Will be removed in T52.12 together with the
+ *             rest of the StoryCluster infrastructure (see ADR-019).
  */
 class SemanticClusterVerifier
 {
@@ -35,6 +41,10 @@ class SemanticClusterVerifier
 
     /**
      * Verify if a single PR title is about the same story as the cluster headline.
+     *
+     * @deprecated since Sprint 52 (T52.8) — use
+     *             {@see \App\Service\Verification\SemanticVerifierService::findDuplicatePairsInTopicWindow()}.
+     *             Removal scheduled for T52.12.
      */
     public function verify(string $prTitle, string $clusterHeadline): VerificationResult
     {
@@ -48,6 +58,10 @@ class SemanticClusterVerifier
      *
      * @param list<array{title: string, id?: int}> $candidates
      * @return list<VerificationResult>
+     *
+     * @deprecated since Sprint 52 (T52.8) — use
+     *             {@see \App\Service\Verification\SemanticVerifierService::findDuplicatePairsInTopicWindow()}.
+     *             Removal scheduled for T52.12.
      */
     public function verifyBatch(array $candidates, string $clusterHeadline): array
     {
