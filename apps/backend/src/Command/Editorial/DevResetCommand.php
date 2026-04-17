@@ -90,7 +90,7 @@ final class DevResetCommand extends Command
 
         // --- Step 3: All fixtures in ONE pass (avoids --append dependency conflicts) ---
         $this->em->clear();
-        $fixtureGroups = ['categories', 'menu', 'user', 'live-pipeline'];
+        $fixtureGroups = ['categories', 'menu', 'user', 'live-pipeline', 'app-settings'];
         if (!$skipTopics) {
             $fixtureGroups[] = 'topics';
         }

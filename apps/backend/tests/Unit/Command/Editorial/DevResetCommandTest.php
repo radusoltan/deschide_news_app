@@ -181,7 +181,7 @@ class DevResetCommandTest extends TestCase
         $display = $tester->getDisplay();
         // The fixtures step header lists groups in parens; with --skip-topics
         // the suffix ", topics)" must not appear on that line.
-        self::assertStringContainsString('Load fixtures (categories, menu, user, live-pipeline)', $display);
+        self::assertStringContainsString('Load fixtures (categories, menu, user, live-pipeline, app-settings)', $display);
         self::assertDoesNotMatchRegularExpression('/Load fixtures \([^)]*topics[^)]*\)/', $display);
     }
 
