@@ -12,6 +12,7 @@ use App\Entity\Topic;
 use App\Repository\AppSettingRepository;
 use App\Repository\PressReleaseRepository;
 use App\Repository\StoryClusterRepository;
+use App\Message\GenerateTopicArticleMessage;
 use App\Repository\TopicBriefingRepository;
 use App\Repository\TopicRepository;
 use App\Service\Ai\Provider\GeminiCliService;
@@ -24,6 +25,8 @@ use Psr\Log\NullLogger;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 class GenerateArticleCommandTest extends TestCase
 {
@@ -33,6 +36,7 @@ class GenerateArticleCommandTest extends TestCase
     private AppSettingRepository&MockObject $appSettings;
     private EntityManagerInterface&MockObject $em;
     private ArticleWriterService&MockObject $writerService;
+    private MessageBusInterface&MockObject $messageBus;
     private GenerateArticleCommand $command;
 
     protected function setUp(): void
@@ -43,6 +47,11 @@ class GenerateArticleCommandTest extends TestCase
         $this->appSettings = $this->createMock(AppSettingRepository::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->writerService = $this->createMock(ArticleWriterService::class);
+        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        // MessageBus dispatch returns Envelope — stub a minimal one for default
+        $this->messageBus->method('dispatch')->willReturnCallback(
+            static fn (object $msg): Envelope => new Envelope($msg),
+        );
 
         $this->command = new GenerateArticleCommand(
             $this->writerService,
@@ -51,6 +60,7 @@ class GenerateArticleCommandTest extends TestCase
             $this->appSettings,
             $this->topicRepository,
             $this->pressReleaseRepository,
+            $this->messageBus,
         );
     }
 
@@ -142,7 +152,7 @@ class GenerateArticleCommandTest extends TestCase
         $this->topicRepository->method('findActiveWithUnprocessedPressReleasesSince')->willReturn([]);
 
         $tester = $this->makeTester();
-        $tester->execute([]);
+        $tester->execute(['--sync' => true]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $this->assertStringContainsString('No eligible topics', $tester->getDisplay());
@@ -168,7 +178,7 @@ class GenerateArticleCommandTest extends TestCase
         $this->em->expects($this->never())->method('persist');
 
         $tester = $this->makeTester();
-        $tester->execute([]);
+        $tester->execute(['--sync' => true]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $this->assertStringContainsString('INELIGIBLE', $tester->getDisplay());
@@ -192,7 +202,7 @@ class GenerateArticleCommandTest extends TestCase
         $this->em->expects($this->never())->method('persist');
 
         $tester = $this->makeTester();
-        $tester->execute([]);
+        $tester->execute(['--sync' => true]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode(), 'Writer null is per-topic; batch must continue');
         $this->assertStringContainsString('WRITER FAILED', $tester->getDisplay());
@@ -219,7 +229,7 @@ class GenerateArticleCommandTest extends TestCase
         $this->em->expects($this->once())->method('flush');
 
         $tester = $this->makeTester();
-        $tester->execute([]);
+        $tester->execute(['--sync' => true]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $this->assertStringContainsString('OK: PR', $tester->getDisplay());
@@ -245,7 +255,7 @@ class GenerateArticleCommandTest extends TestCase
         $this->em->expects($this->never())->method('flush');
 
         $tester = $this->makeTester();
-        $tester->execute(['--dry-run' => true]);
+        $tester->execute(['--sync' => true, '--dry-run' => true]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
         $this->assertStringContainsString('DRY:', $tester->getDisplay());
@@ -269,7 +279,7 @@ class GenerateArticleCommandTest extends TestCase
         ]);
 
         $tester = $this->makeTester();
-        $tester->execute(['--limit' => '2']);
+        $tester->execute(['--sync' => true, '--limit' => '2']);
 
         $display = $tester->getDisplay();
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
@@ -281,17 +291,53 @@ class GenerateArticleCommandTest extends TestCase
     }
 
     #[Test]
-    public function topicWindowPathAsyncFlagWarnsAndFallsBackToSync(): void
+    public function topicWindowPathDefaultDispatchesGenerateTopicArticleMessage(): void
     {
         $this->stubAppSettings(useTopicWindow: true);
-        $this->topicRepository->method('findActiveWithUnprocessedPressReleasesSince')->willReturn([]);
+        $topics = [
+            $this->makeTopic('async-1'),
+            $this->makeTopic('async-2'),
+        ];
+
+        $this->topicRepository->method('findActiveWithUnprocessedPressReleasesSince')
+            ->willReturn($topics);
+
+        // No sync work in async mode: writer + repo + persist must NOT fire
+        $this->writerService->expects($this->never())->method('isEligibleForTopicWindow');
+        $this->writerService->expects($this->never())->method('writeArticleFromTopicWindow');
+        $this->pressReleaseRepository->expects($this->never())->method('findByTopicInWindow');
+        $this->em->expects($this->never())->method('persist');
+
+        // Expect exactly one dispatch per topic
+        $this->messageBus->expects($this->exactly(2))
+            ->method('dispatch')
+            ->with($this->isInstanceOf(GenerateTopicArticleMessage::class))
+            ->willReturnCallback(static fn (object $msg) => new Envelope($msg));
 
         $tester = $this->makeTester();
-        $tester->execute(['--async' => true]);
+        $tester->execute([]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertStringContainsString('T52.7', $tester->getDisplay());
-        $this->assertStringContainsString('synchronous', $tester->getDisplay());
+        $this->assertStringContainsString('async (dispatch via briefing transport)', $tester->getDisplay());
+        $this->assertStringContainsString('DISPATCHED', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function topicWindowPathAsyncDryRunDoesNotDispatch(): void
+    {
+        $this->stubAppSettings(useTopicWindow: true);
+        $topics = [$this->makeTopic('async-dry-run')];
+
+        $this->topicRepository->method('findActiveWithUnprocessedPressReleasesSince')
+            ->willReturn($topics);
+
+        $this->messageBus->expects($this->never())->method('dispatch');
+
+        $tester = $this->makeTester();
+        $tester->execute(['--dry-run' => true]);
+
+        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
+        $this->assertStringContainsString('DRY: would dispatch', $tester->getDisplay());
     }
 
     // ────────────────────────────────────────────────────────────────────

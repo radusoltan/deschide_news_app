@@ -9,6 +9,7 @@ use App\Entity\PressRelease;
 use App\Entity\Topic;
 use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
+use App\Message\GenerateTopicArticleMessage;
 use App\Repository\AppSettingRepository;
 use App\Repository\PressReleaseRepository;
 use App\Repository\StoryClusterRepository;
@@ -22,6 +23,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Generate AI articles via either:
@@ -49,6 +51,7 @@ class GenerateArticleCommand extends Command
         private readonly AppSettingRepository $appSettings,
         private readonly TopicRepository $topicRepository,
         private readonly PressReleaseRepository $pressReleaseRepository,
+        private readonly MessageBusInterface $messageBus,
     ) {
         parent::__construct();
     }
@@ -77,8 +80,8 @@ class GenerateArticleCommand extends Command
                 'Maximum number of topics to process in topic-window mode (0 = unlimited)',
                 '0',
             )
-            ->addOption('sync', null, InputOption::VALUE_NONE, 'Force synchronous in-process generation (default in T52.6)')
-            ->addOption('async', null, InputOption::VALUE_NONE, 'Async dispatch via GenerateTopicArticleMessage (arrives in T52.7; T52.6 falls back to sync with a warning)');
+            ->addOption('sync', null, InputOption::VALUE_NONE, 'Force synchronous in-process generation (default in production is async dispatch via GenerateTopicArticleMessage)')
+            ->addOption('async', null, InputOption::VALUE_NONE, 'Async dispatch via GenerateTopicArticleMessage (this is the default since T52.7 — flag is documented for clarity, no-op if --sync is also set)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -110,14 +113,13 @@ class GenerateArticleCommand extends Command
             return Command::FAILURE;
         }
 
-        if ((bool) $input->getOption('async')) {
-            $io->warning('--async dispatch is introduced in T52.7. Falling back to synchronous execution.');
-        }
+        $sync = (bool) $input->getOption('sync');
 
         return $this->executeTopicWindowPath(
             $io,
             $dryRun,
             (int) $input->getOption('limit'),
+            $sync,
         );
     }
 
@@ -125,7 +127,7 @@ class GenerateArticleCommand extends Command
     //  Sprint 52 — Topic + Window path (ADR-019 D2, T52.6 sync phase)
     // ────────────────────────────────────────────────────────────────────
 
-    private function executeTopicWindowPath(SymfonyStyle $io, bool $dryRun, int $limit): int
+    private function executeTopicWindowPath(SymfonyStyle $io, bool $dryRun, int $limit, bool $sync): int
     {
         $io->title('Generate Articles — Topic + Window (Sprint 52, ADR-019 D2)');
 
@@ -135,6 +137,9 @@ class GenerateArticleCommand extends Command
         $now = new \DateTimeImmutable();
         $windowStart = $now->modify(sprintf('-%d hours', $windowHours));
         $windowEnd = $now;
+
+        $modeLabel = $sync ? 'sync (in-process)' : 'async (dispatch via briefing transport)';
+        $io->writeln('Mode: ' . $modeLabel);
 
         $io->writeln(sprintf(
             'Window: %s → %s (%d hours)',
@@ -165,6 +170,13 @@ class GenerateArticleCommand extends Command
             $topics = \array_slice($topics, 0, $limit);
         } else {
             $io->writeln(sprintf('Found %d eligible topics; processing all.', \count($topics)));
+        }
+
+        // Async path: dispatch one message per eligible topic, return.
+        // Per-topic eligibility/dedup/writer execution happens in the
+        // GenerateTopicArticleHandler, not here.
+        if (!$sync) {
+            return $this->dispatchAsync($io, $topics, $windowStart, $windowEnd, $dryRun);
         }
 
         $stats = ['processed' => 0, 'generated' => 0, 'ineligible' => 0, 'writerNull' => 0];
@@ -239,6 +251,53 @@ class GenerateArticleCommand extends Command
                 ['Writer returned null', (string) $stats['writerNull']],
             ],
         );
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Dispatch one GenerateTopicArticleMessage per eligible topic to the
+     * shared `briefing` transport. Per-topic eligibility / dedup / writer
+     * execution happens in GenerateTopicArticleHandler (T52.7).
+     *
+     * @param Topic[] $topics
+     */
+    private function dispatchAsync(
+        SymfonyStyle $io,
+        array $topics,
+        \DateTimeImmutable $windowStart,
+        \DateTimeImmutable $windowEnd,
+        bool $dryRun,
+    ): int {
+        $dispatched = 0;
+        foreach ($topics as $topic) {
+            $topicId = $topic->getId();
+            if ($topicId === null) {
+                continue;
+            }
+            $topicLabel = sprintf('topic #%d "%s"', $topicId, $topic->getTitle() ?? 'n/a');
+
+            if ($dryRun) {
+                $io->writeln(sprintf('  %s — DRY: would dispatch GenerateTopicArticleMessage', $topicLabel));
+                $dispatched++;
+                continue;
+            }
+
+            $this->messageBus->dispatch(
+                new GenerateTopicArticleMessage($topicId, $windowStart, $windowEnd),
+            );
+            $io->writeln(sprintf('  %s — DISPATCHED', $topicLabel));
+            $dispatched++;
+        }
+
+        $io->section('Summary');
+        $io->table(
+            ['Metric', 'Count'],
+            [
+                ['Topics dispatched' . ($dryRun ? ' (dry-run)' : ''), (string) $dispatched],
+            ],
+        );
+        $io->note('Per-topic outcome will be visible in the briefing worker logs (messenger:consume briefing).');
 
         return Command::SUCCESS;
     }

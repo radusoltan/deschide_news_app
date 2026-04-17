@@ -187,6 +187,12 @@ framework:
             'App\Message\Topic\TriggerTopicBriefingRunMessage': briefing
             'App\Message\Topic\GenerateTopicBriefingMessage': briefing
 
+            # Topic-window article generation (Sprint 52, ADR-019 D2)
+            # Shared briefing transport per D2 default. Split into a
+            # dedicated `article_generation` transport in messenger.yaml
+            # if post-merge observation surfaces queue saturation.
+            'App\Message\GenerateTopicArticleMessage': briefing
+
             # NotebookLM sync (Sprint 51a)
             'App\Message\NotebookLM\TriggerTopicNotebookSyncMessage': editorial
 
