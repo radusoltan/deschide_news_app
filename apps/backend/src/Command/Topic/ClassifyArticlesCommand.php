@@ -142,17 +142,14 @@ class ClassifyArticlesCommand extends Command
                 // Emit per-100 article checkpoint line
                 if ($running->classified >= $lastReportedCount + 100) {
                     $lastReportedCount = $running->classified - ($running->classified % 100);
-                    $stats = method_exists($io, 'getErrorStyle') ? $io : null;
-                    if ($stats !== null) {
-                        $progressBar->clear();
-                        $io->writeln(sprintf(
-                            '  checkpoint: classified=%d, skipped=%d, failed_chunks=%d',
-                            $running->classified,
-                            $running->skipped,
-                            $running->failedChunks,
-                        ));
-                        $progressBar->display();
-                    }
+                    $progressBar->clear();
+                    $io->writeln(sprintf(
+                        '  checkpoint: classified=%d, skipped=%d, failed_chunks=%d',
+                        $running->classified,
+                        $running->skipped,
+                        $running->failedChunks,
+                    ));
+                    $progressBar->display();
                 }
             },
         );

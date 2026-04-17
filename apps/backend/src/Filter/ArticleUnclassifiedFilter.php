@@ -61,14 +61,11 @@ final class ArticleUnclassifiedFilter extends AbstractFilter
     {
         return [
             self::PARAMETER_NAME => [
-                'property' => null,
+                'property' => self::PARAMETER_NAME,
                 'type' => 'bool',
                 'required' => false,
                 'description' => 'When true, returns only articles with no linked topics (NOT EXISTS on article_topics).',
-                'openapi' => [
-                    'example' => '1',
-                    'allowEmptyValue' => false,
-                ],
+                'schema' => ['type' => 'boolean'],
             ],
         ];
     }
