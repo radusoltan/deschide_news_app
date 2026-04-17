@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Command;
 
 use App\Command\GenerateArticleCommand;
+use App\Repository\AppSettingRepository;
 use App\Repository\StoryClusterRepository;
+use App\Repository\TopicBriefingRepository;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\ArticleWriterService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,7 +26,12 @@ class GenerateArticleCommandTest extends TestCase
     protected function setUp(): void
     {
         $geminiCli = new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger());
-        $writerService = new ArticleWriterService($geminiCli, new NullLogger());
+        $writerService = new ArticleWriterService(
+            $geminiCli,
+            new NullLogger(),
+            $this->createMock(AppSettingRepository::class),
+            $this->createMock(TopicBriefingRepository::class),
+        );
         $this->clusterRepository = $this->createMock(StoryClusterRepository::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
 
