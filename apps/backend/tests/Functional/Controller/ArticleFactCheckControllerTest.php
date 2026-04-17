@@ -13,7 +13,7 @@ use App\Entity\Topic;
 use App\Entity\User;
 use App\Enum\ArticleStatus;
 use App\Enum\TopicStatus;
-use App\Service\NotebookLM\NotebookLmFactCheckService;
+use App\Service\NotebookLM\NotebookLmFactCheckServiceInterface;
 use App\Service\NotebookLM\NotebookLMService;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -278,9 +278,13 @@ class ArticleFactCheckControllerTest extends WebTestCase
         $notebookLmMock->method('isAvailable')->willReturn(true);
         static::getContainer()->set(NotebookLMService::class, $notebookLmMock);
 
-        $factCheckMock = $this->createMock(NotebookLmFactCheckService::class);
+        $factCheckMock = $this->createMock(NotebookLmFactCheckServiceInterface::class);
         $factCheckMock->method('factCheck')->willReturn(null);
-        static::getContainer()->set(NotebookLmFactCheckService::class, $factCheckMock);
+        // The interface is an auto-alias to the concrete class; Symfony's autowiring
+// resolves the controller's constructor to the concrete service ID, so we set
+// the mock under that ID. Mock target remains the interface — this preserves
+// the architectural seam (controller depends on interface, service is `final`).
+static::getContainer()->set(\App\Service\NotebookLM\NotebookLmFactCheckService::class, $factCheckMock);
 
         $article = $this->createArticleWithTopic(notebookLmId: 'nb-42');
         $token = $this->getAuthToken($this->adminUser);
@@ -323,9 +327,13 @@ class ArticleFactCheckControllerTest extends WebTestCase
             checkedAt: new DateTimeImmutable('2026-04-17T10:00:00+00:00'),
         );
 
-        $factCheckMock = $this->createMock(NotebookLmFactCheckService::class);
+        $factCheckMock = $this->createMock(NotebookLmFactCheckServiceInterface::class);
         $factCheckMock->method('factCheck')->willReturn($result);
-        static::getContainer()->set(NotebookLmFactCheckService::class, $factCheckMock);
+        // The interface is an auto-alias to the concrete class; Symfony's autowiring
+// resolves the controller's constructor to the concrete service ID, so we set
+// the mock under that ID. Mock target remains the interface — this preserves
+// the architectural seam (controller depends on interface, service is `final`).
+static::getContainer()->set(\App\Service\NotebookLM\NotebookLmFactCheckService::class, $factCheckMock);
 
         $article = $this->createArticleWithTopic(notebookLmId: 'nb-42');
         $token = $this->getAuthToken($this->adminUser);
@@ -367,9 +375,13 @@ class ArticleFactCheckControllerTest extends WebTestCase
             checkedAt: new DateTimeImmutable('2026-04-17T09:00:00+00:00'),
         );
 
-        $factCheckMock = $this->createMock(NotebookLmFactCheckService::class);
+        $factCheckMock = $this->createMock(NotebookLmFactCheckServiceInterface::class);
         $factCheckMock->method('factCheck')->willReturn($cached);
-        static::getContainer()->set(NotebookLmFactCheckService::class, $factCheckMock);
+        // The interface is an auto-alias to the concrete class; Symfony's autowiring
+// resolves the controller's constructor to the concrete service ID, so we set
+// the mock under that ID. Mock target remains the interface — this preserves
+// the architectural seam (controller depends on interface, service is `final`).
+static::getContainer()->set(\App\Service\NotebookLM\NotebookLmFactCheckService::class, $factCheckMock);
 
         $article = $this->createArticleWithTopic(notebookLmId: 'nb-42');
         $token = $this->getAuthToken($this->adminUser);

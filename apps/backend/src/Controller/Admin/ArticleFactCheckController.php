@@ -6,7 +6,7 @@ namespace App\Controller\Admin;
 
 use App\Repository\AppSettingRepository;
 use App\Repository\ArticleRepository;
-use App\Service\NotebookLM\NotebookLmFactCheckService;
+use App\Service\NotebookLM\NotebookLmFactCheckServiceInterface;
 use App\Service\NotebookLM\NotebookLMService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,7 +25,7 @@ class ArticleFactCheckController extends AbstractController
     private const QUESTION_MAX_LENGTH = 500;
 
     public function __construct(
-        private readonly NotebookLmFactCheckService $factCheckService,
+        private readonly NotebookLmFactCheckServiceInterface $factCheckService,
         private readonly NotebookLMService $notebookLMService,
         private readonly ArticleRepository $articleRepository,
         private readonly RateLimiterFactoryInterface $factcheckLimiter,

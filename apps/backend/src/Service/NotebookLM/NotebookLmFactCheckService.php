@@ -12,7 +12,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
-class NotebookLmFactCheckService
+final class NotebookLmFactCheckService implements NotebookLmFactCheckServiceInterface
 {
     private const DEFAULT_CACHE_TTL = 3600;
     private const MAX_QUESTION_LENGTH = 500;
