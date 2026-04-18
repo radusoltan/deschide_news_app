@@ -274,6 +274,69 @@ class VerificationGateTest extends TestCase
         $this->assertSame(0.9, $verdict->confidence);
     }
 
+    public function testLlmUpgradeRejectedEvenWithHighConfidence(): void
+    {
+        // Rule verdict = REJECT (rank 0). LLM suggests FULL_FLASH (rank 4) at
+        // confidence 0.95 — this is an UPGRADE attempt which is forbidden
+        // under the downgrade-only policy. Rule verdict kept.
+        $graph = $this->makeGraph(
+            chains: 2,
+            alignments: ['kremlin_aligned', 'wire_neutral'],
+            tiers: ['2' => 2], // no tier-1 → REJECT
+        );
+
+        $this->tierResolver->method('isEnabled')->willReturn(true);
+        $this->tierResolver->method('resolve')->willReturn(LlmModelTier::HAIKU);
+
+        $this->executor->method('executeWithRetry')->willReturn([
+            'content' => '{"verdict_sound":false,"confidence":0.95,"reasoning":"actually high confidence","alternative_verdict":"full_flash"}',
+            'agent_id' => 'verification_gate',
+            'tier' => 'haiku',
+            'model' => 'claude-haiku-4-5-20251001',
+            'attempts' => 1,
+            'fallback_detected' => false,
+            'metrics' => null,
+        ]);
+
+        $verdict = $this->gate->rule($graph, [$this->makeSignal(1, 'Știre neclară')]);
+
+        $this->assertSame(
+            VerdictType::REJECT,
+            $verdict->type,
+            'LLM upgrade attempt from REJECT to FULL_FLASH must be rejected even at high confidence.',
+        );
+        $this->assertFalse($verdict->llmOverride);
+    }
+
+    public function testLlmDowngradeAcceptedAtHighConfidence(): void
+    {
+        // Rule verdict = FULL_FLASH (rank 4). LLM suggests YELLOW (rank 2) at
+        // 0.9 — downgrade direction, accepted.
+        $graph = $this->makeGraph(
+            chains: 3,
+            alignments: ['wire_neutral', 'md_independent_pro_eu', 'kremlin_aligned'],
+            tiers: ['1' => 2, '2' => 1],
+        );
+
+        $this->tierResolver->method('isEnabled')->willReturn(true);
+        $this->tierResolver->method('resolve')->willReturn(LlmModelTier::HAIKU);
+
+        $this->executor->method('executeWithRetry')->willReturn([
+            'content' => '{"verdict_sound":false,"confidence":0.9,"reasoning":"overlap actually","alternative_verdict":"flash_with_assertion_yellow"}',
+            'agent_id' => 'verification_gate',
+            'tier' => 'haiku',
+            'model' => 'claude-haiku-4-5-20251001',
+            'attempts' => 1,
+            'fallback_detected' => false,
+            'metrics' => null,
+        ]);
+
+        $verdict = $this->gate->rule($graph, [$this->makeSignal(1, 'X')]);
+
+        $this->assertSame(VerdictType::FLASH_WITH_ASSERTION_YELLOW, $verdict->type);
+        $this->assertTrue($verdict->llmOverride);
+    }
+
     public function testLlmOverrideIgnoredWhenConfidenceBelowFloor(): void
     {
         $graph = $this->makeGraph(

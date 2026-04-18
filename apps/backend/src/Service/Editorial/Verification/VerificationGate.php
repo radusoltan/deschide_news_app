@@ -425,25 +425,38 @@ class VerificationGate
         );
 
         if (!$sound && $alternative !== null && $confidence >= $overrideConfidenceFloor) {
-            $this->logger->info('verification_llm_override', [
-                'topic_hash' => $graph->topicHash,
-                'rule_verdict' => $ruleVerdict->value,
-                'overridden_to' => $alternative->value,
-                'confidence' => $confidence,
-                'reasoning' => mb_substr((string) ($sanity['reasoning'] ?? ''), 0, 200),
-            ]);
+            // Downgrade-only policy (ADR-020 D1, "AI proposes, editor decides"):
+            // the LLM may only tighten the verdict, never relax it. Upgrade
+            // attempts are rejected and the rule-based verdict is kept.
+            if ($alternative->rank() > $ruleVerdict->rank()) {
+                $this->logger->info('verification_llm_upgrade_rejected', [
+                    'topic_hash' => $graph->topicHash,
+                    'rule_verdict' => $ruleVerdict->value,
+                    'attempted_upgrade_to' => $alternative->value,
+                    'confidence' => $confidence,
+                    'reasoning' => mb_substr((string) ($sanity['reasoning'] ?? ''), 0, 200),
+                ]);
+            } else {
+                $this->logger->info('verification_llm_override', [
+                    'topic_hash' => $graph->topicHash,
+                    'rule_verdict' => $ruleVerdict->value,
+                    'overridden_to' => $alternative->value,
+                    'confidence' => $confidence,
+                    'reasoning' => mb_substr((string) ($sanity['reasoning'] ?? ''), 0, 200),
+                ]);
 
-            return new VerificationVerdict(
-                type: $alternative,
-                reasoning: sprintf(
-                    'LLM override (%s, conf=%.2f): %s',
-                    $tier->value,
-                    $confidence,
-                    (string) ($sanity['reasoning'] ?? ''),
-                ),
-                llmOverride: true,
-                confidence: $confidence,
-            );
+                return new VerificationVerdict(
+                    type: $alternative,
+                    reasoning: sprintf(
+                        'LLM override (%s, conf=%.2f): %s',
+                        $tier->value,
+                        $confidence,
+                        (string) ($sanity['reasoning'] ?? ''),
+                    ),
+                    llmOverride: true,
+                    confidence: $confidence,
+                );
+            }
         }
 
         return new VerificationVerdict(

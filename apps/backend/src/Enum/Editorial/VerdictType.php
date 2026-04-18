@@ -30,4 +30,28 @@ enum VerdictType: string
     case FULL_FLASH = 'full_flash';
     case ESCALATE_HUMAN = 'escalate_human';
     case REJECT = 'reject';
+
+    /**
+     * Strictness rank used by {@see \App\Service\Editorial\Verification\VerificationGate}
+     * to constrain LLM override direction: the LLM may only override the
+     * rule-based verdict with an equal-or-stricter alternative. This
+     * enforces "AI proposes, editor decides" — the rule-based verdict
+     * sets a ceiling, and LLM sanity can only tighten it.
+     *
+     *   REJECT (0)         < strictest, publishes nothing
+     *   ESCALATE_HUMAN (1) < human decides
+     *   FLASH_WITH_ASSERTION_YELLOW (2) < publishes with caveat
+     *   FLASH_WITH_ATTRIBUTION (3) < publishes with attribution
+     *   FULL_FLASH (4)     < most permissive
+     */
+    public function rank(): int
+    {
+        return match ($this) {
+            self::REJECT => 0,
+            self::ESCALATE_HUMAN => 1,
+            self::FLASH_WITH_ASSERTION_YELLOW => 2,
+            self::FLASH_WITH_ATTRIBUTION => 3,
+            self::FULL_FLASH => 4,
+        };
+    }
 }
