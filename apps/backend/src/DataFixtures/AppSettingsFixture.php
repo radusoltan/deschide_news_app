@@ -92,6 +92,23 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         // clustering. 45s = tuned for the typical "wire first, others follow"
         // cadence observed in MD/RO news cycles (Sprint 53 manual analysis).
         'editorial.stabilization_window_seconds' => '45',
+
+        // SignalAggregator thresholds (Sprint 54 T54.8, ADR-020 D3).
+        //
+        // - min_es_score: Elasticsearch `more_like_this` min_score used when
+        //   finding similar articles for a given signal. 0.65 is the value
+        //   the existing Sprint 48 cluster-verification service tuned for
+        //   the trilingual index; reuse keeps behaviour aligned.
+        // - min_cluster_overlap: number of shared ES-matched article ids
+        //   between two signals required to place them in the same
+        //   candidate cluster. 2 = at least two common references before
+        //   we hand a pair to the LLM semantic gate.
+        // - llm_gate_confidence_threshold: Haiku must return is_same_claim
+        //   + confidence >= this value for a multi-signal cluster to be
+        //   confirmed. Single-signal clusters bypass the gate.
+        'editorial.aggregator.min_es_score' => '0.65',
+        'editorial.aggregator.min_cluster_overlap' => '2',
+        'editorial.aggregator.llm_gate_confidence_threshold' => '0.7',
     ];
 
     /**
