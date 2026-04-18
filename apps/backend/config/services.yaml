@@ -398,6 +398,16 @@ services:
         arguments:
             $cleaners: !tagged_iterator app.source_content_cleaner
 
+    # Editorial guard pipeline (Sprint 55 T55.6). Iterates all
+    # services tagged `app.editorial_guard` (auto-tagged via
+    # App\Service\Editorial\Guard\GuardInterface attribute).
+    App\Service\Editorial\Guard\GuardPipeline:
+        arguments:
+            $guards: !tagged_iterator app.editorial_guard
+
+    App\Service\Editorial\Guard\GuardPipelineInterface:
+        alias: App\Service\Editorial\Guard\GuardPipeline
+
 # Test environment specific configuration
 when@test:
     services:
