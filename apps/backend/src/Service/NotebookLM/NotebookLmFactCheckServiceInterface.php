@@ -24,6 +24,26 @@ interface NotebookLmFactCheckServiceInterface
     public function factCheck(Article $article, Topic $topic, ?string $question = null): ?FactCheckResult;
 
     /**
+     * Fact-check a single raw claim (not a full Article) against a Topic's
+     * NotebookLM notebook (Sprint 55 T55.10). Called by the verification
+     * pipeline gate where no Article exists yet — the claim text is derived
+     * from the primary {@see \App\Entity\Editorial\SourceSignal}.
+     *
+     * Contract mirrors {@see self::factCheck}:
+     *  - Returns null when `notebooklm.factcheck.enabled=false`, when the
+     *    topic has no notebook, when the CLI subprocess times out, or when
+     *    the answer can't be produced.
+     *  - Results cached per (topicId, question) with the same TTL as
+     *    factCheck, but under a distinct cache-key prefix so claim-level
+     *    checks do not poison article-level checks.
+     *
+     * @param string      $claimText the raw claim statement (~1-3 sentences)
+     * @param Topic       $topic     the topic whose notebook holds the baseline sources
+     * @param string|null $question  override; otherwise a default RO question is synthesised
+     */
+    public function factCheckClaim(string $claimText, Topic $topic, ?string $question = null): ?FactCheckResult;
+
+    /**
      * Reports whether fact-checking is currently usable for this Topic
      * (feature flag on, NotebookLM reachable, topic has notebookLmId).
      */

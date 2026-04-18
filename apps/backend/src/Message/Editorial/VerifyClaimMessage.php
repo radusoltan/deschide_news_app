@@ -21,11 +21,19 @@ final readonly class VerifyClaimMessage
 {
     /**
      * @param array<string, mixed> $graphArray Result of ClaimOriginGraph::toArray()
-     * @param list<int> $signalIds source_signals.id values covered by this claim
+     * @param list<int>            $signalIds  source_signals.id values covered by this claim
+     * @param int|null             $topicId    optional Topic entity id (Sprint 55 T55.10).
+     *                                         When present, the verification gate can invoke
+     *                                         NotebookLM factCheckClaim against the topic's
+     *                                         notebook. Null = gate falls back to log-only
+     *                                         behaviour even with factcheck.enabled=true.
+     *                                         T55.9 wires the aggregator to resolve + pass this
+     *                                         from the cluster's topic assignment.
      */
     public function __construct(
         public string $topicHash,
         public array $graphArray,
         public array $signalIds,
+        public ?int $topicId = null,
     ) {}
 }

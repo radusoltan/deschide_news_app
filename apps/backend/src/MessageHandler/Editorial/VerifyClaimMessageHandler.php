@@ -7,9 +7,11 @@ namespace App\MessageHandler\Editorial;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Entity\Editorial\SourceClaimHistory;
 use App\Entity\Editorial\SourceSignal;
+use App\Entity\Topic;
 use App\Enum\ClaimOutcome;
 use App\Message\Editorial\VerifyClaimMessage;
 use App\Repository\Editorial\SourceSignalRepository;
+use App\Repository\TopicRepository;
 use App\Service\Editorial\Verification\VerificationGate;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -38,6 +40,7 @@ final readonly class VerifyClaimMessageHandler
         private SourceSignalRepository $sourceSignalRepository,
         private VerificationGate $gate,
         private EntityManagerInterface $entityManager,
+        private TopicRepository $topicRepository,
         private LoggerInterface $logger,
     ) {}
 
@@ -63,7 +66,15 @@ final readonly class VerifyClaimMessageHandler
             }
 
             $graph = ClaimOriginGraph::fromArray($message->graphArray);
-            $verdict = $this->gate->rule($graph, $signals);
+
+            // Resolve Topic once (Sprint 55 T55.10) so the gate's NotebookLM
+            // fact-check call has the notebook target. Null topic keeps the
+            // gate behavior pre-T55.10 (no factcheck invocation).
+            $topic = $message->topicId !== null
+                ? $this->resolveTopic($message->topicId)
+                : null;
+
+            $verdict = $this->gate->rule($graph, $signals, $topic);
 
             $snapshot = [
                 'graph' => $graph->toArray(),
@@ -140,5 +151,19 @@ final readonly class VerifyClaimMessageHandler
         $title = trim($signal->getTitle());
 
         return $title !== '' ? $title : sprintf('(empty signal id=%d)', $signal->getId() ?? 0);
+    }
+
+    private function resolveTopic(int $topicId): ?Topic
+    {
+        try {
+            return $this->topicRepository->find($topicId);
+        } catch (\Throwable $e) {
+            $this->logger->warning('VerifyClaimMessageHandler: topic resolution failed', [
+                'topic_id' => $topicId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 }
