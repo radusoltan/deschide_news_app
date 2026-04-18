@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Service\Ai;
 
+use App\Service\Ai\Exception\ClaudeCliPermanentException;
+use App\Service\Ai\Exception\ClaudeCliTransientException;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 
 /**
@@ -46,31 +49,41 @@ final class ClaudeCliClient implements AnthropicClientInterface
             $wallDuration = (int) round((microtime(true) - $startTime) * 1000);
 
             if (!$process->isSuccessful()) {
+                $exitCode = $process->getExitCode() ?? -1;
+                $stderr = mb_substr($process->getErrorOutput(), 0, 500);
+
                 $this->logger->warning('Claude CLI failed', [
-                    'exitCode' => $process->getExitCode(),
-                    'error' => mb_substr($process->getErrorOutput(), 0, 500),
+                    'exitCode' => $exitCode,
+                    'error' => $stderr,
                     'model' => $model,
                     'duration_ms' => $wallDuration,
                 ]);
 
-                throw new \RuntimeException(sprintf(
+                $message = sprintf(
                     'Claude CLI exited with code %d: %s',
-                    $process->getExitCode(),
-                    mb_substr($process->getErrorOutput(), 0, 200),
-                ));
+                    $exitCode,
+                    mb_substr($stderr, 0, 200),
+                );
+
+                throw $this->isTransientStderr($stderr)
+                    ? new ClaudeCliTransientException($message)
+                    : new ClaudeCliPermanentException($message);
             }
 
             $rawOutput = trim($process->getOutput());
             $json = json_decode($rawOutput, true);
 
             if (!\is_array($json) || !isset($json['result'])) {
-                // Fallback: output wasn't JSON (shouldn't happen with --output-format json)
                 $this->lastMetrics = null;
                 $this->logger->warning('Claude CLI: unexpected non-JSON output', [
                     'output_preview' => mb_substr($rawOutput, 0, 200),
                 ]);
 
-                return $rawOutput;
+                throw new ClaudeCliPermanentException(sprintf(
+                    'Claude CLI returned malformed JSON output (model=%s, preview=%s)',
+                    $model,
+                    mb_substr($rawOutput, 0, 120),
+                ));
             }
 
             // Extract metrics
@@ -98,18 +111,47 @@ final class ClaudeCliClient implements AnthropicClientInterface
             ]);
 
             return $json['result'];
-        } catch (\Throwable $e) {
-            if ($e instanceof \RuntimeException) {
-                throw $e;
-            }
+        } catch (ProcessTimedOutException $e) {
+            $this->logger->warning('Claude CLI timed out', [
+                'error' => $e->getMessage(),
+                'model' => $model,
+                'timeout' => $this->timeout,
+            ]);
 
+            throw new ClaudeCliTransientException(
+                sprintf('Claude CLI timed out after %ds (model=%s)', $this->timeout, $model),
+                previous: $e,
+            );
+        } catch (ClaudeCliTransientException | ClaudeCliPermanentException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
             $this->logger->error('Claude CLI exception', [
                 'error' => $e->getMessage(),
                 'model' => $model,
             ]);
 
-            throw new \RuntimeException('Claude CLI failed: ' . $e->getMessage(), previous: $e);
+            throw new ClaudeCliPermanentException(
+                'Claude CLI failed: ' . $e->getMessage(),
+                previous: $e,
+            );
         }
+    }
+
+    /**
+     * Classify a stderr line as transient (retryable). Checks for rate-limit
+     * signals and overload codes that indicate the next attempt is likely to
+     * succeed after backoff. Anything else is treated as permanent.
+     */
+    private function isTransientStderr(string $stderr): bool
+    {
+        $lower = mb_strtolower($stderr);
+        foreach (['rate_limit', 'rate limit', '529', 'overload', 'overloaded'] as $needle) {
+            if (str_contains($lower, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function chatStream(array $messages, string $model, ?string $system = null): \Generator

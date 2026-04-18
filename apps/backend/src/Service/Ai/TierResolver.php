@@ -16,7 +16,7 @@ use App\Repository\AppSettingRepository;
  * Also exposes the per-agent fallback tier and the enabled flag so services
  * can gate LLM calls without each one re-reading AppSettings directly.
  */
-final class TierResolver
+class TierResolver
 {
     public function __construct(
         private readonly AppSettingRepository $settings,
