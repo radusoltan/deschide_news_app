@@ -4,36 +4,118 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Escalation;
 
+use App\Enum\Editorial\EscalationCategory;
+use App\Service\Editorial\Escalation\EscalationClassifier;
 use PHPUnit\Framework\Attributes\Group;
-use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 /**
  * Empirical-validation test for EscalationClassifier (Sprint 55 T55.8, ADR-020 D7).
  *
- * Currently SKIPPED — EscalationClassifier service lands in T55.8. The 50-claim
- * dataset is already in place at
- * `tests/fixtures/editorial/escalation-classifier-dataset.php` (Sprint 55 T55.15,
- * reviewed by Radu in T55.18).
+ * Runs the real classifier (LLM-backed) against the 50-claim dataset shipped
+ * in T55.15 and enforces the audit-locked acceptance bar: false-negative rate
+ * must be strictly less than {@see self::FALSE_NEGATIVE_RATE_CEILING}. False
+ * POSITIVES are logged for Radu's follow-up but do NOT fail the run (audit
+ * D18 weaker acceptance bar on positives).
  *
- * When T55.8 un-skips this test, the implementation must:
- *  1. Load the dataset.
- *  2. For each entry, call $classifier->classify($claimText, $primaryTitle, $topic).
- *  3. Map the classifier result to `is_escalation = result !== null` and
- *     `category = result?->name`.
- *  4. Compare against `expected_is_escalation` and `expected_category`.
- *  5. Assert the false-negative rate < 5% (≤ 2 of 50) — claims that are true
- *     positives but the classifier returned null.
- *  6. Log false positives for Radu's awareness but do NOT fail the run on them
- *     (weaker acceptance bar per audit D18).
+ * NOT run by default — makes real LLM calls and is slow + costly. Invoke
+ * with:
+ *
+ *     RUN_EMPIRICAL_ESCALATION=1 vendor/bin/phpunit \
+ *         --filter=test50ClaimAcceptanceBar
+ *
+ * Or via the group:
+ *
+ *     RUN_EMPIRICAL_ESCALATION=1 vendor/bin/phpunit \
+ *         --group=empirical-escalation
+ *
+ * The dataset sanity tests (shape + distribution) run on every CI run.
  */
 #[Group('empirical-escalation')]
-final class EscalationClassifierEmpiricalTest extends TestCase
+final class EscalationClassifierEmpiricalTest extends KernelTestCase
 {
+    /** Audit D18 / T55.15 locked bar — NEVER slacken to accommodate model drift. */
+    private const FALSE_NEGATIVE_RATE_CEILING = 0.05;
+
     public function test50ClaimAcceptanceBar(): void
     {
-        self::markTestSkipped(
-            'Pending EscalationClassifier service from T55.8 — '
-                . 'dataset already available at tests/fixtures/editorial/escalation-classifier-dataset.php.'
+        if (getenv('RUN_EMPIRICAL_ESCALATION') !== '1') {
+            self::markTestSkipped(
+                'Empirical classifier benchmark — set RUN_EMPIRICAL_ESCALATION=1 to invoke. '
+                    . 'Makes real LLM calls on 50 claims (slow + costly).',
+            );
+        }
+
+        self::bootKernel();
+        $classifier = static::getContainer()->get(EscalationClassifier::class);
+        self::assertInstanceOf(EscalationClassifier::class, $classifier);
+
+        $dataset = require __DIR__ . '/../../../../fixtures/editorial/escalation-classifier-dataset.php';
+        self::assertCount(50, $dataset);
+
+        $falseNegatives = [];
+        $falsePositives = [];
+        $categoryMisses = [];
+
+        foreach ($dataset as $entry) {
+            $result = $classifier->classify(
+                claimText: $entry['title'] . "\n\n" . $entry['summary'],
+                primarySourceTitle: $entry['title'],
+                topic: null,
+            );
+
+            $classifierEscalated = $result !== null;
+            $expectedEscalation = (bool) $entry['expected_is_escalation'];
+            $expectedCategory = (string) $entry['expected_category'];
+
+            if ($expectedEscalation && !$classifierEscalated) {
+                $falseNegatives[] = $entry['id'];
+
+                continue;
+            }
+            if (!$expectedEscalation && $classifierEscalated) {
+                $falsePositives[] = $entry['id'];
+
+                continue;
+            }
+            // At this point: either both expected=true AND classifier=true (compare category),
+            // or both expected=false AND classifier=false (nothing to check).
+            if ($result === null) {
+                continue;
+            }
+            if ($expectedEscalation && $result->name !== $expectedCategory) {
+                $categoryMisses[] = sprintf('%s: expected=%s got=%s', $entry['id'], $expectedCategory, $result->name);
+            }
+        }
+
+        $fnRate = count($falseNegatives) / 50;
+
+        // Log the full diagnostic to stdout so --verbose captures it on CI.
+        fwrite(
+            STDOUT,
+            sprintf(
+                "\n[empirical-escalation] FN=%d (%.1f%%) FP=%d cat-miss=%d\n  FN ids: %s\n  FP ids: %s\n  cat-miss: %s\n",
+                count($falseNegatives),
+                $fnRate * 100,
+                count($falsePositives),
+                count($categoryMisses),
+                implode(',', $falseNegatives) ?: '(none)',
+                implode(',', $falsePositives) ?: '(none)',
+                implode(' | ', $categoryMisses) ?: '(none)',
+            ),
+        );
+
+        self::assertLessThan(
+            self::FALSE_NEGATIVE_RATE_CEILING,
+            $fnRate,
+            sprintf(
+                'False-negative rate %.1f%% exceeds locked ceiling %.1f%% (%d/50 missed escalations: %s). '
+                    . 'Do NOT slacken the ceiling — fix the prompt or the dataset coverage.',
+                $fnRate * 100,
+                self::FALSE_NEGATIVE_RATE_CEILING * 100,
+                count($falseNegatives),
+                implode(',', $falseNegatives) ?: '(none)',
+            ),
         );
     }
 

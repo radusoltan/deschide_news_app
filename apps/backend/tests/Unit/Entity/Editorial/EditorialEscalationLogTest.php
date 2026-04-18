@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Entity\Editorial;
 
 use App\Entity\Editorial\EditorialEscalationLog;
 use App\Entity\User;
+use App\Enum\Editorial\EscalationCategory;
 use App\Enum\EscalationDecision;
 use PHPUnit\Framework\TestCase;
 
@@ -35,15 +36,17 @@ class EditorialEscalationLogTest extends TestCase
         $before = new \DateTimeImmutable();
         $log = new EditorialEscalationLog(
             articleSnapshot: $articleSnapshot,
-            categoryCode: 'categ_3',
+            category: EscalationCategory::CATEGORY_3_NBC_ATTACK,
             originGraphSnapshot: $originGraph,
         );
         $after = new \DateTimeImmutable();
 
         self::assertNull($log->getId());
         self::assertSame($articleSnapshot, $log->getArticleSnapshot());
-        self::assertSame('categ_3', $log->getCategoryCode());
+        self::assertSame(EscalationCategory::CATEGORY_3_NBC_ATTACK, $log->getCategory());
+        self::assertSame('categ_3', $log->getCategoryCode(), 'Legacy string shim keeps S53 API contract');
         self::assertSame($originGraph, $log->getOriginGraphSnapshot());
+        self::assertNull($log->getExpiresAt(), 'expiresAt starts null — set by EscalationLogWriter on insert');
         self::assertNull($log->getDecision(), 'Decision starts null — filled in on human adjudication');
         self::assertNull($log->getDecidedBy());
         self::assertNull($log->getDecidedAt());
@@ -51,22 +54,41 @@ class EditorialEscalationLogTest extends TestCase
         self::assertLessThanOrEqual($after, $log->getCreatedAt());
     }
 
-    public function testFamilyTaxonomyCategoryCodeAcceptedVerbatim(): void
+    public function testFamilyTaxonomyMappedToEnum(): void
     {
         $log = new EditorialEscalationLog(
             articleSnapshot: ['id' => 1],
-            categoryCode: 'family_b',
+            category: EscalationCategory::FAMILY_B_EU_NATO_RUSSIA,
             originGraphSnapshot: [],
         );
 
+        self::assertSame(EscalationCategory::FAMILY_B_EU_NATO_RUSSIA, $log->getCategory());
         self::assertSame('family_b', $log->getCategoryCode());
+    }
+
+    public function testExpiresAtSetterGetterRoundTrip(): void
+    {
+        $log = new EditorialEscalationLog(
+            articleSnapshot: ['id' => 1],
+            category: EscalationCategory::CATEGORY_7_PRE_CEC_ELECTORAL,
+            originGraphSnapshot: [],
+        );
+
+        self::assertNull($log->getExpiresAt());
+
+        $expires = new \DateTimeImmutable('+10 minutes');
+        $log->setExpiresAt($expires);
+        self::assertEquals($expires, $log->getExpiresAt());
+
+        $log->setExpiresAt(null);
+        self::assertNull($log->getExpiresAt());
     }
 
     public function testDecisionWorkflowMutators(): void
     {
         $log = new EditorialEscalationLog(
             articleSnapshot: ['id' => 7],
-            categoryCode: 'categ_1',
+            category: EscalationCategory::CATEGORY_1_NUCLEAR_WAR,
             originGraphSnapshot: ['pr' => [1]],
         );
 
@@ -86,7 +108,7 @@ class EditorialEscalationLogTest extends TestCase
     {
         $log = new EditorialEscalationLog(
             articleSnapshot: ['id' => 7],
-            categoryCode: 'categ_1',
+            category: EscalationCategory::CATEGORY_1_NUCLEAR_WAR,
             originGraphSnapshot: [],
         );
 
