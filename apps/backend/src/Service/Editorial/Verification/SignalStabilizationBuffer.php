@@ -30,7 +30,7 @@ use Psr\Log\LoggerInterface;
  * deliberately NOT in a Symfony cache pool because it isn't cache — it
  * is ephemeral state with deterministic TTL + ordered consumption.
  */
-final class SignalStabilizationBuffer
+class SignalStabilizationBuffer
 {
     /** Redis key prefix so stabilization sets don't collide with other app state. */
     public const KEY_PREFIX = 'editorial:stabilization:';

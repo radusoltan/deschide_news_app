@@ -31,7 +31,7 @@ use Symfony\Component\Process\Exception\ProcessTimedOutException;
  * the CLI JSON envelope's token/cost metrics are copied into the `llm_agent_call`
  * log line and the return array.
  */
-final class LlmRetryExecutor
+class LlmRetryExecutor
 {
     /** Total attempts including the initial call. */
     private const MAX_ATTEMPTS = 4;

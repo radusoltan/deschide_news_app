@@ -206,6 +206,12 @@ framework:
             # Editorial-pipeline signal ingestion (Sprint 53, ADR-020 D4)
             'App\Message\Editorial\SignalIngestedMessage': editorial_signal_ingest
 
+            # Verification layer (Sprint 54, ADR-020 D2) — temporarily routed
+            # to editorial_signal_ingest until T54.12 introduces the dedicated
+            # editorial_verification transport. AggregateSignalsMessage still
+            # has no handler at this point (T54.8 lands it).
+            'App\Message\Editorial\ExtractSourceAttributionMessage': editorial_signal_ingest
+
             # NotebookLM sync (Sprint 51a)
             'App\Message\NotebookLM\TriggerTopicNotebookSyncMessage': editorial
 
