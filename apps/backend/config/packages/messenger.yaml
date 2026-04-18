@@ -259,10 +259,13 @@ framework:
             'App\Message\Editorial\VerifyClaimMessage': editorial_verification_decide
 
             # Editorial-pipeline writers (Sprint 55 T55.3, T55.4, ADR-020 L3 layer).
-            # T55.4 adds WriteDevelopingStoryMessage on the same transport — the two
-            # messages share a pool because developing-story merges are cheaper than
-            # fresh flash emission and the writer workload is low-volume end-to-end.
+            # Both writer messages share the editorial_flash pool — developing-story
+            # merges are cheaper than fresh flash emission and the writer workload
+            # is low-volume end-to-end. FIFO ordering is acceptable because the two
+            # handlers never target the same Article (findDevelopingStoryForTopic
+            # discriminates at dispatch time in T55.9).
             'App\Message\Editorial\WriteFlashMessage': editorial_flash
+            'App\Message\Editorial\WriteDevelopingStoryMessage': editorial_flash
 
             # NotebookLM sync (Sprint 51a)
             'App\Message\NotebookLM\TriggerTopicNotebookSyncMessage': editorial
