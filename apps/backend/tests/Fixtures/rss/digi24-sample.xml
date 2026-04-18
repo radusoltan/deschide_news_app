@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Digi24.ro — Flux principal</title>
+    <link>https://www.digi24.ro</link>
+    <description>Digi24 — fixture realistic pentru T53.7 MediaRoSourceMonitor.</description>
+    <language>ro</language>
+    <item>
+      <title>Coaliția guvernamentală discută bugetul pentru 2027</title>
+      <link>https://www.digi24.ro/stiri/politica/bugetul-2027-coalitia</link>
+      <description>Discuțiile se concentrează pe alocări pentru sănătate și educație.</description>
+      <pubDate>Fri, 18 Apr 2026 09:15:00 +0300</pubDate>
+    </item>
+    <item>
+      <title>Republica Moldova: primele impresii după o vizită oficială la Chișinău</title>
+      <link>https://www.digi24.ro/stiri/externe/ue/moldova-vizita-chisinau</link>
+      <description>Delegația a discutat despre progresele negocierilor de aderare.</description>
+      <pubDate>Fri, 18 Apr 2026 08:45:00 +0300</pubDate>
+    </item>
+  </channel>
+</rss>
