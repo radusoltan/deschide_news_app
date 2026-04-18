@@ -19,11 +19,11 @@ class ArticleDraftTest extends TestCase
             contentRo: 'Conținutul articolului complet.',
             metaDescription: 'Meta description SEO',
             suggestedTags: ['tag1', 'tag2'],
-            clusterId: 42,
             confidenceScore: 0.85,
             sourcePressReleaseIds: [1, 2, 3],
             rawPrompt: 'The prompt sent to Gemini',
             rawResponse: '{"title": "..."}',
+            topicId: 42,
         );
 
         $this->assertSame('Titlul articolului', $draft->titleRo);
@@ -31,7 +31,7 @@ class ArticleDraftTest extends TestCase
         $this->assertSame('Conținutul articolului complet.', $draft->contentRo);
         $this->assertSame('Meta description SEO', $draft->metaDescription);
         $this->assertSame(['tag1', 'tag2'], $draft->suggestedTags);
-        $this->assertSame(42, $draft->clusterId);
+        $this->assertSame(42, $draft->topicId);
         $this->assertSame(0.85, $draft->confidenceScore);
         $this->assertSame([1, 2, 3], $draft->sourcePressReleaseIds);
         $this->assertSame('The prompt sent to Gemini', $draft->rawPrompt);
@@ -47,11 +47,11 @@ class ArticleDraftTest extends TestCase
             contentRo: 'Content',
             metaDescription: 'Meta',
             suggestedTags: [],
-            clusterId: 1,
             confidenceScore: 0.5,
             sourcePressReleaseIds: [],
             rawPrompt: '',
             rawResponse: '',
+            topicId: 1,
         );
 
         $this->assertSame([], $draft->suggestedTags);

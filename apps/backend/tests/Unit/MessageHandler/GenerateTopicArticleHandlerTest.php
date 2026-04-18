@@ -259,7 +259,6 @@ class GenerateTopicArticleHandlerTest extends TestCase
             contentRo: str_repeat('Content paragraph. ', 30),
             metaDescription: 'Meta',
             suggestedTags: [],
-            clusterId: null,
             confidenceScore: 0.85,
             sourcePressReleaseIds: [100, 101, 102],
             rawPrompt: 'p',
