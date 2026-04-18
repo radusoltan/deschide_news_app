@@ -12,10 +12,15 @@ use Doctrine\Persistence\ObjectManager;
 /**
  * Seeds runtime AppSettings keys with sensible defaults.
  *
- * Populates the `article_generation.*` family consumed by the topic-window
- * article generator (ADR-019 D1 + D7). The T52.10 `use_topic_window` feature
- * flag was retired in T52.12 when the legacy StoryCluster path was removed
- * wholesale, so it is no longer seeded here.
+ * Populates:
+ *  - `article_generation.*` family consumed by the topic-window article
+ *    generator (ADR-019 D1 + D7). The T52.10 `use_topic_window` feature flag
+ *    was retired in T52.12 when the legacy StoryCluster path was removed
+ *    wholesale, so it is no longer seeded here.
+ *  - `editorial.*` family for the editorial-pipeline signal-monitor layer
+ *    (ADR-020 D4, Sprint 53 T53.4b). `editorial.pipeline.enabled` stays
+ *    `false` at sprint-end — Sprint 54 flips it when the verification
+ *    layer lands.
  */
 class AppSettingsFixture extends Fixture implements FixtureGroupInterface
 {
@@ -46,6 +51,34 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         'article_generation.min_avg_content_length' => '1500',
     ];
 
+    /**
+     * Editorial-pipeline AppSettings (Sprint 53 T53.4b, ADR-020 D4).
+     *
+     * Values are strings because `app_settings.value` is a single TEXT column
+     * — consuming services cast at read time (see {@see \App\Service\AppSettingService}).
+     *
+     * @var array<string, string>
+     */
+    private const EDITORIAL_DEFAULTS = [
+        // Master kill-switch for the editorial-pipeline signal collection
+        // and verification layer. Stays `false` through Sprint 53 — Sprint 54
+        // activates it after the L2 verification services land.
+        'editorial.pipeline.enabled' => 'false',
+
+        // WireSourceMonitor (T53.6) — covers wire_neutral, ukrainian_state,
+        // independent_ru, kremlin_aligned alignments.
+        'editorial.monitor.wire.enabled' => 'true',
+        // 180s = 3min refresh for wire sources (fast breaking-news cycle).
+        'editorial.monitor.wire.fetch_interval_seconds' => '180',
+
+        // MediaRoSourceMonitor (T53.7) — covers md_investigative,
+        // md_independent_pro_eu, md_government, ro_mainstream alignments.
+        'editorial.monitor.media_ro.enabled' => 'true',
+        // 300s = 5min refresh — slower than wire because MD/RO editorial
+        // outlets publish on a less frenetic cadence.
+        'editorial.monitor.media_ro.fetch_interval_seconds' => '300',
+    ];
+
     public static function getGroups(): array
     {
         return ['app-settings'];
@@ -54,13 +87,22 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
     public function load(ObjectManager $manager): void
     {
         foreach (self::ARTICLE_GENERATION_DEFAULTS as $key => $value) {
-            $existing = $manager->getRepository(AppSetting::class)->find($key);
-            if ($existing !== null) {
-                continue;
-            }
-            $manager->persist(new AppSetting($key, $value));
+            $this->upsertIfMissing($manager, $key, $value);
+        }
+
+        foreach (self::EDITORIAL_DEFAULTS as $key => $value) {
+            $this->upsertIfMissing($manager, $key, $value);
         }
 
         $manager->flush();
+    }
+
+    private function upsertIfMissing(ObjectManager $manager, string $key, string $value): void
+    {
+        $existing = $manager->getRepository(AppSetting::class)->find($key);
+        if ($existing !== null) {
+            return;
+        }
+        $manager->persist(new AppSetting($key, $value));
     }
 }
