@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Ziarul de Gardă</title>
+    <link>https://www.zdg.md</link>
+    <description>Ziarul de Gardă — fixture realistic pentru T53.7 MediaRoSourceMonitor.</description>
+    <language>ro</language>
+    <item>
+      <title>Investigație: achiziții publice netransparente la Ministerul Infrastructurii</title>
+      <link>https://www.zdg.md/investigatii/ministerul-infrastructurii-achizitii-2026/</link>
+      <description>Documente obținute de ZDG arată cum contractele au fost atribuite firmelor conexe.</description>
+      <pubDate>Fri, 18 Apr 2026 08:00:00 +0300</pubDate>
+      <dc:creator>Echipa ZDG</dc:creator>
+    </item>
+    <item>
+      <title>Negocieri cu UE: ce urmează pentru Moldova în 2026</title>
+      <link>https://www.zdg.md/stiri/politic/negocieri-ue-2026/</link>
+      <description>Cronologia negocierilor și pașii următori în procesul de aderare.</description>
+      <pubDate>Fri, 18 Apr 2026 07:30:00 +0300</pubDate>
+      <dc:creator>Echipa ZDG</dc:creator>
+    </item>
+  </channel>
+</rss>

@@ -559,6 +559,41 @@ class SeedDiasporaSourcesCommand extends Command
                 'domainPattern' => 'cyprus-mail.com',
             ],
 
+            // === MOLDOVA (domestic editorial — Sprint 53 T53.4a) ===
+            // Per ADR-020 D4: these three are the MD-investigative /
+            // MD-independent_pro_eu anchors for the editorial-pipeline
+            // verification layer. Added here alongside diaspora + RO outlets
+            // because semantically they are "non-international-wire domestic
+            // outlets we actively monitor" — same class as Meduza/NG/Interfax
+            // above.
+            [
+                'name' => 'ZDG.md',
+                'rssUrl' => 'https://www.zdg.md/feed/',
+                'credibilityWeight' => 0.90,
+                'country' => 'MD',
+                'sourceCategory' => SourceCategory::REGIONAL,
+                'fetchFrequencyMinutes' => 60,
+                'domainPattern' => 'zdg.md',
+            ],
+            [
+                'name' => 'NewsMaker.md',
+                'rssUrl' => 'https://newsmaker.md/ro/feed/',
+                'credibilityWeight' => 0.85,
+                'country' => 'MD',
+                'sourceCategory' => SourceCategory::REGIONAL,
+                'fetchFrequencyMinutes' => 30,
+                'domainPattern' => 'newsmaker.md',
+            ],
+            [
+                'name' => 'TV8.md',
+                'rssUrl' => 'https://tv8.md/rss',
+                'credibilityWeight' => 0.85,
+                'country' => 'MD',
+                'sourceCategory' => SourceCategory::REGIONAL,
+                'fetchFrequencyMinutes' => 30,
+                'domainPattern' => 'tv8.md',
+            ],
+
             // === ROMÂNIA (Wave 2) ===
             [
                 'name' => 'Digi24',
