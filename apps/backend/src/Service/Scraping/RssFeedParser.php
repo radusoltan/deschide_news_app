@@ -44,9 +44,13 @@ final readonly class RssFeedParser
     }
 
     /**
+     * Parse a pre-fetched RSS/Atom XML string. Exposed so callers that need to
+     * preprocess the raw bytes (e.g. decode Windows-1251 before handing to
+     * SimpleXML) can reuse the existing parsing pipeline without duplicating it.
+     *
      * @return list<FeedItem>
      */
-    private function parseXml(string $xml, string $sourceName, string $language, int $limit): array
+    public function parseXml(string $xml, string $sourceName, string $language, int $limit): array
     {
         $previous = libxml_use_internal_errors(true);
 
