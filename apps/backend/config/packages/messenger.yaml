@@ -141,6 +141,21 @@ framework:
                     multiplier: 2
                     max_delay: 45000
 
+            # Editorial-pipeline verification layer transport (Sprint 54 T54.12,
+            # ADR-020 D2). Dedicated queue for the four L2 verification
+            # messages so the per-signal LLM work does not compete with
+            # signal ingestion. Consumed by messenger-editorial-verification
+            # Supervisor worker (numprocs=2 for parallelism).
+            editorial_verification:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: editorial_verification
+                retry_strategy:
+                    max_retries: 3
+                    delay: 3000
+                    multiplier: 2
+                    max_delay: 45000
+
         routing:
             # Route your messages to the transports
             # Cache messages (Sprint 2)
@@ -206,12 +221,14 @@ framework:
             # Editorial-pipeline signal ingestion (Sprint 53, ADR-020 D4)
             'App\Message\Editorial\SignalIngestedMessage': editorial_signal_ingest
 
-            # Verification layer (Sprint 54, ADR-020 D2) — temporarily routed
-            # to editorial_signal_ingest until T54.12 introduces the dedicated
-            # editorial_verification transport.
-            'App\Message\Editorial\ExtractSourceAttributionMessage': editorial_signal_ingest
-            'App\Message\Editorial\AggregateSignalsMessage': editorial_signal_ingest
-            'App\Message\Editorial\VerifyClaimMessage': editorial_signal_ingest
+            # Verification layer (Sprint 54, ADR-020 D2) — dedicated
+            # editorial_verification transport landed in T54.12. Includes
+            # the stabilization flush tick so LLM-heavy work runs on the
+            # verification worker, not the signal-ingest worker.
+            'App\Message\Editorial\ExtractSourceAttributionMessage': editorial_verification
+            'App\Message\Editorial\AggregateSignalsMessage': editorial_verification
+            'App\Message\Editorial\VerifyClaimMessage': editorial_verification
+            'App\Message\Editorial\FlushStabilizedSignalsMessage': editorial_verification
 
             # NotebookLM sync (Sprint 51a)
             'App\Message\NotebookLM\TriggerTopicNotebookSyncMessage': editorial
