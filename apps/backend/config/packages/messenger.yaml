@@ -126,6 +126,21 @@ framework:
                     multiplier: 2
                     max_delay: 45000
 
+            # Editorial-pipeline signal ingestion transport (Sprint 53, ADR-020 D4).
+            # Dedicated queue for SignalIngestedMessage produced by SourceMonitor
+            # runs so wire/MD/RO signal volume cannot starve the editorial
+            # curation queue. Sprint 53 handler is a log-only stub; Sprint 54
+            # replaces it with the SignalAggregator entry point.
+            editorial_signal_ingest:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: editorial_signal_ingest
+                retry_strategy:
+                    max_retries: 3
+                    delay: 3000
+                    multiplier: 2
+                    max_delay: 45000
+
         routing:
             # Route your messages to the transports
             # Cache messages (Sprint 2)
@@ -187,6 +202,9 @@ framework:
             # dedicated `article_generation` transport in messenger.yaml
             # if post-merge observation surfaces queue saturation.
             'App\Message\GenerateTopicArticleMessage': briefing
+
+            # Editorial-pipeline signal ingestion (Sprint 53, ADR-020 D4)
+            'App\Message\Editorial\SignalIngestedMessage': editorial_signal_ingest
 
             # NotebookLM sync (Sprint 51a)
             'App\Message\NotebookLM\TriggerTopicNotebookSyncMessage': editorial
