@@ -41,3 +41,19 @@ framework:
             policy: 'fixed_window'
             limit: 20
             interval: '1 minute'
+
+        # Admin escalation endpoints — 100 req/h per user total (list/approve/reject/stats).
+        # Sprint 55 T55.12. Per-editor limiter so one editor's spam cannot block
+        # others — the factory resolves by user identifier at request time.
+        escalation:
+            policy: 'token_bucket'
+            limit: 100
+            rate: { interval: '1 hour', amount: 100 }
+
+        # Admin escalation extend-sla — tighter per-editor limit (5/h).
+        # Audit D8: editors should not repeatedly extend to bypass SLA;
+        # hard ceiling at 5 extensions per hour per editor.
+        escalation_extend:
+            policy: 'token_bucket'
+            limit: 5
+            rate: { interval: '1 hour', amount: 5 }

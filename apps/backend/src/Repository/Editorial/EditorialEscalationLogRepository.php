@@ -6,6 +6,7 @@ namespace App\Repository\Editorial;
 
 use App\Entity\Editorial\EditorialEscalationLog;
 use App\Enum\Editorial\EscalationCategory;
+use App\Enum\EscalationDecision;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -20,6 +21,42 @@ class EditorialEscalationLogRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, EditorialEscalationLog::class);
+    }
+
+    /**
+     * Filter by decision status keyword (Sprint 55 T55.12 admin controller).
+     *
+     *   'pending'  → decision IS NULL (same as findPending but kept as an explicit status)
+     *   'approved' → decision = APPROVED
+     *   'rejected' → decision = REJECTED
+     *   'expired'  → decision = EXPIRED
+     *   anything else → empty list (caller responsibility to validate input first)
+     *
+     * @return list<EditorialEscalationLog>
+     */
+    public function findByStatus(string $status, int $limit, int $offset = 0): array
+    {
+        $qb = $this->createQueryBuilder('e');
+
+        if ($status === 'pending') {
+            $qb->andWhere('e.decision IS NULL')->orderBy('e.expiresAt', 'ASC');
+        } else {
+            $decision = EscalationDecision::tryFrom($status);
+            if ($decision === null) {
+                return [];
+            }
+            $qb->andWhere('e.decision = :decision')
+                ->setParameter('decision', $decision->value)
+                ->orderBy('e.decidedAt', 'DESC');
+        }
+
+        /** @var list<EditorialEscalationLog> $rows */
+        $rows = $qb->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery()
+            ->getResult();
+
+        return $rows;
     }
 
     /**
@@ -102,7 +139,7 @@ class EditorialEscalationLogRepository extends ServiceEntityRepository
      */
     public function countPendingByCategory(): array
     {
-        /** @var list<array{category: string, cnt: int|string}> $rows */
+        /** @var list<array{category: EscalationCategory, cnt: int|string}> $rows */
         $rows = $this->createQueryBuilder('e')
             ->select('e.category AS category', 'COUNT(e.id) AS cnt')
             ->andWhere('e.decision IS NULL')
@@ -110,9 +147,13 @@ class EditorialEscalationLogRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
 
+        // Doctrine auto-casts the category column to the backing EscalationCategory
+        // enum because the property is annotated with enumType. Use ->value to get
+        // the short DB code (categ_1, family_a) as the array key — consistent with
+        // what the admin controller expects when remapping to verbose enum names.
         $out = [];
         foreach ($rows as $row) {
-            $out[$row['category']] = (int) $row['cnt'];
+            $out[$row['category']->value] = (int) $row['cnt'];
         }
 
         return $out;
