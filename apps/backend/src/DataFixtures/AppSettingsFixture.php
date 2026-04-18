@@ -55,7 +55,8 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
      * Editorial-pipeline AppSettings (Sprint 53 T53.4b, ADR-020 D4).
      *
      * Values are strings because `app_settings.value` is a single TEXT column
-     * — consuming services cast at read time (see {@see \App\Service\AppSettingService}).
+     * — consuming services cast at read time (see {@see \App\Repository\AppSettingRepository::getBool()}
+     * and related typed accessors).
      *
      * @var array<string, string>
      */
@@ -79,6 +80,55 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         'editorial.monitor.media_ro.fetch_interval_seconds' => '300',
     ];
 
+    /**
+     * Per-agent LLM tier AppSettings (Sprint 54 T54.1, ADR-020 D5).
+     *
+     * Each editorial agent declares three keys:
+     *   - `agent.{id}.model_tier` (or variants like `model_tier_simple` /
+     *     `model_tier_conflict` for verification_gate): primary {@see \App\Enum\LlmModelTier} value
+     *   - `agent.{id}.fallback`: secondary tier used by LlmRetryExecutor when
+     *     primary exhausts; empty string means "no fallback" (Tier B/C in ADR-020 D5)
+     *   - `agent.{id}.enabled`: gate — false skips the LLM call entirely
+     *
+     * Resolved through {@see \App\Service\Ai\TierResolver}. The pipeline
+     * master switch (`editorial.pipeline.enabled`) overrides these; an
+     * individual agent can still be toggled off without killing the whole
+     * pipeline.
+     *
+     * @var array<string, string>
+     */
+    private const AGENT_TIER_DEFAULTS = [
+        // SourceAttributionExtractor (T54.7) — extracts `source_attribution`
+        // and `source_links_out` from each signal. Cheap per-signal call,
+        // Haiku is sufficient; Gemini fallback keeps extraction flowing if
+        // Anthropic is unavailable.
+        'agent.source_attribution.model_tier' => 'haiku',
+        'agent.source_attribution.fallback' => 'gemini_flash',
+        'agent.source_attribution.enabled' => 'true',
+
+        // SignalAggregator (T54.8) — clusters signals + runs LLM semantic
+        // gate on each candidate cluster. Haiku primary, Gemini fallback.
+        'agent.signal_aggregator.model_tier' => 'haiku',
+        'agent.signal_aggregator.fallback' => 'gemini_flash',
+        'agent.signal_aggregator.enabled' => 'true',
+
+        // VerificationGate (T54.9) — D3 publication matrix. Two variants:
+        // simple (single-chain / unambiguous diverse) runs on Haiku;
+        // conflict (contradictory claims across chains) escalates to Sonnet.
+        'agent.verification_gate.model_tier_simple' => 'haiku',
+        'agent.verification_gate.model_tier_conflict' => 'sonnet',
+        'agent.verification_gate.fallback' => 'gemini_flash',
+        'agent.verification_gate.enabled' => 'true',
+
+        // ContextAgent (T54.11) — Elasticsearch MLT + Sonnet narrative
+        // synthesis. No fallback per ADR-020 D5 Tier B: Gemini produces
+        // lower-quality narrative and we'd rather return isNovelClaim=true
+        // than emit weak context.
+        'agent.context.model_tier' => 'sonnet',
+        'agent.context.fallback' => '',
+        'agent.context.enabled' => 'true',
+    ];
+
     public static function getGroups(): array
     {
         return ['app-settings'];
@@ -91,6 +141,10 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         }
 
         foreach (self::EDITORIAL_DEFAULTS as $key => $value) {
+            $this->upsertIfMissing($manager, $key, $value);
+        }
+
+        foreach (self::AGENT_TIER_DEFAULTS as $key => $value) {
             $this->upsertIfMissing($manager, $key, $value);
         }
 
