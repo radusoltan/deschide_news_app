@@ -4,36 +4,45 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Dto\Editorial\ArticleDraft;
 use App\Entity\PressRelease;
-use App\Entity\StoryCluster;
-use App\Enum\ArticleStatus;
+use App\Entity\Topic;
 use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
-use App\Repository\StoryClusterRepository;
-use App\Service\Editorial\ArticleFactoryService;
+use App\Message\GenerateTopicArticleMessage;
+use App\Repository\AppSettingRepository;
+use App\Repository\PressReleaseRepository;
+use App\Repository\TopicRepository;
 use App\Service\Editorial\ArticleWriterService;
-use App\Service\Editorial\PostApprovalDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Messenger\MessageBusInterface;
 
+/**
+ * Generate AI articles via the Topic + Window path (ADR-019 D2).
+ *
+ * Async by default (dispatches GenerateTopicArticleMessage per eligible topic
+ * to the `briefing` transport); --sync forces in-process synchronous generation
+ * for local debugging.
+ */
 #[AsCommand(
     name: 'app:generate-article',
-    description: 'Generate an AI article from a StoryCluster using Gemini',
+    description: 'Generate AI articles from eligible topics via the topic-window path.',
 )]
 class GenerateArticleCommand extends Command
 {
-    private const MIN_SCORE = 0.75;
-
     public function __construct(
         private readonly ArticleWriterService $writerService,
-        private readonly StoryClusterRepository $clusterRepository,
         private readonly EntityManagerInterface $em,
+        private readonly AppSettingRepository $appSettings,
+        private readonly TopicRepository $topicRepository,
+        private readonly PressReleaseRepository $pressReleaseRepository,
+        private readonly MessageBusInterface $messageBus,
     ) {
         parent::__construct();
     }
@@ -41,106 +50,217 @@ class GenerateArticleCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('cluster-id', InputArgument::REQUIRED, 'StoryCluster ID')
-            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Preview only, do not persist')
-            ->addOption('force', 'f', InputOption::VALUE_NONE, 'Skip eligibility checks')
-            ->addOption('min-score', null, InputOption::VALUE_REQUIRED, 'Minimum importance score', (string) self::MIN_SCORE);
+            ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Preview only, do not persist any PressRelease')
+            ->addOption(
+                'limit',
+                'l',
+                InputOption::VALUE_REQUIRED,
+                'Maximum number of topics to process (0 = unlimited)',
+                '0',
+            )
+            ->addOption('sync', null, InputOption::VALUE_NONE, 'Force synchronous in-process generation (default is async dispatch via GenerateTopicArticleMessage)')
+            ->addOption('async', null, InputOption::VALUE_NONE, 'Async dispatch via GenerateTopicArticleMessage (default since T52.7 — flag kept for clarity; no-op if --sync is also set)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $clusterId = (int) $input->getArgument('cluster-id');
-        $dryRun = $input->getOption('dry-run');
-        $force = $input->getOption('force');
-        $minScore = (float) $input->getOption('min-score');
 
-        $io->title('Generate Article from StoryCluster');
+        return $this->executeTopicWindowPath(
+            $io,
+            (bool) $input->getOption('dry-run'),
+            (int) $input->getOption('limit'),
+            (bool) $input->getOption('sync'),
+        );
+    }
 
-        // 1. Load cluster
-        $cluster = $this->clusterRepository->find($clusterId);
-        if ($cluster === null) {
-            $io->error(sprintf('Cluster #%d not found', $clusterId));
-            return Command::FAILURE;
-        }
+    private function executeTopicWindowPath(SymfonyStyle $io, bool $dryRun, int $limit, bool $sync): int
+    {
+        $io->title('Generate Articles — Topic + Window (ADR-019 D2)');
 
-        $io->writeln(sprintf('Cluster #%d: "%s"', $clusterId, $cluster->getPrimaryHeadline()));
-        $io->writeln(sprintf('Score: %.4f | Sources: %d | Articles: %d', $cluster->getImportanceScore(), $cluster->getSourceCount(), $cluster->getArticleCount()));
+        $windowHours = $this->appSettings->getInt('article_generation.window_hours', 24);
+        $minPrCount = $this->appSettings->getInt('article_generation.min_pr_count', 1);
+        $minRelevance = $this->appSettings->getFloat('article_generation.min_topic_relevance', 2.0);
+        $now = new \DateTimeImmutable();
+        $windowStart = $now->modify(sprintf('-%d hours', $windowHours));
+        $windowEnd = $now;
 
-        // 2. Validate score
-        if (!$force && $cluster->getImportanceScore() < $minScore) {
-            $io->error(sprintf(
-                'Cluster score %.4f is below minimum %.2f. Use --force to override.',
-                $cluster->getImportanceScore(),
-                $minScore,
-            ));
-            return Command::FAILURE;
-        }
+        $modeLabel = $sync ? 'sync (in-process)' : 'async (dispatch via briefing transport)';
+        $io->writeln('Mode: ' . $modeLabel);
 
-        // 3. Content-depth gate
-        if (!$force) {
-            $eligibility = $this->writerService->isEligibleForAiGeneration($cluster);
-            if (!$eligibility['eligible']) {
-                $io->error(sprintf(
-                    'Content-depth gate failed: %s. Use --force to override.',
-                    $eligibility['reason'],
-                ));
-                return Command::FAILURE;
-            }
-            $io->writeln(sprintf('Content-depth: %d sources, avg %d chars — OK', $eligibility['sourceCount'], $eligibility['avgLength']));
-        }
+        $io->writeln(sprintf(
+            'Window: %s → %s (%d hours)',
+            $windowStart->format('Y-m-d H:i'),
+            $windowEnd->format('Y-m-d H:i'),
+            $windowHours,
+        ));
+        $io->writeln(sprintf(
+            'Eligibility floors: min_pr_count=%d, min_topic_relevance=%.2f',
+            $minPrCount,
+            $minRelevance,
+        ));
 
-        // 4. Generate article
-        $io->writeln('');
-        $io->writeln('Calling Gemini CLI...');
+        $topics = $this->topicRepository->findActiveWithUnprocessedPressReleasesSince(
+            $windowStart,
+            $minPrCount,
+            $minRelevance,
+        );
 
-        $draft = $this->writerService->generateArticle($cluster);
+        if ($topics === []) {
+            $io->success('No eligible topics in window — nothing to generate.');
 
-        if ($draft === null) {
-            $io->error('Article generation failed (Gemini error or invalid output)');
-            return Command::FAILURE;
-        }
-
-        // 5. Display draft
-        $io->section('Generated Draft');
-        $io->writeln(sprintf('<info>Title:</info> %s', $draft->titleRo));
-        $io->writeln(sprintf('<info>Lead:</info> %s', mb_substr($draft->leadRo, 0, 200)));
-        $io->writeln(sprintf('<info>Content:</info> %d words', str_word_count($draft->contentRo)));
-        $io->writeln(sprintf('<info>Meta:</info> %s', $draft->metaDescription));
-        $io->writeln(sprintf('<info>Tags:</info> %s', implode(', ', $draft->suggestedTags)));
-        $io->writeln(sprintf('<info>Confidence:</info> %.2f', $draft->confidenceScore));
-        $io->writeln(sprintf('<info>Sources:</info> %d press releases', \count($draft->sourcePressReleaseIds)));
-
-        if ($dryRun) {
-            $io->note('DRY RUN — draft not persisted');
             return Command::SUCCESS;
         }
 
-        // 6. Create PressRelease with AI-generated content (pending review)
+        if ($limit > 0 && \count($topics) > $limit) {
+            $io->writeln(sprintf('Found %d eligible topics; processing top %d (--limit).', \count($topics), $limit));
+            $topics = \array_slice($topics, 0, $limit);
+        } else {
+            $io->writeln(sprintf('Found %d eligible topics; processing all.', \count($topics)));
+        }
+
+        if (!$sync) {
+            return $this->dispatchAsync($io, $topics, $windowStart, $windowEnd, $dryRun);
+        }
+
+        $stats = ['processed' => 0, 'generated' => 0, 'ineligible' => 0, 'writerNull' => 0];
+
+        foreach ($topics as $topic) {
+            $stats['processed']++;
+            $topicLabel = sprintf('topic #%d "%s"', $topic->getId() ?? 0, $topic->getTitle() ?? 'n/a');
+
+            $pressReleases = $this->pressReleaseRepository->findByTopicInWindow(
+                $topic,
+                $windowStart,
+                $windowEnd,
+            );
+
+            $eligibility = $this->writerService->isEligibleForTopicWindow($topic, $pressReleases);
+            if (!$eligibility['eligible']) {
+                $io->writeln(sprintf(
+                    '  %s — INELIGIBLE: %s',
+                    $topicLabel,
+                    implode('; ', $eligibility['reasons']),
+                ));
+                $stats['ineligible']++;
+                continue;
+            }
+
+            $draft = $this->writerService->writeArticleFromTopicWindow(
+                $topic,
+                $windowStart,
+                $windowEnd,
+                $pressReleases,
+            );
+
+            if ($draft === null) {
+                $io->writeln(sprintf(
+                    '  %s — WRITER FAILED (Gemini error or invalid output, see logs)',
+                    $topicLabel,
+                ));
+                $stats['writerNull']++;
+                continue;
+            }
+
+            if ($dryRun) {
+                $io->writeln(sprintf(
+                    '  %s — DRY: would persist PR (title="%s", confidence=%.2f, sources=%d)',
+                    $topicLabel,
+                    mb_substr($draft->titleRo, 0, 60),
+                    $draft->confidenceScore,
+                    \count($draft->sourcePressReleaseIds),
+                ));
+                $stats['generated']++;
+                continue;
+            }
+
+            $pr = $this->persistDraftAsPressRelease($draft, $topic);
+            $io->writeln(sprintf(
+                '  %s — OK: PR #%d created (confidence=%.2f, sources=%d)',
+                $topicLabel,
+                $pr->getId() ?? 0,
+                $draft->confidenceScore,
+                \count($draft->sourcePressReleaseIds),
+            ));
+            $stats['generated']++;
+        }
+
+        $io->section('Summary');
+        $io->table(
+            ['Metric', 'Count'],
+            [
+                ['Topics processed', (string) $stats['processed']],
+                ['Drafts generated' . ($dryRun ? ' (dry-run)' : ''), (string) $stats['generated']],
+                ['Ineligible', (string) $stats['ineligible']],
+                ['Writer returned null', (string) $stats['writerNull']],
+            ],
+        );
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * @param Topic[] $topics
+     */
+    private function dispatchAsync(
+        SymfonyStyle $io,
+        array $topics,
+        \DateTimeImmutable $windowStart,
+        \DateTimeImmutable $windowEnd,
+        bool $dryRun,
+    ): int {
+        $dispatched = 0;
+        foreach ($topics as $topic) {
+            $topicId = $topic->getId();
+            if ($topicId === null) {
+                continue;
+            }
+            $topicLabel = sprintf('topic #%d "%s"', $topicId, $topic->getTitle() ?? 'n/a');
+
+            if ($dryRun) {
+                $io->writeln(sprintf('  %s — DRY: would dispatch GenerateTopicArticleMessage', $topicLabel));
+                $dispatched++;
+                continue;
+            }
+
+            $this->messageBus->dispatch(
+                new GenerateTopicArticleMessage($topicId, $windowStart, $windowEnd),
+            );
+            $io->writeln(sprintf('  %s — DISPATCHED', $topicLabel));
+            $dispatched++;
+        }
+
+        $io->section('Summary');
+        $io->table(
+            ['Metric', 'Count'],
+            [
+                ['Topics dispatched' . ($dryRun ? ' (dry-run)' : ''), (string) $dispatched],
+            ],
+        );
+        $io->note('Per-topic outcome will be visible in the briefing worker logs (messenger:consume briefing).');
+
+        return Command::SUCCESS;
+    }
+
+    private function persistDraftAsPressRelease(ArticleDraft $draft, Topic $topic): PressRelease
+    {
         $pr = new PressRelease();
         $pr->setTitle(mb_substr($draft->titleRo, 0, 255));
         $pr->setLead($draft->leadRo);
         $pr->setContent($draft->contentRo);
         $pr->setStatus(PressReleaseStatus::PENDING);
         $pr->setSourceType(SourceType::AGGREGATOR);
-        $pr->setSourceName(sprintf('AI:cluster#%d', $cluster->getId()));
-        $pr->setContentHash(hash('sha256', 'ai_gen_' . $cluster->getId() . '_' . time()));
+        $pr->setSourceName(sprintf('AI:topic#%d', $topic->getId() ?? 0));
+        $pr->setContentHash(hash('sha256', sprintf('ai_gen_topic_%d_%d', $topic->getId() ?? 0, time())));
         $pr->setCategorySlug('externe');
         $pr->setDetectedLanguage('ro');
 
-        // Store AI metadata for downstream propagation to Article on approval
         $pr->setAiConfidenceScore($draft->confidenceScore);
         $pr->setAiSourceCount(\count($draft->sourcePressReleaseIds));
-        $pr->setSourceClusterId($draft->clusterId);
 
         $this->em->persist($pr);
         $this->em->flush();
 
-        $io->success(sprintf(
-            'PressRelease #%d created (status: pending). Approve via API to create Article.',
-            $pr->getId(),
-        ));
-
-        return Command::SUCCESS;
+        return $pr;
     }
 }

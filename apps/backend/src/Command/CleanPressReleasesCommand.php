@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Message\Clustering\SummarizeClusterMessage;
 use App\Repository\PressReleaseRepository;
 use App\Service\Cleaning\SourceContentCleanerRegistry;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,7 +13,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsCommand(
     name: 'app:clean-press-releases',
@@ -26,7 +24,6 @@ class CleanPressReleasesCommand extends Command
         private readonly PressReleaseRepository $pressReleaseRepository,
         private readonly SourceContentCleanerRegistry $cleanerRegistry,
         private readonly EntityManagerInterface $em,
-        private readonly MessageBusInterface $messageBus,
     ) {
         parent::__construct();
     }
@@ -84,7 +81,6 @@ class CleanPressReleasesCommand extends Command
         $cleaned = 0;
         $unchanged = 0;
         $totalReduced = 0;
-        $affectedClusterIds = [];
 
         foreach ($pressReleases as $pr) {
             $sourceName = $pr->getSourceName() ?? '';
@@ -118,26 +114,11 @@ class CleanPressReleasesCommand extends Command
                 $pr->setContent($cleanedContent);
             }
 
-            // Collect affected cluster IDs for re-summarization
-            foreach ($pr->getStoryClusters() as $cluster) {
-                $affectedClusterIds[$cluster->getId()] = true;
-            }
-
             $cleaned++;
         }
 
         if (!$dryRun) {
             $this->em->flush();
-        }
-
-        // Re-trigger cluster summaries for affected clusters
-        if (!$dryRun && $affectedClusterIds !== []) {
-            $io->writeln('');
-            $io->writeln(sprintf('Re-summarizing %d affected clusters...', \count($affectedClusterIds)));
-            foreach (array_keys($affectedClusterIds) as $clusterId) {
-                $this->messageBus->dispatch(new SummarizeClusterMessage($clusterId));
-                $io->writeln(sprintf('  → Cluster #%d: summary dispatched', $clusterId));
-            }
         }
 
         $io->writeln('');
@@ -148,7 +129,6 @@ class CleanPressReleasesCommand extends Command
                 ['Cleaned', (string) $cleaned],
                 ['Unchanged', (string) $unchanged],
                 ['Total chars removed', number_format($totalReduced)],
-                ['Clusters re-summarized', (string) \count($affectedClusterIds)],
                 ['Mode', $dryRun ? 'DRY RUN' : 'APPLIED'],
             ],
         );

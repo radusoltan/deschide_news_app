@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Service\Clustering\PressReleaseIndexManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,7 +20,6 @@ class PressReleaseDedupUrlsCommand extends Command
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
-        private readonly PressReleaseIndexManager $indexManager,
     ) {
         parent::__construct();
     }
@@ -43,7 +41,6 @@ class PressReleaseDedupUrlsCommand extends Command
             $io->note('DRY RUN — no changes will be persisted');
         }
 
-        // Find all source_urls with duplicates
         $duplicateGroups = $conn->fetchAllAssociative('
             SELECT source_url, COUNT(*) as cnt, MIN(id) as keep_id
             FROM press_releases
@@ -68,7 +65,6 @@ class PressReleaseDedupUrlsCommand extends Command
             $duplicateCount = $count - 1;
             $totalDuplicates += $duplicateCount;
 
-            // Get IDs of duplicates to remove (all except the oldest)
             $duplicateIds = $conn->fetchFirstColumn(
                 'SELECT id FROM press_releases WHERE source_url = ? AND id != ? ORDER BY id',
                 [$sourceUrl, $keepId],
@@ -85,26 +81,6 @@ class PressReleaseDedupUrlsCommand extends Command
             if (!$dryRun) {
                 $idList = implode(',', array_map('intval', $duplicateIds));
 
-                // Remove from cluster join table
-                $conn->executeStatement(
-                    "DELETE FROM story_cluster_press_release WHERE press_release_id IN ($idList)"
-                );
-
-                // Remove from ES index
-                if ($this->indexManager->isEnabled() && $this->indexManager->getClient() !== null) {
-                    foreach ($duplicateIds as $dupId) {
-                        try {
-                            $this->indexManager->getClient()->delete([
-                                'index' => $this->indexManager->getIndexName(),
-                                'id' => (string) $dupId,
-                            ]);
-                        } catch (\Throwable) {
-                            // Ignore — document may not exist in ES
-                        }
-                    }
-                }
-
-                // Delete the duplicate PRs
                 $conn->executeStatement(
                     "DELETE FROM press_releases WHERE id IN ($idList)"
                 );
@@ -114,12 +90,6 @@ class PressReleaseDedupUrlsCommand extends Command
         }
 
         if (!$dryRun) {
-            // Recalculate cluster counts for affected clusters
-            $conn->executeStatement('
-                UPDATE story_clusters sc SET
-                    article_count = (SELECT COUNT(*) FROM story_cluster_press_release WHERE story_cluster_id = sc.id)
-            ');
-
             $io->newLine();
             $io->success(sprintf(
                 'Removed %d duplicates from %d unique URLs.',

@@ -132,7 +132,13 @@ class ClassifyArticlesIntegrationTest extends KernelTestCase
         $command = new ClassifyArticlesCommand($this->em, $stub);
         $command->setName('app:articles:classify-topics');
         $tester = new CommandTester($command);
-        $tester->execute(['--limit' => 10]);
+        // Limit must exceed the count of pre-existing unclassified PUBLISHED
+        // articles left over by sibling integration tests; otherwise the
+        // ORDER BY id ASC + LIMIT window excludes the seeded article and the
+        // stub never sees it. Sibling testCommandFiltersOutAlreadyClassified...
+        // uses --limit 100 for the same reason. Long-term DAMA isolation
+        // tracked under T52.15.
+        $tester->execute(['--limit' => 100]);
 
         self::assertSame(0, $tester->getStatusCode());
         self::assertStringContainsString('Backfill Summary', $tester->getDisplay());

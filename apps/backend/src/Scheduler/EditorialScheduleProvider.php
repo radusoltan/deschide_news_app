@@ -7,10 +7,6 @@ namespace App\Scheduler;
 use App\Enum\BriefingCadence;
 use App\Message\Aggregator\TriggerAggregatorRunMessage;
 use App\Message\ArchiveStalePressReleasesMessage;
-use App\Message\Clustering\TriggerClusterCurationMessage;
-use App\Message\Clustering\TriggerClusterRunMessage;
-use App\Message\Clustering\TriggerClusterScoringMessage;
-use App\Message\Editorial\GenerateDailyBriefingMessage;
 use App\Message\Editorial\GenerateDossiersMessage;
 use App\Message\Editorial\GenerateWeeklySummaryMessage;
 use App\Message\Editorial\ScrapeSourceMessage;
@@ -34,16 +30,6 @@ class EditorialScheduleProvider implements ScheduleProviderInterface
         return (new Schedule())
             // === Content Generation ===
 
-            // Morning briefing at 06:00 (overnight PressRelease sources)
-            ->add(RecurringMessage::cron(
-                '0 6 * * *',
-                new GenerateDailyBriefingMessage(type: 'morning'),
-            ))
-            // Evening briefing at 20:00 (after day's articles are published)
-            ->add(RecurringMessage::cron(
-                '0 20 * * *',
-                new GenerateDailyBriefingMessage(type: 'evening'),
-            ))
             // Weekly summary on Sunday at 21:00
             ->add(RecurringMessage::cron(
                 '0 21 * * 0',
@@ -101,23 +87,6 @@ class EditorialScheduleProvider implements ScheduleProviderInterface
             ->add(RecurringMessage::cron(
                 '0 21 * * 0',
                 new TriggerTopicBriefingRunMessage(BriefingCadence::WEEKLY),
-            ))
-
-            // === Clustering Schedules (Sprint 30+47) ===
-
-            // Cluster curation suggestions — daily at 03:00
-            ->add(RecurringMessage::cron(
-                '0 3 * * *',
-                new TriggerClusterCurationMessage(),
-            ))
-
-            // Cluster unclustered PressReleases every 30 minutes
-            ->add(RecurringMessage::every('30 minutes',
-                new TriggerClusterRunMessage(since: '24h'),
-            ))
-            // Recalculate importance scores every 15 minutes
-            ->add(RecurringMessage::every('15 minutes',
-                new TriggerClusterScoringMessage(since: '48h', autoPromote: true),
             ))
 
             // === NotebookLM Sync (Sprint 51a) ===

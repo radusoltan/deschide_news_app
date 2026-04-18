@@ -228,11 +228,6 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?int $aiSourceCount = null;
 
-    /** StoryCluster ID from which this AI PR was generated */
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    #[Groups(['press:read'])]
-    private ?int $sourceClusterId = null;
-
     /** When content was enriched via remote scraping */
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     #[Groups(['press:read'])]
@@ -244,10 +239,6 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?Source $source = null;
 
-    /** @var Collection<int, StoryCluster> */
-    #[ORM\ManyToMany(targetEntity: StoryCluster::class, mappedBy: 'pressReleases')]
-    private Collection $storyClusters;
-
     /** @var Collection<int, PressReleaseTopic> */
     #[ORM\OneToMany(targetEntity: PressReleaseTopic::class, mappedBy: 'pressRelease', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Groups(['press:detail'])]
@@ -257,7 +248,6 @@ class PressRelease
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->receivedAt = new \DateTimeImmutable();
-        $this->storyClusters = new ArrayCollection();
         $this->pressReleaseTopics = new ArrayCollection();
     }
 
@@ -375,9 +365,6 @@ class PressRelease
     public function getSource(): ?Source { return $this->source; }
     public function setSource(?Source $source): static { $this->source = $source; return $this; }
 
-    /** @return Collection<int, StoryCluster> */
-    public function getStoryClusters(): Collection { return $this->storyClusters; }
-
     /** @return Collection<int, PressReleaseTopic> */
     public function getPressReleaseTopics(): Collection { return $this->pressReleaseTopics; }
 
@@ -395,9 +382,6 @@ class PressRelease
 
     public function getAiSourceCount(): ?int { return $this->aiSourceCount; }
     public function setAiSourceCount(?int $aiSourceCount): static { $this->aiSourceCount = $aiSourceCount; return $this; }
-
-    public function getSourceClusterId(): ?int { return $this->sourceClusterId; }
-    public function setSourceClusterId(?int $sourceClusterId): static { $this->sourceClusterId = $sourceClusterId; return $this; }
 
     public function isAiGenerated(): bool
     {

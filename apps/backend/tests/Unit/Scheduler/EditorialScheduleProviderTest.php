@@ -32,9 +32,12 @@ class EditorialScheduleProviderTest extends TestCase
         $schedule = $this->provider->getSchedule();
         $messages = $schedule->getRecurringMessages();
 
-        // 4 content generation + 3 scraping + 1 aggregator + 1 archive
-        // + 3 clustering + 3 topic briefing (Sprint 50) + 1 notebook sync (Sprint 51a) = 16
-        $this->assertCount(16, $messages);
+        // 2 content generation (weekly + dossiers) + 3 scraping + 1 aggregator
+        // + 1 archive + 3 topic briefing (Sprint 50) + 1 notebook sync
+        // (Sprint 51a) = 11. Sprint 52 T52.11/12 removed the 3 clustering
+        // schedule entries (curation + run + scoring) alongside the wholesale
+        // StoryCluster drop per ADR-019 D6.
+        $this->assertCount(11, $messages);
     }
 
     public function testScheduleContainsThreeTopicBriefingTriggers(): void

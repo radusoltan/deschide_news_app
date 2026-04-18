@@ -163,8 +163,7 @@ framework:
             # Translation evaluation pipeline (Sprint 18)
             'App\Message\Editorial\EvaluateTranslationMessage': editorial
 
-            # Editorial scheduler (Sprint 22 — daily briefing, weekly summary, dossiers)
-            'App\Message\Editorial\GenerateDailyBriefingMessage': editorial
+            # Editorial scheduler (Sprint 22 — weekly summary, dossiers)
             'App\Message\Editorial\GenerateWeeklySummaryMessage': editorial
             'App\Message\Editorial\GenerateDossiersMessage': editorial
 
@@ -172,11 +171,6 @@ framework:
             'App\Message\Aggregator\ProcessAggregatorResultMessage': editorial
             'App\Message\Aggregator\TriggerAggregatorRunMessage': editorial
 
-            # Clustering pipeline (Sprint 30-32)
-            'App\Message\Clustering\ClusterPressReleaseMessage': editorial
-            'App\Message\Clustering\TriggerClusterRunMessage': editorial
-            'App\Message\Clustering\TriggerClusterScoringMessage': editorial
-            'App\Message\Clustering\SummarizeClusterMessage': ai_async
 
             # Python scraper pipeline (Sprint 46)
             'App\Message\Scraping\PythonScrapeMessage': python_scraper
@@ -187,6 +181,12 @@ framework:
             # Topic briefing pipeline (Sprint 50, ADR-016)
             'App\Message\Topic\TriggerTopicBriefingRunMessage': briefing
             'App\Message\Topic\GenerateTopicBriefingMessage': briefing
+
+            # Topic-window article generation (Sprint 52, ADR-019 D2)
+            # Shared briefing transport per D2 default. Split into a
+            # dedicated `article_generation` transport in messenger.yaml
+            # if post-merge observation surfaces queue saturation.
+            'App\Message\GenerateTopicArticleMessage': briefing
 
             # NotebookLM sync (Sprint 51a)
             'App\Message\NotebookLM\TriggerTopicNotebookSyncMessage': editorial

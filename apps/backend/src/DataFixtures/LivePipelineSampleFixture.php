@@ -7,13 +7,11 @@ namespace App\DataFixtures;
 use App\Entity\Article;
 use App\Entity\Category;
 use App\Entity\PressRelease;
-use App\Entity\StoryCluster;
 use App\Entity\Tag;
 use App\Entity\Topic;
 use App\Enum\ArticleStatus;
 use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
-use App\Enum\StoryClusterStatus;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
@@ -21,9 +19,8 @@ use Doctrine\Persistence\ObjectManager;
 use Gedmo\Translatable\Entity\Translation;
 
 /**
- * Synthetic pipeline fixtures: 10 PressReleases, 3 StoryClusters, 3 Article drafts.
- * Exercises aggregator → clustering → editorial workflow pipeline.
- * No ClusterBackgroundProposal (entity does not exist).
+ * Synthetic pipeline fixtures: 10 PressReleases + 3 draft Articles.
+ * Exercises aggregator → editorial workflow pipeline.
  */
 class LivePipelineSampleFixture extends Fixture implements FixtureGroupInterface, DependentFixtureInterface
 {
@@ -51,12 +48,8 @@ class LivePipelineSampleFixture extends Fixture implements FixtureGroupInterface
         $pressReleases = $this->createPressReleases($manager);
         echo "  Created " . \count($pressReleases) . " press releases\n";
 
-        // === Story Clusters ===
-        $clusters = $this->createClusters($manager, $pressReleases);
-        echo "  Created " . \count($clusters) . " story clusters\n";
-
         // === Draft Articles ===
-        $this->createDraftArticles($manager, $translationRepo, $clusters);
+        $this->createDraftArticles($manager, $translationRepo);
         echo "  Created 3 draft articles with topics + tags\n";
     }
 
@@ -109,76 +102,7 @@ class LivePipelineSampleFixture extends Fixture implements FixtureGroupInterface
         return $prs;
     }
 
-    /**
-     * @param array<string, PressRelease> $prs
-     * @return array<string, StoryCluster>
-     */
-    private function createClusters(ObjectManager $manager, array $prs): array
-    {
-        $clusters = [];
-
-        // Cluster 1: EU Negotiations
-        $c1 = new StoryCluster();
-        $c1->setPrimaryHeadline('Deschiderea Clusterului 1 al negocierilor cu UE');
-        $c1->setSummaryShort('Moldova a deschis oficial Clusterul 1 al negocierilor de aderare la UE, marcând un pas important în procesul de integrare europeană.');
-        $c1->setImportanceScore(8.5);
-        $c1->setSourceCount(4);
-        $c1->setArticleCount(4);
-        $c1->setStatus(StoryClusterStatus::AUTO);
-        foreach (['zdg-c1', 'nm-c1', 'tv8-c1', 'mp-c1'] as $key) {
-            $c1->addPressRelease($prs[$key]);
-        }
-        // Link to topic
-        if ($this->hasReference('topic-moldova-eu-accession-clusters', Topic::class)) {
-            $c1->addTopic($this->getReference('topic-moldova-eu-accession-clusters', Topic::class));
-        }
-        $manager->persist($c1);
-        $manager->flush();
-        $clusters['c1'] = $c1;
-
-        // Cluster 2: Transnistria Energy
-        $c2 = new StoryCluster();
-        $c2->setPrimaryHeadline('Criza energetică din stânga Nistrului');
-        $c2->setSummaryShort('Regiunea transnistreană se confruntă cu o criză energetică severă după oprirea livrărilor de gaz rusesc.');
-        $c2->setImportanceScore(7.8);
-        $c2->setSourceCount(3);
-        $c2->setArticleCount(3);
-        $c2->setStatus(StoryClusterStatus::AUTO);
-        foreach (['nm-c2', 'ipn-c2', 'pt-c2'] as $key) {
-            $c2->addPressRelease($prs[$key]);
-        }
-        if ($this->hasReference('topic-transnistria-gas-crisis-met-gas', Topic::class)) {
-            $c2->addTopic($this->getReference('topic-transnistria-gas-crisis-met-gas', Topic::class));
-        }
-        $manager->persist($c2);
-        $manager->flush();
-        $clusters['c2'] = $c2;
-
-        // Cluster 3: Pension Reform
-        $c3 = new StoryCluster();
-        $c3->setPrimaryHeadline('Reforma sistemului de pensii');
-        $c3->setSummaryShort('Guvernul a anunțat modificări importante în sistemul de pensii, cu noi condiții de pensionare și compensații.');
-        $c3->setImportanceScore(5.4);
-        $c3->setSourceCount(2);
-        $c3->setArticleCount(2);
-        $c3->setStatus(StoryClusterStatus::AUTO);
-        foreach (['mp-c3', 'jn-c3'] as $key) {
-            $c3->addPressRelease($prs[$key]);
-        }
-        if ($this->hasReference('topic-moldova-pensions-cnas-social-protection', Topic::class)) {
-            $c3->addTopic($this->getReference('topic-moldova-pensions-cnas-social-protection', Topic::class));
-        }
-        $manager->persist($c3);
-        $manager->flush();
-        $clusters['c3'] = $c3;
-
-        return $clusters;
-    }
-
-    /**
-     * @param array<string, StoryCluster> $clusters
-     */
-    private function createDraftArticles(ObjectManager $manager, mixed $translationRepo, array $clusters): void
+    private function createDraftArticles(ObjectManager $manager, mixed $translationRepo): void
     {
         $catPolitica = $this->getReference('category-politica', Category::class);
         $catEditoriale = $this->getReference('category-editoriale', Category::class);
