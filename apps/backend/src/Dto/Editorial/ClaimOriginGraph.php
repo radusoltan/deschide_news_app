@@ -69,6 +69,25 @@ final readonly class ClaimOriginGraph
     }
 
     /**
+     * Number of nodes at the given tier (1/2/…). 0 when the tier has no
+     * representatives in the graph. Accepts integer tier — internal string
+     * key mapping is an implementation detail.
+     */
+    public function getTierCount(int $tier): int
+    {
+        $key = (string) $tier;
+
+        return \array_key_exists($key, $this->tierDistribution)
+            ? $this->tierDistribution[$key]
+            : 0;
+    }
+
+    public function hasAlignmentDiversity(): bool
+    {
+        return \count($this->alignmentClusters) >= 2;
+    }
+
+    /**
      * Serialize the graph as a structured array suitable for storage into
      * `source_signals.claim_graph_snapshot`.
      *
@@ -85,5 +104,33 @@ final readonly class ClaimOriginGraph
             'independent_chains' => $this->independentChains,
             'tier_distribution' => $this->tierDistribution,
         ];
+    }
+
+    /**
+     * Reconstruct a graph from its {@see toArray()} form — used by handlers
+     * that receive the serialized payload through the messenger bus.
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function fromArray(array $data): self
+    {
+        /** @var list<array{id: int|string, slug: string, alignment: string, tier: int|null}> $nodes */
+        $nodes = \is_array($data['nodes'] ?? null) ? $data['nodes'] : [];
+        /** @var list<array{from: int|string, to: int|string, type: 'domain'|'name'}> $edges */
+        $edges = \is_array($data['edges'] ?? null) ? $data['edges'] : [];
+        /** @var list<string> $clusters */
+        $clusters = \is_array($data['alignment_clusters'] ?? null) ? $data['alignment_clusters'] : [];
+        /** @var array<string, int> $tiers */
+        $tiers = \is_array($data['tier_distribution'] ?? null) ? $data['tier_distribution'] : [];
+
+        return new self(
+            topicHash: (string) ($data['topic_hash'] ?? ''),
+            claimHash: (string) ($data['claim_hash'] ?? ''),
+            nodes: $nodes,
+            edges: $edges,
+            alignmentClusters: $clusters,
+            independentChains: (int) ($data['independent_chains'] ?? 0),
+            tierDistribution: $tiers,
+        );
     }
 }

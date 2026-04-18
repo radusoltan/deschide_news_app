@@ -109,6 +109,13 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         'editorial.aggregator.min_es_score' => '0.65',
         'editorial.aggregator.min_cluster_overlap' => '2',
         'editorial.aggregator.llm_gate_confidence_threshold' => '0.7',
+
+        // VerificationGate LLM-override floor (Sprint 54 T54.9, ADR-020 D3).
+        // The rule-based D3 verdict only yields to the LLM's alternative
+        // verdict when the LLM's own confidence is at or above this floor.
+        // 0.8 keeps the override mechanism conservative — rule-based decisions
+        // remain the default path.
+        'editorial.verification.llm_override_confidence' => '0.8',
     ];
 
     /**
