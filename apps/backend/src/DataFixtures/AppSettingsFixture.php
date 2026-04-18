@@ -175,6 +175,72 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         'agent.context.enabled' => 'true',
     ];
 
+    /**
+     * Writer / Guard / Escalation / Throttle AppSettings (Sprint 55 T55.14).
+     *
+     * Seed for the L3 writers, L4 guards, EscalationClassifier and global
+     * pipeline throttle landing in S55. Longform synthesizer and headline
+     * optimizer ship with `enabled=false` per orchestrator D14/D17 — their
+     * implementation slips to S56. SLA values follow D9/D21 (day window
+     * 07:00-22:00 Europe/Chișinău, 10 min day / 30 min night).
+     *
+     * @var array<string, string>
+     */
+    private const WRITER_GUARD_ESCALATION_DEFAULTS = [
+        // Writers (T55.3, T55.4) — Haiku primary, Gemini Flash fallback (direct
+        // GeminiCliService call, bypassing LlmRetryExecutor per audit hard rule 6).
+        'agent.flash_writer.model_tier' => 'haiku',
+        'agent.flash_writer.fallback' => 'gemini_flash',
+        'agent.flash_writer.enabled' => 'true',
+        'agent.developing_story_writer.model_tier' => 'haiku',
+        'agent.developing_story_writer.fallback' => 'gemini_flash',
+        'agent.developing_story_writer.enabled' => 'true',
+
+        // LongformSynthesizer (S56 — seed disabled). Sonnet-only per Tier B
+        // guidance (no Gemini fallback for long narrative synthesis).
+        'agent.longform_synthesizer.model_tier' => 'sonnet',
+        'agent.longform_synthesizer.fallback' => '',
+        'agent.longform_synthesizer.enabled' => 'false',
+
+        // HeadlineOptimizer (S56 — seed disabled per audit D14). Sonnet-primary
+        // for editorial polish, Gemini fallback for bulk processing.
+        'agent.headline_optimizer.model_tier' => 'sonnet',
+        'agent.headline_optimizer.fallback' => 'gemini_flash',
+        'agent.headline_optimizer.enabled' => 'false',
+
+        // Guards (T55.6, T55.7). LegalGuard splits by category: general cases
+        // run on Haiku; Category 6 (personalised criminal accusations per
+        // ADR-020 D7) escalates to Sonnet for nuance.
+        'agent.style_guard.model_tier' => 'haiku',
+        'agent.style_guard.fallback' => 'gemini_flash',
+        'agent.style_guard.enabled' => 'true',
+        'agent.legal_guard.model_tier_general' => 'haiku',
+        'agent.legal_guard.model_tier_categ6' => 'sonnet',
+        'agent.legal_guard.fallback' => 'gemini_flash',
+        'agent.legal_guard.enabled' => 'true',
+
+        // EscalationClassifier (T55.8) — Haiku with Gemini fallback. Fail-open:
+        // classifier null result does not block the pipeline; handler uses a
+        // generic family default and logs the gap.
+        'agent.escalation_classifier.model_tier' => 'haiku',
+        'agent.escalation_classifier.fallback' => 'gemini_flash',
+        'agent.escalation_classifier.enabled' => 'true',
+
+        // SLA window + expiry (T55.8, T55.11). Day/night bands mirror the
+        // Europe/Chișinău editorial rhythm: tighter SLA during business hours,
+        // relaxed SLA overnight. Role taxonomy version pins the ADR-020 D7
+        // prompt seed — increments when Radu updates the role set.
+        'editorial.escalation.sla_day_seconds' => '600',
+        'editorial.escalation.sla_night_seconds' => '1800',
+        'editorial.escalation.sla_day_start_hour' => '7',
+        'editorial.escalation.sla_day_end_hour' => '22',
+        'editorial.escalation.role_taxonomy_version' => 'v1',
+
+        // Global writer throttle (audit D16). Smoke ceiling is 3/h — T55.17
+        // sets it to 3 explicitly before the smoke window and restores to 10.
+        'editorial.throttle.articles_per_hour' => '10',
+    ];
+
     public static function getGroups(): array
     {
         return ['app-settings'];
@@ -191,6 +257,10 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         }
 
         foreach (self::AGENT_TIER_DEFAULTS as $key => $value) {
+            $this->upsertIfMissing($manager, $key, $value);
+        }
+
+        foreach (self::WRITER_GUARD_ESCALATION_DEFAULTS as $key => $value) {
             $this->upsertIfMissing($manager, $key, $value);
         }
 

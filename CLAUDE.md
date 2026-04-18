@@ -612,7 +612,7 @@ ss -tulpn | grep -E ":(3005|8081)"
 - `src/State/` - API Platform State Providers and Processors (locale-aware queries)
 - `src/Controller/` - API controllers (for custom endpoints)
 - `src/Service/` - Business logic
-  - `Service/AI/` - LLM integrations (GeminiCliService, ClaudeCliService, LlmCliFactory)
+  - `Service/Ai/` - LLM integrations (GeminiCliService, ClaudeCliClient, AiProviderRegistry, LlmRetryExecutor)
   - `Service/Aggregator/` - Content aggregators (RSS, scraping, Telegram, etc.)
   - `Service/Clustering/` - Story clustering, semantic verification, importance scoring
   - `Service/Content/` - Content cleaning, deduplication
@@ -1473,7 +1473,7 @@ This skill provides:
 
 ✅ **AI Pipeline — Complete:**
 - Dual-LLM: Gemini CLI (context crunch/bulk) + Claude CLI (journalistic polish)
-- `LlmCliInterface` + `LlmCliFactory` for provider switching
+- `AiProviderInterface` + `AiProviderRegistry` for provider switching
 - Article translation (EN+RU via Gemini, one call per locale)
 - Topic detection + batch classification
 - Cluster summaries + semantic verification (30-min cron)
