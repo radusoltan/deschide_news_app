@@ -105,6 +105,26 @@ class VerificationGate
         ],
     ];
 
+    /**
+     * High-stakes topic words used by the NotebookLM hook (T54.10) to flag
+     * YELLOW verdicts for fact-check double-check. These are broader than
+     * {@see self::ESCALATION_PATTERNS}: they name sensitive topics without
+     * requiring action-verb co-occurrence. A signal mentioning
+     * "Transnistria" alone doesn't trip Rule 0 (needs "+ armată/atac") but
+     * still warrants NotebookLM verification when coverage is
+     * same-alignment-only.
+     *
+     * @var list<string>
+     */
+    private const HIGH_STAKES_TOPIC_WORDS = [
+        'transnistria', 'găgăuzia', 'gagauzia',
+        'alegeri', 'alegerile', 'scrutin', 'scrutinul',
+        'mitropolia', 'kirill', 'ortodox', 'biserica',
+        'aderare', 'aderării', 'uniunea europeană',
+        'nato', 'rusia', 'kremlin',
+        'nuclear', 'sancțiuni', 'sancțiunilor',
+    ];
+
     public function __construct(
         private readonly LlmRetryExecutor $executor,
         private readonly TierResolver $tierResolver,
@@ -116,6 +136,17 @@ class VerificationGate
      * @param list<SourceSignal> $signals all signals in the confirmed cluster
      */
     public function rule(ClaimOriginGraph $graph, array $signals): VerificationVerdict
+    {
+        $verdict = $this->computeVerdict($graph, $signals);
+        $this->emitNotebookLmHookIfApplicable($graph, $verdict, $signals);
+
+        return $verdict;
+    }
+
+    /**
+     * @param list<SourceSignal> $signals
+     */
+    private function computeVerdict(ClaimOriginGraph $graph, array $signals): VerificationVerdict
     {
         $escalationMatch = $this->matchEscalationKeyword($signals);
         if ($escalationMatch !== null) {
@@ -160,6 +191,97 @@ class VerificationGate
         }
 
         return $this->llmSanityCheck($graph, $ruleVerdict, $ruleReasoning);
+    }
+
+    /**
+     * Sprint 54 T54.10 — log-only hook. When the feature flag
+     * `notebooklm.factcheck.enabled` is on and the verdict is high-stakes
+     * (ESCALATE_HUMAN, or FLASH_WITH_ASSERTION_YELLOW + escalation keyword),
+     * emit a structured log line `verification_notebooklm_would_invoke` that
+     * names the claim and the reason. Sprint 55+ will swap the log for an
+     * actual {@see \App\Service\NotebookLM\NotebookLmFactCheckServiceInterface}
+     * call once we have the Article/Topic context plumbed through the
+     * verification layer (the existing interface requires both, neither of
+     * which exist at this point in the signal pipeline).
+     *
+     * FULL_FLASH is intentionally NOT high-stakes — alignment-diversity +
+     * rule-based already provide sufficient safety; NotebookLM cost would
+     * be pure overhead.
+     *
+     * @param list<SourceSignal> $signals
+     */
+    private function emitNotebookLmHookIfApplicable(
+        ClaimOriginGraph $graph,
+        VerificationVerdict $verdict,
+        array $signals,
+    ): void {
+        if (!$this->appSettings->getBool('notebooklm.factcheck.enabled', false)) {
+            return;
+        }
+
+        $reason = $this->determineHighStakesReason($verdict, $signals);
+        if ($reason === null) {
+            return;
+        }
+
+        $primarySignal = $signals[0] ?? null;
+        $claim = $primarySignal !== null ? trim($primarySignal->getTitle()) : '(unknown)';
+
+        $this->logger->info('verification_notebooklm_would_invoke', [
+            'topic_hash' => $graph->topicHash,
+            'claim_hash' => $graph->claimHash,
+            'verdict_before_notebooklm' => $verdict->type->value,
+            'high_stakes_reason' => $reason,
+            'claim' => mb_substr($claim, 0, 200),
+        ]);
+    }
+
+    /**
+     * Returns a stable string label when the verdict is high-stakes, else
+     * null. Labels are observable-grouped so downstream metrics can split
+     * "escalate_verdict" from "yellow_with_keyword:*" cost/frequency.
+     *
+     * @param list<SourceSignal> $signals
+     */
+    private function determineHighStakesReason(
+        VerificationVerdict $verdict,
+        array $signals,
+    ): ?string {
+        if ($verdict->type === VerdictType::ESCALATE_HUMAN) {
+            return 'escalate_verdict';
+        }
+
+        if ($verdict->type === VerdictType::FLASH_WITH_ASSERTION_YELLOW) {
+            $topic = $this->matchHighStakesTopic($signals);
+            if ($topic !== null) {
+                return 'yellow_with_topic:' . $topic;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Broader-than-escalation topic match used exclusively by the
+     * NotebookLM hook. Returns the first matched HIGH_STAKES_TOPIC_WORDS
+     * pattern (lowercase, substring) or null.
+     *
+     * @param list<SourceSignal> $signals
+     */
+    private function matchHighStakesTopic(array $signals): ?string
+    {
+        foreach ($signals as $signal) {
+            $haystack = mb_strtolower(
+                $signal->getTitle() . ' ' . ($signal->getRawSummary() ?? ''),
+            );
+            foreach (self::HIGH_STAKES_TOPIC_WORDS as $word) {
+                if (str_contains($haystack, $word)) {
+                    return $word;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function applyD3Matrix(ClaimOriginGraph $graph): VerdictType

@@ -116,6 +116,14 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         // 0.8 keeps the override mechanism conservative — rule-based decisions
         // remain the default path.
         'editorial.verification.llm_override_confidence' => '0.8',
+
+        // NotebookLM fact-check hook (Sprint 54 T54.10). Off by default —
+        // flipping this on emits a structured `verification_notebooklm_would_invoke`
+        // log line every time the VerificationGate lands a high-stakes
+        // verdict (ESCALATE_HUMAN or FLASH_WITH_ASSERTION_YELLOW with a
+        // high-stakes keyword match). Actual NotebookLM invocation is
+        // deferred to Sprint 55 where Article/Topic context plumbing lands.
+        'notebooklm.factcheck.enabled' => 'false',
     ];
 
     /**
