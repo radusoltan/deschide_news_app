@@ -13,7 +13,6 @@ use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
-use App\Service\TranslationPriorityDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -72,7 +71,6 @@ PROMPT;
     public function __construct(
         private readonly LlmRetryExecutor $llmRetryExecutor,
         private readonly GeminiCliService $geminiCliService,
-        private readonly TranslationPriorityDispatcher $translationDispatcher,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
     ) {}
@@ -137,14 +135,10 @@ PROMPT;
 
         $this->em->flush();
 
-        // Targeted re-translation. Bypasses the `requestTranslation` flag path
-        // because that only fires on flag state-change — on the 2nd+ update
-        // the flag may already be `true` and preUpdate would see no diff.
-        $this->translationDispatcher->dispatch(
-            article: $existing,
-            locales: ['ru', 'en'],
-            forceRetranslate: true,
-        );
+        // NOTE: TranslationPriorityDispatcher is NOT called here (Sprint 55
+        // T55.9 refactor). The handler runs the guard pipeline after this
+        // returns and decides whether to dispatch re-translation or to
+        // archive+escalate. Keeps writer single-responsibility.
 
         $this->logger->info('developing_story_writer_article_updated', [
             'article_id' => $existing->getId(),

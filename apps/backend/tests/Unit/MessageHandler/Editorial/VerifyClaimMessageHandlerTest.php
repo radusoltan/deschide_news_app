@@ -15,30 +15,72 @@ use App\Enum\Editorial\VerdictType;
 use App\Enum\EditorialAlignment;
 use App\Message\Editorial\VerifyClaimMessage;
 use App\MessageHandler\Editorial\VerifyClaimMessageHandler;
+use App\Repository\AppSettingRepository;
+use App\Repository\ArticleRepository;
 use App\Repository\Editorial\SourceSignalRepository;
+use App\Repository\TopicRepository;
+use App\Service\Editorial\Escalation\EscalationClassifier;
+use App\Service\Editorial\Escalation\EscalationLogWriter;
 use App\Service\Editorial\Verification\VerificationGate;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 class VerifyClaimMessageHandlerTest extends TestCase
 {
     private SourceSignalRepository&MockObject $repository;
     private VerificationGate&MockObject $gate;
     private EntityManagerInterface&MockObject $em;
+    private TopicRepository&MockObject $topicRepository;
+    private ArticleRepository&MockObject $articleRepository;
+    private EscalationClassifier&MockObject $escalationClassifier;
+    private EscalationLogWriter&MockObject $escalationLogWriter;
+    private MessageBusInterface&MockObject $messageBus;
+    private AppSettingRepository&MockObject $appSettings;
     private VerifyClaimMessageHandler $handler;
+
+    /** @var list<object> */
+    private array $dispatchedMessages = [];
 
     protected function setUp(): void
     {
         $this->repository = $this->createMock(SourceSignalRepository::class);
         $this->gate = $this->createMock(VerificationGate::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
+        $this->topicRepository = $this->createMock(TopicRepository::class);
+        $this->articleRepository = $this->createMock(ArticleRepository::class);
+        $this->escalationClassifier = $this->createMock(EscalationClassifier::class);
+        $this->escalationLogWriter = $this->createMock(EscalationLogWriter::class);
+        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->appSettings = $this->createMock(AppSettingRepository::class);
+
+        // Default: pipeline is OFF (S54 behavior — audit trail persists, no
+        // downstream dispatch). Individual tests override for the T55.9 paths.
+        $this->appSettings->method('getBool')
+            ->with('editorial.pipeline.enabled', false)
+            ->willReturn(false);
+
+        $this->dispatchedMessages = [];
+        $this->messageBus->method('dispatch')
+            ->willReturnCallback(function (object $m): Envelope {
+                $this->dispatchedMessages[] = $m;
+
+                return new Envelope($m);
+            });
 
         $this->handler = new VerifyClaimMessageHandler(
             $this->repository,
             $this->gate,
             $this->em,
+            $this->topicRepository,
+            $this->articleRepository,
+            $this->escalationClassifier,
+            $this->escalationLogWriter,
+            $this->messageBus,
+            $this->appSettings,
             new NullLogger(),
         );
     }

@@ -19,7 +19,6 @@ use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
-use App\Service\Editorial\PostApprovalDispatcher;
 use App\Service\Editorial\Writer\AiAuthorProvider;
 use App\Service\Editorial\Writer\FlashWriter;
 use App\Service\Editorial\Writer\SignalCategoryResolver;
@@ -41,7 +40,6 @@ class FlashWriterTest extends TestCase
     private GeminiCliService&MockObject $geminiCliService;
     private SignalCategoryResolver&MockObject $categoryResolver;
     private AiAuthorProvider&MockObject $aiAuthorProvider;
-    private PostApprovalDispatcher&MockObject $postApprovalDispatcher;
     private EntityManagerInterface&MockObject $em;
     private LoggerInterface&MockObject $logger;
     private FlashWriter $writer;
@@ -52,7 +50,6 @@ class FlashWriterTest extends TestCase
         $this->geminiCliService = $this->createMock(GeminiCliService::class);
         $this->categoryResolver = $this->createMock(SignalCategoryResolver::class);
         $this->aiAuthorProvider = $this->createMock(AiAuthorProvider::class);
-        $this->postApprovalDispatcher = $this->createMock(PostApprovalDispatcher::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
@@ -61,7 +58,6 @@ class FlashWriterTest extends TestCase
             $this->geminiCliService,
             $this->categoryResolver,
             $this->aiAuthorProvider,
-            $this->postApprovalDispatcher,
             $this->em,
             $this->logger,
         );
@@ -105,10 +101,6 @@ class FlashWriterTest extends TestCase
                 $persistedArticle = $entity;
             });
         $this->em->expects($this->once())->method('flush');
-
-        $this->postApprovalDispatcher->expects($this->once())
-            ->method('dispatch')
-            ->with($this->isInstanceOf(Article::class), null, 'ro');
 
         $primary = $this->mockSignal(42, 'Titlu sursă', 'Rezumat cu diacritice: Chișinău și Bălți.');
         $verdict = new VerificationVerdict(
@@ -162,8 +154,6 @@ class FlashWriterTest extends TestCase
 
         $this->em->expects($this->once())->method('persist');
         $this->em->expects($this->once())->method('flush');
-        $this->postApprovalDispatcher->expects($this->once())->method('dispatch');
-
         $this->logger->expects($this->atLeastOnce())
             ->method('warning')
             ->with('flash_writer_haiku_unavailable_trying_gemini', $this->isArray());
@@ -191,7 +181,6 @@ class FlashWriterTest extends TestCase
 
         $this->em->expects($this->never())->method('persist');
         $this->em->expects($this->never())->method('flush');
-        $this->postApprovalDispatcher->expects($this->never())->method('dispatch');
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('could not decode');

@@ -16,17 +16,11 @@ use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
-use App\Message\TranslateArticleMessage;
-use App\Repository\ImportantArticlesListRepository;
 use App\Service\Editorial\Writer\DevelopingStoryWriter;
-use App\Service\TranslationPriorityDispatcher;
-use App\Service\TranslationPriorityResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Unit test for {@see DevelopingStoryWriter} (Sprint 55 T55.4).
@@ -38,51 +32,20 @@ class DevelopingStoryWriterTest extends TestCase
 {
     private LlmRetryExecutor&MockObject $llmRetryExecutor;
     private GeminiCliService&MockObject $geminiCliService;
-    private MessageBusInterface&MockObject $messageBus;
-    private TranslationPriorityDispatcher $translationDispatcher;
     private EntityManagerInterface&MockObject $em;
     private LoggerInterface&MockObject $logger;
     private DevelopingStoryWriter $writer;
-
-    /** @var list<TranslateArticleMessage> */
-    private array $dispatchedTranslations = [];
 
     protected function setUp(): void
     {
         $this->llmRetryExecutor = $this->createMock(LlmRetryExecutor::class);
         $this->geminiCliService = $this->createMock(GeminiCliService::class);
-        $this->messageBus = $this->createMock(MessageBusInterface::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
-
-        $this->dispatchedTranslations = [];
-        $this->messageBus->method('dispatch')
-            ->willReturnCallback(function (object $envelopeOrMessage): Envelope {
-                $envelope = $envelopeOrMessage instanceof Envelope
-                    ? $envelopeOrMessage
-                    : new Envelope($envelopeOrMessage);
-                $inner = $envelope->getMessage();
-                if ($inner instanceof TranslateArticleMessage) {
-                    $this->dispatchedTranslations[] = $inner;
-                }
-
-                return $envelope;
-            });
-
-        // TranslationPriorityDispatcher is final readonly — use a real instance
-        // with a mocked MessageBus so we can observe the TranslateArticleMessage
-        // envelope the writer emits.
-        $importantRepo = $this->createMock(ImportantArticlesListRepository::class);
-        $this->translationDispatcher = new TranslationPriorityDispatcher(
-            $this->messageBus,
-            new TranslationPriorityResolver($importantRepo),
-            $this->createMock(LoggerInterface::class),
-        );
 
         $this->writer = new DevelopingStoryWriter(
             $this->llmRetryExecutor,
             $this->geminiCliService,
-            $this->translationDispatcher,
             $this->em,
             $this->logger,
         );
@@ -121,11 +84,9 @@ class DevelopingStoryWriterTest extends TestCase
 
         $result = $this->writer->write($existing, $primary, [], $verdict);
 
-        // TranslationPriorityDispatcher emitted exactly one TranslateArticleMessage
-        // with forceRetranslate=true on both ru + en locales.
-        $this->assertCount(1, $this->dispatchedTranslations);
-        $this->assertTrue($this->dispatchedTranslations[0]->forceRetranslate);
-        $this->assertEqualsCanonicalizing(['ru', 'en'], $this->dispatchedTranslations[0]->locales);
+        // Sprint 55 T55.9 refactor: writer no longer dispatches translations —
+        // WriteDevelopingStoryMessageHandler does that after the guard check.
+        // This test only verifies the writer's persist-only contract now.
 
         $this->assertSame($existing, $result);
         $this->assertSame(2, $existing->getRevisionCount());
@@ -236,7 +197,6 @@ class DevelopingStoryWriterTest extends TestCase
         );
 
         $this->assertSame($existing, $result);
-        $this->assertCount(1, $this->dispatchedTranslations);
     }
 
     public function testUpdatedTitleOverwritesWhenProvided(): void
@@ -333,7 +293,6 @@ class DevelopingStoryWriterTest extends TestCase
         $writer = new DevelopingStoryWriter(
             $this->llmRetryExecutor,
             $this->geminiCliService,
-            $this->translationDispatcher,
             $this->em,
             $this->logger,
         );

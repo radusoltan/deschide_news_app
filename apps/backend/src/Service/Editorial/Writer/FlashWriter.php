@@ -15,7 +15,6 @@ use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
-use App\Service\Editorial\PostApprovalDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -72,7 +71,6 @@ PROMPT;
         private readonly GeminiCliService $geminiCliService,
         private readonly SignalCategoryResolver $categoryResolver,
         private readonly AiAuthorProvider $aiAuthorProvider,
-        private readonly PostApprovalDispatcher $postApprovalDispatcher,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
     ) {}
@@ -98,7 +96,12 @@ PROMPT;
         $this->em->persist($article);
         $this->em->flush();
 
-        $this->postApprovalDispatcher->dispatch($article, null, 'ro');
+        // NOTE: PostApprovalDispatcher is NOT called here (Sprint 55 T55.9
+        // refactor). The writer is now persist-only; WriteFlashMessageHandler
+        // runs the guard pipeline AFTER persist and then decides whether to
+        // dispatch translations/ingestion or to archive+escalate. Keeps the
+        // writer single-responsibility and lets the handler control the
+        // publication flow.
 
         $this->logger->info('flash_writer_article_emitted', [
             'article_id' => $article->getId(),
@@ -267,7 +270,12 @@ PROMPT;
         $article->setAiSourceCount(\count($supporting) + 1);
         $article->setAiConfidenceScore($verdict->confidence);
         $article->setContentHash(hash('sha256', $content));
-        $article->setPublishedLocales(['ro']);
+        // publishedLocales intentionally empty at writer time (Sprint 55 T55.9).
+        // The public ArticleProvider gates visibility on ARRAY_CONTAINS(publishedLocales, locale);
+        // leaving it empty keeps the Article invisible until WriteFlashMessageHandler
+        // passes the guard pipeline and flips it to ['ro'] before PostApprovalDispatcher
+        // fires. Prevents a window where a guard-failing Article leaks into the public feed.
+        $article->setPublishedLocales([]);
 
         if ($category !== null) {
             $article->setCategory($category);

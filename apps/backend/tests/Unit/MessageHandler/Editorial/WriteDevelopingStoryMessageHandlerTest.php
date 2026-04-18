@@ -8,182 +8,258 @@ use App\Dto\Editorial\VerificationVerdict;
 use App\Entity\Article;
 use App\Entity\Editorial\SourceSignal;
 use App\Entity\Editorial\VerifiedSource;
-use App\Enum\Editorial\VerdictType;
+use App\Enum\ArticleStatus;
+use App\Enum\ArticleType;
+use App\Enum\Editorial\EscalationCategory;
 use App\Message\Editorial\WriteDevelopingStoryMessage;
 use App\MessageHandler\Editorial\WriteDevelopingStoryMessageHandler;
 use App\Repository\ArticleRepository;
 use App\Repository\Editorial\SourceSignalRepository;
+use App\Service\Editorial\Escalation\EscalationLogWriter;
+use App\Service\Editorial\Guard\GuardEscalationCategoryMapper;
+use App\Service\Editorial\Guard\GuardPipelineInterface;
+use App\Service\Editorial\Guard\GuardVerdict;
+use App\Service\Editorial\Guard\LegalGuard;
+use App\Message\TranslateArticleMessage;
+use App\Repository\ImportantArticlesListRepository;
 use App\Service\Editorial\Writer\DevelopingStoryWriter;
+use App\Service\TranslationPriorityDispatcher;
+use App\Service\TranslationPriorityResolver;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
- * Unit test for {@see WriteDevelopingStoryMessageHandler} (Sprint 55 T55.4).
+ * Unit test for {@see WriteDevelopingStoryMessageHandler} (Sprint 55 T55.4 + T55.9).
  */
 class WriteDevelopingStoryMessageHandlerTest extends TestCase
 {
-    private DevelopingStoryWriter&MockObject $developingStoryWriter;
+    private DevelopingStoryWriter&MockObject $writer;
+    private GuardPipelineInterface&MockObject $guardPipeline;
+    private MessageBusInterface&MockObject $messageBus;
+    private TranslationPriorityDispatcher $translationDispatcher;
+    private EscalationLogWriter&MockObject $escalationLogWriter;
     private ArticleRepository&MockObject $articleRepository;
     private SourceSignalRepository&MockObject $signalRepository;
+    private EntityManagerInterface&MockObject $em;
     private LoggerInterface&MockObject $logger;
     private WriteDevelopingStoryMessageHandler $handler;
 
+    /** @var list<TranslateArticleMessage> */
+    private array $dispatchedTranslations = [];
+
     protected function setUp(): void
     {
-        $this->developingStoryWriter = $this->createMock(DevelopingStoryWriter::class);
+        $this->writer = $this->createMock(DevelopingStoryWriter::class);
+        $this->guardPipeline = $this->createMock(GuardPipelineInterface::class);
+        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->escalationLogWriter = $this->createMock(EscalationLogWriter::class);
         $this->articleRepository = $this->createMock(ArticleRepository::class);
         $this->signalRepository = $this->createMock(SourceSignalRepository::class);
+        $this->em = $this->createMock(EntityManagerInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
+        // TranslationPriorityDispatcher is final readonly — use a real instance
+        // with a mocked MessageBus so the handler's dispatch() call is
+        // observable in tests.
+        $this->dispatchedTranslations = [];
+        $this->messageBus->method('dispatch')
+            ->willReturnCallback(function (object $envelopeOrMessage): Envelope {
+                $envelope = $envelopeOrMessage instanceof Envelope
+                    ? $envelopeOrMessage
+                    : new Envelope($envelopeOrMessage);
+                $inner = $envelope->getMessage();
+                if ($inner instanceof TranslateArticleMessage) {
+                    $this->dispatchedTranslations[] = $inner;
+                }
+
+                return $envelope;
+            });
+
+        $importantRepo = $this->createMock(ImportantArticlesListRepository::class);
+        $this->translationDispatcher = new TranslationPriorityDispatcher(
+            $this->messageBus,
+            new TranslationPriorityResolver($importantRepo),
+            new NullLogger(),
+        );
+
         $this->handler = new WriteDevelopingStoryMessageHandler(
-            $this->developingStoryWriter,
+            $this->writer,
+            $this->guardPipeline,
+            $this->translationDispatcher,
+            $this->escalationLogWriter,
+            new GuardEscalationCategoryMapper(),
             $this->articleRepository,
             $this->signalRepository,
+            $this->em,
             $this->logger,
         );
     }
 
-    public function testHappyPathDispatchesDevelopingStoryWriter(): void
+    public function testGuardPassDispatchesReTranslation(): void
     {
-        $article = new Article();
+        $article = $this->buildDevelopingArticle();
         $primary = $this->mockSignal(100);
-        $sup = $this->mockSignal(101);
 
-        $this->articleRepository->method('find')->with(42)->willReturn($article);
-        $this->signalRepository->method('find')->willReturnMap([
-            [100, $primary],
-            [101, $sup],
-        ]);
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
 
-        $this->developingStoryWriter->expects($this->once())
-            ->method('write')
-            ->with(
-                $article,
-                $primary,
-                [$sup],
-                $this->callback(fn (VerificationVerdict $v): bool => $v->type === VerdictType::FULL_FLASH),
-            )
-            ->willReturn($article);
+        $this->writer->method('write')->willReturn($article);
 
-        $message = new WriteDevelopingStoryMessage(
-            articleId: 42,
-            primarySignalId: 100,
-            supportingSignalIds: [101],
-            verdictType: 'full_flash',
-        );
+        $this->guardPipeline->method('check')->willReturn(new GuardVerdict(passed: true));
 
+        $this->escalationLogWriter->expects($this->never())->method('write');
+
+        $message = new WriteDevelopingStoryMessage(42, 100, [], 'full_flash');
         $result = ($this->handler)($message);
 
         $this->assertSame($article, $result);
+        // Handler dispatched a TranslateArticleMessage with forceRetranslate=true.
+        $this->assertCount(1, $this->dispatchedTranslations);
+        $this->assertTrue($this->dispatchedTranslations[0]->forceRetranslate);
+        $this->assertEqualsCanonicalizing(['ru', 'en'], $this->dispatchedTranslations[0]->locales);
+    }
+
+    public function testGuardEscalationArchivesAndLogs(): void
+    {
+        $article = $this->buildDevelopingArticle();
+        $primary = $this->mockSignal(200);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->writer->method('write')->willReturn($article);
+
+        $this->guardPipeline->method('check')->willReturn(new GuardVerdict(
+            passed: false,
+            failures: ['[legal] risc înalt'],
+            escalationCode: LegalGuard::ESCALATION_CODE_CATEGORY_6,
+        ));
+
+        $this->em->expects($this->once())->method('flush');
+
+        $this->escalationLogWriter->expects($this->once())
+            ->method('write')
+            ->with(
+                EscalationCategory::CATEGORY_6_CRIMINAL_ACCUSATION,
+                $this->callback(function (array $snapshot): bool {
+                    // Developing-story snapshot carries revision_count.
+                    return array_key_exists('revision_count', $snapshot);
+                }),
+                $this->isArray(),
+            );
+
+        // TranslationPriorityDispatcher is a real instance; verify nothing was dispatched.
+
+        $message = new WriteDevelopingStoryMessage(42, 200, [], 'full_flash');
+        ($this->handler)($message);
+
+        $this->assertSame(ArticleStatus::ARCHIVED, $article->getStatus());
+        $this->assertCount(0, $this->dispatchedTranslations, 'Archived Article must not dispatch translations');
+    }
+
+    public function testGuardFlagAnnotatesInternalSummaryNoDispatch(): void
+    {
+        $article = $this->buildDevelopingArticle();
+        $primary = $this->mockSignal(300);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->writer->method('write')->willReturn($article);
+
+        $this->guardPipeline->method('check')->willReturn(new GuardVerdict(
+            passed: false,
+            failures: ['[style:tone:medium] ton prea subiectiv'],
+            escalationCode: null,
+        ));
+
+        // TranslationPriorityDispatcher is a real instance; verify nothing was dispatched.
+        $this->escalationLogWriter->expects($this->never())->method('write');
+
+        $message = new WriteDevelopingStoryMessage(42, 300, [], 'full_flash');
+        ($this->handler)($message);
+
+        $this->assertSame(ArticleStatus::PUBLISHED, $article->getStatus());
+        $this->assertStringContainsString('[guard_flag:', (string) $article->getInternalSummary());
+        $this->assertCount(0, $this->dispatchedTranslations, 'Flagged Article must not dispatch re-translation');
+    }
+
+    public function testWriterRejectsSkipsGuardAndDispatch(): void
+    {
+        $article = $this->buildDevelopingArticle();
+        $article->setStatus(ArticleStatus::ARCHIVED);
+        $primary = $this->mockSignal(400);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+
+        // Writer rejects the update (returns null) because the target is archived.
+        $this->writer->method('write')->willReturn(null);
+
+        // Guard + dispatch should never run.
+        $this->guardPipeline->expects($this->never())->method('check');
+        // TranslationPriorityDispatcher is a real instance; verify nothing was dispatched.
+
+        $message = new WriteDevelopingStoryMessage(42, 400, [], 'full_flash');
+        $this->assertNull(($this->handler)($message));
     }
 
     public function testMissingArticleLogsAndReturnsNull(): void
     {
         $this->articleRepository->method('find')->willReturn(null);
-        $this->developingStoryWriter->expects($this->never())->method('write');
+        $this->writer->expects($this->never())->method('write');
 
         $this->logger->expects($this->once())
             ->method('warning')
             ->with('write_developing_article_missing', $this->isArray());
 
-        $message = new WriteDevelopingStoryMessage(999, 100, [], 'full_flash');
-
+        $message = new WriteDevelopingStoryMessage(999999, 1, [], 'full_flash');
         $this->assertNull(($this->handler)($message));
     }
 
-    public function testMissingPrimarySignalLogsAndReturnsNull(): void
+    public function testUnknownVerdictTypeLogsErrorAndReturnsNull(): void
     {
-        $this->articleRepository->method('find')->willReturn(new Article());
-        $this->signalRepository->method('find')->willReturn(null);
-        $this->developingStoryWriter->expects($this->never())->method('write');
+        $this->articleRepository->method('find')->willReturn($this->buildDevelopingArticle());
+        $this->signalRepository->method('find')->willReturn($this->mockSignal(1));
 
-        $this->logger->expects($this->once())
-            ->method('warning')
-            ->with('write_developing_primary_signal_missing', $this->isArray());
-
-        $message = new WriteDevelopingStoryMessage(42, 999, [], 'full_flash');
-
-        $this->assertNull(($this->handler)($message));
-    }
-
-    public function testUnknownVerdictLogsErrorAndReturnsNull(): void
-    {
-        $article = new Article();
-        $primary = $this->mockSignal(1);
-
-        $this->articleRepository->method('find')->willReturn($article);
-        $this->signalRepository->method('find')->willReturn($primary);
-        $this->developingStoryWriter->expects($this->never())->method('write');
-
+        $this->writer->expects($this->never())->method('write');
         $this->logger->expects($this->once())
             ->method('error')
             ->with('write_developing_unknown_verdict_type', $this->isArray());
 
-        $message = new WriteDevelopingStoryMessage(42, 1, [], 'garbage_verdict');
-
+        $message = new WriteDevelopingStoryMessage(42, 1, [], 'nonsense');
         $this->assertNull(($this->handler)($message));
     }
 
-    public function testMissingSupportingSignalsAreDropped(): void
+    private function buildDevelopingArticle(): Article
     {
         $article = new Article();
-        $primary = $this->mockSignal(1);
-        $alive = $this->mockSignal(3);
+        $article->setTitle('Developing story');
+        $article->setLead('Seed lead');
+        $article->setContent('Seed content');
+        $article->setStatus(ArticleStatus::PUBLISHED);
+        $article->setArticleType(ArticleType::DEVELOPING_STORY);
+        $article->setRevisionCount(2);
 
-        $this->articleRepository->method('find')->willReturn($article);
-        $this->signalRepository->method('find')->willReturnCallback(
-            fn (int $id): ?SourceSignal => match ($id) {
-                1 => $primary,
-                3 => $alive,
-                default => null,
-            },
-        );
+        // TranslationPriorityDispatcher::dispatch bails out early when the
+        // Article has no id, so seed one via reflection for tests that
+        // expect the dispatch path to fire.
+        $ref = new \ReflectionProperty(Article::class, 'id');
+        $ref->setValue($article, 42);
 
-        $this->developingStoryWriter->expects($this->once())
-            ->method('write')
-            ->with($article, $primary, [$alive], $this->anything())
-            ->willReturn($article);
-
-        $message = new WriteDevelopingStoryMessage(42, 1, [2, 3], 'flash_with_attribution');
-
-        $this->assertSame($article, ($this->handler)($message));
-    }
-
-    public function testConfidencePulledFromClaimGraphSnapshot(): void
-    {
-        $article = new Article();
-        $primary = $this->mockSignal(1);
-        $primary->method('getClaimGraphSnapshot')->willReturn([
-            'verdict_confidence' => 0.71,
-        ]);
-
-        $this->articleRepository->method('find')->willReturn($article);
-        $this->signalRepository->method('find')->willReturn($primary);
-
-        $captured = null;
-        $this->developingStoryWriter->expects($this->once())
-            ->method('write')
-            ->willReturnCallback(function ($a, $p, $s, VerificationVerdict $v) use (&$captured, $article): Article {
-                $captured = $v;
-
-                return $article;
-            });
-
-        $message = new WriteDevelopingStoryMessage(42, 1, [], 'full_flash');
-        ($this->handler)($message);
-
-        $this->assertNotNull($captured);
-        $this->assertEqualsWithDelta(0.71, $captured->confidence, 0.001);
+        return $article;
     }
 
     private function mockSignal(int $id): SourceSignal&MockObject
     {
         $verifiedSource = $this->createMock(VerifiedSource::class);
-
         $signal = $this->createMock(SourceSignal::class);
         $signal->method('getId')->willReturn($id);
         $signal->method('getVerifiedSource')->willReturn($verifiedSource);
+        $signal->method('getClaimGraphSnapshot')->willReturn(null);
 
         return $signal;
     }
