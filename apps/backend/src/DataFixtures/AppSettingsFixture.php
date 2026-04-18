@@ -78,6 +78,13 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         // 300s = 5min refresh — slower than wire because MD/RO editorial
         // outlets publish on a less frenetic cadence.
         'editorial.monitor.media_ro.fetch_interval_seconds' => '300',
+
+        // MediaRuSourceMonitor (Sprint 54 T54.5) — covers independent_ru,
+        // kremlin_aligned alignments. Overlaps with WireSourceMonitor on
+        // these two alignments by design; the independent cadence (300s)
+        // gives Russian-language coverage its own operational signal.
+        'editorial.monitor.media_ru.enabled' => 'true',
+        'editorial.monitor.media_ru.fetch_interval_seconds' => '300',
     ];
 
     /**
