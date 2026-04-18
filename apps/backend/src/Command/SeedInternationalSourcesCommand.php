@@ -17,7 +17,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:source:seed-international',
-    description: 'Seed international RSS sources with credibility weights for StoryCluster scoring',
+    description: 'Seed international RSS sources with credibility weights',
 )]
 class SeedInternationalSourcesCommand extends Command
 {

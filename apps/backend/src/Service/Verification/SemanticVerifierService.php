@@ -13,23 +13,17 @@ use Psr\Log\LoggerInterface;
 /**
  * Topic-level semantic deduplication for press releases inside a time window.
  *
- * Replaces the cluster-bound contamination gate (see {@see \App\Service\Clustering\SemanticClusterVerifier}).
  * Per ADR-019 D3: given press releases P1..Pn classified on topic T within a
  * fixed window (default 24h), flag pairs whose semantic similarity exceeds the
  * configured threshold as candidate duplicates. The output is consumed at
  * article generation time to prevent two press releases describing the same
  * event from producing two articles.
  *
- * Infrastructure characteristics preserved from the legacy verifier:
- * - **Fail-open contract**: any LLM/transport/parse failure returns an empty
- *   pairs list. Callers must treat "no duplicates flagged" as the safe default.
- *   This service must NEVER throw to its caller.
- * - **AppSettings-driven thresholds**: existing `cluster_semantic_*` keys are
- *   reused (slated for rename in T52.11; intentionally not renamed here to
- *   keep T52.8 scope contained).
+ * Contract:
+ * - **Fail-open**: any LLM/transport/parse failure returns an empty pairs list.
+ *   Callers must treat "no duplicates flagged" as the safe default. This service
+ *   must NEVER throw to its caller.
  * - **Gemini-backed**: bulk classification fits the cheap-model routing tier.
- *
- * @see \App\Service\Clustering\SemanticClusterVerifier deprecated cluster-bound counterpart
  */
 class SemanticVerifierService
 {

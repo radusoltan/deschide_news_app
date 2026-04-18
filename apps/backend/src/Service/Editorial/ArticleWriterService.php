@@ -6,7 +6,6 @@ namespace App\Service\Editorial;
 
 use App\Dto\Editorial\ArticleDraft;
 use App\Entity\PressRelease;
-use App\Entity\StoryCluster;
 use App\Entity\Topic;
 use App\Entity\TopicBriefing;
 use App\Enum\BriefingCadence;
@@ -17,10 +16,8 @@ use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
 
 /**
- * Generates a news article draft from either:
- *   - a Topic + 24h window of press releases (Sprint 52, ADR-019 D1 — primary)
- *   - a StoryCluster (legacy, kept @deprecated for T52.10 quality
- *     comparison; removed wholesale in T52.12)
+ * Generates a news article draft from a Topic + window of press releases
+ * (ADR-019 D1).
  *
  * Assembles a context dossier (TopicBriefing summary if available, otherwise
  * structural fallback from PR titles), calls Gemini with a structured
@@ -33,12 +30,6 @@ class ArticleWriterService
     private const EXCERPT_THRESHOLD = 500;
     private const MAX_CONTENT_PER_SOURCE = 3000;
     private const KEY_FACTS_FALLBACK_SOURCES = 3;
-
-    /** @deprecated since Sprint 52 — replaced by AppSetting `article_generation.min_pr_count`. Removed in T52.12. */
-    private const MIN_SOURCES_FOR_AI = 3;
-
-    /** @deprecated since Sprint 52 — replaced by AppSetting `article_generation.min_avg_content_length` (same value). Removed in T52.12. */
-    private const MIN_AVG_CONTENT_LENGTH = 1500;
 
     public function __construct(
         private readonly GeminiCliService $geminiCli,
@@ -194,7 +185,6 @@ class ArticleWriterService
             contentRo: $parsed['content'],
             metaDescription: $parsed['meta_description'],
             suggestedTags: $parsed['suggested_tags'],
-            clusterId: null,
             confidenceScore: $confidence,
             sourcePressReleaseIds: $sourceIds,
             rawPrompt: $prompt,
@@ -387,228 +377,11 @@ PROMPT;
     }
 
     // ────────────────────────────────────────────────────────────────────
-    //  Sprint 52 — Legacy StoryCluster path (kept FUNCTIONAL for T52.10
-    //  quality comparison; removed wholesale in T52.12 per ADR-019 D6)
+    //  Shared helpers
     // ────────────────────────────────────────────────────────────────────
 
     /**
-     * @deprecated since Sprint 52 (T52.4) — superseded by
-     *             {@see isEligibleForTopicWindow()}. Kept functional
-     *             for the T52.10 quality comparison checkpoint;
-     *             removed wholesale in T52.12 (ADR-019 D6).
-     *
-     * @return array{eligible: bool, reason: ?string, sourceCount: int, avgLength: int}
-     */
-    public function isEligibleForAiGeneration(StoryCluster $cluster): array
-    {
-        $pressReleases = $cluster->getPressReleases();
-        $count = $pressReleases->count();
-
-        if ($count === 0) {
-            return ['eligible' => false, 'reason' => 'No press releases', 'sourceCount' => 0, 'avgLength' => 0];
-        }
-
-        if ($count < self::MIN_SOURCES_FOR_AI) {
-            return [
-                'eligible' => false,
-                'reason' => sprintf('Too few sources (%d, need %d)', $count, self::MIN_SOURCES_FOR_AI),
-                'sourceCount' => $count,
-                'avgLength' => 0,
-            ];
-        }
-
-        $totalLength = 0;
-        foreach ($pressReleases as $pr) {
-            $totalLength += mb_strlen($pr->getContent());
-        }
-        $avgLength = (int) ($totalLength / $count);
-
-        if ($avgLength < self::MIN_AVG_CONTENT_LENGTH) {
-            return [
-                'eligible' => false,
-                'reason' => sprintf('Content too thin (avg %d chars, need %d)', $avgLength, self::MIN_AVG_CONTENT_LENGTH),
-                'sourceCount' => $count,
-                'avgLength' => $avgLength,
-            ];
-        }
-
-        return ['eligible' => true, 'reason' => null, 'sourceCount' => $count, 'avgLength' => $avgLength];
-    }
-
-    /**
-     * @deprecated since Sprint 52 (T52.4) — superseded by
-     *             {@see writeArticleFromTopicWindow()}. Kept FUNCTIONAL
-     *             (not a delegate) for the T52.10 quality comparison
-     *             checkpoint; removed wholesale in T52.12 (ADR-019 D6).
-     */
-    public function generateArticle(StoryCluster $cluster): ?ArticleDraft
-    {
-        $pressReleases = $cluster->getPressReleases();
-        if ($pressReleases->isEmpty()) {
-            $this->logger->warning('ArticleWriterService: cluster #{id} has no PressReleases', [
-                'id' => $cluster->getId(),
-            ]);
-
-            return null;
-        }
-
-        $prompt = $this->buildPrompt($cluster);
-        $raw = $this->callGemini($prompt);
-
-        if ($raw === null) {
-            return null;
-        }
-
-        $parsed = $this->parseResponse($raw);
-        if ($parsed === null) {
-            $this->logger->warning('ArticleWriterService: failed to parse Gemini JSON for cluster #{id}', [
-                'id' => $cluster->getId(),
-                'rawLength' => \strlen($raw),
-            ]);
-
-            return null;
-        }
-
-        $this->checkDiacritics($parsed, sprintf('cluster#%d', $cluster->getId() ?? 0));
-
-        $sourceIds = [];
-        foreach ($pressReleases as $pr) {
-            $sourceIds[] = $pr->getId();
-        }
-
-        $confidence = $this->calculateConfidence($cluster, $parsed);
-
-        $this->logger->info('ArticleWriterService: generated draft for cluster #{id}', [
-            'id' => $cluster->getId(),
-            'titleLength' => mb_strlen($parsed['title']),
-            'contentWords' => str_word_count($parsed['content']),
-            'sourceCount' => \count($sourceIds),
-            'confidence' => round($confidence, 2),
-        ]);
-
-        return new ArticleDraft(
-            titleRo: $parsed['title'],
-            leadRo: $parsed['lead'],
-            contentRo: $parsed['content'],
-            metaDescription: $parsed['meta_description'],
-            suggestedTags: $parsed['suggested_tags'],
-            clusterId: $cluster->getId(),
-            confidenceScore: $confidence,
-            sourcePressReleaseIds: $sourceIds,
-            rawPrompt: $prompt,
-            rawResponse: $raw,
-        );
-    }
-
-    /** @deprecated since Sprint 52 — see {@see generateArticle()}. */
-    private function buildPrompt(StoryCluster $cluster): string
-    {
-        $context = $this->assembleContext($cluster);
-
-        return <<<PROMPT
-Ești jurnalist la Deschide.md, un portal de știri din Republica Moldova.
-Scrie un articol de știri bazat STRICT pe sursele furnizate.
-
-REGULI OBLIGATORII:
-- Stil piramidă inversată: informația cea mai importantă PRIMA
-- Lead: Maximum 50 de cuvinte, răspunde la Cine/Ce/Când/Unde/De ce
-- Atribuire: Citează sursa pentru fiecare afirmație factuală
-- Diacritice: EXCLUSIV comma-below: ș (U+0219), ț (U+021B). Cedilla = EROARE.
-- Sursele marcate [EXCERPT ONLY] — NU extinde, NU inventă context suplimentar
-- Dacă sursele se contrazic pe cifre/date, include AMBELE variante cu [DISCREPANȚĂ]
-- NU inventa fapte. Fiecare afirmație TREBUIE să apară în cel puțin o sursă
-- Tonul: Modern, factual, accesibil. Evită limbaj propagandistic.
-- Conținutul: minimum 300 de cuvinte, structurat cu subtitluri Markdown (##)
-
-RĂSPUNDE EXCLUSIV cu JSON valid (fără markdown fences):
-{
-  "title": "Titlul articolului (max 100 caractere)",
-  "lead": "Lead-ul (max 50 cuvinte)",
-  "content": "Conținutul complet în Markdown (min 300 cuvinte)",
-  "meta_description": "Meta description SEO (max 160 caractere)",
-  "suggested_tags": ["tag1", "tag2", "tag3"]
-}
-
-CONTEXT DOSSIER:
----
-{$context}
----
-PROMPT;
-    }
-
-    /** @deprecated since Sprint 52 — see {@see generateArticle()}. */
-    private function assembleContext(StoryCluster $cluster): string
-    {
-        $parts = [];
-
-        $parts[] = '## REZUMAT CLUSTER';
-        $parts[] = 'Titlu: ' . $cluster->getPrimaryHeadline();
-        $parts[] = 'Scor importanță: ' . round($cluster->getImportanceScore(), 2);
-
-        if ($cluster->getSummaryShort() !== null) {
-            $parts[] = 'Rezumat scurt: ' . $cluster->getSummaryShort();
-        }
-        if ($cluster->getSummaryMedium() !== null) {
-            $parts[] = 'Rezumat mediu: ' . $cluster->getSummaryMedium();
-        }
-        if ($cluster->getWhyItMatters() !== null) {
-            $parts[] = 'De ce contează: ' . $cluster->getWhyItMatters();
-        }
-        $keyFacts = $cluster->getKeyFacts();
-        if ($keyFacts !== null && \count($keyFacts) > 0) {
-            $parts[] = "Fapte cheie:\n- " . implode("\n- ", $keyFacts);
-        }
-
-        $parts[] = $this->renderSourcesSection(iterator_to_array($cluster->getPressReleases()));
-
-        return implode("\n", $parts);
-    }
-
-    /**
-     * @deprecated since Sprint 52 — see {@see generateArticle()}.
-     *
-     * @param array{title: string, lead: string, content: string, meta_description: string, suggested_tags: list<string>} $parsed
-     */
-    private function calculateConfidence(StoryCluster $cluster, array $parsed): float
-    {
-        $score = 0.0;
-
-        $sourceCount = $cluster->getPressReleases()->count();
-        $score += min(0.3, $sourceCount * 0.06);
-
-        $fullTextCount = 0;
-        foreach ($cluster->getPressReleases() as $pr) {
-            if (mb_strlen($pr->getContent()) >= self::EXCERPT_THRESHOLD) {
-                $fullTextCount++;
-            }
-        }
-        $fullTextRatio = $sourceCount > 0 ? $fullTextCount / $sourceCount : 0;
-        $score += $fullTextRatio * 0.25;
-
-        $contentWords = str_word_count($parsed['content']);
-        $score += min(0.2, ($contentWords / 500) * 0.2);
-
-        if ($cluster->getSummaryShort() !== null) {
-            $score += 0.05;
-        }
-        if ($cluster->getSummaryMedium() !== null) {
-            $score += 0.05;
-        }
-        if ($cluster->getKeyFacts() !== null) {
-            $score += 0.05;
-        }
-
-        $score += min(0.1, $cluster->getImportanceScore() * 0.1);
-
-        return min(1.0, $score);
-    }
-
-    // ────────────────────────────────────────────────────────────────────
-    //  Shared helpers (used by both paths)
-    // ────────────────────────────────────────────────────────────────────
-
-    /**
-     * Render the SURSE section for either path.
+     * Render the SURSE section.
      *
      * @param PressRelease[] $pressReleases
      */
@@ -729,7 +502,7 @@ PROMPT;
      * Warn if cedilla diacritics detected in output.
      *
      * @param array{title: string, lead: string, content: string, meta_description: string, suggested_tags: list<string>} $parsed
-     * @param string                                                                                                       $sourceLabel Identifier for log context (e.g. "topic#42" or "cluster#7")
+     * @param string                                                                                                       $sourceLabel Identifier for log context (e.g. "topic#42")
      */
     private function checkDiacritics(array $parsed, string $sourceLabel): void
     {

@@ -334,10 +334,6 @@ class Article implements Translatable
     #[Groups(['article:read'])]
     private bool $aiGenerated = false;
 
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    #[Groups(['article:read'])]
-    private ?int $sourceClusterId = null;
-
     #[ORM\Column(type: Types::FLOAT, nullable: true)]
     #[Groups(['article:read'])]
     private ?float $aiConfidenceScore = null;
@@ -884,18 +880,6 @@ class Article implements Translatable
     public function setAiGenerated(bool $aiGenerated): self
     {
         $this->aiGenerated = $aiGenerated;
-
-        return $this;
-    }
-
-    public function getSourceClusterId(): ?int
-    {
-        return $this->sourceClusterId;
-    }
-
-    public function setSourceClusterId(?int $sourceClusterId): self
-    {
-        $this->sourceClusterId = $sourceClusterId;
 
         return $this;
     }

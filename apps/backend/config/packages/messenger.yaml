@@ -171,11 +171,6 @@ framework:
             'App\Message\Aggregator\ProcessAggregatorResultMessage': editorial
             'App\Message\Aggregator\TriggerAggregatorRunMessage': editorial
 
-            # Clustering pipeline (Sprint 30-32)
-            'App\Message\Clustering\ClusterPressReleaseMessage': editorial
-            'App\Message\Clustering\TriggerClusterRunMessage': editorial
-            'App\Message\Clustering\TriggerClusterScoringMessage': editorial
-            'App\Message\Clustering\SummarizeClusterMessage': ai_async
 
             # Python scraper pipeline (Sprint 46)
             'App\Message\Scraping\PythonScrapeMessage': python_scraper

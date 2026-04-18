@@ -69,7 +69,6 @@ class ArticleFactoryService
             $article->setAiGenerated(true);
             $article->setAiConfidenceScore($pressRelease->getAiConfidenceScore());
             $article->setAiSourceCount($pressRelease->getAiSourceCount());
-            $article->setSourceClusterId($pressRelease->getSourceClusterId());
         }
 
         // Map category
