@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Scheduler;
 
 use App\Message\Editorial\RunMediaRoMonitorMessage;
+use App\Message\Editorial\RunMediaRuMonitorMessage;
 use App\Message\Editorial\RunWireMonitorMessage;
 use App\Repository\AppSettingRepository;
 use Symfony\Component\Scheduler\Attribute\AsSchedule;
@@ -20,10 +21,11 @@ use Symfony\Component\Scheduler\ScheduleProviderInterface;
  * returns an empty Schedule and the two monitors never fire automatically.
  * Sprint 54 flips the flag on once the verification layer is ready.
  *
- * When enabled, the wire + media_ro monitors can be individually toggled and
- * their fetch intervals independently tuned via:
- *   - editorial.monitor.wire.enabled / .fetch_interval_seconds     (default 180s)
+ * When enabled, the three monitors can be individually toggled and their
+ * fetch intervals independently tuned via:
+ *   - editorial.monitor.wire.enabled     / .fetch_interval_seconds (default 180s)
  *   - editorial.monitor.media_ro.enabled / .fetch_interval_seconds (default 300s)
+ *   - editorial.monitor.media_ru.enabled / .fetch_interval_seconds (default 300s)
  *
  * To consume: symfony console messenger:consume scheduler_editorial_signal -vv
  */
@@ -55,6 +57,14 @@ final class EditorialSignalScheduleProvider implements ScheduleProviderInterface
             $schedule->add(RecurringMessage::every(
                 sprintf('%d seconds', $interval),
                 new RunMediaRoMonitorMessage(),
+            ));
+        }
+
+        if ($this->appSettings->getBool('editorial.monitor.media_ru.enabled', true)) {
+            $interval = max(30, $this->appSettings->getInt('editorial.monitor.media_ru.fetch_interval_seconds', 300));
+            $schedule->add(RecurringMessage::every(
+                sprintf('%d seconds', $interval),
+                new RunMediaRuMonitorMessage(),
             ));
         }
 

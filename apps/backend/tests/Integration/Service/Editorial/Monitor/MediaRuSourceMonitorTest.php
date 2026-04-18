@@ -11,8 +11,8 @@ use App\Enum\EditorialAlignment;
 use App\Repository\Editorial\SourceSignalRepository;
 use App\Repository\Editorial\VerifiedSourceRepository;
 use App\Service\ContentHasher;
+use App\Service\Editorial\Monitor\MediaRuSourceMonitor;
 use App\Service\Editorial\Monitor\UrlNormalizer;
-use App\Service\Editorial\Monitor\WireSourceMonitor;
 use App\Service\Scraping\RssFeedParser;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\NullLogger;
@@ -25,13 +25,13 @@ use Symfony\Component\Messenger\Middleware\MiddlewareInterface;
 use Symfony\Component\Messenger\Middleware\StackInterface;
 
 /**
- * T53.6 — WireSourceMonitor integration tests.
+ * T54.5 — MediaRuSourceMonitor integration tests.
  *
- * Validates the alignment filter wiring end-to-end: a WireSourceMonitor run
- * must pick up Reuters (wire_neutral) + Meduza (independent_ru) sources and
- * NOT pick up MD/RO outlets even when they exist and are enabled.
+ * Validates alignment filter wiring end-to-end: a MediaRuSourceMonitor run
+ * must pick up INDEPENDENT_RU (Meduza) + KREMLIN_ALIGNED (Interfax-like)
+ * and NOT pick up wire_neutral or md_* sources.
  */
-class WireSourceMonitorTest extends KernelTestCase
+class MediaRuSourceMonitorTest extends KernelTestCase
 {
     private EntityManagerInterface $em;
     private RssFeedParser $rssFeedParser;
@@ -102,31 +102,30 @@ class WireSourceMonitorTest extends KernelTestCase
         parent::tearDown();
     }
 
-    public function testWireMonitorFetchesReutersButSkipsOtherAlignments(): void
+    public function testMediaRuMonitorFetchesRuAlignedSourcesAndSkipsOthers(): void
     {
-        // Sprint 54 T54.11 narrowed WireSourceMonitor to WIRE_NEUTRAL +
-        // UKRAINIAN_STATE. INDEPENDENT_RU and KREMLIN_ALIGNED moved
-        // single-owner to MediaRuSourceMonitor; MD_* belong to
-        // MediaRoSourceMonitor. This test exercises that narrowing by
-        // seeding one source per alignment bucket and asserting the wire
-        // monitor only touches the WIRE_NEUTRAL one.
+        $meduzaXml = (string) file_get_contents(\dirname(__DIR__, 4) . '/Fixtures/rss/meduza-sample.xml');
         $reutersXml = (string) file_get_contents(\dirname(__DIR__, 4) . '/Fixtures/rss/reuters-sample.xml');
 
+        // Slug prefixes force alphabetical order so the MockHttpClient
+        // queue matches the order the repository yields (tier ASC, slug ASC).
+        // kremlin_aligned (b-) will use reuters-sample as its payload here
+        // purely to exercise the alignment filter; content itself is not asserted.
         $httpClient = new MockHttpClient([
+            new MockResponse($meduzaXml),
             new MockResponse($reutersXml),
         ]);
 
-        $reutersSource = $this->seedSource('Reuters-' . uniqid(), 'https://www.reuters.com/rss');
-        $meduzaSource = $this->seedSource('Meduza-' . uniqid(), 'https://meduza.io/rss');
+        $meduzaSource = $this->seedSource('Meduza-' . uniqid(), 'https://meduza.io/rss/all');
+        $interfaxSource = $this->seedSource('Interfax-' . uniqid(), 'https://www.interfax.com/rss.asp');
         $zdgSource = $this->seedSource('ZDG-' . uniqid(), 'https://www.zdg.md/feed/');
 
-        $reutersVs = $this->seedVerifiedSource('a-wire-reuters', EditorialAlignment::WIRE_NEUTRAL, $reutersSource);
-        // INDEPENDENT_RU — no longer picked up by WireSourceMonitor post T54.11.
-        $this->seedVerifiedSource('b-indep-meduza', EditorialAlignment::INDEPENDENT_RU, $meduzaSource);
-        // MD_INVESTIGATIVE — must NOT be picked up by WireSourceMonitor.
+        $meduzaVs = $this->seedVerifiedSource('a-indru-meduza', EditorialAlignment::INDEPENDENT_RU, $meduzaSource);
+        $interfaxVs = $this->seedVerifiedSource('b-krml-interfax', EditorialAlignment::KREMLIN_ALIGNED, $interfaxSource);
+        // md_investigative — must NOT be picked up by MediaRuSourceMonitor.
         $this->seedVerifiedSource('c-md-zdg', EditorialAlignment::MD_INVESTIGATIVE, $zdgSource);
 
-        $monitor = new WireSourceMonitor(
+        $monitor = new MediaRuSourceMonitor(
             $httpClient,
             $this->rssFeedParser,
             $this->contentHasher,
@@ -140,17 +139,25 @@ class WireSourceMonitorTest extends KernelTestCase
 
         $result = $monitor->fetchAndEmit();
 
-        self::assertSame(1, $result->sourcesProcessed, 'Only the WIRE_NEUTRAL VS is iterated after T54.11 narrowing.');
-        self::assertSame(3, $result->signalsEmitted, '3 Reuters items.');
+        self::assertSame(
+            2,
+            $result->sourcesProcessed,
+            'INDEPENDENT_RU + KREMLIN_ALIGNED VS processed, md_* not iterated.',
+        );
         self::assertSame([], $result->errors);
 
-        $reutersStored = $this->sourceSignalRepository->findRecentBySource($reutersVs, 24);
-        self::assertCount(3, $reutersStored);
+        $meduzaStored = $this->sourceSignalRepository->findRecentBySource($meduzaVs, 24);
+        self::assertNotEmpty($meduzaStored, 'Meduza signals should be persisted.');
+
+        foreach ($meduzaStored as $signal) {
+            self::assertInstanceOf(SourceSignal::class, $signal);
+            self::assertSame($meduzaVs->getId(), $signal->getVerifiedSource()->getId());
+        }
     }
 
-    public function testAlignmentFiltersDeclaresWireLikeSet(): void
+    public function testAlignmentFiltersDeclaresRuSet(): void
     {
-        $monitor = new WireSourceMonitor(
+        $monitor = new MediaRuSourceMonitor(
             new MockHttpClient([]),
             $this->rssFeedParser,
             $this->contentHasher,
@@ -167,12 +174,10 @@ class WireSourceMonitorTest extends KernelTestCase
 
         self::assertEqualsCanonicalizing(
             [
-                EditorialAlignment::WIRE_NEUTRAL,
-                EditorialAlignment::UKRAINIAN_STATE,
+                EditorialAlignment::INDEPENDENT_RU,
+                EditorialAlignment::KREMLIN_ALIGNED,
             ],
             $filters,
-            'WireSourceMonitor narrowed in Sprint 54 T54.11 — INDEPENDENT_RU and '
-            . 'KREMLIN_ALIGNED are now single-owned by MediaRuSourceMonitor.',
         );
     }
 
@@ -181,8 +186,8 @@ class WireSourceMonitorTest extends KernelTestCase
         $source = new Source();
         $source->setName($name);
         $source->setRssUrl($rssUrl);
-        $source->setCredibilityWeight(0.9);
-        $source->setCountry('XX');
+        $source->setCredibilityWeight(0.5);
+        $source->setCountry('RU');
         $source->setFetchFrequencyMinutes(60);
         $source->setIsActive(true);
 
@@ -201,13 +206,12 @@ class WireSourceMonitorTest extends KernelTestCase
         EditorialAlignment $alignment,
         Source $source,
     ): VerifiedSource {
-        // Use a unique slug suffix so parallel test seeds don't collide.
         $fullSlug = $slug . '-' . uniqid();
         $vs = new VerifiedSource(
             slug: $fullSlug,
             tier: 1,
             editorialAlignment: $alignment,
-            trustScoreBaseline: '0.85',
+            trustScoreBaseline: '0.50',
             source: $source,
         );
         $this->em->persist($vs);

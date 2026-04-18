@@ -386,6 +386,40 @@ class SeedInternationalSourcesCommand extends Command
                 'fetchFrequencyMinutes' => 120,
                 'domainPattern' => 'europarl.europa.eu',
             ],
+
+            // === KREMLIN-ALIGNED WAVE (Sprint 54 T54.4) ===
+            // Intentional low credibility: these are editorially aligned with
+            // Kremlin narratives. Their value is signal diversity for the
+            // VerificationGate claim-origin graph (ADR-020 D3), not standalone
+            // reliability. Credibility floor kept above 0 so they still count
+            // as "a source" in chain counting.
+            [
+                'name' => 'TASS',
+                'rssUrl' => 'https://tass.com/rss/v2.xml',
+                'credibilityWeight' => 0.50,
+                'country' => 'RU',
+                'sourceCategory' => SourceCategory::AGENCY,
+                'fetchFrequencyMinutes' => 60,
+                'domainPattern' => 'tass.com',
+            ],
+            [
+                'name' => 'RIA Novosti',
+                'rssUrl' => 'https://ria.ru/export/rss2/archive/index.xml',
+                'credibilityWeight' => 0.50,
+                'country' => 'RU',
+                'sourceCategory' => SourceCategory::AGENCY,
+                'fetchFrequencyMinutes' => 60,
+                'domainPattern' => 'ria.ru',
+            ],
+            [
+                'name' => 'Kremlin.ru',
+                'rssUrl' => 'http://kremlin.ru/events/president/news/feed',
+                'credibilityWeight' => 0.60,
+                'country' => 'RU',
+                'sourceCategory' => SourceCategory::INSTITUTIONAL,
+                'fetchFrequencyMinutes' => 120,
+                'domainPattern' => 'kremlin.ru',
+            ],
         ];
     }
 }

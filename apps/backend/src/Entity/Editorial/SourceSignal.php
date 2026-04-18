@@ -83,6 +83,24 @@ class SourceSignal
     #[ORM\Column(type: Types::JSON, nullable: true)]
     private ?array $rawPayload = null;
 
+    /**
+     * Snapshot of the {@see \App\DTO\Editorial\ClaimOriginGraph} and
+     * {@see \App\DTO\Editorial\VerificationVerdict} at the moment the
+     * verification gate ruled on this signal's claim cluster.
+     *
+     * Shape (Sprint 54 T54.9):
+     *   [
+     *     'graph'       => array,   // ClaimOriginGraph::toArray()
+     *     'verdict'     => string,  // VerdictType->value
+     *     'decided_at'  => string,  // ISO-8601
+     *     'reasoning'   => string,  // free-form LLM rationale
+     *   ]
+     *
+     * @var array<string, mixed>|null
+     */
+    #[ORM\Column(name: 'claim_graph_snapshot', type: Types::JSON, nullable: true)]
+    private ?array $claimGraphSnapshot = null;
+
     public function __construct(
         VerifiedSource $verifiedSource,
         string $sourceUrl,
@@ -199,6 +217,20 @@ class SourceSignal
     public function setRawPayload(?array $rawPayload): self
     {
         $this->rawPayload = $rawPayload;
+
+        return $this;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function getClaimGraphSnapshot(): ?array
+    {
+        return $this->claimGraphSnapshot;
+    }
+
+    /** @param array<string, mixed>|null $claimGraphSnapshot */
+    public function setClaimGraphSnapshot(?array $claimGraphSnapshot): self
+    {
+        $this->claimGraphSnapshot = $claimGraphSnapshot;
 
         return $this;
     }
