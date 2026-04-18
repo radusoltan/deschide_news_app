@@ -170,6 +170,21 @@ framework:
                     multiplier: 2
                     max_delay: 45000
 
+            # Editorial-pipeline L3 writer transport (Sprint 55 T55.3, ADR-020 D5).
+            # Dedicated queue for WriteFlashMessage (and WriteDevelopingStoryMessage
+            # in T55.4) so the writer pool is isolated from both the verification
+            # stage and the legacy `editorial` queue (7286 stale messages).
+            # Consumed by messenger-editorial-flash Supervisor pool (numprocs=2).
+            editorial_flash:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: editorial_flash
+                retry_strategy:
+                    max_retries: 3
+                    delay: 3000
+                    multiplier: 2
+                    max_delay: 45000
+
         routing:
             # Route your messages to the transports
             # Cache messages (Sprint 2)
@@ -242,6 +257,12 @@ framework:
             'App\Message\Editorial\FlushStabilizedSignalsMessage': editorial_verification_extract
             'App\Message\Editorial\AggregateSignalsMessage': editorial_verification_decide
             'App\Message\Editorial\VerifyClaimMessage': editorial_verification_decide
+
+            # Editorial-pipeline writers (Sprint 55 T55.3, T55.4, ADR-020 L3 layer).
+            # T55.4 adds WriteDevelopingStoryMessage on the same transport — the two
+            # messages share a pool because developing-story merges are cheaper than
+            # fresh flash emission and the writer workload is low-volume end-to-end.
+            'App\Message\Editorial\WriteFlashMessage': editorial_flash
 
             # NotebookLM sync (Sprint 51a)
             'App\Message\NotebookLM\TriggerTopicNotebookSyncMessage': editorial
