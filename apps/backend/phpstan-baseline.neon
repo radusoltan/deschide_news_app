@@ -115,12 +115,6 @@ parameters:
 			path: src/Command/CleanupStatsCommand.php
 
 		-
-			message: '#^Method Doctrine\\Persistence\\ObjectManager\:\:clear\(\) invoked with 1 parameter, 0 required\.$#'
-			identifier: arguments.count
-			count: 1
-			path: src/Command/ClusterDataQualityCommand.php
-
-		-
 			message: '#^Access to property \$queries on an unknown class Doctrine\\DBAL\\Logging\\DebugStack\.$#'
 			identifier: class.notFound
 			count: 1
@@ -622,12 +616,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Controller/Api/StatsController.php
-
-		-
-			message: '#^Call to an undefined method Symfony\\Component\\Serializer\\SerializerInterface\:\:normalize\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Controller/Api/StoryClusterController.php
 
 		-
 			message: '#^Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface\:\:getId\(\)\.$#'
@@ -1776,42 +1764,6 @@ parameters:
 			path: src/Entity/ShortLinkInteraction.php
 
 		-
-			message: '#^Method App\\Entity\\StoryCluster\:\:getKeyFacts\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/StoryCluster.php
-
-		-
-			message: '#^Method App\\Entity\\StoryCluster\:\:getRegionTags\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/StoryCluster.php
-
-		-
-			message: '#^Method App\\Entity\\StoryCluster\:\:setKeyFacts\(\) has parameter \$keyFacts with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/StoryCluster.php
-
-		-
-			message: '#^Method App\\Entity\\StoryCluster\:\:setRegionTags\(\) has parameter \$regionTags with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/StoryCluster.php
-
-		-
-			message: '#^Property App\\Entity\\StoryCluster\:\:\$keyFacts type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/StoryCluster.php
-
-		-
-			message: '#^Property App\\Entity\\StoryCluster\:\:\$regionTags type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/StoryCluster.php
-
-		-
 			message: '#^Property App\\Entity\\Tag\:\:\$articles type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\Article\>\.$#'
 			identifier: doctrine.associationType
 			count: 1
@@ -2122,24 +2074,6 @@ parameters:
 			identifier: instanceof.alwaysTrue
 			count: 1
 			path: src/EventListener/MercureJwtCookieListener.php
-
-		-
-			message: '#^Method App\\EventListener\\PressReleaseIndexListener\:\:indexIfPressRelease\(\) has parameter \$args with generic class Doctrine\\Persistence\\Event\\LifecycleEventArgs but does not specify its types\: TObjectManager$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/EventListener/PressReleaseIndexListener.php
-
-		-
-			message: '#^Method App\\EventListener\\PressReleaseIndexListener\:\:postPersist\(\) has parameter \$args with generic class Doctrine\\Persistence\\Event\\LifecycleEventArgs but does not specify its types\: TObjectManager$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/EventListener/PressReleaseIndexListener.php
-
-		-
-			message: '#^Method App\\EventListener\\PressReleaseIndexListener\:\:postUpdate\(\) has parameter \$args with generic class Doctrine\\Persistence\\Event\\LifecycleEventArgs but does not specify its types\: TObjectManager$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/EventListener/PressReleaseIndexListener.php
 
 		-
 			message: '#^Property App\\EventSubscriber\\HttpMetricsSubscriber\:\:\$requestStartTimes type has no value type specified in iterable type array\.$#'
@@ -2566,54 +2500,6 @@ parameters:
 			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Service/Cache/CacheService.php
-
-		-
-			message: '#^Offset ''key_facts'' on array\{summary_short\: string, summary_medium\: string, why_it_matters\: string, key_facts\: list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/Clustering/ClusterSummaryService.php
-
-		-
-			message: '#^Offset ''summary_medium'' on array\{summary_short\: string, summary_medium\: string, why_it_matters\: string, key_facts\: list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/Clustering/ClusterSummaryService.php
-
-		-
-			message: '#^Offset ''summary_short'' on array\{summary_short\: string, summary_medium\: string, why_it_matters\: string, key_facts\: list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/Clustering/ClusterSummaryService.php
-
-		-
-			message: '#^Offset ''why_it_matters'' on array\{summary_short\: string, summary_medium\: string, why_it_matters\: string, key_facts\: list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/Clustering/ClusterSummaryService.php
-
-		-
-			message: '#^Deprecated in PHP 8\.4\: Parameter \#1 \$since \(DateTimeInterface\) is implicitly nullable via default value null\.$#'
-			identifier: parameter.implicitlyNullable
-			count: 1
-			path: src/Service/Clustering/ClusteringService.php
-
-		-
-			message: '#^Method App\\Service\\Clustering\\PressReleaseIndexManager\:\:bulkIndex\(\) has parameter \$documents with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/Clustering/PressReleaseIndexManager.php
-
-		-
-			message: '#^Method App\\Service\\Clustering\\PressReleaseIndexManager\:\:indexDocument\(\) has parameter \$document with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/Clustering/PressReleaseIndexManager.php
-
-		-
-			message: '#^Property App\\Service\\Clustering\\PressReleaseIndexer\:\:\$logger is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Service/Clustering/PressReleaseIndexer.php
 
 		-
 			message: '#^Match arm comparison between ''alert''\|''breaking''\|''flash'' and ''analysis'' is always false\.$#'
