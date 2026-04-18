@@ -85,6 +85,13 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         // gives Russian-language coverage its own operational signal.
         'editorial.monitor.media_ru.enabled' => 'true',
         'editorial.monitor.media_ru.fetch_interval_seconds' => '300',
+
+        // SignalStabilizationBuffer window (Sprint 54 T54.6, ADR-020 D2).
+        // A signal must sit in the Redis buffer for at least this many
+        // seconds before it's considered stabilized and eligible for
+        // clustering. 45s = tuned for the typical "wire first, others follow"
+        // cadence observed in MD/RO news cycles (Sprint 53 manual analysis).
+        'editorial.stabilization_window_seconds' => '45',
     ];
 
     /**
