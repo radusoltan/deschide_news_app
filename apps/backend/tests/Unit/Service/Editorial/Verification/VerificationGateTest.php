@@ -180,15 +180,12 @@ class VerificationGateTest extends TestCase
         $this->assertSame(VerdictType::ESCALATE_HUMAN, $verdict->type);
     }
 
-    public function testEchoChamberRedLineCollapsesToFlashWithAttribution(): void
+    public function testEchoChamberWithoutTier1Rejects(): void
     {
-        // ADR-020 D3 RED-LINE after T54.8 graph collapse: 3 kremlin sources
-        // in a cycle collapse to 1 chain + 1 alignment. Rule 1 requires a
-        // tier-1 source — if only tier 2 sources are present (as TASS/RIA
-        // both are at tier 2), that falls to Rule 2's chain count... actually
-        // collapsed to 1 chain + no tier 1 → REJECT. This is the editorially
-        // correct outcome: echo-chamber-only kremlin coverage without a
-        // primary-source tier 1 should NOT publish.
+        // ADR-020 D3 after T54.8 graph collapse: 3 kremlin sources in a
+        // cycle collapse to 1 chain + 1 alignment. Without a tier-1
+        // primary, Rule 1 does not fire and the verdict is REJECT — the
+        // editorially correct outcome for echo-chamber-only coverage.
         $graph = $this->makeGraph(
             chains: 1,  // collapsed
             alignments: ['kremlin_aligned'],  // single cluster
