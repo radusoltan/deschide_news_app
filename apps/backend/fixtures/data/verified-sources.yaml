@@ -86,6 +86,34 @@ verified_sources:
     enabled: true
     editorial_notes: "Kremlin-adjacent; use for 'what state position is' not 'what happened'"
 
+  # Sprint 54 T54.4 — kremlin_aligned wave for echo-chamber detection in
+  # VerificationGate (ADR-020 D3). These must be present in the claim-origin
+  # graph so the gate can distinguish "N sources in same alignment cluster"
+  # from "N independent chains".
+  - slug: tass
+    source_name: TASS
+    tier: 2
+    editorial_alignment: kremlin_aligned
+    trust_score_baseline: '0.30'
+    enabled: true
+    editorial_notes: "Russian state agency; use for 'what state position is', never standalone"
+
+  - slug: ria-novosti
+    source_name: RIA Novosti
+    tier: 2
+    editorial_alignment: kremlin_aligned
+    trust_score_baseline: '0.30'
+    enabled: true
+    editorial_notes: "Russian state-aligned agency; echo-chamber indicator"
+
+  - slug: kremlin-official
+    source_name: Kremlin.ru
+    tier: 1
+    editorial_alignment: kremlin_aligned
+    trust_score_baseline: '0.40'
+    enabled: true
+    editorial_notes: "Official Kremlin press feed; tier 1 as primary-source institutional, but aligned so trust floor stays low"
+
   # === MD_INVESTIGATIVE ===
   - slug: zdg
     source_name: ZDG.md
