@@ -50,6 +50,8 @@ class AdminEscalationController extends AbstractController
     public const MAX_PAGE_SIZE = 100;
     public const REASON_MIN_LENGTH = 5;
     public const REASON_MAX_LENGTH = 500;
+    public const EDITORIAL_NOTES_MAX_LENGTH = 2000;
+    public const MERCURE_EXCERPT_MAX_LENGTH = 200;
 
     public function __construct(
         private readonly EditorialEscalationLogRepository $repository,
@@ -146,6 +148,17 @@ class AdminEscalationController extends AbstractController
         $editorialNotes = isset($payload['editorialNotes']) && \is_string($payload['editorialNotes'])
             ? trim($payload['editorialNotes'])
             : null;
+
+        // Bound free-text to prevent DoS (unbounded POST bodies) and unbounded
+        // Mercure event payloads that would blow up subscriber bandwidth.
+        if ($editorialNotes !== null && mb_strlen($editorialNotes) > self::EDITORIAL_NOTES_MAX_LENGTH) {
+            return $this->envelope(false, 'validation', 'Invalid payload.', Response::HTTP_UNPROCESSABLE_ENTITY, [
+                'violations' => [[
+                    'field' => 'editorialNotes',
+                    'message' => sprintf('Editorial notes must be at most %d characters.', self::EDITORIAL_NOTES_MAX_LENGTH),
+                ]],
+            ]);
+        }
 
         $user = $this->getCurrentUser();
         $now = new \DateTimeImmutable();
@@ -455,7 +468,7 @@ class AdminEscalationController extends AbstractController
 
     private function publishMercureDecided(EditorialEscalationLog $log, string $decision, ?string $comment): void
     {
-        $this->publishMercureEvent([
+        $payload = [
             'event' => 'decided',
             'decision' => $decision,
             'id' => $log->getId(),
@@ -463,8 +476,22 @@ class AdminEscalationController extends AbstractController
             'category_name' => $log->getCategory()->name,
             'decided_at' => $log->getDecidedAt()?->format(\DateTimeInterface::ATOM),
             'decided_by' => $log->getDecidedBy()?->getId(),
-            'comment' => $comment !== null && $comment !== '' ? $comment : null,
-        ]);
+        ];
+
+        if ($comment !== null && $comment !== '') {
+            // Cap the excerpt tight on the wire so subscribers never receive a
+            // Mercure event larger than a handful of KB — the full note stays
+            // available via the REST endpoint for clients that need it.
+            $truncated = mb_strlen($comment) > self::MERCURE_EXCERPT_MAX_LENGTH;
+            $payload['comment'] = $truncated
+                ? mb_substr($comment, 0, self::MERCURE_EXCERPT_MAX_LENGTH)
+                : $comment;
+            $payload['comment_truncated'] = $truncated;
+        } else {
+            $payload['comment'] = null;
+        }
+
+        $this->publishMercureEvent($payload);
     }
 
     private function publishMercureExtended(EditorialEscalationLog $log, int $addedSeconds): void

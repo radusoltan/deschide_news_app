@@ -14,6 +14,8 @@ use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mercure\HubInterface;
+use Symfony\Component\Mercure\Update;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
@@ -202,6 +204,119 @@ class AdminEscalationControllerTest extends WebTestCase
         // Decision is still recorded; dispatch status flags the missing signal.
         $this->assertSame('approved', $body['status']);
         $this->assertSame('missing_signal_id', $body['data']['publish_dispatch']['status']);
+    }
+
+    public function testApproveRejectsEditorialNotesOver2000Chars(): void
+    {
+        // S-H2 regression guard: unbounded editorialNotes is a DoS surface +
+        // blows up Mercure event payload size. Validator must return 422.
+        $log = $this->seedLog(EscalationCategory::CATEGORY_6_CRIMINAL_ACCUSATION);
+
+        $oversize = str_repeat('a', 2001);
+
+        $this->client->request(
+            'POST',
+            sprintf('/api/admin/escalations/%d/approve', $log->getId()),
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token($this->editorUser),
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            json_encode(['publishAsArticle' => false, 'editorialNotes' => $oversize]),
+        );
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_UNPROCESSABLE_ENTITY);
+        $body = $this->decode();
+        $this->assertSame('validation', $body['status']);
+        $this->assertSame('editorialNotes', $body['violations'][0]['field']);
+
+        // Decision must NOT have been recorded.
+        $this->em->refresh($log);
+        $this->assertNull($log->getDecision());
+    }
+
+    public function testApproveAcceptsEditorialNotesAtMaxLength(): void
+    {
+        // Boundary: exactly 2000 chars must succeed.
+        $log = $this->seedLog(EscalationCategory::CATEGORY_6_CRIMINAL_ACCUSATION);
+
+        $atLimit = str_repeat('a', 2000);
+
+        $this->client->request(
+            'POST',
+            sprintf('/api/admin/escalations/%d/approve', $log->getId()),
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token($this->editorUser),
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            json_encode(['publishAsArticle' => false, 'editorialNotes' => $atLimit]),
+        );
+
+        $this->assertResponseIsSuccessful();
+        $body = $this->decode();
+        $this->assertSame('approved', $body['status']);
+    }
+
+    public function testMercurePayloadTruncatesLongEditorialNotes(): void
+    {
+        // S-H2: even when notes are within the 2000-char ceiling, the Mercure
+        // wire payload excerpt must be capped at MERCURE_EXCERPT_MAX_LENGTH
+        // so subscribers aren't forced to receive multi-KB events per action.
+        //
+        // The Mercure hub is eagerly initialised by the kernel (Doctrine
+        // publish listener depends on it), so swapping the service requires
+        // a fresh container: we reboot the kernel here and set the mock
+        // BEFORE any request touches the controller.
+        $logId = $this->seedLog(EscalationCategory::CATEGORY_6_CRIMINAL_ACCUSATION)->getId();
+        $editorId = $this->editorUser?->getId();
+        $this->assertNotNull($editorId);
+
+        // Fresh kernel — container has not yet initialised HubInterface.
+        static::ensureKernelShutdown();
+        $this->client = static::createClient();
+        $em = static::getContainer()->get('doctrine')->getManager();
+        \assert($em instanceof EntityManagerInterface);
+        $this->em = $em;
+
+        // Rehydrate the editor so token() has a real user to sign for.
+        $this->editorUser = $em->find(User::class, $editorId);
+
+        $hub = $this->createMock(HubInterface::class);
+        $captured = null;
+        $hub->method('publish')
+            ->willReturnCallback(function (Update $update) use (&$captured): string {
+                $captured = $update;
+
+                return 'test-event-id';
+            });
+        static::getContainer()->set(HubInterface::class, $hub);
+
+        $longNote = str_repeat('x', 1500);
+
+        $this->client->request(
+            'POST',
+            sprintf('/api/admin/escalations/%d/approve', $logId),
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token($this->editorUser),
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            json_encode(['publishAsArticle' => false, 'editorialNotes' => $longNote]),
+        );
+
+        $this->assertResponseIsSuccessful();
+        $this->assertNotNull($captured, 'Mercure hub must have been invoked on approve');
+
+        $decoded = json_decode($captured->getData(), true);
+        $this->assertIsArray($decoded);
+        $this->assertArrayHasKey('comment', $decoded);
+        $this->assertArrayHasKey('comment_truncated', $decoded);
+        $this->assertTrue($decoded['comment_truncated']);
+        $this->assertSame(200, mb_strlen((string) $decoded['comment']));
     }
 
     public function testApproveReturns404OnUnknownEscalation(): void
