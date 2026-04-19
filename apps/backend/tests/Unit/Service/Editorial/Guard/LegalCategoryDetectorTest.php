@@ -101,4 +101,61 @@ class LegalCategoryDetectorTest extends TestCase
 
         $this->assertFalse($this->detector->isCategory6($text));
     }
+
+    // ----- Unicode bypass vectors (S-H4) -----
+
+    public function testZeroWidthSpaceBypassBlocked(): void
+    {
+        // Adversary RSS splices U+200B between "Popescu" and "este" to escape
+        // the keyword match "acuzat de". NFKC + zero-width strip must normalise.
+        $text = "Ion Popescu\u{200B} este acuzat de fraudă în dosarul recent.";
+
+        $this->assertTrue($this->detector->isCategory6($text));
+    }
+
+    public function testZeroWidthJoinerInsideProperNounBlocked(): void
+    {
+        // ZWJ (U+200D) splitting "Ion" → "Io\u{200D}n" — bigram detection
+        // must still identify the capitalised pair after stripping.
+        $text = "Io\u{200D}n Ionescu este acuzat de corupție în schema financiară.";
+
+        $this->assertTrue($this->detector->isCategory6($text));
+    }
+
+    public function testNbspBetweenProperNounWordsBlocked(): void
+    {
+        // Non-breaking space (U+00A0) between "Ion" and "Popescu" — if treated
+        // as a single token, the capitalised bigram disappears. Strip → true.
+        $text = "Ion\u{00A0}Popescu este acuzat de abuz sexual conform anchetei.";
+
+        $this->assertTrue($this->detector->isCategory6($text));
+    }
+
+    public function testCombiningDiacriticInKeywordNormalisedViaNfkc(): void
+    {
+        // "acuzată" (final char U+0103 = a + breve) rendered in decomposed
+        // form as "acuzata" + combining breve (U+0306). NFKC folds the pair
+        // into the precomposed U+0103 so "acuzată de" matches the keyword.
+        $text = "Maria Ionescu este acuzata\u{0306} de fraudă gravă în dosarul regional.";
+        $normalisedCheck = \Normalizer::normalize($text, \Normalizer::FORM_KC) ?: $text;
+        // Sanity guard: the NFKC form must contain the precomposed ă used by
+        // the keyword list — otherwise this regression test cannot pass.
+        self::assertStringContainsString('acuzată', mb_strtolower($normalisedCheck));
+
+        $this->assertTrue($this->detector->isCategory6($text));
+    }
+
+    public function testNormalContentUnaffectedByNormalisation(): void
+    {
+        // Regression guard: plain accented text without bypass chars still
+        // produces the same verdicts as before the normaliser was added.
+        $this->assertFalse(
+            $this->detector->isCategory6('Ion Popescu a depus jurământul și a mulțumit alegătorilor.'),
+            'Routine coverage (no accusation keyword) must stay non-Cat6',
+        );
+        $this->assertTrue(
+            $this->detector->isCategory6('Maria Ionescu este acuzată de corupție în dosarul regional.'),
+            'Clean Cat6 text must still match',
+        );
+    }
 }

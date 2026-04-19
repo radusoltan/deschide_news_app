@@ -58,9 +58,24 @@ class LegalCategoryDetector
     private const WINDOW_WORDS = 50;
     private const MIN_INDICATORS = 2;
 
+    /**
+     * Zero-width + non-breaking-space chars an adversary RSS can splice between
+     * letters of "Popescu" or "acuzat de" so the literal mb_strpos / capitalised-
+     * word scan misses the indicator. We strip them before any matching while
+     * keeping the caller's original `$text` untouched (logging / storage use it).
+     */
+    private const INVISIBLE_BYPASS_CHARS = '/[\x{200B}-\x{200D}\x{FEFF}\x{00A0}]/u';
+
     public function isCategory6(string $text): bool
     {
-        $lower = mb_strtolower($text);
+        // Unicode normalisation against bypass vectors — combining diacritics
+        // (NFKC folds "é" = e + U+0301 into single codepoint) + zero-width strip.
+        $normalized = \Normalizer::isNormalized($text, \Normalizer::FORM_KC)
+            ? $text
+            : (\Normalizer::normalize($text, \Normalizer::FORM_KC) ?: $text);
+        $stripped = preg_replace(self::INVISIBLE_BYPASS_CHARS, '', $normalized) ?? $normalized;
+
+        $lower = mb_strtolower($stripped);
 
         $words = preg_split('/\s+/u', $lower, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         if (\count($words) === 0) {
@@ -85,7 +100,9 @@ class LegalCategoryDetector
 
         // 2. NER-lite: find word positions that look like proper-noun runs in
         //    the ORIGINAL-case text (lowercase view would miss capitalisation).
-        $originalWords = preg_split('/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        //    Uses the stripped/normalised variant so splits like "Po\u{200B}pescu"
+        //    are rejoined before capitalisation + bigram detection.
+        $originalWords = preg_split('/\s+/u', $stripped, -1, PREG_SPLIT_NO_EMPTY) ?: [];
         $namePositions = [];
         for ($i = 0; $i < \count($originalWords) - 1; ++$i) {
             if ($this->isCapitalisedWord($originalWords[$i]) && $this->isCapitalisedWord($originalWords[$i + 1])) {
