@@ -5,27 +5,26 @@ declare(strict_types=1);
 namespace App\Entity\Editorial;
 
 use App\Entity\User;
+use App\Enum\Editorial\EscalationCategory;
 use App\Enum\EscalationDecision;
 use App\Repository\Editorial\EditorialEscalationLogRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Schema-only entity (Sprint 53 scope, ADR-020 D4).
- *
  * Immutable log of editorial escalations triggered when the verification
- * layer cannot resolve a claim autonomously. Records the article state at
- * escalation time, its origin-graph (Sprint 55 pipeline snapshot), and the
- * human editor's decision + timestamp.
+ * layer cannot resolve a claim autonomously or when {@see \App\Service\Editorial\Guard\LegalGuard}
+ * flags Category 6 content (ADR-020 D7/D8).
  *
- * `category_code` is the sensitive-topic classification string from the
- * editorial taxonomy (`categ_1`..`categ_7` for primary axes, `family_a`..
- * `family_d` for cross-cutting families). Enum is not imposed at this layer
- * because the taxonomy is governed by a separate table and may grow.
+ * Sprint 53 provisioned the table + scalar accessors. Sprint 55 T55.8 adds:
+ *   - {@see EscalationCategory} enum typing on the category column (tightened
+ *     VARCHAR from 40 → 20 chars; values stay in the `categ_*` / `family_*`
+ *     short code space).
+ *   - `expires_at` DATETIME_IMMUTABLE column + partial index, driving the
+ *     T55.11 SLA auto-expire scheduler.
  *
- * **Business logic arrives in Sprint 55** — Sprint 53 only provisions the
- * table + constructors + accessors.
+ * The getter+setter names preserve the S53 API shape (`getCategoryCode()`
+ * remains available as a string shim) so legacy callers do not break.
  */
 #[ORM\Entity(repositoryClass: EditorialEscalationLogRepository::class)]
 #[ORM\Table(name: 'editorial_escalation_log')]
@@ -33,6 +32,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_editorial_escalation_log_decision', columns: ['decision'])]
 #[ORM\Index(name: 'idx_editorial_escalation_log_category', columns: ['category_code'])]
 #[ORM\Index(name: 'idx_editorial_escalation_log_decided_by', columns: ['decided_by_user_id'])]
+// Sprint 55 T55.8 — partial index for SLA expiry scanner (T55.11).
+#[ORM\Index(name: 'idx_esc_log_expires_pending', columns: ['expires_at'], options: ['where' => '(decision IS NULL)'])]
 class EditorialEscalationLog
 {
     #[ORM\Id]
@@ -44,9 +45,8 @@ class EditorialEscalationLog
     #[ORM\Column(type: Types::JSON)]
     private array $articleSnapshot;
 
-    #[ORM\Column(length: 40)]
-    #[Assert\NotBlank]
-    private string $categoryCode;
+    #[ORM\Column(name: 'category_code', length: 20, enumType: EscalationCategory::class)]
+    private EscalationCategory $category;
 
     /** @var array<string, mixed> */
     #[ORM\Column(type: Types::JSON)]
@@ -66,17 +66,25 @@ class EditorialEscalationLog
     private ?\DateTimeImmutable $decidedAt = null;
 
     /**
+     * SLA expiry timestamp (Sprint 55 T55.8, audit D9). NULL when decided.
+     * The partial index `idx_esc_log_expires_pending` covers only rows where
+     * decision IS NULL so the scheduler scan is cheap.
+     */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $expiresAt = null;
+
+    /**
      * @param array<string, mixed> $articleSnapshot
      * @param array<string, mixed> $originGraphSnapshot
      */
     public function __construct(
         array $articleSnapshot,
-        string $categoryCode,
+        EscalationCategory $category,
         array $originGraphSnapshot,
         ?\DateTimeImmutable $createdAt = null,
     ) {
         $this->articleSnapshot = $articleSnapshot;
-        $this->categoryCode = $categoryCode;
+        $this->category = $category;
         $this->originGraphSnapshot = $originGraphSnapshot;
         $this->createdAt = $createdAt ?? new \DateTimeImmutable();
     }
@@ -92,9 +100,18 @@ class EditorialEscalationLog
         return $this->articleSnapshot;
     }
 
+    public function getCategory(): EscalationCategory
+    {
+        return $this->category;
+    }
+
+    /**
+     * Short-code accessor kept for S53 backward compatibility.
+     * Returns the enum's value (e.g. 'categ_3', 'family_b').
+     */
     public function getCategoryCode(): string
     {
-        return $this->categoryCode;
+        return $this->category->value;
     }
 
     /** @return array<string, mixed> */
@@ -140,6 +157,18 @@ class EditorialEscalationLog
     public function setDecidedAt(?\DateTimeImmutable $decidedAt): self
     {
         $this->decidedAt = $decidedAt;
+
+        return $this;
+    }
+
+    public function getExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->expiresAt;
+    }
+
+    public function setExpiresAt(?\DateTimeImmutable $expiresAt): self
+    {
+        $this->expiresAt = $expiresAt;
 
         return $this;
     }

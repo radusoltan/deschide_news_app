@@ -7,11 +7,13 @@ namespace App\Service\Editorial\Verification;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Dto\Editorial\VerificationVerdict;
 use App\Entity\Editorial\SourceSignal;
+use App\Entity\Topic;
 use App\Enum\Editorial\VerdictType;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
+use App\Service\NotebookLM\NotebookLmFactCheckServiceInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -130,15 +132,21 @@ class VerificationGate
         private readonly TierResolver $tierResolver,
         private readonly AppSettingRepository $appSettings,
         private readonly LoggerInterface $logger,
+        private readonly ?NotebookLmFactCheckServiceInterface $factCheckService = null,
     ) {}
 
     /**
      * @param list<SourceSignal> $signals all signals in the confirmed cluster
+     * @param Topic|null         $topic   optional topic context — required for the
+     *                                    T55.10 NotebookLM fact-check invocation.
+     *                                    When null, the gate falls back to its
+     *                                    S54 log-only hook even with
+     *                                    `notebooklm.factcheck.enabled=true`.
      */
-    public function rule(ClaimOriginGraph $graph, array $signals): VerificationVerdict
+    public function rule(ClaimOriginGraph $graph, array $signals, ?Topic $topic = null): VerificationVerdict
     {
         $verdict = $this->computeVerdict($graph, $signals);
-        $this->emitNotebookLmHookIfApplicable($graph, $verdict, $signals);
+        $verdict = $this->maybeInvokeNotebookLm($graph, $verdict, $signals, $topic);
 
         return $verdict;
     }
@@ -194,46 +202,138 @@ class VerificationGate
     }
 
     /**
-     * Sprint 54 T54.10 — log-only hook. When the feature flag
-     * `notebooklm.factcheck.enabled` is on and the verdict is high-stakes
-     * (ESCALATE_HUMAN, or FLASH_WITH_ASSERTION_YELLOW + escalation keyword),
-     * emit a structured log line `verification_notebooklm_would_invoke` that
-     * names the claim and the reason. Sprint 55+ will swap the log for an
-     * actual {@see \App\Service\NotebookLM\NotebookLmFactCheckServiceInterface}
-     * call once we have the Article/Topic context plumbed through the
-     * verification layer (the existing interface requires both, neither of
-     * which exist at this point in the signal pipeline).
+     * Sprint 55 T55.10 — real NotebookLM invocation with downgrade-only override.
      *
-     * FULL_FLASH is intentionally NOT high-stakes — alignment-diversity +
-     * rule-based already provide sufficient safety; NotebookLM cost would
-     * be pure overhead.
+     * Applies only to high-stakes verdicts (ESCALATE_HUMAN or yellow-with-
+     * escalation-topic). Downgrade-only means the NotebookLM answer can
+     * MOVE the verdict from a publishable state toward ESCALATE_HUMAN when
+     * the fact-check contradicts the claim — but it can NEVER upgrade a
+     * verdict in the other direction. This matches audit D7/D8 posture of
+     * preferring false positives (editor noise) over false negatives
+     * (published unverified claims).
+     *
+     * Fail-open at every seam:
+     *   - feature flag off                 → return original verdict, log debug
+     *   - topic=null or no notebook        → log info, return original
+     *   - factCheckClaim throws / returns null → log warning, return original
+     *   - fact-check answer does NOT contradict → return original (no upgrade)
+     *
+     * Only path that mutates the verdict: answer contradicts → downgrade to
+     * ESCALATE_HUMAN with a new reasoning string naming the NotebookLM
+     * trigger. The Article the writer would have emitted never publishes
+     * without human review.
+     *
+     * FULL_FLASH is intentionally NOT passed through NotebookLM —
+     * alignment-diversity + rule-based gate already provide the safety the
+     * verdict requires; pulling the subprocess would be pure cost.
      *
      * @param list<SourceSignal> $signals
      */
-    private function emitNotebookLmHookIfApplicable(
+    private function maybeInvokeNotebookLm(
         ClaimOriginGraph $graph,
         VerificationVerdict $verdict,
         array $signals,
-    ): void {
+        ?Topic $topic,
+    ): VerificationVerdict {
+        // Hard-gate on feature flag BEFORE any subprocess work.
         if (!$this->appSettings->getBool('notebooklm.factcheck.enabled', false)) {
-            return;
+            return $verdict;
         }
 
         $reason = $this->determineHighStakesReason($verdict, $signals);
         if ($reason === null) {
-            return;
+            return $verdict;
         }
 
         $primarySignal = $signals[0] ?? null;
-        $claim = $primarySignal !== null ? trim($primarySignal->getTitle()) : '(unknown)';
+        $claim = $primarySignal !== null ? trim($primarySignal->getTitle()) : '';
+        if ($claim === '') {
+            return $verdict;
+        }
 
-        $this->logger->info('verification_notebooklm_would_invoke', [
+        // No Topic / no factcheck service wired → fall back to the S54
+        // log-only behaviour. Preserves observability without subprocess cost.
+        if ($topic === null || $this->factCheckService === null) {
+            $this->logger->info('verification_notebooklm_would_invoke', [
+                'topic_hash' => $graph->topicHash,
+                'claim_hash' => $graph->claimHash,
+                'verdict_before_notebooklm' => $verdict->type->value,
+                'high_stakes_reason' => $reason,
+                'claim' => mb_substr($claim, 0, 200),
+                'skipped_reason' => $topic === null ? 'no_topic' : 'service_not_wired',
+            ]);
+
+            return $verdict;
+        }
+
+        try {
+            $result = $this->factCheckService->factCheckClaim($claim, $topic);
+        } catch (\Throwable $e) {
+            $this->logger->warning('verification_notebooklm_factcheck_threw', [
+                'topic_hash' => $graph->topicHash,
+                'claim_hash' => $graph->claimHash,
+                'topic_id' => $topic->getId(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return $verdict;
+        }
+
+        if ($result === null) {
+            $this->logger->info('verification_notebooklm_factcheck_null', [
+                'topic_hash' => $graph->topicHash,
+                'claim_hash' => $graph->claimHash,
+                'topic_id' => $topic->getId(),
+                'verdict' => $verdict->type->value,
+                'reason' => 'disabled|no_notebook|cli_error',
+            ]);
+
+            return $verdict;
+        }
+
+        if (!$result->isContradictory()) {
+            $this->logger->info('verification_notebooklm_factcheck_consistent', [
+                'topic_hash' => $graph->topicHash,
+                'claim_hash' => $graph->claimHash,
+                'topic_id' => $topic->getId(),
+                'verdict' => $verdict->type->value,
+            ]);
+
+            return $verdict;
+        }
+
+        // Contradiction → downgrade to ESCALATE_HUMAN (only if not already there).
+        if ($verdict->type === VerdictType::ESCALATE_HUMAN) {
+            $this->logger->info('verification_notebooklm_confirms_escalation', [
+                'topic_hash' => $graph->topicHash,
+                'claim_hash' => $graph->claimHash,
+                'topic_id' => $topic->getId(),
+            ]);
+
+            return $verdict;
+        }
+
+        $this->logger->warning('verification_notebooklm_downgrade', [
             'topic_hash' => $graph->topicHash,
             'claim_hash' => $graph->claimHash,
+            'topic_id' => $topic->getId(),
             'verdict_before_notebooklm' => $verdict->type->value,
             'high_stakes_reason' => $reason,
-            'claim' => mb_substr($claim, 0, 200),
+            'notebook_answer_excerpt' => mb_substr($result->answer, 0, 200),
         ]);
+
+        return new VerificationVerdict(
+            type: VerdictType::ESCALATE_HUMAN,
+            reasoning: sprintf(
+                'NotebookLM contrazice afirmația (%s) — verdict inițial „%s" downgraded la ESCALATE_HUMAN.',
+                $reason,
+                $verdict->type->value,
+            ),
+            llmOverride: $verdict->llmOverride,
+            llmSanitySkipped: $verdict->llmSanitySkipped,
+            escalationKeyword: $verdict->escalationKeyword,
+            confidence: $verdict->confidence,
+        );
     }
 
     /**

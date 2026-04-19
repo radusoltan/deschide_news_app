@@ -12,7 +12,7 @@ class ArticleStatusTest extends TestCase
     public function testAllCases(): void
     {
         $cases = ArticleStatus::cases();
-        $this->assertCount(4, $cases);
+        $this->assertCount(5, $cases);
     }
 
     public function testValues(): void
@@ -20,6 +20,7 @@ class ArticleStatusTest extends TestCase
         $this->assertSame('new', ArticleStatus::NEW->value);
         $this->assertSame('submitted', ArticleStatus::SUBMITTED->value);
         $this->assertSame('published', ArticleStatus::PUBLISHED->value);
+        $this->assertSame('published_full', ArticleStatus::PUBLISHED_FULL->value);
         $this->assertSame('archived', ArticleStatus::ARCHIVED->value);
     }
 
@@ -28,6 +29,7 @@ class ArticleStatusTest extends TestCase
         $this->assertSame(ArticleStatus::NEW, ArticleStatus::from('new'));
         $this->assertSame(ArticleStatus::SUBMITTED, ArticleStatus::from('submitted'));
         $this->assertSame(ArticleStatus::PUBLISHED, ArticleStatus::from('published'));
+        $this->assertSame(ArticleStatus::PUBLISHED_FULL, ArticleStatus::from('published_full'));
         $this->assertSame(ArticleStatus::ARCHIVED, ArticleStatus::from('archived'));
     }
 

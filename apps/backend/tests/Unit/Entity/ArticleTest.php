@@ -9,6 +9,7 @@ use App\Entity\Author;
 use App\Entity\Category;
 use App\Enum\ArticleBadge;
 use App\Enum\ArticleStatus;
+use App\Enum\ArticleType;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
@@ -384,10 +385,11 @@ class ArticleTest extends TestCase
     {
         $cases = ArticleStatus::cases();
 
-        $this->assertCount(4, $cases);
+        $this->assertCount(5, $cases);
         $this->assertContains(ArticleStatus::NEW, $cases);
         $this->assertContains(ArticleStatus::SUBMITTED, $cases);
         $this->assertContains(ArticleStatus::PUBLISHED, $cases);
+        $this->assertContains(ArticleStatus::PUBLISHED_FULL, $cases);
         $this->assertContains(ArticleStatus::ARCHIVED, $cases);
     }
 
@@ -451,5 +453,82 @@ class ArticleTest extends TestCase
         $this->assertEquals(ArticleBadge::BREAKING, $article->getBadge());
         $this->assertTrue($article->isFeatured());
         $this->assertEquals(100, $article->getViewCount());
+    }
+
+    public function testArticleTypeGetterSetterDefaultsNull(): void
+    {
+        $article = new Article();
+
+        $this->assertNull($article->getArticleType());
+
+        $result = $article->setArticleType(ArticleType::FLASH);
+        $this->assertSame($article, $result);
+        $this->assertSame(ArticleType::FLASH, $article->getArticleType());
+
+        $article->setArticleType(null);
+        $this->assertNull($article->getArticleType());
+    }
+
+    public function testRevisionCountDefaultsToZero(): void
+    {
+        $article = new Article();
+
+        $this->assertSame(0, $article->getRevisionCount());
+
+        $article->setRevisionCount(3);
+        $this->assertSame(3, $article->getRevisionCount());
+    }
+
+    public function testRevisionHistoryStartsNull(): void
+    {
+        $article = new Article();
+
+        $this->assertNull($article->getRevisionHistory());
+    }
+
+    public function testAppendRevisionSeedsEmptyHistory(): void
+    {
+        $article = new Article();
+
+        $entry = [
+            'rev' => 1,
+            'ts' => '2026-04-18T19:00:00+00:00',
+            'diff' => 'initial',
+            'actor' => ['type' => 'writer', 'id' => null],
+            'source_signal_id' => 42,
+        ];
+        $article->appendRevision($entry);
+
+        $history = $article->getRevisionHistory();
+        $this->assertIsArray($history);
+        $this->assertCount(1, $history);
+        $this->assertSame($entry, $history[0]);
+    }
+
+    public function testAppendRevisionPreservesOrder(): void
+    {
+        $article = new Article();
+        for ($i = 1; $i <= 5; $i++) {
+            $article->appendRevision(['rev' => $i, 'diff' => "rev-{$i}"]);
+        }
+
+        $history = $article->getRevisionHistory();
+        $this->assertCount(5, $history);
+        $this->assertSame(1, $history[0]['rev']);
+        $this->assertSame(5, $history[4]['rev']);
+    }
+
+    public function testAppendRevisionCapsAt100Entries(): void
+    {
+        $article = new Article();
+        for ($i = 1; $i <= 105; $i++) {
+            $article->appendRevision(['rev' => $i]);
+        }
+
+        $history = $article->getRevisionHistory();
+        $this->assertCount(100, $history);
+        // Oldest entries dropped — we kept rev 6..105 (last 100 inserted).
+        $this->assertSame(6, $history[0]['rev']);
+        $this->assertSame(105, $history[99]['rev']);
     }
 }

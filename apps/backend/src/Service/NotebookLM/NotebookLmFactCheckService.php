@@ -27,9 +27,33 @@ final class NotebookLmFactCheckService implements NotebookLmFactCheckServiceInte
 
     /**
      * Fact-check article claims against topic's NotebookLM notebook.
+     *
+     * Delegates to {@see self::factCheckClaim} with a title+lead composition
+     * as the claim text — single code path for both call sites (admin article
+     * review + L2 verification-pipeline claim check).
      */
     public function factCheck(Article $article, Topic $topic, ?string $question = null): ?FactCheckResult
     {
+        $claimText = sprintf(
+            '%s. %s',
+            $article->getTitle() ?? 'Untitled',
+            mb_substr($article->getLead() ?? $article->getContent() ?? '', 0, 200),
+        );
+
+        return $this->factCheckClaim($claimText, $topic, $question);
+    }
+
+    /**
+     * Sprint 55 T55.10 — claim-level fact-check, no Article required.
+     *
+     * Cache key prefix is `factcheck.claim.*` so claim-level answers never
+     * poison the `factcheck.topic_*` space used by the Article path.
+     */
+    public function factCheckClaim(string $claimText, Topic $topic, ?string $question = null): ?FactCheckResult
+    {
+        // Hard gate: if the feature flag is off we return null BEFORE any
+        // subprocess work — zero NotebookLM CLI cost when disabled. Matches
+        // audit hard-rule "no cost for disabled services".
         if ($this->settings !== null && !$this->settings->getBool('notebooklm.factcheck.enabled', false)) {
             $this->logger->debug('FactCheck: disabled via AppSettings (notebooklm.factcheck.enabled=false)');
 
@@ -45,11 +69,18 @@ final class NotebookLmFactCheckService implements NotebookLmFactCheckServiceInte
             return null;
         }
 
-        $question ??= $this->buildDefaultQuestion($article);
+        $trimmedClaim = trim($claimText);
+        if ($trimmedClaim === '') {
+            $this->logger->debug('FactCheck: empty claimText, skipping');
+
+            return null;
+        }
+
+        $question ??= $this->buildDefaultClaimQuestion($trimmedClaim);
         $question = mb_substr($question, 0, self::MAX_QUESTION_LENGTH);
         $topicId = $topic->getId() ?? 0;
 
-        $cacheKey = $this->buildCacheKey($topicId, $question);
+        $cacheKey = $this->buildClaimCacheKey($trimmedClaim, $topicId);
         $effectiveTtl = $this->settings?->getInt('notebooklm.factcheck.cache_ttl', $this->cacheTtl) ?? $this->cacheTtl;
 
         return $this->cache->get($cacheKey, function (ItemInterface $item) use ($notebookId, $question, $topicId, $effectiveTtl): ?FactCheckResult {
@@ -58,6 +89,7 @@ final class NotebookLmFactCheckService implements NotebookLmFactCheckServiceInte
             $this->logger->info('FactCheck: querying NotebookLM', [
                 'topicId' => $topicId,
                 'question' => mb_substr($question, 0, 80),
+                'variant' => 'claim',
             ]);
 
             $answer = $this->notebookLM->ask($notebookId, $question);
@@ -92,22 +124,20 @@ final class NotebookLmFactCheckService implements NotebookLmFactCheckServiceInte
             && $topic->getNotebookLmId() !== null;
     }
 
-    private function buildDefaultQuestion(Article $article): string
+    private function buildDefaultClaimQuestion(string $claimText): string
     {
-        $title = $article->getTitle() ?? 'Untitled';
-        $lead = mb_substr($article->getLead() ?? $article->getContent() ?? '', 0, 200);
+        $excerpt = mb_substr($claimText, 0, 300);
 
         return sprintf(
-            'Verifică afirmațiile din acest articol și identifică eventuale inexactități sau contradicții cu sursele disponibile: "%s". %s',
-            $title,
-            $lead,
+            'Verifică următoarea afirmație folosind sursele din notebook. Dacă este contrazisă de surse, spune explicit „contrazice"; dacă este susținută, spune „este susținut". Afirmație: %s',
+            $excerpt,
         );
     }
 
-    private function buildCacheKey(int $topicId, string $question): string
+    private function buildClaimCacheKey(string $claimText, int $topicId): string
     {
-        $questionHash = substr(md5($question), 0, 16);
+        $claimHash = substr(md5($claimText), 0, 16);
 
-        return sprintf('factcheck.topic_%d.q_%s', $topicId, $questionHash);
+        return sprintf('factcheck.claim.topic_%d.c_%s', $topicId, $claimHash);
     }
 }

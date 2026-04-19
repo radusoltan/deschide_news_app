@@ -141,15 +141,44 @@ framework:
                     multiplier: 2
                     max_delay: 45000
 
-            # Editorial-pipeline verification layer transport (Sprint 54 T54.12,
-            # ADR-020 D2). Dedicated queue for the four L2 verification
-            # messages so the per-signal LLM work does not compete with
-            # signal ingestion. Consumed by messenger-editorial-verification
-            # Supervisor worker (numprocs=2 for parallelism).
-            editorial_verification:
+            # Editorial-pipeline verification layer transports (Sprint 55 T55.1,
+            # ADR-020 D2 + audit D3). The Sprint 54 single `editorial_verification`
+            # queue FIFO-starved the low-volume Aggregate+Verify messages behind
+            # the high-volume Extract+Flush ticks. Split into two queues so the
+            # per-stage worker pools scale independently:
+            #   - extract (4w): ExtractSourceAttributionMessage + FlushStabilizedSignalsMessage
+            #   - decide  (2w): AggregateSignalsMessage + VerifyClaimMessage
+            # Retry strategies kept identical to the S54 baseline for V1;
+            # tune per-transport post-observation if needed.
+            editorial_verification_extract:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
-                    queue_name: editorial_verification
+                    queue_name: editorial_verification_extract
+                retry_strategy:
+                    max_retries: 3
+                    delay: 3000
+                    multiplier: 2
+                    max_delay: 45000
+
+            editorial_verification_decide:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: editorial_verification_decide
+                retry_strategy:
+                    max_retries: 3
+                    delay: 3000
+                    multiplier: 2
+                    max_delay: 45000
+
+            # Editorial-pipeline L3 writer transport (Sprint 55 T55.3, ADR-020 D5).
+            # Dedicated queue for WriteFlashMessage (and WriteDevelopingStoryMessage
+            # in T55.4) so the writer pool is isolated from both the verification
+            # stage and the legacy `editorial` queue (7286 stale messages).
+            # Consumed by messenger-editorial-flash Supervisor pool (numprocs=2).
+            editorial_flash:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: editorial_flash
                 retry_strategy:
                     max_retries: 3
                     delay: 3000
@@ -221,14 +250,22 @@ framework:
             # Editorial-pipeline signal ingestion (Sprint 53, ADR-020 D4)
             'App\Message\Editorial\SignalIngestedMessage': editorial_signal_ingest
 
-            # Verification layer (Sprint 54, ADR-020 D2) — dedicated
-            # editorial_verification transport landed in T54.12. Includes
-            # the stabilization flush tick so LLM-heavy work runs on the
-            # verification worker, not the signal-ingest worker.
-            'App\Message\Editorial\ExtractSourceAttributionMessage': editorial_verification
-            'App\Message\Editorial\AggregateSignalsMessage': editorial_verification
-            'App\Message\Editorial\VerifyClaimMessage': editorial_verification
-            'App\Message\Editorial\FlushStabilizedSignalsMessage': editorial_verification
+            # Verification layer (Sprint 54 T54.12 → Sprint 55 T55.1, ADR-020 D2).
+            # Extract+Flush ride the _extract pool (4w, cheap per-signal LLM),
+            # Aggregate+Verify ride _decide (2w, cluster-level + verdict).
+            'App\Message\Editorial\ExtractSourceAttributionMessage': editorial_verification_extract
+            'App\Message\Editorial\FlushStabilizedSignalsMessage': editorial_verification_extract
+            'App\Message\Editorial\AggregateSignalsMessage': editorial_verification_decide
+            'App\Message\Editorial\VerifyClaimMessage': editorial_verification_decide
+
+            # Editorial-pipeline writers (Sprint 55 T55.3, T55.4, ADR-020 L3 layer).
+            # Both writer messages share the editorial_flash pool — developing-story
+            # merges are cheaper than fresh flash emission and the writer workload
+            # is low-volume end-to-end. FIFO ordering is acceptable because the two
+            # handlers never target the same Article (findDevelopingStoryForTopic
+            # discriminates at dispatch time in T55.9).
+            'App\Message\Editorial\WriteFlashMessage': editorial_flash
+            'App\Message\Editorial\WriteDevelopingStoryMessage': editorial_flash
 
             # NotebookLM sync (Sprint 51a)
             'App\Message\NotebookLM\TriggerTopicNotebookSyncMessage': editorial
