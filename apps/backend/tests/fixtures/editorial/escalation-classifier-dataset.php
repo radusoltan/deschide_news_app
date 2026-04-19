@@ -23,10 +23,10 @@ declare(strict_types=1);
  * Radu reviews this in T55.18 against the companion Markdown file in
  * `40_Agent_Workspace/Review/sprint-55-escalation-dataset.md`.
  *
- * Distribution (50 total):
+ * Distribution (51 total, T55.18 revision adds 1 negative to Cat 3):
  *   CATEGORY_1_NUCLEAR_WAR           3 positive + 1 negative =  4
  *   CATEGORY_2_HEAD_OF_STATE_DEATH   3 positive + 1 negative =  4
- *   CATEGORY_3_NBC_ATTACK            3 positive + 0 negative =  3
+ *   CATEGORY_3_NBC_ATTACK            3 positive + 1 negative =  4  (+1 cat3_negative_1)
  *   CATEGORY_4_COUP                  3 positive + 1 negative =  4
  *   CATEGORY_5_MASS_CASUALTIES       3 positive + 1 negative =  4
  *   CATEGORY_6_CRIMINAL_ACCUSATION   3 positive + 2 negative =  5
@@ -35,7 +35,7 @@ declare(strict_types=1);
  *   FAMILY_B_EU_NATO_RUSSIA          3 positive + 2 negative =  5
  *   FAMILY_C_TRANSNISTRIA_GAGAUZIA   4 positive + 2 negative =  6
  *   FAMILY_D_CEC_PARTY_LEADERS       4 positive + 2 negative =  6
- *                                                    total   = 50
+ *                                                    total   = 51
  *
  * @return list<array{
  *     id: string,
@@ -112,11 +112,11 @@ return [
     ],
     [
         'id' => 'cat2_negative_1',
-        'title' => 'Prim-ministrul unui stat european anunță retragerea din funcție pentru motive medicale',
-        'summary' => 'Prim-ministrul în exercițiu declară, într-un comunicat video, că se va retrage la finalul mandatului actual din motive de sănătate. Tratamentul este descris ca „de rutină”.',
+        'title' => 'Președintele unui stat european anunță retragerea din funcție la finalul mandatului pentru motive medicale',
+        'summary' => 'Președintele în exercițiu declară, într-un comunicat video, că se va retrage la finalul mandatului actual din motive de sănătate. Tratamentul este descris ca „de rutină”.',
         'expected_category' => 'CATEGORY_2_HEAD_OF_STATE_DEATH',
         'expected_is_escalation' => false,
-        'notes' => 'NEGATIV — retragere planificată, nu deces. Ușor de confundat cu pozitivele prin tema sănătate-funcție.',
+        'notes' => 'NEGATIV — retragere planificată, nu deces al șefului statului. Aliniat tematic cu pozitivele cat2 (head of state), pentru a evita wrong-reason classifier failure. Subtilitatea rămâne: tema sănătate + funcție înaltă.',
     ],
 
     // ====================================================================
@@ -145,6 +145,14 @@ return [
         'expected_category' => 'CATEGORY_3_NBC_ATTACK',
         'expected_is_escalation' => true,
         'notes' => 'Armament radiologic („dirty shell”) — prag NBC, chiar și în absența detonației.',
+    ],
+    [
+        'id' => 'cat3_negative_1',
+        'title' => 'Agenția Internațională pentru Energia Atomică publică raportul anual privind siguranța reactoarelor nucleare din Europa de Est',
+        'summary' => 'Raportul AIEA confirmă conformitatea tuturor facilităților inspectate cu standardele de siguranță nucleară. Nu au fost raportate incidente sau devieri majore; următoarea inspecție programată este în vara anului viitor.',
+        'expected_category' => 'CATEGORY_3_NBC_ATTACK',
+        'expected_is_escalation' => false,
+        'notes' => 'NEGATIV — raportare rutinieră AIEA privind siguranța nucleară. Confuzia potențială: prezența termenilor „nuclear” + „reactoare” + agenție internațională; trigger-ul Cat 3 e un atac NBC intenționat, nu o inspecție de rutină. Închide gap-ul de false-positive testing pe Cat 3 (T55.18).',
     ],
 
     // ====================================================================
@@ -460,19 +468,19 @@ return [
     ],
     [
         'id' => 'family_d_positive_3',
-        'title' => 'Un fost prim-ministru își anunță retragerea din formațiunea politică după un scandal intern privind atribuirea fondurilor de campanie',
-        'summary' => 'Fostul prim-ministru anunță părăsirea formațiunii. Comunicatul face referire la un scandal intern privind fondurile de campanie, fără detalii procedurale.',
+        'title' => 'Liderul unei formațiuni politice ar fi promis plăți cash voluntarilor în schimbul garantării prezenței la secțiile de vot',
+        'summary' => 'O înregistrare telefonică scursă într-un canal Telegram ar indica liderul unei formațiuni politice promițând sume în cash voluntarilor electorali în schimbul garantării prezenței la secțiile de vot din raioane cheie. Formațiunea neagă autenticitatea; expertiza tehnică este în curs.',
         'expected_category' => 'FAMILY_D_CEC_PARTY_LEADERS',
         'expected_is_escalation' => true,
-        'notes' => 'Demisie cu fundal de scandal financiar — impact politic, necesită verificare editorială.',
+        'notes' => 'Corupție electorală concretă — cumpărare de prezență la urne = violare directă a Codului Electoral. Înregistrare neautentificată + acuzație personalizată = trigger Family D cu risc defăimare ridicat.',
     ],
     [
         'id' => 'family_d_positive_4',
-        'title' => 'Liderul unui bloc parlamentar declară boicotul integral al ciclului electoral, inclusiv al alegerilor prezidențiale',
-        'summary' => 'Liderul blocului parlamentar anunță într-o conferință de presă boicotul integral al ciclului electoral. Partidele din bloc analizează poziția individuală; societatea civilă avertizează asupra efectelor.',
+        'title' => 'Un grup organizat ar planifica intimidarea fizică a alegătorilor la secțiile de vot dintr-un raion-cheie pentru a forța boicotul electoral',
+        'summary' => 'O investigație jurnalistică descrie un grup organizat care ar planifica intimidarea fizică a alegătorilor la secțiile de vot dintr-un raion-cheie, cu scopul de a forța reducerea prezenței și legitimarea unui boicot electoral. Autoritățile centrale nu au emis încă o reacție formală; dosarul penal nu a fost deschis.',
         'expected_category' => 'FAMILY_D_CEC_PARTY_LEADERS',
         'expected_is_escalation' => true,
-        'notes' => 'Boicot electoral integral — eveniment cu impact sistemic asupra legitimității scrutinului.',
+        'notes' => 'Amenințare de violență electorală organizată, fără dosar penal — trigger Family D cu nivel de risc ridicat (risc defăimare + contagiune amplificare pre-scrutin).',
     ],
     [
         'id' => 'family_d_negative_1',

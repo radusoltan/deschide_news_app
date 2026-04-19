@@ -12,17 +12,18 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 /**
  * Empirical-validation test for EscalationClassifier (Sprint 55 T55.8, ADR-020 D7).
  *
- * Runs the real classifier (LLM-backed) against the 50-claim dataset shipped
- * in T55.15 and enforces the audit-locked acceptance bar: false-negative rate
- * must be strictly less than {@see self::FALSE_NEGATIVE_RATE_CEILING}. False
- * POSITIVES are logged for Radu's follow-up but do NOT fail the run (audit
- * D18 weaker acceptance bar on positives).
+ * Runs the real classifier (LLM-backed) against the 51-claim dataset shipped
+ * in T55.15 (50 claims) + T55.18 revision (+1 cat3_negative_1 to close false-
+ * positive gap on NBC category) and enforces the audit-locked acceptance bar:
+ * false-negative rate must be strictly less than {@see self::FALSE_NEGATIVE_RATE_CEILING}.
+ * False POSITIVES are logged for Radu's follow-up but do NOT fail the run
+ * (audit D18 weaker acceptance bar on positives).
  *
  * NOT run by default — makes real LLM calls and is slow + costly. Invoke
  * with:
  *
  *     RUN_EMPIRICAL_ESCALATION=1 vendor/bin/phpunit \
- *         --filter=test50ClaimAcceptanceBar
+ *         --filter=test51ClaimAcceptanceBar
  *
  * Or via the group:
  *
@@ -37,12 +38,12 @@ final class EscalationClassifierEmpiricalTest extends KernelTestCase
     /** Audit D18 / T55.15 locked bar — NEVER slacken to accommodate model drift. */
     private const FALSE_NEGATIVE_RATE_CEILING = 0.05;
 
-    public function test50ClaimAcceptanceBar(): void
+    public function test51ClaimAcceptanceBar(): void
     {
         if (getenv('RUN_EMPIRICAL_ESCALATION') !== '1') {
             self::markTestSkipped(
                 'Empirical classifier benchmark — set RUN_EMPIRICAL_ESCALATION=1 to invoke. '
-                    . 'Makes real LLM calls on 50 claims (slow + costly).',
+                    . 'Makes real LLM calls on 51 claims (slow + costly).',
             );
         }
 
@@ -51,7 +52,7 @@ final class EscalationClassifierEmpiricalTest extends KernelTestCase
         self::assertInstanceOf(EscalationClassifier::class, $classifier);
 
         $dataset = require __DIR__ . '/../../../../fixtures/editorial/escalation-classifier-dataset.php';
-        self::assertCount(50, $dataset);
+        self::assertCount(51, $dataset);
 
         $falseNegatives = [];
         $falsePositives = [];
@@ -88,7 +89,7 @@ final class EscalationClassifierEmpiricalTest extends KernelTestCase
             }
         }
 
-        $fnRate = count($falseNegatives) / 50;
+        $fnRate = count($falseNegatives) / count($dataset);
 
         // Log the full diagnostic to stdout so --verbose captures it on CI.
         fwrite(
@@ -109,11 +110,12 @@ final class EscalationClassifierEmpiricalTest extends KernelTestCase
             self::FALSE_NEGATIVE_RATE_CEILING,
             $fnRate,
             sprintf(
-                'False-negative rate %.1f%% exceeds locked ceiling %.1f%% (%d/50 missed escalations: %s). '
+                'False-negative rate %.1f%% exceeds locked ceiling %.1f%% (%d/%d missed escalations: %s). '
                     . 'Do NOT slacken the ceiling — fix the prompt or the dataset coverage.',
                 $fnRate * 100,
                 self::FALSE_NEGATIVE_RATE_CEILING * 100,
                 count($falseNegatives),
+                count($dataset),
                 implode(',', $falseNegatives) ?: '(none)',
             ),
         );
@@ -129,7 +131,7 @@ final class EscalationClassifierEmpiricalTest extends KernelTestCase
         $dataset = require __DIR__ . '/../../../../fixtures/editorial/escalation-classifier-dataset.php';
 
         $this->assertIsArray($dataset);
-        $this->assertCount(50, $dataset, 'Dataset must contain exactly 50 entries.');
+        $this->assertCount(51, $dataset, 'Dataset must contain exactly 51 entries (T55.18: +1 cat3_negative_1).');
 
         $requiredKeys = ['id', 'title', 'summary', 'expected_category', 'expected_is_escalation', 'notes'];
         $validCategories = [
@@ -173,7 +175,7 @@ final class EscalationClassifierEmpiricalTest extends KernelTestCase
             $ids[] = $entry['id'];
         }
 
-        $this->assertCount(50, array_unique($ids), 'All entry IDs must be unique.');
+        $this->assertCount(51, array_unique($ids), 'All entry IDs must be unique.');
     }
 
     public function testDatasetDistributionMatchesAuditD18Spec(): void
@@ -190,7 +192,7 @@ final class EscalationClassifierEmpiricalTest extends KernelTestCase
         $expected = [
             'CATEGORY_1_NUCLEAR_WAR' => ['pos' => 3, 'neg' => 1],
             'CATEGORY_2_HEAD_OF_STATE_DEATH' => ['pos' => 3, 'neg' => 1],
-            'CATEGORY_3_NBC_ATTACK' => ['pos' => 3, 'neg' => 0],
+            'CATEGORY_3_NBC_ATTACK' => ['pos' => 3, 'neg' => 1],
             'CATEGORY_4_COUP' => ['pos' => 3, 'neg' => 1],
             'CATEGORY_5_MASS_CASUALTIES' => ['pos' => 3, 'neg' => 1],
             'CATEGORY_6_CRIMINAL_ACCUSATION' => ['pos' => 3, 'neg' => 2],
