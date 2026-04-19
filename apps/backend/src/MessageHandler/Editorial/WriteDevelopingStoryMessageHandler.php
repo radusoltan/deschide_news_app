@@ -54,56 +54,71 @@ class WriteDevelopingStoryMessageHandler
 
     public function __invoke(WriteDevelopingStoryMessage $message): ?Article
     {
-        $article = $this->articleRepository->find($message->articleId);
-        if ($article === null) {
-            $this->logger->warning('write_developing_article_missing', [
-                'article_id' => $message->articleId,
-            ]);
+        try {
+            $article = $this->articleRepository->find($message->articleId);
+            if ($article === null) {
+                $this->logger->warning('write_developing_article_missing', [
+                    'article_id' => $message->articleId,
+                ]);
 
-            return null;
-        }
+                return null;
+            }
 
-        $primary = $this->signalRepository->find($message->primarySignalId);
-        if ($primary === null) {
-            $this->logger->warning('write_developing_primary_signal_missing', [
+            $primary = $this->signalRepository->find($message->primarySignalId);
+            if ($primary === null) {
+                $this->logger->warning('write_developing_primary_signal_missing', [
+                    'article_id' => $message->articleId,
+                    'primary_signal_id' => $message->primarySignalId,
+                ]);
+
+                return null;
+            }
+
+            $supporting = [];
+            foreach ($message->supportingSignalIds as $id) {
+                $signal = $this->signalRepository->find($id);
+                if ($signal !== null) {
+                    $supporting[] = $signal;
+                }
+            }
+
+            $verdictType = VerdictType::tryFrom($message->verdictType);
+            if ($verdictType === null) {
+                $this->logger->error('write_developing_unknown_verdict_type', [
+                    'verdict_type' => $message->verdictType,
+                    'article_id' => $message->articleId,
+                ]);
+
+                return null;
+            }
+
+            $verdict = new VerificationVerdict(
+                type: $verdictType,
+                reasoning: 'dispatched-from-verify-claim-handler',
+                confidence: $this->extractConfidence($primary),
+            );
+
+            $updated = $this->developingStoryWriter->write($article, $primary, $supporting, $verdict);
+            if ($updated === null) {
+                // Writer rejected (wrong type / archived). Handler logs already fired inside.
+                return null;
+            }
+
+            return $this->applyGuardAndRetranslate($updated, $primary, $supporting, $verdict);
+        } catch (\Throwable $e) {
+            // Contract: log + no-op, never rethrow. Matches VerifyClaimMessageHandler
+            // pattern — retry storms would keep reopening a live Article for
+            // repeated partial revision attempts, desyncing translations.
+            $this->logger->error('write_developing_handler_failed', [
                 'article_id' => $message->articleId,
                 'primary_signal_id' => $message->primarySignalId,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+                'trace' => mb_substr($e->getTraceAsString(), 0, 500),
             ]);
 
             return null;
         }
-
-        $supporting = [];
-        foreach ($message->supportingSignalIds as $id) {
-            $signal = $this->signalRepository->find($id);
-            if ($signal !== null) {
-                $supporting[] = $signal;
-            }
-        }
-
-        $verdictType = VerdictType::tryFrom($message->verdictType);
-        if ($verdictType === null) {
-            $this->logger->error('write_developing_unknown_verdict_type', [
-                'verdict_type' => $message->verdictType,
-                'article_id' => $message->articleId,
-            ]);
-
-            return null;
-        }
-
-        $verdict = new VerificationVerdict(
-            type: $verdictType,
-            reasoning: 'dispatched-from-verify-claim-handler',
-            confidence: $this->extractConfidence($primary),
-        );
-
-        $updated = $this->developingStoryWriter->write($article, $primary, $supporting, $verdict);
-        if ($updated === null) {
-            // Writer rejected (wrong type / archived). Handler logs already fired inside.
-            return null;
-        }
-
-        return $this->applyGuardAndRetranslate($updated, $primary, $supporting, $verdict);
     }
 
     /**

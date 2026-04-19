@@ -259,6 +259,66 @@ class WriteFlashMessageHandlerTest extends TestCase
         ($this->handler)($message);
     }
 
+    public function testHandlerSwallowsWriterException(): void
+    {
+        $primary = $this->mockSignal(700);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->articleRepository->method('findOneBy')->willReturn(null);
+        $this->topicRepository->method('find')->willReturn(null);
+
+        $this->flashWriter->method('write')
+            ->willThrowException(new \RuntimeException('writer exploded'));
+
+        // Guard / dispatcher / escalation-log never run when writer blows up.
+        $this->guardPipeline->expects($this->never())->method('check');
+        $this->postApprovalDispatcher->expects($this->never())->method('dispatch');
+        $this->escalationLogWriter->expects($this->never())->method('write');
+
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with('write_flash_handler_failed', $this->callback(static function (array $ctx): bool {
+                return isset($ctx['primary_signal_id'], $ctx['exception'], $ctx['error'])
+                    && $ctx['primary_signal_id'] === 700
+                    && $ctx['exception'] === \RuntimeException::class
+                    && $ctx['error'] === 'writer exploded';
+            }));
+
+        $message = new WriteFlashMessage(700, [], 'full_flash');
+
+        // Must NOT rethrow — contract guards against Messenger retry storms
+        // that would pin the Article in NEW/publishedLocales=[] forever.
+        $result = ($this->handler)($message);
+
+        $this->assertNull($result);
+    }
+
+    public function testHandlerSwallowsGuardPipelineException(): void
+    {
+        $primary = $this->mockSignal(800);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->articleRepository->method('findOneBy')->willReturn(null);
+        $this->topicRepository->method('find')->willReturn(null);
+
+        $article = $this->buildWriterArticle();
+        $this->flashWriter->method('write')->willReturn($article);
+
+        $this->guardPipeline->method('check')
+            ->willThrowException(new \LogicException('guard pipeline broken'));
+
+        $this->postApprovalDispatcher->expects($this->never())->method('dispatch');
+        $this->escalationLogWriter->expects($this->never())->method('write');
+
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with('write_flash_handler_failed', $this->callback(static function (array $ctx): bool {
+                return isset($ctx['exception'])
+                    && $ctx['exception'] === \LogicException::class;
+            }));
+
+        $message = new WriteFlashMessage(800, [], 'full_flash');
+        $this->assertNull(($this->handler)($message));
+    }
+
     private function buildWriterArticle(): Article
     {
         $article = new Article();

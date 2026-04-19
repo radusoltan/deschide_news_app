@@ -68,58 +68,74 @@ class WriteFlashMessageHandler
 
     public function __invoke(WriteFlashMessage $message): ?Article
     {
-        $primary = $this->signalRepository->find($message->primarySignalId);
-        if ($primary === null) {
-            $this->logger->warning('write_flash_primary_signal_missing', [
-                'primary_signal_id' => $message->primarySignalId,
-            ]);
+        try {
+            $primary = $this->signalRepository->find($message->primarySignalId);
+            if ($primary === null) {
+                $this->logger->warning('write_flash_primary_signal_missing', [
+                    'primary_signal_id' => $message->primarySignalId,
+                ]);
 
-            return null;
-        }
-
-        // Idempotency: if we already persisted an Article for this primary
-        // signal (previous successful run of the same message), return it
-        // without regenerating. Messenger retries on transient failures
-        // (DB deadlock, LLM timeout) must not produce duplicate Articles.
-        $existing = $this->articleRepository->findOneBy(['originalSourceSignal' => $primary]);
-        if ($existing !== null) {
-            $this->logger->info('write_flash_idempotent_short_circuit', [
-                'primary_signal_id' => $message->primarySignalId,
-                'article_id' => $existing->getId(),
-            ]);
-
-            return $existing;
-        }
-
-        $supporting = [];
-        foreach ($message->supportingSignalIds as $id) {
-            $signal = $this->signalRepository->find($id);
-            if ($signal !== null) {
-                $supporting[] = $signal;
+                return null;
             }
-        }
 
-        $verdictType = VerdictType::tryFrom($message->verdictType);
-        if ($verdictType === null) {
-            $this->logger->error('write_flash_unknown_verdict_type', [
-                'verdict_type' => $message->verdictType,
+            // Idempotency: if we already persisted an Article for this primary
+            // signal (previous successful run of the same message), return it
+            // without regenerating. Messenger retries on transient failures
+            // (DB deadlock, LLM timeout) must not produce duplicate Articles.
+            $existing = $this->articleRepository->findOneBy(['originalSourceSignal' => $primary]);
+            if ($existing !== null) {
+                $this->logger->info('write_flash_idempotent_short_circuit', [
+                    'primary_signal_id' => $message->primarySignalId,
+                    'article_id' => $existing->getId(),
+                ]);
+
+                return $existing;
+            }
+
+            $supporting = [];
+            foreach ($message->supportingSignalIds as $id) {
+                $signal = $this->signalRepository->find($id);
+                if ($signal !== null) {
+                    $supporting[] = $signal;
+                }
+            }
+
+            $verdictType = VerdictType::tryFrom($message->verdictType);
+            if ($verdictType === null) {
+                $this->logger->error('write_flash_unknown_verdict_type', [
+                    'verdict_type' => $message->verdictType,
+                    'primary_signal_id' => $message->primarySignalId,
+                ]);
+
+                return null;
+            }
+
+            $topic = $message->topicId !== null ? $this->topicRepository->find($message->topicId) : null;
+
+            $verdict = new VerificationVerdict(
+                type: $verdictType,
+                reasoning: 'dispatched-from-verify-claim-handler',
+                confidence: $this->extractConfidence($primary),
+            );
+
+            $article = $this->flashWriter->write($primary, $supporting, $verdict, $topic);
+
+            return $this->applyGuardAndPublish($article, $primary, $supporting, $verdict);
+        } catch (\Throwable $e) {
+            // Contract: log + no-op, never rethrow. Matches VerifyClaimMessageHandler
+            // pattern so a transient writer/guard fault does not spiral into a
+            // Messenger retry storm — the idempotency short-circuit on the next
+            // run would otherwise pin the Article in NEW/publishedLocales=[]
+            // forever.
+            $this->logger->error('write_flash_handler_failed', [
                 'primary_signal_id' => $message->primarySignalId,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+                'trace' => mb_substr($e->getTraceAsString(), 0, 500),
             ]);
 
             return null;
         }
-
-        $topic = $message->topicId !== null ? $this->topicRepository->find($message->topicId) : null;
-
-        $verdict = new VerificationVerdict(
-            type: $verdictType,
-            reasoning: 'dispatched-from-verify-claim-handler',
-            confidence: $this->extractConfidence($primary),
-        );
-
-        $article = $this->flashWriter->write($primary, $supporting, $verdict, $topic);
-
-        return $this->applyGuardAndPublish($article, $primary, $supporting, $verdict);
     }
 
     /**

@@ -234,6 +234,61 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
         $this->assertNull(($this->handler)($message));
     }
 
+    public function testHandlerSwallowsWriterException(): void
+    {
+        $article = $this->buildDevelopingArticle();
+        $primary = $this->mockSignal(700);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+
+        $this->writer->method('write')
+            ->willThrowException(new \RuntimeException('writer exploded'));
+
+        $this->guardPipeline->expects($this->never())->method('check');
+        $this->escalationLogWriter->expects($this->never())->method('write');
+
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with('write_developing_handler_failed', $this->callback(static function (array $ctx): bool {
+                return isset($ctx['article_id'], $ctx['exception'], $ctx['error'])
+                    && $ctx['article_id'] === 42
+                    && $ctx['exception'] === \RuntimeException::class;
+            }));
+
+        $message = new WriteDevelopingStoryMessage(42, 700, [], 'full_flash');
+
+        // Must NOT rethrow — matches VerifyClaimMessageHandler log-and-noop contract.
+        $this->assertNull(($this->handler)($message));
+        $this->assertCount(0, $this->dispatchedTranslations);
+    }
+
+    public function testHandlerSwallowsGuardPipelineException(): void
+    {
+        $article = $this->buildDevelopingArticle();
+        $primary = $this->mockSignal(800);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->writer->method('write')->willReturn($article);
+
+        $this->guardPipeline->method('check')
+            ->willThrowException(new \LogicException('guard pipeline broken'));
+
+        $this->escalationLogWriter->expects($this->never())->method('write');
+
+        $this->logger->expects($this->once())
+            ->method('error')
+            ->with('write_developing_handler_failed', $this->callback(static function (array $ctx): bool {
+                return isset($ctx['exception'])
+                    && $ctx['exception'] === \LogicException::class;
+            }));
+
+        $message = new WriteDevelopingStoryMessage(42, 800, [], 'full_flash');
+        $this->assertNull(($this->handler)($message));
+        $this->assertCount(0, $this->dispatchedTranslations);
+    }
+
     private function buildDevelopingArticle(): Article
     {
         $article = new Article();
