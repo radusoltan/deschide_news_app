@@ -342,6 +342,52 @@ class AdminEscalationControllerTest extends WebTestCase
         $this->assertGreaterThan($originalExpiry, $log->getExpiresAt());
     }
 
+    public function testExtendSlaOnStaleExpiredRowUsesNowAsBase(): void
+    {
+        // Regression guard for B-H1: an EXPIRED row whose expires_at already
+        // lies in the past must NOT be extended from that stale timestamp —
+        // otherwise short extensions land in the past and the scheduler
+        // re-expires the row on the next tick.
+        $log = $this->seedLog(EscalationCategory::CATEGORY_6_CRIMINAL_ACCUSATION);
+        $log->setDecision(EscalationDecision::EXPIRED);
+        $log->setDecidedAt(new \DateTimeImmutable('-1 hour'));
+        $log->setExpiresAt(new \DateTimeImmutable('-1 hour'));
+        $this->em->flush();
+
+        $beforeRequest = new \DateTimeImmutable();
+
+        $this->client->request(
+            'POST',
+            sprintf('/api/admin/escalations/%d/extend-sla', $log->getId()),
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token($this->editorUser),
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            // +10 minutes — smaller than the 1h staleness, so using the stale
+            // expiry would yield newExpiry = now - 50min (still in the past).
+            json_encode(['additionalSeconds' => 600]),
+        );
+
+        $this->assertResponseIsSuccessful();
+
+        $this->em->refresh($log);
+        $newExpiry = $log->getExpiresAt();
+        $this->assertNotNull($newExpiry);
+
+        // New expiry must be in the future AND roughly now+600s (±a few
+        // seconds for request processing), NOT stale_expiry+600s.
+        $this->assertGreaterThan(
+            $beforeRequest,
+            $newExpiry,
+            'Reopened expiry must be in the future, not still in the past',
+        );
+        $delta = $newExpiry->getTimestamp() - $beforeRequest->getTimestamp();
+        $this->assertGreaterThanOrEqual(595, $delta, 'Base must be ~now, not stale expiry');
+        $this->assertLessThanOrEqual(610, $delta, 'Base must be ~now, not stale expiry');
+    }
+
     public function testExtendSlaReopensExpiredRow(): void
     {
         $log = $this->seedLog(EscalationCategory::CATEGORY_7_PRE_CEC_ELECTORAL);

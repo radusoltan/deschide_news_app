@@ -276,8 +276,16 @@ class AdminEscalationController extends AbstractController
             ]);
         }
 
-        $currentExpiry = $log->getExpiresAt() ?? new \DateTimeImmutable();
-        $newExpiry = $currentExpiry->modify(sprintf('+%d seconds', $additionalSeconds));
+        // When reopening an EXPIRED row (or any row whose expires_at is already
+        // in the past because a previous tick missed the scheduler), using the
+        // stale expiry as base would produce a new expiry still in the past
+        // for short extensions — the scheduler would immediately re-expire it.
+        // Clamp base to max(now, currentExpiry) so added seconds always land in
+        // the future regardless of row age.
+        $now = new \DateTimeImmutable();
+        $currentExpiry = $log->getExpiresAt();
+        $base = ($currentExpiry !== null && $currentExpiry > $now) ? $currentExpiry : $now;
+        $newExpiry = $base->modify(sprintf('+%d seconds', $additionalSeconds));
         $log->setExpiresAt($newExpiry);
 
         // If the row had been auto-EXPIRED, extending SLA re-opens it for review.
