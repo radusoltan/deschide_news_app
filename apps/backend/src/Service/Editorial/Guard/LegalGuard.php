@@ -10,6 +10,7 @@ use App\Repository\AppSettingRepository;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -40,6 +41,9 @@ use Psr\Log\LoggerInterface;
  */
 class LegalGuard implements GuardInterface
 {
+    // TODO(s58-retro): rename AGENT_ID_GENERAL → AGENT_ID for naming consistency
+    // with peer agents (flash_writer, style_guard, etc.) — deferred per T57.03
+    // discovery to avoid mechanical diff churn during P' instrumentation sprint.
     private const AGENT_ID_GENERAL = 'legal_guard';
     private const FALLBACK_MODEL = 'gemini-2.5-flash';
     public const ESCALATION_CODE_CATEGORY_6 = 'CATEGORY_6_CRIMINAL_ACCUSATION';
@@ -72,6 +76,7 @@ PROMPT;
         private readonly LlmRetryExecutor $llmRetryExecutor,
         private readonly GeminiCliService $geminiCliService,
         private readonly AppSettingRepository $appSettingRepository,
+        private readonly LlmInvocationLogger $invocationLogger,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -85,7 +90,7 @@ PROMPT;
         $tier = $this->resolveTier($isCategory6);
 
         try {
-            $llmResult = $this->invokeLlm($article, $tier);
+            $llmResult = $this->invokeLlm($article, $tier, $isCategory6);
         } catch (\Throwable $e) {
             $this->logger->warning('legal_guard_llm_unavailable', [
                 'article_id' => $article->getId(),
@@ -127,7 +132,7 @@ PROMPT;
     /**
      * @return array<string, mixed>
      */
-    private function invokeLlm(Article $article, LlmModelTier $tier): array
+    private function invokeLlm(Article $article, LlmModelTier $tier, bool $isCategory6): array
     {
         $userPrompt = sprintf(
             "Titlu: %s\n\nLead: %s\n\nCorp:\n%s",
@@ -144,7 +149,19 @@ PROMPT;
                 systemPrompt: self::SYSTEM_PROMPT,
             );
 
-            return $this->decodeJson($result['content']);
+            $decoded = $this->decodeJson($result['content']);
+
+            // T57.03 (ADR-023 D2) — P' coverage. Attach the parsed verdict
+            // to the executor-owned baseline row.
+            $invocationId = $result['invocation_id'] ?? null;
+            if ($invocationId !== null) {
+                $this->invocationLogger->attachVerdict(
+                    $invocationId,
+                    $this->mapVerdict($decoded, $isCategory6),
+                );
+            }
+
+            return $decoded;
         } catch (LlmUnavailableException $e) {
             $this->logger->warning('legal_guard_primary_tier_unavailable_trying_gemini', [
                 'tier' => $tier->value,
@@ -152,13 +169,65 @@ PROMPT;
             ]);
         }
 
+        // T57.03 — Gemini bypasses the executor so the gate self-logs for
+        // cost parity with the Claude path. Verdict is written at insert
+        // time because we already have the decoded payload.
         $geminiPrompt = self::SYSTEM_PROMPT . "\n\n" . $userPrompt;
+        $geminiStart = (int) (microtime(true) * 1000);
         $raw = $this->geminiCliService->execute($geminiPrompt, [
             'model' => self::FALLBACK_MODEL,
             'timeout' => 120,
         ]);
+        $geminiWallMs = (int) (microtime(true) * 1000) - $geminiStart;
+        $decoded = $this->decodeJson($raw);
 
-        return $this->decodeJson($raw);
+        $this->invocationLogger->logInvocation(
+            agentName: self::AGENT_ID_GENERAL,
+            promptHash: hash('xxh128', $geminiPrompt),
+            durationMs: $geminiWallMs,
+            inputTokens: 0,
+            outputTokens: 0,
+            model: self::FALLBACK_MODEL,
+            verdict: $this->mapVerdict($decoded, $isCategory6),
+        );
+
+        return $decoded;
+    }
+
+    /**
+     * T57.03 — discrete verdict string derived from the LLM's own severity
+     * analysis. Matches what the pipeline will do with the article: category-6
+     * escalation, medium-severity block, or pass.
+     *
+     * @param array<string, mixed> $decoded
+     */
+    private function mapVerdict(array $decoded, bool $isCategory6): string
+    {
+        $risks = $decoded['risks'] ?? [];
+        $hasHigh = false;
+        $hasMedium = false;
+        if (is_array($risks)) {
+            foreach ($risks as $risk) {
+                if (!is_array($risk)) {
+                    continue;
+                }
+                $severity = $risk['severity'] ?? 'low';
+                if ($severity === 'high') {
+                    $hasHigh = true;
+                } elseif ($severity === 'medium') {
+                    $hasMedium = true;
+                }
+            }
+        }
+
+        if ($isCategory6 || $hasHigh) {
+            return 'escalate_cat6';
+        }
+        if ($hasMedium) {
+            return 'block_medium';
+        }
+
+        return 'pass';
     }
 
     /**

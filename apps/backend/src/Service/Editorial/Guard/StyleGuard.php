@@ -9,6 +9,7 @@ use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -64,6 +65,7 @@ PROMPT;
         private readonly DiacriticsValidator $diacriticsValidator,
         private readonly LlmRetryExecutor $llmRetryExecutor,
         private readonly GeminiCliService $geminiCliService,
+        private readonly LlmInvocationLogger $invocationLogger,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -135,20 +137,70 @@ PROMPT;
                 systemPrompt: self::SYSTEM_PROMPT,
             );
 
-            return $this->decodeJson($result['content']);
+            $decoded = $this->decodeJson($result['content']);
+
+            // T57.03 (ADR-023 D2) — attach verdict to executor-owned row.
+            $invocationId = $result['invocation_id'] ?? null;
+            if ($invocationId !== null) {
+                $this->invocationLogger->attachVerdict(
+                    $invocationId,
+                    $this->mapVerdict($decoded),
+                );
+            }
+
+            return $decoded;
         } catch (LlmUnavailableException $e) {
             $this->logger->warning('style_guard_haiku_unavailable_trying_gemini', [
                 'attempts' => $e->attempts,
             ]);
         }
 
+        // T57.03 — Gemini self-logs for cost parity with the Claude path.
         $geminiPrompt = self::SYSTEM_PROMPT . "\n\n" . $userPrompt;
+        $geminiStart = (int) (microtime(true) * 1000);
         $raw = $this->geminiCliService->execute($geminiPrompt, [
             'model' => self::FALLBACK_MODEL,
             'timeout' => 60,
         ]);
+        $geminiWallMs = (int) (microtime(true) * 1000) - $geminiStart;
+        $decoded = $this->decodeJson($raw);
 
-        return $this->decodeJson($raw);
+        $this->invocationLogger->logInvocation(
+            agentName: self::AGENT_ID,
+            promptHash: hash('xxh128', $geminiPrompt),
+            durationMs: $geminiWallMs,
+            inputTokens: 0,
+            outputTokens: 0,
+            model: self::FALLBACK_MODEL,
+            verdict: $this->mapVerdict($decoded),
+        );
+
+        return $decoded;
+    }
+
+    /**
+     * T57.03 — pass/block verdict derived from the LLM's issue severity list.
+     * StyleGuard has no escalation ladder (per ADR-020 D8) so binary suffices.
+     *
+     * @param array<string, mixed> $decoded
+     */
+    private function mapVerdict(array $decoded): string
+    {
+        $issues = $decoded['issues'] ?? [];
+        if (!is_array($issues)) {
+            return 'pass';
+        }
+        foreach ($issues as $issue) {
+            if (!is_array($issue)) {
+                continue;
+            }
+            $severity = $issue['severity'] ?? 'low';
+            if ($severity === 'medium' || $severity === 'high') {
+                return 'block';
+            }
+        }
+
+        return 'pass';
     }
 
     private function buildUserPrompt(Article $article): string
