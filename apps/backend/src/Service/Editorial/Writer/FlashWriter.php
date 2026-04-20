@@ -189,38 +189,18 @@ TEXT;
      */
     private function invokeLlm(string $userPrompt): array
     {
-        // T56.09 — full prompt hash (system + user) for dedup / retry-detection
-        // analytics. Recorded against every invocation, Haiku or Gemini.
+        // T57.03 — Claude-path baseline row is now owned by LlmRetryExecutor
+        // (W' coverage, ADR-023 D2). The Gemini fallback still self-logs
+        // because GeminiCliService bypasses the executor.
         $fullPrompt = self::SYSTEM_PROMPT . "\n\n" . $userPrompt;
         $promptHash = hash('sha256', $fullPrompt);
 
         try {
-            $haikuStart = (int) (microtime(true) * 1000);
             $result = $this->llmRetryExecutor->executeWithRetry(
                 agentId: self::AGENT_ID,
                 messages: [['role' => 'user', 'content' => $userPrompt]],
                 tier: self::PRIMARY_TIER,
                 systemPrompt: self::SYSTEM_PROMPT,
-            );
-            $haikuWallMs = (int) (microtime(true) * 1000) - $haikuStart;
-
-            /** @var array<string, mixed>|null $metrics */
-            $metrics = $result['metrics'] ?? null;
-            $this->llmInvocationLogger->logInvocation(
-                agentName: self::AGENT_ID,
-                promptHash: $promptHash,
-                // Prefer wrapper-reported duration; fall back to wall time
-                // when the wrapper did not surface it (Gemini fallback path).
-                durationMs: (int) ($metrics['duration_ms'] ?? $haikuWallMs),
-                inputTokens: (int) ($metrics['input_tokens'] ?? 0),
-                outputTokens: (int) ($metrics['output_tokens'] ?? 0),
-                cacheReadTokens: (int) ($metrics['cache_read_tokens'] ?? 0),
-                cacheCreationTokens: (int) ($metrics['cache_creation_tokens'] ?? 0),
-                costUsd: (float) ($metrics['cost_usd'] ?? 0.0),
-                model: $result['model'],
-                // FlashWriter produces content rather than a classification
-                // verdict — leave null so dashboards can filter writers out.
-                verdict: null,
             );
 
             return $this->decodeJson($result['content'], 'haiku');
