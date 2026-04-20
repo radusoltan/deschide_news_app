@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\MessageHandler\Editorial;
 
+use App\Entity\Editorial\SourceSignal;
 use App\Message\Editorial\AggregateSignalsMessage;
 use App\Message\Editorial\VerifyClaimMessage;
 use App\Repository\AppSettingRepository;
+use App\Repository\Editorial\SourceSignalRepository;
+use App\Service\Editorial\TopicHashResolver;
 use App\Service\Editorial\Verification\SignalAggregator;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -28,6 +31,8 @@ final readonly class AggregateSignalsMessageHandler
         private SignalAggregator $aggregator,
         private MessageBusInterface $messageBus,
         private AppSettingRepository $appSettings,
+        private SourceSignalRepository $signalRepository,
+        private TopicHashResolver $topicHashResolver,
         private LoggerInterface $logger,
     ) {}
 
@@ -49,11 +54,26 @@ final readonly class AggregateSignalsMessageHandler
         try {
             $graphs = $this->aggregator->aggregate($message->topicHash, $message->signalIds);
 
+            // Resolve the cluster's topic once per dispatch batch. All graphs
+            // in this batch share the same topic_hash (same stabilization
+            // bucket), so a single LLM round-trip covers the whole fan-out.
+            // T56.04 / ADR-022 D4: unblocks VerifyClaimMessageHandler's
+            // developing-story continuation, which was dead code in S55 due
+            // to topicId always arriving null.
+            $topicId = null;
+            if ($graphs !== []) {
+                $representativeSignal = $this->hydrateRepresentativeSignal($message->signalIds);
+                if ($representativeSignal !== null) {
+                    $topicId = $this->topicHashResolver->resolve($message->topicHash, $representativeSignal);
+                }
+            }
+
             foreach ($graphs as $graph) {
                 $this->messageBus->dispatch(new VerifyClaimMessage(
                     topicHash: $graph->topicHash,
                     graphArray: $graph->toArray(),
                     signalIds: $message->signalIds,
+                    topicId: $topicId,
                 ));
             }
 
@@ -70,5 +90,24 @@ final readonly class AggregateSignalsMessageHandler
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Pick the first signal id in the batch that still hydrates from the DB.
+     * Signals may be deleted between stabilization and aggregation, so we
+     * walk the list instead of trusting index 0 blindly.
+     *
+     * @param list<int> $signalIds
+     */
+    private function hydrateRepresentativeSignal(array $signalIds): ?SourceSignal
+    {
+        foreach ($signalIds as $id) {
+            $signal = $this->signalRepository->find($id);
+            if ($signal !== null) {
+                return $signal;
+            }
+        }
+
+        return null;
     }
 }
