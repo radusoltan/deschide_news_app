@@ -77,6 +77,19 @@ final readonly class VerifyClaimMessageHandler
 
     public function __invoke(VerifyClaimMessage $message): void
     {
+        // Emergency circuit breaker (T56.02, ADR-022 D5). Short-circuits
+        // BEFORE any LLM call or guard invocation so mid-run halts work
+        // even with in-flight messages already dispatched to the queue.
+        if ($this->appSettings->getBool('editorial.emergency_halt', false)) {
+            $this->logger->info('emergency_halt.triggered', [
+                'handler' => self::class,
+                'message_class' => $message::class,
+                'message_id_hint' => $message->topicHash,
+            ]);
+
+            return;
+        }
+
         try {
             /** @var list<SourceSignal> $signals */
             $signals = [];

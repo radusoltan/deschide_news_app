@@ -6,6 +6,7 @@ namespace App\MessageHandler\Editorial;
 
 use App\Message\Editorial\AggregateSignalsMessage;
 use App\Message\Editorial\VerifyClaimMessage;
+use App\Repository\AppSettingRepository;
 use App\Service\Editorial\Verification\SignalAggregator;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -26,11 +27,25 @@ final readonly class AggregateSignalsMessageHandler
     public function __construct(
         private SignalAggregator $aggregator,
         private MessageBusInterface $messageBus,
+        private AppSettingRepository $appSettings,
         private LoggerInterface $logger,
     ) {}
 
     public function __invoke(AggregateSignalsMessage $message): void
     {
+        // Emergency circuit breaker (T56.02, ADR-022 D5). Short-circuits
+        // BEFORE any LLM call or aggregator invocation so mid-run halts work
+        // even with in-flight messages already dispatched to the queue.
+        if ($this->appSettings->getBool('editorial.emergency_halt', false)) {
+            $this->logger->info('emergency_halt.triggered', [
+                'handler' => self::class,
+                'message_class' => $message::class,
+                'message_id_hint' => $message->topicHash,
+            ]);
+
+            return;
+        }
+
         try {
             $graphs = $this->aggregator->aggregate($message->topicHash, $message->signalIds);
 

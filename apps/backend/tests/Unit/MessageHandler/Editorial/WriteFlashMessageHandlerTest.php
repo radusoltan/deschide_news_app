@@ -15,6 +15,7 @@ use App\Enum\Editorial\EscalationCategory;
 use App\Enum\Editorial\VerdictType;
 use App\Message\Editorial\WriteFlashMessage;
 use App\MessageHandler\Editorial\WriteFlashMessageHandler;
+use App\Repository\AppSettingRepository;
 use App\Repository\ArticleRepository;
 use App\Repository\Editorial\SourceSignalRepository;
 use App\Repository\TopicRepository;
@@ -46,6 +47,7 @@ class WriteFlashMessageHandlerTest extends TestCase
     private ArticleRepository&MockObject $articleRepository;
     private TopicRepository&MockObject $topicRepository;
     private EntityManagerInterface&MockObject $em;
+    private AppSettingRepository&MockObject $appSettings;
     private LoggerInterface&MockObject $logger;
     private WriteFlashMessageHandler $handler;
 
@@ -59,6 +61,12 @@ class WriteFlashMessageHandlerTest extends TestCase
         $this->articleRepository = $this->createMock(ArticleRepository::class);
         $this->topicRepository = $this->createMock(TopicRepository::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
+        $this->appSettings = $this->createMock(AppSettingRepository::class);
+        // Default: emergency_halt=false so the existing happy-path tests exercise
+        // real delegation. The emergency_halt test overrides with a fresh mock.
+        $this->appSettings->method('getBool')
+            ->with('editorial.emergency_halt', false)
+            ->willReturn(false);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->handler = new WriteFlashMessageHandler(
@@ -71,6 +79,7 @@ class WriteFlashMessageHandlerTest extends TestCase
             $this->articleRepository,
             $this->topicRepository,
             $this->em,
+            $this->appSettings,
             $this->logger,
         );
     }
@@ -317,6 +326,77 @@ class WriteFlashMessageHandlerTest extends TestCase
 
         $message = new WriteFlashMessage(800, [], 'full_flash');
         $this->assertNull(($this->handler)($message));
+    }
+
+    public function testEmergencyHaltShortCircuitsBeforeAnyDependencyIsTouched(): void
+    {
+        $haltedAppSettings = $this->createMock(AppSettingRepository::class);
+        $haltedAppSettings->method('getBool')
+            ->with('editorial.emergency_halt', false)
+            ->willReturn(true);
+
+        $handler = new WriteFlashMessageHandler(
+            $this->flashWriter,
+            $this->guardPipeline,
+            $this->postApprovalDispatcher,
+            $this->escalationLogWriter,
+            new GuardEscalationCategoryMapper(),
+            $this->signalRepository,
+            $this->articleRepository,
+            $this->topicRepository,
+            $this->em,
+            $haltedAppSettings,
+            $this->logger,
+        );
+
+        // Short-circuit must happen BEFORE any repo, writer, guard, dispatcher
+        // or flush is invoked — this is the whole point of the circuit breaker.
+        $this->signalRepository->expects($this->never())->method('find');
+        $this->articleRepository->expects($this->never())->method('findOneBy');
+        $this->flashWriter->expects($this->never())->method('write');
+        $this->guardPipeline->expects($this->never())->method('check');
+        $this->postApprovalDispatcher->expects($this->never())->method('dispatch');
+        $this->escalationLogWriter->expects($this->never())->method('write');
+        $this->em->expects($this->never())->method('flush');
+
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('emergency_halt.triggered', $this->callback(static function (array $ctx): bool {
+                return ($ctx['handler'] ?? null) === WriteFlashMessageHandler::class
+                    && ($ctx['message_class'] ?? null) === WriteFlashMessage::class
+                    && ($ctx['message_id_hint'] ?? null) === 4242;
+            }));
+
+        $result = $handler(new WriteFlashMessage(4242, [], 'full_flash'));
+
+        $this->assertNull($result);
+    }
+
+    public function testEmergencyHaltDisabledKeepsDelegatingToDeps(): void
+    {
+        // Sanity twin to emergency_halt=true: with flag=false (default in setUp),
+        // the happy-path delegation chain still runs end-to-end. Proves the
+        // circuit breaker check doesn't accidentally swallow normal traffic.
+        $primary = $this->mockSignal(4243);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->articleRepository->method('findOneBy')->willReturn(null);
+        $this->topicRepository->method('find')->willReturn(null);
+
+        $article = $this->buildWriterArticle();
+        $this->flashWriter->expects($this->once())
+            ->method('write')
+            ->willReturn($article);
+
+        $this->guardPipeline->expects($this->once())
+            ->method('check')
+            ->willReturn(new GuardVerdict(passed: true));
+
+        $this->postApprovalDispatcher->expects($this->once())->method('dispatch');
+
+        $result = ($this->handler)(new WriteFlashMessage(4243, [], 'full_flash'));
+
+        $this->assertSame($article, $result);
+        $this->assertSame(['ro'], $article->getPublishedLocales());
     }
 
     private function buildWriterArticle(): Article

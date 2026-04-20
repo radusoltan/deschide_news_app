@@ -13,6 +13,7 @@ use App\Enum\ArticleType;
 use App\Enum\Editorial\EscalationCategory;
 use App\Message\Editorial\WriteDevelopingStoryMessage;
 use App\MessageHandler\Editorial\WriteDevelopingStoryMessageHandler;
+use App\Repository\AppSettingRepository;
 use App\Repository\ArticleRepository;
 use App\Repository\Editorial\SourceSignalRepository;
 use App\Service\Editorial\Escalation\EscalationLogWriter;
@@ -46,6 +47,7 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
     private ArticleRepository&MockObject $articleRepository;
     private SourceSignalRepository&MockObject $signalRepository;
     private EntityManagerInterface&MockObject $em;
+    private AppSettingRepository&MockObject $appSettings;
     private LoggerInterface&MockObject $logger;
     private WriteDevelopingStoryMessageHandler $handler;
 
@@ -61,6 +63,12 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
         $this->articleRepository = $this->createMock(ArticleRepository::class);
         $this->signalRepository = $this->createMock(SourceSignalRepository::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
+        $this->appSettings = $this->createMock(AppSettingRepository::class);
+        // Default: emergency_halt=false so the existing happy-path tests exercise
+        // real delegation. The emergency_halt test overrides with a fresh mock.
+        $this->appSettings->method('getBool')
+            ->with('editorial.emergency_halt', false)
+            ->willReturn(false);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         // TranslationPriorityDispatcher is final readonly — use a real instance
@@ -96,6 +104,7 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
             $this->articleRepository,
             $this->signalRepository,
             $this->em,
+            $this->appSettings,
             $this->logger,
         );
     }
@@ -287,6 +296,72 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
         $message = new WriteDevelopingStoryMessage(42, 800, [], 'full_flash');
         $this->assertNull(($this->handler)($message));
         $this->assertCount(0, $this->dispatchedTranslations);
+    }
+
+    public function testEmergencyHaltShortCircuitsBeforeAnyDependencyIsTouched(): void
+    {
+        $haltedAppSettings = $this->createMock(AppSettingRepository::class);
+        $haltedAppSettings->method('getBool')
+            ->with('editorial.emergency_halt', false)
+            ->willReturn(true);
+
+        $handler = new WriteDevelopingStoryMessageHandler(
+            $this->writer,
+            $this->guardPipeline,
+            $this->translationDispatcher,
+            $this->escalationLogWriter,
+            new GuardEscalationCategoryMapper(),
+            $this->articleRepository,
+            $this->signalRepository,
+            $this->em,
+            $haltedAppSettings,
+            $this->logger,
+        );
+
+        // Short-circuit must happen before any repo/writer/guard/dispatch hits.
+        $this->articleRepository->expects($this->never())->method('find');
+        $this->signalRepository->expects($this->never())->method('find');
+        $this->writer->expects($this->never())->method('write');
+        $this->guardPipeline->expects($this->never())->method('check');
+        $this->escalationLogWriter->expects($this->never())->method('write');
+        $this->em->expects($this->never())->method('flush');
+
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('emergency_halt.triggered', $this->callback(static function (array $ctx): bool {
+                return ($ctx['handler'] ?? null) === WriteDevelopingStoryMessageHandler::class
+                    && ($ctx['message_class'] ?? null) === WriteDevelopingStoryMessage::class
+                    && ($ctx['message_id_hint'] ?? null) === 5151;
+            }));
+
+        $result = $handler(new WriteDevelopingStoryMessage(5151, 700, [], 'full_flash'));
+
+        $this->assertNull($result);
+        $this->assertCount(0, $this->dispatchedTranslations);
+    }
+
+    public function testEmergencyHaltDisabledKeepsDelegatingToDeps(): void
+    {
+        // Sanity twin to emergency_halt=true: with flag=false (default in setUp),
+        // the happy-path delegation chain still runs end-to-end.
+        $article = $this->buildDevelopingArticle();
+        $primary = $this->mockSignal(5152);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+
+        $this->writer->expects($this->once())
+            ->method('write')
+            ->willReturn($article);
+
+        $this->guardPipeline->expects($this->once())
+            ->method('check')
+            ->willReturn(new GuardVerdict(passed: true));
+
+        $result = ($this->handler)(new WriteDevelopingStoryMessage(42, 5152, [], 'full_flash'));
+
+        $this->assertSame($article, $result);
+        $this->assertCount(1, $this->dispatchedTranslations);
     }
 
     private function buildDevelopingArticle(): Article

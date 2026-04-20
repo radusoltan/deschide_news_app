@@ -25,6 +25,7 @@ use App\Service\Editorial\Verification\VerificationGate;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -58,10 +59,13 @@ class VerifyClaimMessageHandlerTest extends TestCase
         $this->appSettings = $this->createMock(AppSettingRepository::class);
 
         // Default: pipeline is OFF (S54 behavior — audit trail persists, no
-        // downstream dispatch). Individual tests override for the T55.9 paths.
+        // downstream dispatch). emergency_halt is off (T56.02 — handler runs).
+        // Individual tests override for the T55.9 / T56.02 paths.
         $this->appSettings->method('getBool')
-            ->with('editorial.pipeline.enabled', false)
-            ->willReturn(false);
+            ->willReturnMap([
+                ['editorial.emergency_halt', false, false],
+                ['editorial.pipeline.enabled', false, false],
+            ]);
 
         $this->dispatchedMessages = [];
         $this->messageBus->method('dispatch')
@@ -203,6 +207,82 @@ class VerifyClaimMessageHandlerTest extends TestCase
 
         // Should NOT throw.
         $this->handler->__invoke(new VerifyClaimMessage('topic', $this->minimalGraphArray(), [1]));
+    }
+
+    public function testEmergencyHaltShortCircuitsBeforeAnyDependencyIsTouched(): void
+    {
+        $haltedAppSettings = $this->createMock(AppSettingRepository::class);
+        $haltedAppSettings->method('getBool')
+            ->willReturnMap([
+                ['editorial.emergency_halt', false, true],
+                ['editorial.pipeline.enabled', false, true],
+            ]);
+
+        $logger = $this->createMock(LoggerInterface::class);
+
+        $handler = new VerifyClaimMessageHandler(
+            $this->repository,
+            $this->gate,
+            $this->em,
+            $this->topicRepository,
+            $this->articleRepository,
+            $this->escalationClassifier,
+            $this->escalationLogWriter,
+            $this->messageBus,
+            $haltedAppSettings,
+            $logger,
+        );
+
+        // Short-circuit must happen BEFORE any repo/gate/persist/dispatch call.
+        $this->repository->expects($this->never())->method('find');
+        $this->gate->expects($this->never())->method('rule');
+        $this->em->expects($this->never())->method('persist');
+        $this->em->expects($this->never())->method('flush');
+        $this->escalationClassifier->expects($this->never())->method('classify');
+        $this->escalationLogWriter->expects($this->never())->method('write');
+        $this->messageBus->expects($this->never())->method('dispatch');
+
+        $logger->expects($this->once())
+            ->method('info')
+            ->with('emergency_halt.triggered', $this->callback(static function (array $ctx): bool {
+                return ($ctx['handler'] ?? null) === VerifyClaimMessageHandler::class
+                    && ($ctx['message_class'] ?? null) === VerifyClaimMessage::class
+                    && ($ctx['message_id_hint'] ?? null) === 'topic-halted';
+            }));
+
+        $handler(new VerifyClaimMessage(
+            topicHash: 'topic-halted',
+            graphArray: $this->minimalGraphArray(),
+            signalIds: [1, 2],
+        ));
+    }
+
+    public function testEmergencyHaltDisabledRunsAuditTrail(): void
+    {
+        // Sanity twin: with emergency_halt=false (default in setUp), the audit
+        // trail (snapshot + claim history persist) still runs. Proves the
+        // circuit breaker doesn't accidentally swallow normal traffic.
+        $s1 = $this->makeSignal(5551, tier: 1);
+        $this->repository->method('find')->willReturnMap([[5551, null, $s1]]);
+
+        $this->gate->expects($this->once())
+            ->method('rule')
+            ->willReturn(new VerificationVerdict(
+                type: VerdictType::REJECT,
+                reasoning: 'low-signal',
+                confidence: 0.2,
+            ));
+
+        $this->em->expects($this->once())->method('persist');
+        $this->em->expects($this->once())->method('flush');
+
+        $this->handler->__invoke(new VerifyClaimMessage(
+            topicHash: 'topic-normal',
+            graphArray: $this->minimalGraphArray(),
+            signalIds: [5551],
+        ));
+
+        $this->assertNotNull($s1->getClaimGraphSnapshot());
     }
 
     /**

@@ -10,6 +10,7 @@ use App\Entity\Editorial\SourceSignal;
 use App\Enum\ArticleStatus;
 use App\Enum\Editorial\VerdictType;
 use App\Message\Editorial\WriteFlashMessage;
+use App\Repository\AppSettingRepository;
 use App\Repository\ArticleRepository;
 use App\Repository\Editorial\SourceSignalRepository;
 use App\Repository\TopicRepository;
@@ -63,11 +64,25 @@ class WriteFlashMessageHandler
         private readonly ArticleRepository $articleRepository,
         private readonly TopicRepository $topicRepository,
         private readonly EntityManagerInterface $em,
+        private readonly AppSettingRepository $appSettings,
         private readonly LoggerInterface $logger,
     ) {}
 
     public function __invoke(WriteFlashMessage $message): ?Article
     {
+        // Emergency circuit breaker (T56.02, ADR-022 D5). Short-circuits
+        // BEFORE any LLM call or guard invocation so mid-run halts work
+        // even with in-flight messages already dispatched to the queue.
+        if ($this->appSettings->getBool('editorial.emergency_halt', false)) {
+            $this->logger->info('emergency_halt.triggered', [
+                'handler' => self::class,
+                'message_class' => $message::class,
+                'message_id_hint' => $message->primarySignalId,
+            ]);
+
+            return null;
+        }
+
         try {
             $primary = $this->signalRepository->find($message->primarySignalId);
             if ($primary === null) {

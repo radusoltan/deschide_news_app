@@ -79,10 +79,12 @@ class VerifyClaimMessageHandlerT559Test extends TestCase
                 return new Envelope($m);
             });
 
-        // Default: pipeline ON — override per-test where needed.
+        // Default: pipeline ON, emergency_halt OFF — override per-test where needed.
         $this->appSettings->method('getBool')
-            ->with('editorial.pipeline.enabled', false)
-            ->willReturn(true);
+            ->willReturnMap([
+                ['editorial.emergency_halt', false, false],
+                ['editorial.pipeline.enabled', false, true],
+            ]);
 
         $this->handler = new VerifyClaimMessageHandler(
             $this->repository,
