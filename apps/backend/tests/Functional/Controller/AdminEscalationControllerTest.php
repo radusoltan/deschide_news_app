@@ -260,28 +260,26 @@ class AdminEscalationControllerTest extends WebTestCase
         $this->assertSame('approved', $body['status']);
     }
 
-    public function testMercurePayloadTruncatesLongEditorialNotes(): void
+    public function testMercureDecidedPayloadStripsPiiOnApprove(): void
     {
-        // S-H2: even when notes are within the 2000-char ceiling, the Mercure
-        // wire payload excerpt must be capped at MERCURE_EXCERPT_MAX_LENGTH
-        // so subscribers aren't forced to receive multi-KB events per action.
-        //
-        // The Mercure hub is eagerly initialised by the kernel (Doctrine
-        // publish listener depends on it), so swapping the service requires
-        // a fresh container: we reboot the kernel here and set the mock
-        // BEFORE any request touches the controller.
+        // T56.07 (ADR-022 D3, audit S-H1): the `deschide_news/admin_escalations`
+        // topic has no subscriber auth — any party with the Mercure URL can
+        // listen. The payload must NOT carry editor identity (`decided_by`)
+        // or editorial reasoning (`comment`, `comment_truncated`) even when
+        // the editor supplies editorial notes. Full context lives on the
+        // authenticated REST endpoint.
         $logId = $this->seedLog(EscalationCategory::CATEGORY_6_CRIMINAL_ACCUSATION)->getId();
         $editorId = $this->editorUser?->getId();
         $this->assertNotNull($editorId);
 
-        // Fresh kernel — container has not yet initialised HubInterface.
+        // Swap the hub BEFORE the controller runs — the bundle eagerly
+        // resolves the service at kernel boot via a Doctrine publish
+        // subscriber, so we need a fresh container.
         static::ensureKernelShutdown();
         $this->client = static::createClient();
         $em = static::getContainer()->get('doctrine')->getManager();
         \assert($em instanceof EntityManagerInterface);
         $this->em = $em;
-
-        // Rehydrate the editor so token() has a real user to sign for.
         $this->editorUser = $em->find(User::class, $editorId);
 
         $hub = $this->createMock(HubInterface::class);
@@ -313,10 +311,76 @@ class AdminEscalationControllerTest extends WebTestCase
 
         $decoded = json_decode($captured->getData(), true);
         $this->assertIsArray($decoded);
-        $this->assertArrayHasKey('comment', $decoded);
-        $this->assertArrayHasKey('comment_truncated', $decoded);
-        $this->assertTrue($decoded['comment_truncated']);
-        $this->assertSame(200, mb_strlen((string) $decoded['comment']));
+
+        // Allowed keys stay.
+        $this->assertSame('decided', $decoded['event']);
+        $this->assertSame('approved', $decoded['decision']);
+        $this->assertSame($logId, $decoded['id']);
+        $this->assertArrayHasKey('category', $decoded);
+        $this->assertArrayHasKey('category_name', $decoded);
+        $this->assertArrayHasKey('decided_at', $decoded);
+
+        // Stripped keys must NOT appear, regardless of editorialNotes length.
+        $this->assertArrayNotHasKey('decided_by', $decoded, 'editor user id must not leak on an unauthenticated topic');
+        $this->assertArrayNotHasKey('comment', $decoded, 'editorial reasoning must not leak');
+        $this->assertArrayNotHasKey('comment_truncated', $decoded, 'meta-flag must not leak (signals longer context exists)');
+
+        // Payload shape is the complete allowed set — absence check over
+        // the whole key space catches future accidental additions.
+        $this->assertEqualsCanonicalizing(
+            ['event', 'decision', 'id', 'category', 'category_name', 'decided_at'],
+            array_keys($decoded),
+        );
+    }
+
+    public function testMercureDecidedPayloadStripsPiiOnReject(): void
+    {
+        // Symmetric regression guard for the reject path. publishMercureDecided
+        // is shared between approve and reject — future edits must not
+        // accidentally re-introduce `comment` on one branch while keeping the
+        // other clean.
+        $logId = $this->seedLog(EscalationCategory::FAMILY_A_CHURCH)->getId();
+        $editorId = $this->editorUser?->getId();
+        $this->assertNotNull($editorId);
+
+        static::ensureKernelShutdown();
+        $this->client = static::createClient();
+        $em = static::getContainer()->get('doctrine')->getManager();
+        \assert($em instanceof EntityManagerInterface);
+        $this->em = $em;
+        $this->editorUser = $em->find(User::class, $editorId);
+
+        $hub = $this->createMock(HubInterface::class);
+        $captured = null;
+        $hub->method('publish')
+            ->willReturnCallback(function (Update $update) use (&$captured): string {
+                $captured = $update;
+
+                return 'test-event-id';
+            });
+        static::getContainer()->set(HubInterface::class, $hub);
+
+        $this->client->request(
+            'POST',
+            sprintf('/api/admin/escalations/%d/reject', $logId),
+            [],
+            [],
+            [
+                'HTTP_AUTHORIZATION' => 'Bearer ' . $this->token($this->editorUser),
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            json_encode(['reason' => 'Source cannot be corroborated against the archive.']),
+        );
+
+        $this->assertResponseIsSuccessful();
+        $this->assertNotNull($captured);
+
+        $decoded = json_decode($captured->getData(), true);
+        $this->assertIsArray($decoded);
+        $this->assertSame('rejected', $decoded['decision']);
+        $this->assertArrayNotHasKey('decided_by', $decoded);
+        $this->assertArrayNotHasKey('comment', $decoded);
+        $this->assertArrayNotHasKey('comment_truncated', $decoded);
     }
 
     public function testApproveReturns404OnUnknownEscalation(): void
