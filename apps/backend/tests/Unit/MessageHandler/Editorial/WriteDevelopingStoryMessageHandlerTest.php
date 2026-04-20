@@ -364,6 +364,70 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
         $this->assertCount(1, $this->dispatchedTranslations);
     }
 
+    public function testApprovedEscalationBypassSkipsGuardPipelineAndReTranslates(): void
+    {
+        // T56.05 symmetric — DevelopingStory revision dispatched with
+        // approvedEscalationLogId skips GuardPipeline and proceeds directly
+        // to re-translation.
+        $article = $this->buildDevelopingArticle();
+        $primary = $this->mockSignal(910);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->writer->expects($this->once())->method('write')->willReturn($article);
+
+        $this->guardPipeline->expects($this->never())->method('check');
+        $this->escalationLogWriter->expects($this->never())->method('write');
+        // Article is already public → no em->flush() required in bypass path.
+        $this->em->expects($this->never())->method('flush');
+
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('write_developing_published.bypass', $this->callback(static function (array $ctx): bool {
+                return ($ctx['escalation_log_id'] ?? null) === 88
+                    && ($ctx['article_id'] ?? null) === 42;
+            }));
+
+        $message = new WriteDevelopingStoryMessage(
+            articleId: 42,
+            primarySignalId: 910,
+            supportingSignalIds: [],
+            verdictType: 'full_flash',
+            approvedEscalationLogId: 88,
+        );
+        $result = ($this->handler)($message);
+
+        $this->assertSame($article, $result);
+        // Re-translation still fires (editor-override still requires EN+RU).
+        $this->assertCount(1, $this->dispatchedTranslations);
+        $this->assertTrue($this->dispatchedTranslations[0]->forceRetranslate);
+    }
+
+    public function testNullApprovedEscalationLogIdPreservesGuardChain(): void
+    {
+        // Sanity twin for DevelopingStory — pipeline-emitted dispatch still
+        // exercises GuardPipeline exactly once.
+        $article = $this->buildDevelopingArticle();
+        $primary = $this->mockSignal(911);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->writer->method('write')->willReturn($article);
+
+        $this->guardPipeline->expects($this->once())
+            ->method('check')
+            ->willReturn(new GuardVerdict(passed: true));
+
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('write_developing_published', $this->anything());
+
+        $result = ($this->handler)(new WriteDevelopingStoryMessage(42, 911, [], 'full_flash'));
+
+        $this->assertSame($article, $result);
+        $this->assertCount(1, $this->dispatchedTranslations);
+    }
+
     private function buildDevelopingArticle(): Article
     {
         $article = new Article();

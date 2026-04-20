@@ -461,6 +461,12 @@ class AdminEscalationController extends AbstractController
             supportingSignalIds: $supporting,
             verdictType: $verdictType,
             topicId: isset($snapshot['topic_id']) && \is_int($snapshot['topic_id']) ? $snapshot['topic_id'] : null,
+            // T56.05 — carry the escalation log id so the handler knows this
+            // dispatch is an editor override and must skip GuardPipeline. The
+            // guard failures that produced this escalation have already been
+            // adjudicated by a human; re-running the chain would silently
+            // re-escalate (B-H4).
+            approvedEscalationLogId: $log->getId(),
         ));
 
         return ['status' => 'dispatched'];

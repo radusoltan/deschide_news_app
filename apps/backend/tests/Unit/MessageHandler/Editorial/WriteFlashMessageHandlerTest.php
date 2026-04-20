@@ -399,6 +399,79 @@ class WriteFlashMessageHandlerTest extends TestCase
         $this->assertSame(['ro'], $article->getPublishedLocales());
     }
 
+    public function testApprovedEscalationBypassSkipsGuardPipelineAndPublishes(): void
+    {
+        // T56.05 — when the controller dispatches WriteFlashMessage with
+        // approvedEscalationLogId set, the handler MUST skip GuardPipeline
+        // and publish directly. The guard failures that produced this
+        // escalation were already adjudicated by a human editor.
+        $primary = $this->mockSignal(900);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->articleRepository->method('findOneBy')->willReturn(null);
+        $this->topicRepository->method('find')->willReturn(null);
+
+        $article = $this->buildWriterArticle();
+        $this->flashWriter->expects($this->once())->method('write')->willReturn($article);
+
+        // The whole point: guard pipeline + escalation log writer MUST NOT run.
+        $this->guardPipeline->expects($this->never())->method('check');
+        $this->escalationLogWriter->expects($this->never())->method('write');
+
+        // Publish side-effects still fire (mirror of guard-pass branch).
+        $this->em->expects($this->once())->method('flush');
+        $this->postApprovalDispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->identicalTo($article), null, 'ro');
+
+        // Audit trail: structured log distinguishes bypass from normal path.
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('write_flash_published.bypass', $this->callback(static function (array $ctx): bool {
+                return ($ctx['escalation_log_id'] ?? null) === 77;
+            }));
+
+        $result = ($this->handler)(new WriteFlashMessage(
+            primarySignalId: 900,
+            supportingSignalIds: [],
+            verdictType: 'full_flash',
+            topicId: null,
+            approvedEscalationLogId: 77,
+        ));
+
+        $this->assertSame($article, $result);
+        $this->assertSame(['ro'], $article->getPublishedLocales(), 'bypass must flip visibility to RO');
+    }
+
+    public function testNullApprovedEscalationLogIdPreservesGuardChain(): void
+    {
+        // Sanity twin: with approvedEscalationLogId unset (pipeline-emitted
+        // traffic), the guard chain still runs exactly once. Proves the
+        // bypass branch doesn't accidentally swallow normal dispatches.
+        $primary = $this->mockSignal(901);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->articleRepository->method('findOneBy')->willReturn(null);
+        $this->topicRepository->method('find')->willReturn(null);
+
+        $article = $this->buildWriterArticle();
+        $this->flashWriter->method('write')->willReturn($article);
+
+        $this->guardPipeline->expects($this->once())
+            ->method('check')
+            ->willReturn(new GuardVerdict(passed: true));
+
+        $this->postApprovalDispatcher->expects($this->once())->method('dispatch');
+
+        // Normal happy-path log, NOT the .bypass variant.
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('write_flash_published', $this->anything());
+
+        $result = ($this->handler)(new WriteFlashMessage(901, [], 'full_flash'));
+
+        $this->assertSame($article, $result);
+        $this->assertSame(['ro'], $article->getPublishedLocales());
+    }
+
     private function buildWriterArticle(): Article
     {
         $article = new Article();

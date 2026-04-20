@@ -119,6 +119,15 @@ class WriteDevelopingStoryMessageHandler
                 return null;
             }
 
+            // T56.05 — editor approve-from-escalation bypass (symmetric with
+            // WriteFlashMessageHandler). Skip the Guard chain when the
+            // controller has marked this dispatch as editor-approved, else
+            // the same failures that triggered the original escalation would
+            // bounce us back into guard_flag / guard_escalated paths.
+            if ($message->approvedEscalationLogId !== null) {
+                return $this->retranslateWithEscalationBypass($updated, $message->approvedEscalationLogId);
+            }
+
             return $this->applyGuardAndRetranslate($updated, $primary, $supporting, $verdict);
         } catch (\Throwable $e) {
             // Contract: log + no-op, never rethrow. Matches VerifyClaimMessageHandler
@@ -134,6 +143,32 @@ class WriteDevelopingStoryMessageHandler
 
             return null;
         }
+    }
+
+    /**
+     * T56.05 — re-translate the revised Article without running the Guard
+     * chain. Symmetric with {@see WriteFlashMessageHandler::publishWithEscalationBypass()}.
+     *
+     * Mirrors the guard-pass branch of {@see applyGuardAndRetranslate()}:
+     * dispatch a forced re-translation for EN+RU. No publishedLocales flip
+     * here — a developing-story Article is already public; only its body
+     * has been revised by the writer.
+     */
+    private function retranslateWithEscalationBypass(Article $article, int $approvedEscalationLogId): Article
+    {
+        $this->translationDispatcher->dispatch(
+            article: $article,
+            locales: ['ru', 'en'],
+            forceRetranslate: true,
+        );
+
+        $this->logger->info('write_developing_published.bypass', [
+            'article_id' => $article->getId(),
+            'revision' => $article->getRevisionCount(),
+            'escalation_log_id' => $approvedEscalationLogId,
+        ]);
+
+        return $article;
     }
 
     /**

@@ -135,6 +135,16 @@ class WriteFlashMessageHandler
 
             $article = $this->flashWriter->write($primary, $supporting, $verdict, $topic);
 
+            // T56.05 — editor approve-from-escalation bypass. When the
+            // controller sets approvedEscalationLogId, the Guard chain MUST
+            // be skipped: the editor has already adjudicated the very
+            // failures that produced the original EditorialEscalationLog,
+            // so re-running GuardPipeline->check() here would re-escalate
+            // on the same signals and silently cancel the override.
+            if ($message->approvedEscalationLogId !== null) {
+                return $this->publishWithEscalationBypass($article, $message->approvedEscalationLogId);
+            }
+
             return $this->applyGuardAndPublish($article, $primary, $supporting, $verdict);
         } catch (\Throwable $e) {
             // Contract: log + no-op, never rethrow. Matches VerifyClaimMessageHandler
@@ -151,6 +161,31 @@ class WriteFlashMessageHandler
 
             return null;
         }
+    }
+
+    /**
+     * T56.05 — publish the Article without running the Guard chain. Used
+     * only from the editor approve-from-escalation path (see
+     * {@see \App\Controller\Admin\AdminEscalationController::approve()}).
+     *
+     * Side-effects mirror the guard-pass branch of {@see applyGuardAndPublish()}:
+     * flip `publishedLocales=['ro']`, flush, fan out via PostApprovalDispatcher.
+     * The log entry is separated (`write_flash_published.bypass`) so
+     * analytics can distinguish editor-overrides from guard-passed Articles.
+     */
+    private function publishWithEscalationBypass(Article $article, int $approvedEscalationLogId): Article
+    {
+        $article->setPublishedLocales(['ro']);
+        $this->em->flush();
+
+        $this->postApprovalDispatcher->dispatch($article, null, 'ro');
+
+        $this->logger->info('write_flash_published.bypass', [
+            'article_id' => $article->getId(),
+            'escalation_log_id' => $approvedEscalationLogId,
+        ]);
+
+        return $article;
     }
 
     /**
