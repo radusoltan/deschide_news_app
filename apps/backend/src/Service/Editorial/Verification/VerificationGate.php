@@ -13,6 +13,7 @@ use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\NotebookLM\NotebookLmFactCheckServiceInterface;
 use Psr\Log\LoggerInterface;
 
@@ -131,6 +132,7 @@ class VerificationGate
         private readonly LlmRetryExecutor $executor,
         private readonly TierResolver $tierResolver,
         private readonly AppSettingRepository $appSettings,
+        private readonly LlmInvocationLogger $invocationLogger,
         private readonly LoggerInterface $logger,
         private readonly ?NotebookLmFactCheckServiceInterface $factCheckService = null,
     ) {}
@@ -512,6 +514,7 @@ class VerificationGate
             );
         }
 
+        $invocationId = $response['invocation_id'] ?? null;
         $sanity = $this->parseSanityResponse($response['content']);
         $sound = (bool) ($sanity['verdict_sound'] ?? true);
         $confidence = (float) ($sanity['confidence'] ?? 0.5);
@@ -545,7 +548,7 @@ class VerificationGate
                     'reasoning' => mb_substr((string) ($sanity['reasoning'] ?? ''), 0, 200),
                 ]);
 
-                return new VerificationVerdict(
+                $finalVerdict = new VerificationVerdict(
                     type: $alternative,
                     reasoning: sprintf(
                         'LLM override (%s, conf=%.2f): %s',
@@ -556,14 +559,29 @@ class VerificationGate
                     llmOverride: true,
                     confidence: $confidence,
                 );
+
+                // T57.03 (ADR-023 D2) — attach post-override verdict.
+                if ($invocationId !== null) {
+                    $this->invocationLogger->attachVerdict($invocationId, $finalVerdict->type->value);
+                }
+
+                return $finalVerdict;
             }
         }
 
-        return new VerificationVerdict(
+        $finalVerdict = new VerificationVerdict(
             type: $ruleVerdict,
             reasoning: $ruleReasoning,
             confidence: $confidence,
         );
+
+        // T57.03 (ADR-023 D2) — attach rule-kept verdict (LLM either confirmed
+        // sound or its override was rejected as an upgrade).
+        if ($invocationId !== null) {
+            $this->invocationLogger->attachVerdict($invocationId, $finalVerdict->type->value);
+        }
+
+        return $finalVerdict;
     }
 
     private function resolveTierForVerdict(VerdictType $ruleVerdict): LlmModelTier

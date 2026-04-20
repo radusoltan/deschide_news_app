@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service\Editorial\Llm;
 
 use App\Entity\Editorial\LlmAgentCallLog;
+use App\Repository\Editorial\LlmAgentCallLogRepository;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -12,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Unit test for {@see LlmInvocationLogger} (Sprint 56 T56.09).
+ * Unit test for {@see LlmInvocationLogger} (Sprint 56 T56.09, extended T57.03).
  *
  * Happy path + graceful-degrade contract — observability MUST NOT break
  * the pipeline when the DB is unavailable.
@@ -21,11 +22,18 @@ class LlmInvocationLoggerTest extends TestCase
 {
     private EntityManagerInterface&MockObject $em;
     private LoggerInterface&MockObject $logger;
+    private LlmAgentCallLogRepository&MockObject $repository;
 
     protected function setUp(): void
     {
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
+        $this->repository = $this->createMock(LlmAgentCallLogRepository::class);
+    }
+
+    private function makeService(): LlmInvocationLogger
+    {
+        return new LlmInvocationLogger($this->em, $this->logger, $this->repository);
     }
 
     public function testLogInvocationPersistsRowWithAllFieldsAndFlushes(): void
@@ -41,7 +49,7 @@ class LlmInvocationLoggerTest extends TestCase
         $this->em->expects($this->once())->method('flush');
         $this->logger->expects($this->never())->method('warning');
 
-        $service = new LlmInvocationLogger($this->em, $this->logger);
+        $service = $this->makeService();
         $service->logInvocation(
             agentName: 'flash_writer',
             promptHash: str_repeat('d', 64),
@@ -86,7 +94,7 @@ class LlmInvocationLoggerTest extends TestCase
                     && str_contains((string) ($ctx['error'] ?? ''), 'DB connection lost');
             }));
 
-        $service = new LlmInvocationLogger($this->em, $this->logger);
+        $service = $this->makeService();
 
         // Must NOT rethrow — the LLM call already succeeded; whether we can
         // record its metrics is a separate concern.
@@ -110,7 +118,7 @@ class LlmInvocationLoggerTest extends TestCase
             ->method('warning')
             ->with('llm_invocation_logger.persist_failed', $this->anything());
 
-        $service = new LlmInvocationLogger($this->em, $this->logger);
+        $service = $this->makeService();
 
         $service->logInvocation(
             agentName: 'legal_guard',
@@ -134,7 +142,7 @@ class LlmInvocationLoggerTest extends TestCase
                 $ulidsCaptured[] = $entity->getInvocationId();
             });
 
-        $service = new LlmInvocationLogger($this->em, $this->logger);
+        $service = $this->makeService();
         for ($i = 0; $i < 5; ++$i) {
             $service->logInvocation(
                 agentName: 'flash_writer',
@@ -146,5 +154,100 @@ class LlmInvocationLoggerTest extends TestCase
         }
 
         $this->assertCount(5, array_unique($ulidsCaptured));
+    }
+
+    public function testLogInvocationReturnsUlidOnSuccess(): void
+    {
+        // T57.03 — logInvocation now returns the generated ULID so callers
+        // can thread it through (executor → gates for attachVerdict).
+        $this->em->method('persist');
+        $this->em->method('flush');
+
+        $service = $this->makeService();
+        $ulid = $service->logInvocation(
+            agentName: 'flash_writer',
+            promptHash: str_repeat('b', 64),
+            durationMs: 100,
+            inputTokens: 1,
+            outputTokens: 1,
+        );
+
+        $this->assertIsString($ulid);
+        $this->assertSame(26, \strlen($ulid));
+    }
+
+    public function testLogInvocationReturnsNullOnPersistFailure(): void
+    {
+        // T57.03 — null return signals the caller that attachVerdict would
+        // have nothing to UPDATE. Downstream gates gate their verdict-attach
+        // call on `$invocationId !== null`.
+        $this->em->method('persist')->willThrowException(new \RuntimeException('db down'));
+
+        $service = $this->makeService();
+        $ulid = $service->logInvocation(
+            agentName: 'flash_writer',
+            promptHash: str_repeat('c', 64),
+            durationMs: 100,
+            inputTokens: 1,
+            outputTokens: 1,
+        );
+
+        $this->assertNull($ulid);
+    }
+
+    public function testAttachVerdictUpdatesExistingRow(): void
+    {
+        $row = new LlmAgentCallLog(
+            agentName: 'legal_guard',
+            invocationId: '01JFXXXXXXXXXXXXXXXXXXXXXX',
+            promptHash: str_repeat('d', 64),
+            durationMs: 1000,
+            inputTokenCount: 100,
+            outputTokenCount: 50,
+        );
+        $this->repository->expects($this->once())
+            ->method('findOneBy')
+            ->with(['invocationId' => '01JFXXXXXXXXXXXXXXXXXXXXXX'])
+            ->willReturn($row);
+        $this->em->expects($this->once())->method('flush');
+
+        $this->makeService()->attachVerdict('01JFXXXXXXXXXXXXXXXXXXXXXX', 'escalate_cat6');
+
+        $this->assertSame('escalate_cat6', $row->getVerdict());
+    }
+
+    public function testAttachVerdictWarnsOnMissingRowWithoutThrowing(): void
+    {
+        // Graceful degrade: if the baseline row isn't there (e.g. persist
+        // failed earlier), attachVerdict no-ops with a warning — it must
+        // not break the pipeline.
+        $this->repository->method('findOneBy')->willReturn(null);
+        $this->em->expects($this->never())->method('flush');
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with('llm_invocation_logger.attach_verdict_no_row', $this->anything());
+
+        $this->makeService()->attachVerdict('01JFMISSINGXXXXXXXXXXXXXXX', 'pass');
+    }
+
+    public function testAttachVerdictWarnsOnFlushFailureWithoutThrowing(): void
+    {
+        $row = new LlmAgentCallLog(
+            agentName: 'style_guard',
+            invocationId: '01JFXXXXXXXXXXXXXXXXXXXXXX',
+            promptHash: str_repeat('e', 64),
+            durationMs: 500,
+            inputTokenCount: 50,
+            outputTokenCount: 20,
+        );
+        $this->repository->method('findOneBy')->willReturn($row);
+        $this->em->method('flush')->willThrowException(new \RuntimeException('deadlock'));
+
+        $this->logger->expects($this->once())
+            ->method('warning')
+            ->with('llm_invocation_logger.attach_verdict_failed', $this->anything());
+
+        // Must NOT rethrow.
+        $this->makeService()->attachVerdict('01JFXXXXXXXXXXXXXXXXXXXXXX', 'block');
     }
 }

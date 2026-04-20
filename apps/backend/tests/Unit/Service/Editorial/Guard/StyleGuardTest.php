@@ -11,6 +11,7 @@ use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Guard\DiacriticsValidator;
 use App\Service\Editorial\Guard\StyleGuard;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -22,6 +23,7 @@ class StyleGuardTest extends TestCase
 {
     private LlmRetryExecutor&MockObject $llmRetryExecutor;
     private GeminiCliService&MockObject $geminiCliService;
+    private LlmInvocationLogger&MockObject $invocationLogger;
     private LoggerInterface&MockObject $logger;
     private StyleGuard $guard;
 
@@ -29,12 +31,14 @@ class StyleGuardTest extends TestCase
     {
         $this->llmRetryExecutor = $this->createMock(LlmRetryExecutor::class);
         $this->geminiCliService = $this->createMock(GeminiCliService::class);
+        $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->guard = new StyleGuard(
             new DiacriticsValidator(),
             $this->llmRetryExecutor,
             $this->geminiCliService,
+            $this->invocationLogger,
             $this->logger,
         );
     }

@@ -13,6 +13,7 @@ use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Guard\LegalCategoryDetector;
 use App\Service\Editorial\Guard\LegalGuard;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -29,6 +30,7 @@ class LegalGuardTest extends TestCase
     private LlmRetryExecutor&MockObject $llmRetryExecutor;
     private GeminiCliService&MockObject $geminiCliService;
     private AppSettingRepository&MockObject $appSettingRepository;
+    private LlmInvocationLogger&MockObject $invocationLogger;
     private LoggerInterface&MockObject $logger;
     private LegalGuard $guard;
 
@@ -40,6 +42,7 @@ class LegalGuardTest extends TestCase
         $this->llmRetryExecutor = $this->createMock(LlmRetryExecutor::class);
         $this->geminiCliService = $this->createMock(GeminiCliService::class);
         $this->appSettingRepository = $this->createMock(AppSettingRepository::class);
+        $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->seedTierSettings(generalTier: 'haiku', categ6Tier: 'sonnet');
@@ -49,6 +52,7 @@ class LegalGuardTest extends TestCase
             $this->llmRetryExecutor,
             $this->geminiCliService,
             $this->appSettingRepository,
+            $this->invocationLogger,
             $this->logger,
         );
     }
@@ -246,6 +250,7 @@ class LegalGuardTest extends TestCase
             $this->llmRetryExecutor,
             $this->geminiCliService,
             $this->appSettingRepository,
+            $this->invocationLogger,
             $this->logger,
         );
 

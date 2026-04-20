@@ -12,6 +12,7 @@ use App\Enum\EditorialAlignment;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Verification\VerificationGate;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +34,7 @@ class VerificationGateNotebookLmTest extends TestCase
     private LlmRetryExecutor&MockObject $executor;
     private TierResolver&MockObject $tierResolver;
     private AppSettingRepository&MockObject $settings;
+    private LlmInvocationLogger&MockObject $invocationLogger;
     private CapturingLogger $logger;
     private VerificationGate $gate;
 
@@ -41,12 +43,14 @@ class VerificationGateNotebookLmTest extends TestCase
         $this->executor = $this->createMock(LlmRetryExecutor::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
+        $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->logger = new CapturingLogger();
 
         $this->gate = new VerificationGate(
             $this->executor,
             $this->tierResolver,
             $this->settings,
+            $this->invocationLogger,
             $this->logger,
         );
     }

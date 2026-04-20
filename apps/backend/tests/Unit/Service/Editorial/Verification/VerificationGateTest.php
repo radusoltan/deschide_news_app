@@ -14,6 +14,7 @@ use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Verification\VerificationGate;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,7 @@ class VerificationGateTest extends TestCase
     private LlmRetryExecutor&MockObject $executor;
     private TierResolver&MockObject $tierResolver;
     private AppSettingRepository&MockObject $settings;
+    private LlmInvocationLogger&MockObject $invocationLogger;
     private VerificationGate $gate;
 
     protected function setUp(): void
@@ -31,6 +33,7 @@ class VerificationGateTest extends TestCase
         $this->executor = $this->createMock(LlmRetryExecutor::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
+        $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
 
         $this->settings->method('get')
             ->willReturnCallback(static function (string $key, ?string $default = null): ?string {
@@ -44,6 +47,7 @@ class VerificationGateTest extends TestCase
             $this->executor,
             $this->tierResolver,
             $this->settings,
+            $this->invocationLogger,
             new NullLogger(),
         );
     }

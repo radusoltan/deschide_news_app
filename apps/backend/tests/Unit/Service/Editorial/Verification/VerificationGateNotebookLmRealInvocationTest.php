@@ -15,6 +15,7 @@ use App\Enum\EditorialAlignment;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Verification\VerificationGate;
 use App\Service\NotebookLM\NotebookLmFactCheckServiceInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -38,6 +39,7 @@ class VerificationGateNotebookLmRealInvocationTest extends TestCase
     private LlmRetryExecutor&MockObject $executor;
     private TierResolver&MockObject $tierResolver;
     private AppSettingRepository&MockObject $settings;
+    private LlmInvocationLogger&MockObject $invocationLogger;
     private NotebookLmFactCheckServiceInterface&MockObject $factCheck;
     private VerificationGate $gate;
 
@@ -46,6 +48,7 @@ class VerificationGateNotebookLmRealInvocationTest extends TestCase
         $this->executor = $this->createMock(LlmRetryExecutor::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
+        $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->factCheck = $this->createMock(NotebookLmFactCheckServiceInterface::class);
 
         // Feature flag ON — every test here exercises the post-gate path.
@@ -62,6 +65,7 @@ class VerificationGateNotebookLmRealInvocationTest extends TestCase
             $this->executor,
             $this->tierResolver,
             $this->settings,
+            $this->invocationLogger,
             new NullLogger(),
             $this->factCheck,
         );
@@ -206,6 +210,7 @@ class VerificationGateNotebookLmRealInvocationTest extends TestCase
             $this->executor,
             $this->tierResolver,
             $settings,
+            $this->invocationLogger,
             new NullLogger(),
             $factCheck,
         );
