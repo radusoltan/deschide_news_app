@@ -16,7 +16,7 @@ framework:
         system: cache.adapter.redis
 
         # Redis connection
-        default_redis_provider: 'redis://localhost:6379/1'
+        default_redis_provider: '%env(REDIS_URL)%'
 
         # Cache pools
         pools:

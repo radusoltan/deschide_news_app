@@ -5,7 +5,7 @@ framework:
 
         # Redis cache configuration for application cache
         app: cache.adapter.redis_tag_aware
-        default_redis_provider: 'redis://localhost:6379/1'
+        default_redis_provider: '%env(REDIS_URL)%'
 
         # APCu for system and metadata cache (faster for small data)
         system: cache.adapter.apcu
@@ -16,13 +16,13 @@ framework:
             # TTL optimized: 5 minutes for fresh content with tag invalidation
             deschide.cache:
                 adapter: cache.adapter.redis_tag_aware
-                provider: 'redis://localhost:6379/1'
+                provider: '%env(REDIS_URL)%'
                 default_lifetime: 300  # 5 minutes (was 3600)
 
             # Stats pool for real-time statistics
             deschide.stats:
                 adapter: cache.adapter.redis_tag_aware
-                provider: 'redis://localhost:6379/1'
+                provider: '%env(REDIS_URL)%'
                 default_lifetime: 60  # 1 minute for real-time stats (was 86400)
 
             # APCu pool for metadata and small frequently accessed data
@@ -33,13 +33,13 @@ framework:
             # Doctrine result cache - shorter TTL, invalidated on entity changes
             doctrine.result_cache_pool:
                 adapter: cache.adapter.redis_tag_aware
-                provider: 'redis://localhost:6379/1'
+                provider: '%env(REDIS_URL)%'
                 default_lifetime: 600  # 10 minutes (was 3600)
 
             # Doctrine query cache - DQL parsing, can be long-lived
             doctrine.query_cache_pool:
                 adapter: cache.adapter.redis_tag_aware
-                provider: 'redis://localhost:6379/1'
+                provider: '%env(REDIS_URL)%'
                 default_lifetime: 86400  # 24 hours (was 3600)
 
             # Doctrine metadata cache - entity mapping, very long-lived
