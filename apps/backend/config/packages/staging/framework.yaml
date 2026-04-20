@@ -1,0 +1,43 @@
+framework:
+    # Staging framework configuration — mirrors prod for production-parity
+    # (ADR-023 D7 A1 revised: APP_ENV=staging requires dedicated config dir).
+    # Deviations from prod are explicitly annotated below.
+
+    serializer:
+        enable_attributes: true
+
+    http_cache: true
+
+    cache:
+        app: cache.adapter.redis
+        system: cache.adapter.redis
+
+        default_redis_provider: '%env(REDIS_URL)%'
+
+        pools:
+            doctrine.system_cache_pool:
+                adapter: cache.adapter.redis
+                default_lifetime: 86400
+
+            doctrine.query_cache_pool:
+                adapter: cache.adapter.redis
+                default_lifetime: 3600
+
+            doctrine.result_cache_pool:
+                adapter: cache.adapter.redis
+                default_lifetime: 1800
+
+            serializer.mapping.cache.symfony:
+                adapter: cache.adapter.redis
+                default_lifetime: 86400
+
+    router:
+        strict_requirements: null
+        utf8: true
+
+    esi: { enabled: true }
+
+    fragments: { enabled: true, path: /_fragment }
+
+    php_errors:
+        log: true

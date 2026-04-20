@@ -1,0 +1,21 @@
+api_platform:
+    # Staging API Platform config — mirrors prod cache-header behavior but
+    # REMOVES Varnish invalidation (no Varnish in local staging topology per ADR-023 D7).
+    # shared_max_age lowered to match max_age (no CDN/proxy layer in staging).
+
+    defaults:
+        cache_headers:
+            max_age: 3600
+            shared_max_age: 3600
+            public: true
+
+            vary: ['Content-Type', 'Authorization', 'Origin', 'Accept-Language']
+
+            etag: true
+            last_modified: true
+
+    # http_cache.invalidation intentionally omitted — staging has no Varnish.
+
+    exception_to_status:
+        Symfony\Component\Serializer\Exception\ExceptionInterface: 400
+        ApiPlatform\Exception\InvalidArgumentException: 400
