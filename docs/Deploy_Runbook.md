@@ -70,3 +70,65 @@ symfony console app:settings:list --prefix=editorial.
 - The structured log entry `emergency_halt.triggered` is the audit trail. For post-mortem, query via `LlmAgentCallLog` (once T56.09 lands) or grep logs for the structured field `handler` to count dropped messages per handler.
 - Default state: `editorial.emergency_halt=false` (seeded by `AppSettingsFixture`, adjacent to `editorial.pipeline.enabled`).
 - Flag semantics: per `App\Repository\AppSettingRepository::getBool()`, any value in `FILTER_VALIDATE_BOOLEAN`'s true-set (`true`, `1`, `on`, `yes`) triggers the halt. Use `'true'` / `'false'` as literal strings for consistency with other seeds.
+
+---
+
+## Supervised message consumers
+
+Canonical inventory of supervised Symfony Messenger consumers as of Sprint 56 T56.03. Repo-versioned conf files live in `apps/backend/config/supervisor/`; the production supervisor reads them from `/etc/supervisor/conf.d/` (symlinks or copies maintained by the deploy step — see the reload procedure below).
+
+### Editorial pipeline consumers (`messenger-editorial-*`)
+
+| Consumer | Transport(s) | Role |
+|---|---|---|
+| `messenger-editorial-signal` | `editorial_signal_ingest` | L1 — signal intake fan-in |
+| `messenger-editorial-verification-extract` | `editorial_verification_extract` | L2 — extract signal features |
+| `messenger-editorial-verification-decide` | `editorial_verification_decide` | L2 — decide claim verdict |
+| `messenger-editorial-flash` | `editorial_flash` | L3 — WriteFlash + WriteDevelopingStory writers |
+| `messenger-editorial` | `editorial` | legacy queue (kept autostart=false until drained) |
+
+### Scheduler tick consumers (`messenger-scheduler-*`)
+
+All scheduler providers must have a matching consumer so `supervisorctl status` reflects a complete view of scheduled work.
+
+| Consumer | Transport | Schedule provider | Sprint |
+|---|---|---|---|
+| `messenger-scheduler` | `scheduler_default` | (PublishScheduledArticles etc.) | pre-S53 |
+| `messenger-scheduler-editorial-signal` | `scheduler_editorial_signal` | `EditorialSignalScheduleProvider` | S53 T53.9 |
+| `messenger-scheduler-escalation-expiration` | `scheduler_escalation_expiration` | `EscalationExpirationScheduleProvider` | S55 T55.11 |
+| `messenger-scheduler-signal-stabilization` | `scheduler_signal_stabilization` | `SignalStabilizationScheduleProvider` | S54 T54.6 |
+| `messenger-scheduler-tag-maintenance` | `scheduler_tag_maintenance` | `TagMaintenanceScheduleProvider` | — |
+| `messenger-scheduler-editorial` | `scheduler_editorial` | `EditorialScheduleProvider` | S22+ |
+| `messenger-scheduler-translation` | `scheduler_translation` | `TranslationScheduleProvider` | S51 |
+
+### Other consumers
+
+| Consumer | Transport(s) | Role |
+|---|---|---|
+| `messenger-async` | `async scraping python_scraper cache_async stats_async` | generic async pool |
+| `messenger-ai-async` | `ai_async` | LLM async (topic detection, translations, background) |
+| `messenger-translations` | `translations_critical translations_urgent translations_high translations` | priority translation queue |
+| `messenger-python-scraper` | `python_scraper scheduler_python_scraper` | Python scraper bridge |
+| `messenger-briefing` | `briefing` | daily press briefing generation |
+| `messenger-topic-detection` | `topic_detection` | topic classification batch |
+
+### Reload procedure
+
+After adding or editing supervisor conf files, sync them to the system supervisor directory and reload:
+
+```bash
+# 1. Sync repo confs → system (adjust to your deploy's symlink/copy strategy)
+sudo cp /var/www/deschide_news_app/apps/backend/config/supervisor/*.conf /etc/supervisor/conf.d/
+
+# 2. Clear Symfony cache BEFORE reload so new commands (e.g. app:settings:*) are discoverable
+symfony console cache:clear --env=prod
+
+# 3. Pick up new/edited confs and apply
+sudo supervisorctl reread
+sudo supervisorctl update
+
+# 4. Verify all expected consumers are RUNNING
+sudo supervisorctl status
+```
+
+**Note:** `supervisorctl reread` detects changes; `supervisorctl update` starts new programs and stops removed ones. Neither restarts already-running programs with unchanged configs. Use `supervisorctl restart <program>` explicitly when a conf change requires a worker restart (e.g. new `--memory-limit` flag).
