@@ -173,11 +173,13 @@ class FlashWriterTest extends TestCase
         $this->assertSame(ArticleType::FLASH, $article->getArticleType());
     }
 
-    public function testT5609LogsHaikuInvocationWithWrapperMetrics(): void
+    public function testT5703HaikuPathDelegatesLoggingToExecutor(): void
     {
-        // T56.09 — end-to-end verification of the LlmAgentCallLog hook on
-        // the Haiku happy path. The wrapper-reported metrics (input/output
-        // tokens, cost) flow through to LlmInvocationLogger::logInvocation().
+        // T57.03 (ADR-023 D2) — the Haiku baseline row is now written by
+        // LlmRetryExecutor, not by FlashWriter. FlashWriter no longer calls
+        // logInvocation() on the Claude path; the executor handles it on
+        // every successful invocation for W' universal coverage. The Gemini
+        // fallback path still self-logs (next test).
         $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
             'content' => $this->happyPathResponse(),
             'agent_id' => 'flash_writer',
@@ -192,31 +194,22 @@ class FlashWriterTest extends TestCase
                 'cache_creation_tokens' => 0,
                 'cost_usd' => 0.0175,
                 'duration_ms' => 1500,
-                'model' => 'claude-haiku-4-5-20251001',
             ],
+            'invocation_id' => '01JFXXXXXXXXXXXXXXXXXXXXXX',
         ]);
         $this->categoryResolver->method('resolve')->willReturn($this->mockCategory('politica'));
         $this->aiAuthorProvider->method('getOrCreate')->willReturn($this->mockAuthor());
 
-        $this->llmInvocationLogger->expects($this->once())
-            ->method('logInvocation')
-            ->with(
-                'flash_writer',
-                $this->callback(static fn (string $h): bool => \strlen($h) === 64), // SHA-256 hex
-                1500,            // durationMs from wrapper metrics
-                1024,            // inputTokens
-                256,             // outputTokens
-                128,             // cacheReadTokens
-                0,               // cacheCreationTokens
-                0.0175,          // costUsd
-                'claude-haiku-4-5-20251001',
-                null,            // verdict null for writers
-            );
+        // Critical assertion: FlashWriter must NOT call logInvocation on the
+        // Haiku path. Executor-owned logging replaced this.
+        $this->llmInvocationLogger->expects($this->never())->method('logInvocation');
 
         $primary = $this->mockSignal(101, 'Titlu', 'Sumar');
         $verdict = new VerificationVerdict(VerdictType::FULL_FLASH, 'OK', confidence: 0.9);
 
-        $this->writer->write($primary, [], $verdict);
+        $article = $this->writer->write($primary, [], $verdict);
+
+        $this->assertInstanceOf(Article::class, $article);
     }
 
     public function testT5609LogsGeminiFallbackInvocationWithZeroSentinels(): void

@@ -11,6 +11,7 @@ use App\Service\Ai\Exception\ClaudeCliTransientException;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -21,18 +22,74 @@ class LlmRetryExecutorTest extends TestCase
 {
     private AnthropicClientInterface&MockObject $client;
     private TierResolver&MockObject $tierResolver;
+    private LlmInvocationLogger&MockObject $invocationLogger;
     private LlmRetryExecutor $executor;
 
     protected function setUp(): void
     {
         $this->client = $this->createMock(AnthropicClientInterface::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
+        $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->executor = new LlmRetryExecutor(
             $this->client,
             $this->tierResolver,
             new NullLogger(),
+            $this->invocationLogger,
             [0, 0, 0],
         );
+    }
+
+    public function testSuccessfulInvocationWritesBaselineRowAndThreadsUlidIntoReturn(): void
+    {
+        // T57.03 (ADR-023 D2) W' coverage — every successful Claude call
+        // produces one llm_agent_call_log row with verdict=null and the
+        // generated ULID comes back on the result array as `invocation_id`.
+        $this->client->expects($this->once())
+            ->method('chat')
+            ->willReturn('payload');
+
+        $this->invocationLogger->expects($this->once())
+            ->method('logInvocation')
+            ->with(
+                $this->callback(fn (string $agent): bool => $agent === 'legal_guard'),
+                $this->isString(),
+                $this->anything(),
+                $this->anything(),
+                $this->anything(),
+                $this->anything(),
+                $this->anything(),
+                $this->anything(),
+                'claude-haiku-4-5-20251001',
+                null,
+            )
+            ->willReturn('01JFXXXXXXXXXXXXXXXXXXXXXX');
+
+        $result = $this->executor->executeWithRetry(
+            'legal_guard',
+            [['role' => 'user', 'content' => 'check']],
+            LlmModelTier::HAIKU,
+            'system',
+        );
+
+        $this->assertSame('01JFXXXXXXXXXXXXXXXXXXXXXX', $result['invocation_id']);
+    }
+
+    public function testLoggerReturningNullDoesNotBreakExecutor(): void
+    {
+        // Logger degrades gracefully (DB down) — the executor must still
+        // return cleanly with invocation_id=null so downstream gates simply
+        // skip attachVerdict.
+        $this->client->method('chat')->willReturn('payload');
+        $this->invocationLogger->method('logInvocation')->willReturn(null);
+
+        $result = $this->executor->executeWithRetry(
+            'style_guard',
+            [['role' => 'user', 'content' => 'x']],
+            LlmModelTier::HAIKU,
+        );
+
+        $this->assertNull($result['invocation_id']);
+        $this->assertSame('payload', $result['content']);
     }
 
     public function testHappyPathReturnsFirstAttemptResult(): void
