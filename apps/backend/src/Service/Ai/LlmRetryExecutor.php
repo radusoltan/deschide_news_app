@@ -8,6 +8,7 @@ use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\ClaudeCliPermanentException;
 use App\Service\Ai\Exception\ClaudeCliTransientException;
 use App\Service\Ai\Exception\LlmUnavailableException;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use Psr\Log\LoggerInterface;
 use Sentry\Breadcrumb;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
@@ -47,13 +48,14 @@ class LlmRetryExecutor
         private readonly AnthropicClientInterface $client,
         private readonly TierResolver $tierResolver,
         private readonly LoggerInterface $logger,
+        private readonly LlmInvocationLogger $invocationLogger,
         private readonly array $backoffSeconds = self::DEFAULT_BACKOFF_SECONDS,
     ) {}
 
     /**
      * @param list<array{role: string, content: string}> $messages
      *
-     * @return array{content: string, agent_id: string, tier: string, model: string, attempts: int, fallback_detected: bool, metrics: array<string, mixed>|null}
+     * @return array{content: string, agent_id: string, tier: string, model: string, attempts: int, fallback_detected: bool, metrics: array<string, mixed>|null, invocation_id: string|null}
      */
     public function executeWithRetry(
         string $agentId,
@@ -99,6 +101,27 @@ class LlmRetryExecutor
                     $this->extractMetricFields($metrics),
                 ));
 
+                // T57.03 (ADR-023 D2) — W' baseline row. Fires on every
+                // successful Claude invocation; writers leave verdict=null,
+                // gates UPDATE via LlmInvocationLogger::attachVerdict after
+                // they parse the response.
+                $promptHash = hash(
+                    'xxh128',
+                    implode('|', array_column($messages, 'content')) . ($systemPrompt ?? ''),
+                );
+                $invocationId = $this->invocationLogger->logInvocation(
+                    agentName: $agentId,
+                    promptHash: $promptHash,
+                    durationMs: (int) ($metrics['duration_ms'] ?? 0),
+                    inputTokens: (int) ($metrics['input_tokens'] ?? 0),
+                    outputTokens: (int) ($metrics['output_tokens'] ?? 0),
+                    cacheReadTokens: (int) ($metrics['cache_read_tokens'] ?? 0),
+                    cacheCreationTokens: (int) ($metrics['cache_creation_tokens'] ?? 0),
+                    costUsd: (float) ($metrics['cost_usd'] ?? 0.0),
+                    model: $model,
+                    verdict: null,
+                );
+
                 return [
                     'content' => $content,
                     'agent_id' => $agentId,
@@ -107,6 +130,7 @@ class LlmRetryExecutor
                     'attempts' => $attempt,
                     'fallback_detected' => false,
                     'metrics' => $metrics,
+                    'invocation_id' => $invocationId,
                 ];
             } catch (ClaudeCliTransientException | ProcessTimedOutException $e) {
                 $lastException = $e;
