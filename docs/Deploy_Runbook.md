@@ -29,27 +29,29 @@ Use this procedure when the editorial pipeline produces incorrect output in prod
 cd /var/www/deschide_news_app/apps/backend
 
 # 1. Flip the circuit breaker (silent-ACK all pipeline messages).
-#    No dedicated CLI command exists yet — the flag is stored in app_settings
-#    as a plain TEXT row, so direct SQL is the supported path.
-symfony console doctrine:query:sql \
-  "UPDATE app_settings SET value = 'true' WHERE key = 'editorial.emergency_halt'"
+symfony console app:settings:set editorial.emergency_halt true --type=bool
 
-# 2. Stop editorial message consumers to prevent queue buildup.
+# 2. Verify the flag is live. Expected output: `true`
+symfony console app:settings:get editorial.emergency_halt
+
+# 3. Stop editorial message consumers to prevent queue buildup.
 #    (Adjust the program pattern to match your supervisor config.)
 sudo supervisorctl stop messenger-editorial:*
 
-# 3. Verify queue state (inspect backlog; do NOT purge — preserve for post-mortem).
+# 4. Verify queue state (inspect backlog; do NOT purge — preserve for post-mortem).
 symfony console messenger:stats
 
-# 4. Investigate via structured logs:
+# 5. Investigate via structured logs:
 #    - Handler short-circuits emit `emergency_halt.triggered` at INFO level
 #    - Each log row carries: handler, message_class, message_id_hint
 tail -f var/log/editorial.log | grep emergency_halt.triggered
 
-# 5. Once the fix is deployed (or manual intervention is complete):
-symfony console doctrine:query:sql \
-  "UPDATE app_settings SET value = 'false' WHERE key = 'editorial.emergency_halt'"
+# 6. Once the fix is deployed (or manual intervention is complete):
+symfony console app:settings:set editorial.emergency_halt false --type=bool
 sudo supervisorctl start messenger-editorial:*
+
+# 7. Sanity-check all editorial flags after restart.
+symfony console app:settings:list --prefix=editorial.
 ```
 
 ### Handlers gated by the flag
