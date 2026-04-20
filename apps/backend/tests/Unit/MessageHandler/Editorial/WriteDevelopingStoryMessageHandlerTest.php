@@ -500,6 +500,167 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
         $this->assertLessThanOrEqual(46_000, $captured[0]['stamps'][0]->getDelay());
     }
 
+    public function testFirstWriteForSignalAppliesRevisionNormally(): void
+    {
+        // T56.10 — baseline: an Article with empty revision_history receives
+        // the first signal without tripping the idempotency guard. Writer,
+        // guard, and re-translation run end-to-end.
+        $article = $this->buildDevelopingArticle();
+        $article->setRevisionHistory([]);
+        $primary = $this->mockSignal(1000);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+
+        $this->writer->expects($this->once())
+            ->method('write')
+            ->willReturn($article);
+
+        $this->guardPipeline->expects($this->once())
+            ->method('check')
+            ->willReturn(new GuardVerdict(passed: true));
+
+        $message = new WriteDevelopingStoryMessage(42, 1000, [], 'full_flash');
+        $result = ($this->handler)($message);
+
+        $this->assertSame($article, $result);
+        $this->assertCount(1, $this->dispatchedTranslations);
+    }
+
+    public function testDuplicateSignalSilentAcksWithIdempotencyLog(): void
+    {
+        // T56.10 — the signal already appears in revision_history, so the
+        // handler must silent-ACK: no writer, no guard, no dispatch. Messenger
+        // won't redeliver a void return, so the duplicate is absorbed.
+        $article = $this->buildDevelopingArticle();
+        $article->setRevisionCount(3);
+        $article->setRevisionHistory([
+            [
+                'rev' => 3,
+                'ts' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+                'diff' => 'prior change',
+                'actor' => ['type' => 'writer', 'id' => null],
+                'source_signal_id' => 1100,
+            ],
+        ]);
+
+        $this->articleRepository->method('find')->willReturn($article);
+
+        // Throttle runs first, then idempotency short-circuits before signal
+        // lookup / writer / guard.
+        $this->writerThrottle->expects($this->once())->method('consume');
+        $this->signalRepository->expects($this->never())->method('find');
+        $this->writer->expects($this->never())->method('write');
+        $this->guardPipeline->expects($this->never())->method('check');
+
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('idempotency.skip', $this->callback(static function (array $ctx): bool {
+                return ($ctx['handler'] ?? null) === WriteDevelopingStoryMessageHandler::class
+                    && ($ctx['article_id'] ?? null) === 42
+                    && ($ctx['primary_signal_id'] ?? null) === 1100
+                    && ($ctx['existing_revision_count'] ?? null) === 3
+                    && ($ctx['message_id_hint'] ?? null) === 42;
+            }));
+
+        $message = new WriteDevelopingStoryMessage(42, 1100, [], 'full_flash');
+        $result = ($this->handler)($message);
+
+        $this->assertNull($result);
+        $this->assertCount(0, $this->dispatchedTranslations);
+        // revision state untouched.
+        $this->assertSame(3, $article->getRevisionCount());
+        $this->assertCount(1, $article->getRevisionHistory() ?? []);
+    }
+
+    public function testDifferentSignalOnSameArticleBypassesIdempotency(): void
+    {
+        // T56.10 — idempotency is per-signal, not per-article. A new signal
+        // targeting an Article that already carries prior revisions must
+        // proceed through the normal write path.
+        $article = $this->buildDevelopingArticle();
+        $article->setRevisionCount(4);
+        $article->setRevisionHistory([
+            [
+                'rev' => 4,
+                'ts' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+                'diff' => 'earlier unrelated signal',
+                'actor' => ['type' => 'writer', 'id' => null],
+                'source_signal_id' => 1200,
+            ],
+        ]);
+        $primary = $this->mockSignal(1201);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+
+        $this->writer->expects($this->once())
+            ->method('write')
+            ->willReturn($article);
+
+        $this->guardPipeline->expects($this->once())
+            ->method('check')
+            ->willReturn(new GuardVerdict(passed: true));
+
+        $message = new WriteDevelopingStoryMessage(42, 1201, [], 'full_flash');
+        $result = ($this->handler)($message);
+
+        $this->assertSame($article, $result);
+        $this->assertCount(1, $this->dispatchedTranslations);
+    }
+
+    public function testBypassSkipsIdempotencyCheckEvenWhenSignalAlreadyInHistory(): void
+    {
+        // T56.10 — editor-approved bypass is an explicit override that
+        // skips throttle AND idempotency. Even if the signal is already
+        // in revision_history, the bypass still writes (double-apply is
+        // the editor's decision; UI debouncing is upstream).
+        $article = $this->buildDevelopingArticle();
+        $article->setRevisionHistory([
+            [
+                'rev' => 2,
+                'ts' => (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM),
+                'diff' => 'first write',
+                'actor' => ['type' => 'writer', 'id' => null],
+                'source_signal_id' => 1300,
+            ],
+        ]);
+        $primary = $this->mockSignal(1300);
+
+        $this->articleRepository->method('find')->willReturn($article);
+        $this->signalRepository->method('find')->willReturn($primary);
+
+        // Bypass: no throttle, no guard. Writer still runs (revision append
+        // is the writer's responsibility).
+        $this->writerThrottle->expects($this->never())->method('consume');
+        $this->writer->expects($this->once())
+            ->method('write')
+            ->willReturn($article);
+        $this->guardPipeline->expects($this->never())->method('check');
+
+        // Positive assertion: only the bypass published-log fires. Because
+        // this is the sole info() expectation, PHPUnit will fail the test if
+        // the idempotency.skip log also leaks through.
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('write_developing_published.bypass', $this->callback(static function (array $ctx): bool {
+                return ($ctx['escalation_log_id'] ?? null) === 99
+                    && ($ctx['article_id'] ?? null) === 42;
+            }));
+
+        $message = new WriteDevelopingStoryMessage(
+            articleId: 42,
+            primarySignalId: 1300,
+            supportingSignalIds: [],
+            verdictType: 'full_flash',
+            approvedEscalationLogId: 99,
+        );
+        $result = ($this->handler)($message);
+
+        $this->assertSame($article, $result);
+        $this->assertCount(1, $this->dispatchedTranslations);
+    }
+
     private function buildDevelopingArticle(): Article
     {
         $article = new Article();

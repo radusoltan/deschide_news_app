@@ -105,6 +105,36 @@ class WriteDevelopingStoryMessageHandler
                 return null;
             }
 
+            // T56.10 — Idempotency guard (ADR-022 P1). Scan revision_history
+            // for an entry carrying the same primary signal id and silent-ACK
+            // if found. Prevents duplicate revision_count increments and
+            // duplicate revision entries on Messenger redelivery / scheduler
+            // tick overlap / aggregator double-dispatch.
+            //
+            // Bypass intentionally skips this check — an editor approving the
+            // same escalation twice is an explicit decision (UI-level debounce
+            // is the caller's responsibility). Throttle redeliveries interact
+            // correctly: the first delivery writes; the second delivery sees
+            // the signal already in history and skips here.
+            //
+            // Scan is O(n) on revision_history capped at 100 entries by
+            // Article::appendRevision — negligible vs. the downstream LLM call.
+            if ($message->approvedEscalationLogId === null) {
+                $revisionHistory = $article->getRevisionHistory() ?? [];
+                $existingSignalIds = array_column($revisionHistory, 'source_signal_id');
+                if (\in_array($message->primarySignalId, $existingSignalIds, true)) {
+                    $this->logger->info('idempotency.skip', [
+                        'handler' => self::class,
+                        'article_id' => $article->getId(),
+                        'primary_signal_id' => $message->primarySignalId,
+                        'existing_revision_count' => $article->getRevisionCount(),
+                        'message_id_hint' => $message->articleId,
+                    ]);
+
+                    return null;
+                }
+            }
+
             $primary = $this->signalRepository->find($message->primarySignalId);
             if ($primary === null) {
                 $this->logger->warning('write_developing_primary_signal_missing', [
