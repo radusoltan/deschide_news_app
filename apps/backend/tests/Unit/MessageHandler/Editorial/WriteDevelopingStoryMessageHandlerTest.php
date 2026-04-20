@@ -24,6 +24,7 @@ use App\Service\Editorial\Guard\LegalGuard;
 use App\Message\TranslateArticleMessage;
 use App\Repository\ImportantArticlesListRepository;
 use App\Service\Editorial\Writer\DevelopingStoryWriter;
+use App\Service\Editorial\WriterThrottle;
 use App\Service\TranslationPriorityDispatcher;
 use App\Service\TranslationPriorityResolver;
 use Doctrine\ORM\EntityManagerInterface;
@@ -33,6 +34,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
+use Symfony\Component\RateLimiter\RateLimit;
 
 /**
  * Unit test for {@see WriteDevelopingStoryMessageHandler} (Sprint 55 T55.4 + T55.9).
@@ -48,6 +51,7 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
     private SourceSignalRepository&MockObject $signalRepository;
     private EntityManagerInterface&MockObject $em;
     private AppSettingRepository&MockObject $appSettings;
+    private WriterThrottle&MockObject $writerThrottle;
     private LoggerInterface&MockObject $logger;
     private WriteDevelopingStoryMessageHandler $handler;
 
@@ -69,6 +73,9 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
         $this->appSettings->method('getBool')
             ->with('editorial.emergency_halt', false)
             ->willReturn(false);
+        $this->writerThrottle = $this->createMock(WriterThrottle::class);
+        $this->writerThrottle->method('consume')
+            ->willReturn(new RateLimit(9, new \DateTimeImmutable('+1 hour'), true, 10));
         $this->logger = $this->createMock(LoggerInterface::class);
 
         // TranslationPriorityDispatcher is final readonly — use a real instance
@@ -105,6 +112,8 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
             $this->signalRepository,
             $this->em,
             $this->appSettings,
+            $this->writerThrottle,
+            $this->messageBus,
             $this->logger,
         );
     }
@@ -315,6 +324,8 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
             $this->signalRepository,
             $this->em,
             $haltedAppSettings,
+            $this->writerThrottle,
+            $this->messageBus,
             $this->logger,
         );
 
@@ -426,6 +437,67 @@ class WriteDevelopingStoryMessageHandlerTest extends TestCase
 
         $this->assertSame($article, $result);
         $this->assertCount(1, $this->dispatchedTranslations);
+    }
+
+    public function testThrottleBlockedReenqueuesWithDelayAndSkipsWriter(): void
+    {
+        // T56.06 symmetric — DevelopingStory blocked by WriterThrottle
+        // redispatches with DelayStamp + skips writer/guard.
+        $retryAfter = new \DateTimeImmutable('+45 seconds');
+        $throttle = $this->createMock(WriterThrottle::class);
+        $throttle->expects($this->once())
+            ->method('consume')
+            ->willReturn(new RateLimit(0, $retryAfter, false, 10));
+
+        // Dedicated bus: capture only the re-dispatched WriteDevelopingStoryMessage.
+        $throttleBus = $this->createMock(MessageBusInterface::class);
+        /** @var list<array{message: object, stamps: list<mixed>}> $captured */
+        $captured = [];
+        $throttleBus->method('dispatch')
+            ->willReturnCallback(function (object $m, array $stamps = []) use (&$captured): Envelope {
+                $captured[] = ['message' => $m, 'stamps' => $stamps];
+
+                return new Envelope($m);
+            });
+
+        $handler = new WriteDevelopingStoryMessageHandler(
+            $this->writer,
+            $this->guardPipeline,
+            $this->translationDispatcher,
+            $this->escalationLogWriter,
+            new GuardEscalationCategoryMapper(),
+            $this->articleRepository,
+            $this->signalRepository,
+            $this->em,
+            $this->appSettings,
+            $throttle,
+            $throttleBus,
+            $this->logger,
+        );
+
+        // Downstream MUST stay idle on throttle reject.
+        $this->articleRepository->expects($this->never())->method('find');
+        $this->signalRepository->expects($this->never())->method('find');
+        $this->writer->expects($this->never())->method('write');
+        $this->guardPipeline->expects($this->never())->method('check');
+
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('throttle.blocked', $this->callback(static function (array $ctx): bool {
+                return ($ctx['handler'] ?? null) === WriteDevelopingStoryMessageHandler::class
+                    && ($ctx['message_id_hint'] ?? null) === 42
+                    && ($ctx['limit'] ?? null) === 10;
+            }));
+
+        $result = $handler(new WriteDevelopingStoryMessage(42, 6200, [], 'full_flash'));
+
+        $this->assertNull($result);
+        $this->assertCount(1, $captured, 'redispatched exactly once');
+        $this->assertInstanceOf(WriteDevelopingStoryMessage::class, $captured[0]['message']);
+        $this->assertCount(1, $captured[0]['stamps']);
+        $this->assertInstanceOf(DelayStamp::class, $captured[0]['stamps'][0]);
+        $this->assertGreaterThanOrEqual(1_000, $captured[0]['stamps'][0]->getDelay());
+        $this->assertLessThanOrEqual(46_000, $captured[0]['stamps'][0]->getDelay());
     }
 
     private function buildDevelopingArticle(): Article

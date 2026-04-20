@@ -57,3 +57,19 @@ framework:
             policy: 'token_bucket'
             limit: 5
             rate: { interval: '1 hour', amount: 5 }
+
+        # Global editorial writer throttle (Sprint 56 T56.06 / ADR-022 D2).
+        # Caps Flash + DevelopingStory writer dispatches across the pipeline
+        # at this many per hour, closing the B-H5 false-safety claim (the
+        # editorial.throttle.articles_per_hour AppSetting has been seeded
+        # since S55 but had zero enforcement until now).
+        #
+        # Runtime limit is read from AppSetting `editorial.throttle.articles_per_hour`
+        # by {@see \App\Service\Editorial\WriterThrottle}; the YAML value
+        # below is the fallback if the setting is missing/invalid, and it
+        # also anchors the factory autowiring so `debug:container
+        # limiter.editorial_writer` surfaces the throttle for observability.
+        editorial_writer:
+            policy: 'sliding_window'
+            limit: 10
+            interval: '1 hour'

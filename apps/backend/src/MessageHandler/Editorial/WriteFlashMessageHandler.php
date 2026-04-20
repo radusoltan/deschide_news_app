@@ -19,9 +19,12 @@ use App\Service\Editorial\Guard\GuardEscalationCategoryMapper;
 use App\Service\Editorial\Guard\GuardPipelineInterface;
 use App\Service\Editorial\PostApprovalDispatcher;
 use App\Service\Editorial\Writer\FlashWriter;
+use App\Service\Editorial\WriterThrottle;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
 
 /**
  * Async handler for {@see WriteFlashMessage} (Sprint 55 T55.3, extended in T55.9)
@@ -65,6 +68,8 @@ class WriteFlashMessageHandler
         private readonly TopicRepository $topicRepository,
         private readonly EntityManagerInterface $em,
         private readonly AppSettingRepository $appSettings,
+        private readonly WriterThrottle $writerThrottle,
+        private readonly MessageBusInterface $messageBus,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -81,6 +86,30 @@ class WriteFlashMessageHandler
             ]);
 
             return null;
+        }
+
+        // Writer throttle (T56.06, ADR-022 D2). Editor-approved escalations
+        // (T56.05) skip this gate by design — the human has accepted
+        // responsibility and the audit trail is the EditorialEscalationLog.
+        // On reject we re-enqueue with DelayStamp so Messenger redispatches
+        // after the sliding window retry window; the current invocation
+        // ack-completes without touching the writer.
+        if ($message->approvedEscalationLogId === null) {
+            $rateLimit = $this->writerThrottle->consume();
+            if (!$rateLimit->isAccepted()) {
+                $retryAfterMs = $this->computeRetryAfterMs($rateLimit->getRetryAfter());
+                $this->logger->info('throttle.blocked', [
+                    'handler' => self::class,
+                    'message_class' => $message::class,
+                    'message_id_hint' => $message->primarySignalId,
+                    'retry_after_ms' => $retryAfterMs,
+                    'limit' => $rateLimit->getLimit(),
+                ]);
+
+                $this->messageBus->dispatch($message, [new DelayStamp($retryAfterMs)]);
+
+                return null;
+            }
         }
 
         try {
@@ -161,6 +190,21 @@ class WriteFlashMessageHandler
 
             return null;
         }
+    }
+
+    /**
+     * T56.06 — turn the RateLimiter's {@see \DateTimeImmutable} retry-after
+     * into a Messenger {@see DelayStamp} delay expressed in milliseconds.
+     * Floors at 1 second so a retry never re-fires on the same tick and
+     * caps at 1 hour to keep the redispatched message visible within the
+     * throttle window (larger delays would effectively suppress the
+     * message until out-of-band intervention).
+     */
+    private function computeRetryAfterMs(\DateTimeImmutable $retryAfter): int
+    {
+        $deltaSeconds = max(1, $retryAfter->getTimestamp() - time());
+
+        return min(3_600_000, $deltaSeconds * 1000);
     }
 
     /**
