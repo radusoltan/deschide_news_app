@@ -112,22 +112,69 @@ All scheduler providers must have a matching consumer so `supervisorctl status` 
 | `messenger-briefing` | `briefing` | daily press briefing generation |
 | `messenger-topic-detection` | `topic_detection` | topic classification batch |
 
-### Reload procedure
+### ⚠️ Drift warning: repo vs system
 
-After adding or editing supervisor conf files, sync them to the system supervisor directory and reload:
+Supervisor configs in `apps/backend/config/supervisor/*.conf` **DIVERGE** from the deployed canonical `/etc/supervisor/conf.d/*.conf` on non-CLI fields. System is the evolved canonical source; repo reflects an older snapshot plus CLI hygiene updates (T56.03, T56.03.1).
+
+**Known drift points (captured 2026-04-20):**
+
+- `messenger-async.conf`:
+  - repo transports `async editorial scraping` vs system `async scraping python_scraper cache_async stats_async`
+  - repo includes legacy `editorial` queue (~7298 stale S52 messages preserved for forensic review)
+  - repo has `--limit=10`; system has no `--limit`
+  - repo `autostart=true`; system `autostart=false`
+- `messenger-translations.conf`:
+  - repo has `--limit=10`; system has no `--limit`
+  - repo `autostart=true`; system `autostart=false`
+
+**DO NOT** blindly run `cp apps/backend/config/supervisor/*.conf /etc/supervisor/conf.d/` on a production deploy — transport lists and autostart flags carry deliberate deployment intent that would be reverted by a blind copy.
+
+### Safe sync procedure (manual, per-file)
 
 ```bash
-# 1. Sync repo confs → system (adjust to your deploy's symlink/copy strategy)
-sudo cp /var/www/deschide_news_app/apps/backend/config/supervisor/*.conf /etc/supervisor/conf.d/
+# For each changed .conf file:
+diff apps/backend/config/supervisor/<file>.conf /etc/supervisor/conf.d/<file>.conf
 
-# 2. Clear Symfony cache BEFORE reload so new commands (e.g. app:settings:*) are discoverable
+# Review each diff line:
+#   - CLI path changes (/usr/bin/symfony console)    → APPLY
+#   - transport list changes                         → REVIEW intent, decide
+#   - autostart / --limit / numprocs changes         → REVIEW, decide
+#   - logfile paths                                  → APPLY iff aligned
+
+# Once reviewed, apply selectively (editor) or confirm entire copy:
+sudo cp apps/backend/config/supervisor/<file>.conf /etc/supervisor/conf.d/
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl status
+```
+
+For **new** conf files added in the repo (no /etc/supervisor/conf.d/ counterpart yet — e.g. the 6 scheduler-* confs from T56.03), a straight copy IS safe:
+
+```bash
+# Only for files missing on the system side:
+for f in apps/backend/config/supervisor/messenger-scheduler-*.conf; do
+  test -f /etc/supervisor/conf.d/"$(basename "$f")" || sudo cp "$f" /etc/supervisor/conf.d/
+done
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl status
+```
+
+### Tracked resolution
+
+ADR-022 Open Question #6. Candidate for a dedicated S57 sync sprint: supervisor audit + canonical-source decision per file + deploy-workflow automation (Makefile target or bootstrap script) so repo ↔ system stops drifting after every deploy.
+
+### Reload procedure (no drift, e.g. CLI-only edits or new files)
+
+```bash
+# 1. Clear Symfony cache BEFORE reload so new commands (e.g. app:settings:*) are discoverable
 symfony console cache:clear --env=prod
 
-# 3. Pick up new/edited confs and apply
+# 2. Pick up new/edited confs and apply
 sudo supervisorctl reread
 sudo supervisorctl update
 
-# 4. Verify all expected consumers are RUNNING
+# 3. Verify all expected consumers are RUNNING
 sudo supervisorctl status
 ```
 
