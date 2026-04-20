@@ -5,11 +5,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 /**
  * One event emitted by the backend on `deschide_news/admin_escalations`.
  * Event `type` matches the `event` field in the Mercure payload.
+ *
+ * T56.07 (ADR-022 D3): the `decided` variant previously carried
+ * `decided_by` (editor user id) and `comment` (editorial reasoning excerpt
+ * up to 256 chars). Those fields are stripped at emit because the topic
+ * is unauthenticated. Consumers that need editor identity or the
+ * editorial note must fetch via the authenticated REST endpoint
+ * `GET /admin/escalations/{id}` — the hook's own consumers today
+ * (EscalationQueue.tsx) use events solely as refetch triggers.
  */
 export type EscalationMercureEvent =
   | { event: 'new'; id: number; category: string; category_name: string; created_at: string; expires_at: string | null }
   | { event: 'expired'; id: number; category: string; category_name: string; expires_at: string | null; decided_at: string | null }
-  | { event: 'decided'; decision: 'approved' | 'rejected'; id: number; category: string; category_name: string; decided_at: string | null; decided_by: number | null; comment: string | null }
+  | { event: 'decided'; decision: 'approved' | 'rejected'; id: number; category: string; category_name: string; decided_at: string | null }
   | { event: 'extended'; id: number; category: string; category_name: string; expires_at: string | null; added_seconds: number };
 
 export type MercureStatus = 'connecting' | 'connected' | 'disconnected' | 'error';

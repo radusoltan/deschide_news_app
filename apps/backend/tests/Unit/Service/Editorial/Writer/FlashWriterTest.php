@@ -19,6 +19,8 @@ use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
+use App\Service\Editorial\Llm\LlmPromptAssembler;
 use App\Service\Editorial\Writer\AiAuthorProvider;
 use App\Service\Editorial\Writer\FlashWriter;
 use App\Service\Editorial\Writer\SignalCategoryResolver;
@@ -41,6 +43,7 @@ class FlashWriterTest extends TestCase
     private SignalCategoryResolver&MockObject $categoryResolver;
     private AiAuthorProvider&MockObject $aiAuthorProvider;
     private EntityManagerInterface&MockObject $em;
+    private LlmInvocationLogger&MockObject $llmInvocationLogger;
     private LoggerInterface&MockObject $logger;
     private FlashWriter $writer;
 
@@ -51,6 +54,7 @@ class FlashWriterTest extends TestCase
         $this->categoryResolver = $this->createMock(SignalCategoryResolver::class);
         $this->aiAuthorProvider = $this->createMock(AiAuthorProvider::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
+        $this->llmInvocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->writer = new FlashWriter(
@@ -59,6 +63,8 @@ class FlashWriterTest extends TestCase
             $this->categoryResolver,
             $this->aiAuthorProvider,
             $this->em,
+            $this->llmInvocationLogger,
+            new LlmPromptAssembler(),
             $this->logger,
         );
     }
@@ -165,6 +171,90 @@ class FlashWriterTest extends TestCase
 
         $this->assertInstanceOf(Article::class, $article);
         $this->assertSame(ArticleType::FLASH, $article->getArticleType());
+    }
+
+    public function testT5609LogsHaikuInvocationWithWrapperMetrics(): void
+    {
+        // T56.09 — end-to-end verification of the LlmAgentCallLog hook on
+        // the Haiku happy path. The wrapper-reported metrics (input/output
+        // tokens, cost) flow through to LlmInvocationLogger::logInvocation().
+        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
+            'content' => $this->happyPathResponse(),
+            'agent_id' => 'flash_writer',
+            'tier' => 'haiku',
+            'model' => 'claude-haiku-4-5-20251001',
+            'attempts' => 1,
+            'fallback_detected' => false,
+            'metrics' => [
+                'input_tokens' => 1024,
+                'output_tokens' => 256,
+                'cache_read_tokens' => 128,
+                'cache_creation_tokens' => 0,
+                'cost_usd' => 0.0175,
+                'duration_ms' => 1500,
+                'model' => 'claude-haiku-4-5-20251001',
+            ],
+        ]);
+        $this->categoryResolver->method('resolve')->willReturn($this->mockCategory('politica'));
+        $this->aiAuthorProvider->method('getOrCreate')->willReturn($this->mockAuthor());
+
+        $this->llmInvocationLogger->expects($this->once())
+            ->method('logInvocation')
+            ->with(
+                'flash_writer',
+                $this->callback(static fn (string $h): bool => \strlen($h) === 64), // SHA-256 hex
+                1500,            // durationMs from wrapper metrics
+                1024,            // inputTokens
+                256,             // outputTokens
+                128,             // cacheReadTokens
+                0,               // cacheCreationTokens
+                0.0175,          // costUsd
+                'claude-haiku-4-5-20251001',
+                null,            // verdict null for writers
+            );
+
+        $primary = $this->mockSignal(101, 'Titlu', 'Sumar');
+        $verdict = new VerificationVerdict(VerdictType::FULL_FLASH, 'OK', confidence: 0.9);
+
+        $this->writer->write($primary, [], $verdict);
+    }
+
+    public function testT5609LogsGeminiFallbackInvocationWithZeroSentinels(): void
+    {
+        // T56.09 — Gemini CLI fallback path does not expose wrapper metrics;
+        // the hook must still record a row using wall-clock duration and
+        // explicit zeros (not garbage) for token/cost fields.
+        $this->llmRetryExecutor->method('executeWithRetry')->willThrowException(
+            new LlmUnavailableException(
+                agentId: 'flash_writer',
+                tier: LlmModelTier::HAIKU,
+                fallbackTier: LlmModelTier::GEMINI_FLASH,
+                attempts: 4,
+            ),
+        );
+        $this->geminiCliService->method('execute')->willReturn($this->happyPathResponse());
+        $this->categoryResolver->method('resolve')->willReturn($this->mockCategory('externe'));
+        $this->aiAuthorProvider->method('getOrCreate')->willReturn($this->mockAuthor());
+
+        $this->llmInvocationLogger->expects($this->once())
+            ->method('logInvocation')
+            ->with(
+                'flash_writer',
+                $this->callback(static fn (string $h): bool => \strlen($h) === 64),
+                $this->callback(static fn (int $d): bool => $d >= 0),  // wall-clock, positive
+                0,                   // inputTokens sentinel
+                0,                   // outputTokens sentinel
+                0,                   // cacheReadTokens default
+                0,                   // cacheCreationTokens default
+                0.0,                 // costUsd default
+                'gemini-2.5-flash',  // model fixed from FALLBACK_MODEL constant
+                null,
+            );
+
+        $primary = $this->mockSignal(102, 'Titlu', 'Sumar');
+        $verdict = new VerificationVerdict(VerdictType::FULL_FLASH, 'OK', confidence: 0.7);
+
+        $this->writer->write($primary, [], $verdict);
     }
 
     public function testThrowsWhenLlmResponseIsNotJson(): void

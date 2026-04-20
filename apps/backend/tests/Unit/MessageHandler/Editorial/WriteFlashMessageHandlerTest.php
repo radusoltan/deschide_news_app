@@ -15,6 +15,7 @@ use App\Enum\Editorial\EscalationCategory;
 use App\Enum\Editorial\VerdictType;
 use App\Message\Editorial\WriteFlashMessage;
 use App\MessageHandler\Editorial\WriteFlashMessageHandler;
+use App\Repository\AppSettingRepository;
 use App\Repository\ArticleRepository;
 use App\Repository\Editorial\SourceSignalRepository;
 use App\Repository\TopicRepository;
@@ -25,10 +26,15 @@ use App\Service\Editorial\Guard\GuardVerdict;
 use App\Service\Editorial\Guard\LegalGuard;
 use App\Service\Editorial\PostApprovalDispatcher;
 use App\Service\Editorial\Writer\FlashWriter;
+use App\Service\Editorial\WriterThrottle;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
+use Symfony\Component\RateLimiter\RateLimit;
 
 /**
  * Unit test for {@see WriteFlashMessageHandler} (Sprint 55 T55.3 + T55.9 extensions).
@@ -46,6 +52,9 @@ class WriteFlashMessageHandlerTest extends TestCase
     private ArticleRepository&MockObject $articleRepository;
     private TopicRepository&MockObject $topicRepository;
     private EntityManagerInterface&MockObject $em;
+    private AppSettingRepository&MockObject $appSettings;
+    private WriterThrottle&MockObject $writerThrottle;
+    private MessageBusInterface&MockObject $messageBus;
     private LoggerInterface&MockObject $logger;
     private WriteFlashMessageHandler $handler;
 
@@ -59,6 +68,18 @@ class WriteFlashMessageHandlerTest extends TestCase
         $this->articleRepository = $this->createMock(ArticleRepository::class);
         $this->topicRepository = $this->createMock(TopicRepository::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
+        $this->appSettings = $this->createMock(AppSettingRepository::class);
+        // Default: emergency_halt=false so the existing happy-path tests exercise
+        // real delegation. The emergency_halt test overrides with a fresh mock.
+        $this->appSettings->method('getBool')
+            ->with('editorial.emergency_halt', false)
+            ->willReturn(false);
+        $this->writerThrottle = $this->createMock(WriterThrottle::class);
+        // Default: throttle accepts — individual tests override when they need
+        // the reject path. 10 is the AppSetting fallback used as the limit.
+        $this->writerThrottle->method('consume')
+            ->willReturn(new RateLimit(9, new \DateTimeImmutable('+1 hour'), true, 10));
+        $this->messageBus = $this->createMock(MessageBusInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->handler = new WriteFlashMessageHandler(
@@ -71,6 +92,9 @@ class WriteFlashMessageHandlerTest extends TestCase
             $this->articleRepository,
             $this->topicRepository,
             $this->em,
+            $this->appSettings,
+            $this->writerThrottle,
+            $this->messageBus,
             $this->logger,
         );
     }
@@ -317,6 +341,269 @@ class WriteFlashMessageHandlerTest extends TestCase
 
         $message = new WriteFlashMessage(800, [], 'full_flash');
         $this->assertNull(($this->handler)($message));
+    }
+
+    public function testEmergencyHaltShortCircuitsBeforeAnyDependencyIsTouched(): void
+    {
+        $haltedAppSettings = $this->createMock(AppSettingRepository::class);
+        $haltedAppSettings->method('getBool')
+            ->with('editorial.emergency_halt', false)
+            ->willReturn(true);
+
+        $handler = new WriteFlashMessageHandler(
+            $this->flashWriter,
+            $this->guardPipeline,
+            $this->postApprovalDispatcher,
+            $this->escalationLogWriter,
+            new GuardEscalationCategoryMapper(),
+            $this->signalRepository,
+            $this->articleRepository,
+            $this->topicRepository,
+            $this->em,
+            $haltedAppSettings,
+            $this->writerThrottle,
+            $this->messageBus,
+            $this->logger,
+        );
+
+        // Short-circuit must happen BEFORE any repo, writer, guard, dispatcher
+        // or flush is invoked — this is the whole point of the circuit breaker.
+        $this->signalRepository->expects($this->never())->method('find');
+        $this->articleRepository->expects($this->never())->method('findOneBy');
+        $this->flashWriter->expects($this->never())->method('write');
+        $this->guardPipeline->expects($this->never())->method('check');
+        $this->postApprovalDispatcher->expects($this->never())->method('dispatch');
+        $this->escalationLogWriter->expects($this->never())->method('write');
+        $this->em->expects($this->never())->method('flush');
+        // Throttle is downstream of emergency_halt — halted pipeline must not
+        // even consume a throttle token.
+        $this->writerThrottle->expects($this->never())->method('consume');
+
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('emergency_halt.triggered', $this->callback(static function (array $ctx): bool {
+                return ($ctx['handler'] ?? null) === WriteFlashMessageHandler::class
+                    && ($ctx['message_class'] ?? null) === WriteFlashMessage::class
+                    && ($ctx['message_id_hint'] ?? null) === 4242;
+            }));
+
+        $result = $handler(new WriteFlashMessage(4242, [], 'full_flash'));
+
+        $this->assertNull($result);
+    }
+
+    public function testEmergencyHaltDisabledKeepsDelegatingToDeps(): void
+    {
+        // Sanity twin to emergency_halt=true: with flag=false (default in setUp),
+        // the happy-path delegation chain still runs end-to-end. Proves the
+        // circuit breaker check doesn't accidentally swallow normal traffic.
+        $primary = $this->mockSignal(4243);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->articleRepository->method('findOneBy')->willReturn(null);
+        $this->topicRepository->method('find')->willReturn(null);
+
+        $article = $this->buildWriterArticle();
+        $this->flashWriter->expects($this->once())
+            ->method('write')
+            ->willReturn($article);
+
+        $this->guardPipeline->expects($this->once())
+            ->method('check')
+            ->willReturn(new GuardVerdict(passed: true));
+
+        $this->postApprovalDispatcher->expects($this->once())->method('dispatch');
+
+        $result = ($this->handler)(new WriteFlashMessage(4243, [], 'full_flash'));
+
+        $this->assertSame($article, $result);
+        $this->assertSame(['ro'], $article->getPublishedLocales());
+    }
+
+    public function testApprovedEscalationBypassSkipsGuardPipelineAndPublishes(): void
+    {
+        // T56.05 — when the controller dispatches WriteFlashMessage with
+        // approvedEscalationLogId set, the handler MUST skip GuardPipeline
+        // and publish directly. The guard failures that produced this
+        // escalation were already adjudicated by a human editor.
+        $primary = $this->mockSignal(900);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->articleRepository->method('findOneBy')->willReturn(null);
+        $this->topicRepository->method('find')->willReturn(null);
+
+        $article = $this->buildWriterArticle();
+        $this->flashWriter->expects($this->once())->method('write')->willReturn($article);
+
+        // The whole point: guard pipeline + escalation log writer MUST NOT run.
+        $this->guardPipeline->expects($this->never())->method('check');
+        $this->escalationLogWriter->expects($this->never())->method('write');
+
+        // Publish side-effects still fire (mirror of guard-pass branch).
+        $this->em->expects($this->once())->method('flush');
+        $this->postApprovalDispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->identicalTo($article), null, 'ro');
+
+        // Audit trail: structured log distinguishes bypass from normal path.
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('write_flash_published.bypass', $this->callback(static function (array $ctx): bool {
+                return ($ctx['escalation_log_id'] ?? null) === 77;
+            }));
+
+        $result = ($this->handler)(new WriteFlashMessage(
+            primarySignalId: 900,
+            supportingSignalIds: [],
+            verdictType: 'full_flash',
+            topicId: null,
+            approvedEscalationLogId: 77,
+        ));
+
+        $this->assertSame($article, $result);
+        $this->assertSame(['ro'], $article->getPublishedLocales(), 'bypass must flip visibility to RO');
+    }
+
+    public function testNullApprovedEscalationLogIdPreservesGuardChain(): void
+    {
+        // Sanity twin: with approvedEscalationLogId unset (pipeline-emitted
+        // traffic), the guard chain still runs exactly once. Proves the
+        // bypass branch doesn't accidentally swallow normal dispatches.
+        $primary = $this->mockSignal(901);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->articleRepository->method('findOneBy')->willReturn(null);
+        $this->topicRepository->method('find')->willReturn(null);
+
+        $article = $this->buildWriterArticle();
+        $this->flashWriter->method('write')->willReturn($article);
+
+        $this->guardPipeline->expects($this->once())
+            ->method('check')
+            ->willReturn(new GuardVerdict(passed: true));
+
+        $this->postApprovalDispatcher->expects($this->once())->method('dispatch');
+
+        // Normal happy-path log, NOT the .bypass variant.
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('write_flash_published', $this->anything());
+
+        $result = ($this->handler)(new WriteFlashMessage(901, [], 'full_flash'));
+
+        $this->assertSame($article, $result);
+        $this->assertSame(['ro'], $article->getPublishedLocales());
+    }
+
+    public function testThrottleBlockedReenqueuesWithDelayAndSkipsWriter(): void
+    {
+        // T56.06 — when WriterThrottle rejects, the handler must NOT touch
+        // the writer or the guard chain. It re-dispatches the message with
+        // a DelayStamp so Messenger redelivers after the sliding window
+        // makes capacity available, and the current invocation completes.
+        $retryAfter = new \DateTimeImmutable('+30 seconds');
+        $throttle = $this->createMock(WriterThrottle::class);
+        $throttle->expects($this->once())
+            ->method('consume')
+            ->willReturn(new RateLimit(0, $retryAfter, false, 10));
+
+        $handler = new WriteFlashMessageHandler(
+            $this->flashWriter,
+            $this->guardPipeline,
+            $this->postApprovalDispatcher,
+            $this->escalationLogWriter,
+            new GuardEscalationCategoryMapper(),
+            $this->signalRepository,
+            $this->articleRepository,
+            $this->topicRepository,
+            $this->em,
+            $this->appSettings,
+            $throttle,
+            $this->messageBus,
+            $this->logger,
+        );
+
+        // Everything downstream of the throttle gate MUST be untouched.
+        $this->signalRepository->expects($this->never())->method('find');
+        $this->flashWriter->expects($this->never())->method('write');
+        $this->guardPipeline->expects($this->never())->method('check');
+        $this->postApprovalDispatcher->expects($this->never())->method('dispatch');
+
+        // Exactly one re-dispatch with a DelayStamp whose delay matches the
+        // RateLimiter's retry-after, clamped to >= 1s.
+        $this->messageBus->expects($this->once())
+            ->method('dispatch')
+            ->willReturnCallback(function (object $m, array $stamps): Envelope {
+                $this->assertInstanceOf(WriteFlashMessage::class, $m);
+                $this->assertCount(1, $stamps);
+                $this->assertInstanceOf(DelayStamp::class, $stamps[0]);
+                // 30-second retry → ≥ 1s clamp → ≤ 31s to absorb jitter.
+                $this->assertGreaterThanOrEqual(1_000, $stamps[0]->getDelay());
+                $this->assertLessThanOrEqual(31_000, $stamps[0]->getDelay());
+
+                return new Envelope($m);
+            });
+
+        $this->logger->expects($this->once())
+            ->method('info')
+            ->with('throttle.blocked', $this->callback(static function (array $ctx): bool {
+                return ($ctx['handler'] ?? null) === WriteFlashMessageHandler::class
+                    && ($ctx['message_id_hint'] ?? null) === 6000
+                    && ($ctx['limit'] ?? null) === 10
+                    && \is_int($ctx['retry_after_ms'] ?? null);
+            }));
+
+        $result = $handler(new WriteFlashMessage(6000, [], 'full_flash'));
+
+        $this->assertNull($result);
+    }
+
+    public function testApprovedEscalationBypassesThrottleAndPublishes(): void
+    {
+        // T56.06 + T56.05 contract: editor-approved bypass MUST skip the
+        // throttle gate entirely — human override is exempt. Also skips
+        // the guard chain (T56.05) and publishes directly.
+        $primary = $this->mockSignal(6100);
+        $this->signalRepository->method('find')->willReturn($primary);
+        $this->articleRepository->method('findOneBy')->willReturn(null);
+        $this->topicRepository->method('find')->willReturn(null);
+
+        $article = $this->buildWriterArticle();
+        $this->flashWriter->method('write')->willReturn($article);
+
+        // Throttle is fully exempt.
+        $bypassThrottle = $this->createMock(WriterThrottle::class);
+        $bypassThrottle->expects($this->never())->method('consume');
+
+        $bypassBus = $this->createMock(MessageBusInterface::class);
+        $bypassBus->expects($this->never())->method('dispatch');
+
+        $handler = new WriteFlashMessageHandler(
+            $this->flashWriter,
+            $this->guardPipeline,
+            $this->postApprovalDispatcher,
+            $this->escalationLogWriter,
+            new GuardEscalationCategoryMapper(),
+            $this->signalRepository,
+            $this->articleRepository,
+            $this->topicRepository,
+            $this->em,
+            $this->appSettings,
+            $bypassThrottle,
+            $bypassBus,
+            $this->logger,
+        );
+
+        $this->guardPipeline->expects($this->never())->method('check');
+        $this->postApprovalDispatcher->expects($this->once())->method('dispatch');
+
+        $result = $handler(new WriteFlashMessage(
+            primarySignalId: 6100,
+            supportingSignalIds: [],
+            verdictType: 'full_flash',
+            topicId: null,
+            approvedEscalationLogId: 1234,
+        ));
+
+        $this->assertSame($article, $result);
+        $this->assertSame(['ro'], $article->getPublishedLocales());
     }
 
     private function buildWriterArticle(): Article

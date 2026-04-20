@@ -4,24 +4,29 @@ declare(strict_types=1);
 
 namespace App\Command\Editorial;
 
+use App\Entity\Editorial\LlmAgentCallLog;
+use App\Repository\Editorial\LlmAgentCallLogRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Aggregate `llm_agent_call` log-line cost metrics into a human-readable
- * summary (Sprint 55 T55.16). MVP implementation — grep-based over the
- * rotation files in `var/log/`.
+ * Aggregate LLM invocation cost / duration / token metrics per agent and per
+ * model.
  *
- * @todo Sprint 56: migrate to a DB-backed LlmAgentCallLog entity so the
- *       summary can query historical windows past the log-rotation window
- *       and support per-minute aggregation. The grep approach breaks down at
- *       high volume (log rotation every 10 MB; prod will churn through the
- *       window in <1h once the pipeline is live).
+ * Sprint 55 shipped this as a grep-based MVP over the Monolog rotation
+ * files; Sprint 56 T56.09 promotes it to a DB query against the
+ * {@see LlmAgentCallLog} entity so historical windows beyond the log
+ * rotation cycle and high-volume extended smokes (T56.12) remain queryable.
+ *
+ * Output shape is preserved from S55 for backwards compatibility with any
+ * operator muscle memory / analytics scripts that consume the JSON form:
+ * `{ agents: { <agentId>: { models: { <model>: bucket }, total: bucket_with_avg } }, total: bucket_with_avg }`.
  *
  * Usage:
  *   # last 24h, all agents, table output
@@ -35,18 +40,12 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 #[AsCommand(
     name: 'app:editorial:llm-cost-summary',
-    description: 'Aggregate llm_agent_call log-line metrics (per-agent, per-model cost + token rollup)',
+    description: 'Aggregate LlmAgentCallLog rows (per-agent, per-model cost + token rollup)',
 )]
 class LlmCostSummaryCommand extends Command
 {
-    /**
-     * Regex capturing the Monolog line format `[timestamp] channel.LEVEL: llm_agent_call {JSON} [extra]`.
-     * Matches only the `llm_agent_call` message; other log lines are passed over.
-     */
-    private const LINE_REGEX = '/^\[([^\]]+)\]\s+[^:]+:\s+llm_agent_call\s+(\{.*?\})\s+(\[.*?\]|\{.*?\})?\s*$/u';
-
     public function __construct(
-        private readonly string $logDir,
+        private readonly LlmAgentCallLogRepository $repository,
     ) {
         parent::__construct();
     }
@@ -73,28 +72,16 @@ class LlmCostSummaryCommand extends Command
                 InputOption::VALUE_REQUIRED,
                 'Output format: table | json',
                 'table',
-            )
-            ->addOption(
-                'log-dir',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'Override the log directory (default: Symfony `%kernel.logs_dir%`). Useful in tests.',
             );
     }
 
     /**
-     * Parse the short-form `--since` value into a unix timestamp.
-     *
-     * PHP's strtotime() mis-parses bare suffixes like "-24h" or "-30d"
-     * (returns FUTURE instead of past), so we hand-roll the conversion here:
-     *   12m → -12 minutes
-     *   1h  → -1 hour
-     *   24h → -24 hours
-     *   7d  → -7 days
-     *   3w  → -3 weeks
-     * Also accepts explicit forms ("24 hours", "7 days").
+     * Parse the short-form `--since` value into a DateTimeImmutable. Kept
+     * verbatim from the S55 grep implementation — PHP's strtotime mis-parses
+     * bare suffixes like "-24h" / "-30d" (returns FUTURE instead of past),
+     * so the manual mapping is still worth the lines.
      */
-    private function parseSince(string $raw): ?int
+    private function parseSince(string $raw): ?\DateTimeImmutable
     {
         $trimmed = trim($raw);
         if ($trimmed === '') {
@@ -115,9 +102,11 @@ class LlmCostSummaryCommand extends Command
                 return null;
             }
 
-            $ts = strtotime($relative);
-
-            return $ts === false ? null : $ts;
+            try {
+                return new \DateTimeImmutable($relative);
+            } catch (\Exception) {
+                return null;
+            }
         }
 
         // Fall back to strtotime for explicit forms ("24 hours ago", "-7 days").
@@ -126,7 +115,7 @@ class LlmCostSummaryCommand extends Command
             return null;
         }
 
-        return $ts;
+        return (new \DateTimeImmutable())->setTimestamp($ts);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -141,8 +130,8 @@ class LlmCostSummaryCommand extends Command
         }
 
         $sinceRaw = (string) $input->getOption('since');
-        $sinceTimestamp = $this->parseSince($sinceRaw);
-        if ($sinceTimestamp === null) {
+        $since = $this->parseSince($sinceRaw);
+        if ($since === null) {
             $io->error(sprintf('Invalid --since value "%s". Use formats like "1h", "24h", "7d".', $sinceRaw));
 
             return Command::FAILURE;
@@ -153,21 +142,18 @@ class LlmCostSummaryCommand extends Command
             $agentFilter = (string) $agentFilter;
         }
 
-        $logDir = $input->getOption('log-dir') !== null
-            ? (string) $input->getOption('log-dir')
-            : $this->logDir;
-
-        if (!is_dir($logDir)) {
-            $io->error(sprintf('Log directory does not exist: %s', $logDir));
-
-            return Command::FAILURE;
+        $rows = $this->repository->findInTimeRange($since, new \DateTimeImmutable());
+        if ($agentFilter !== null && $agentFilter !== '') {
+            $rows = array_values(array_filter(
+                $rows,
+                static fn (LlmAgentCallLog $r): bool => fnmatch($agentFilter, $r->getAgentName()),
+            ));
         }
 
-        $entries = $this->collectEntries($logDir, $sinceTimestamp, $agentFilter);
-        $rollup = $this->aggregate($entries);
+        $rollup = $this->aggregate($rows);
 
         if ($format === 'json') {
-            $output->writeln(json_encode($rollup, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            $output->writeln((string) json_encode($rollup, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
             return Command::SUCCESS;
         }
@@ -178,118 +164,37 @@ class LlmCostSummaryCommand extends Command
     }
 
     /**
-     * Walks all `*.log` files in the given directory, parses `llm_agent_call`
-     * lines, and filters by timestamp + agent glob.
-     *
-     * @return list<array<string, mixed>>
+     * @param list<LlmAgentCallLog> $rows
+     * @return array{agents: array<string, array{models: array<string, array<string, int|float>>, total: array<string, int|float>}>, total: array<string, int|float>}
      */
-    private function collectEntries(string $logDir, int $sinceTimestamp, ?string $agentFilter): array
-    {
-        $entries = [];
-
-        $files = glob($logDir . '/*.log');
-        if ($files === false) {
-            return [];
-        }
-
-        foreach ($files as $file) {
-            $handle = @fopen($file, 'r');
-            if ($handle === false) {
-                continue;
-            }
-            try {
-                while (($line = fgets($handle)) !== false) {
-                    $parsed = $this->parseLine($line);
-                    if ($parsed === null) {
-                        continue;
-                    }
-
-                    if ($parsed['timestamp'] < $sinceTimestamp) {
-                        continue;
-                    }
-
-                    if ($agentFilter !== null && $agentFilter !== '' && !fnmatch($agentFilter, (string) ($parsed['agent_id'] ?? ''))) {
-                        continue;
-                    }
-
-                    $entries[] = $parsed;
-                }
-            } finally {
-                fclose($handle);
-            }
-        }
-
-        return $entries;
-    }
-
-    /**
-     * Extract timestamp + llm_agent_call JSON context from one log line.
-     *
-     * @return array<string, mixed>|null null when the line isn't an llm_agent_call entry or is malformed
-     */
-    private function parseLine(string $line): ?array
-    {
-        $line = rtrim($line, "\r\n");
-        if ($line === '' || !str_contains($line, 'llm_agent_call')) {
-            return null;
-        }
-
-        if (preg_match(self::LINE_REGEX, $line, $matches) !== 1) {
-            return null;
-        }
-
-        $timestampStr = $matches[1];
-        $jsonStr = $matches[2];
-
-        $timestamp = strtotime($timestampStr);
-        if ($timestamp === false) {
-            return null;
-        }
-
-        try {
-            /** @var array<string, mixed> $context */
-            $context = json_decode($jsonStr, true, 32, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
-            return null;
-        }
-
-        $context['timestamp'] = $timestamp;
-
-        return $context;
-    }
-
-    /**
-     * @param list<array<string, mixed>> $entries
-     * @return array{agents: array<string, array<string, mixed>>, total: array<string, int|float>}
-     */
-    private function aggregate(array $entries): array
+    private function aggregate(array $rows): array
     {
         /** @var array<string, array<string, array<string, int|float>>> $byAgentModel */
         $byAgentModel = [];
         $grandTotal = $this->zeroBucket();
 
-        foreach ($entries as $entry) {
-            $agentId = (string) ($entry['agent_id'] ?? 'unknown');
-            $model = (string) ($entry['model'] ?? 'unknown');
+        foreach ($rows as $row) {
+            $agentId = $row->getAgentName();
+            $model = $row->getModel() ?? 'unknown';
 
             $byAgentModel[$agentId][$model] ??= $this->zeroBucket();
             $bucket = &$byAgentModel[$agentId][$model];
             $bucket['calls']++;
-            $bucket['input_tokens'] += (int) ($entry['input_tokens'] ?? 0);
-            $bucket['output_tokens'] += (int) ($entry['output_tokens'] ?? 0);
-            $bucket['cache_read_tokens'] += (int) ($entry['cache_read_tokens'] ?? 0);
-            $bucket['cache_creation_tokens'] += (int) ($entry['cache_creation_tokens'] ?? 0);
-            $bucket['cost_usd'] += (float) ($entry['cost_usd'] ?? 0.0);
-            $bucket['duration_ms'] += (int) ($entry['duration_ms'] ?? 0);
+            $bucket['input_tokens'] += $row->getInputTokenCount();
+            $bucket['output_tokens'] += $row->getOutputTokenCount();
+            $bucket['cache_read_tokens'] += $row->getCacheReadTokenCount();
+            $bucket['cache_creation_tokens'] += $row->getCacheCreationTokenCount();
+            $bucket['cost_usd'] += $row->getCostUsd();
+            $bucket['duration_ms'] += $row->getDurationMs();
             unset($bucket);
 
             $grandTotal['calls']++;
-            $grandTotal['input_tokens'] += (int) ($entry['input_tokens'] ?? 0);
-            $grandTotal['output_tokens'] += (int) ($entry['output_tokens'] ?? 0);
-            $grandTotal['cache_read_tokens'] += (int) ($entry['cache_read_tokens'] ?? 0);
-            $grandTotal['cache_creation_tokens'] += (int) ($entry['cache_creation_tokens'] ?? 0);
-            $grandTotal['cost_usd'] += (float) ($entry['cost_usd'] ?? 0.0);
-            $grandTotal['duration_ms'] += (int) ($entry['duration_ms'] ?? 0);
+            $grandTotal['input_tokens'] += $row->getInputTokenCount();
+            $grandTotal['output_tokens'] += $row->getOutputTokenCount();
+            $grandTotal['cache_read_tokens'] += $row->getCacheReadTokenCount();
+            $grandTotal['cache_creation_tokens'] += $row->getCacheCreationTokenCount();
+            $grandTotal['cost_usd'] += $row->getCostUsd();
+            $grandTotal['duration_ms'] += $row->getDurationMs();
         }
 
         $agentsOut = [];
@@ -313,7 +218,10 @@ class LlmCostSummaryCommand extends Command
         }
 
         // Sort agents by total cost descending so the most expensive surface first.
-        uasort($agentsOut, static fn (array $a, array $b): int => ($b['total']['cost_usd'] ?? 0) <=> ($a['total']['cost_usd'] ?? 0));
+        uasort(
+            $agentsOut,
+            static fn (array $a, array $b): int => ($b['total']['cost_usd'] ?? 0) <=> ($a['total']['cost_usd'] ?? 0),
+        );
 
         return [
             'agents' => $agentsOut,
@@ -361,7 +269,7 @@ class LlmCostSummaryCommand extends Command
         ));
 
         if ($rollup['agents'] === []) {
-            $io->warning('No llm_agent_call entries matched the filters.');
+            $io->warning('No llm_agent_call_log rows matched the filters.');
 
             return;
         }
@@ -389,7 +297,7 @@ class LlmCostSummaryCommand extends Command
         }
 
         $total = $rollup['total'];
-        $table->addRow(new \Symfony\Component\Console\Helper\TableSeparator());
+        $table->addRow(new TableSeparator());
         $table->addRow([
             '<info>TOTAL</info>',
             '',

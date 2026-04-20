@@ -16,6 +16,7 @@ use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
+use App\Service\Editorial\Llm\LlmPromptAssembler;
 use App\Service\Editorial\Writer\DevelopingStoryWriter;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -47,6 +48,7 @@ class DevelopingStoryWriterTest extends TestCase
             $this->llmRetryExecutor,
             $this->geminiCliService,
             $this->em,
+            new LlmPromptAssembler(),
             $this->logger,
         );
     }
@@ -294,6 +296,7 @@ class DevelopingStoryWriterTest extends TestCase
             $this->llmRetryExecutor,
             $this->geminiCliService,
             $this->em,
+            new LlmPromptAssembler(),
             $this->logger,
         );
 

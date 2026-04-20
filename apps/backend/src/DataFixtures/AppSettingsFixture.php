@@ -66,6 +66,16 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         // activates it after the L2 verification services land.
         'editorial.pipeline.enabled' => 'false',
 
+        // Emergency circuit breaker (Sprint 56 T56.02, ADR-022 D5). Distinct
+        // from `pipeline.enabled`: flipping `pipeline.enabled=false` does NOT
+        // drain messages already dispatched to the queue — they would still
+        // consume LLM quota and produce output. `emergency_halt=true` causes
+        // the 4 editorial writer/verifier handlers to silent-ACK at __invoke
+        // entry, BEFORE any LLM call or guard invocation, so mid-run halts
+        // work even with in-flight messages. See docs/Deploy_Runbook.md
+        // "Emergency halt procedure" for the operational flow.
+        'editorial.emergency_halt' => 'false',
+
         // WireSourceMonitor (T53.6) — covers wire_neutral, ukrainian_state,
         // independent_ru, kremlin_aligned alignments.
         'editorial.monitor.wire.enabled' => 'true',

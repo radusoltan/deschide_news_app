@@ -461,6 +461,12 @@ class AdminEscalationController extends AbstractController
             supportingSignalIds: $supporting,
             verdictType: $verdictType,
             topicId: isset($snapshot['topic_id']) && \is_int($snapshot['topic_id']) ? $snapshot['topic_id'] : null,
+            // T56.05 — carry the escalation log id so the handler knows this
+            // dispatch is an editor override and must skip GuardPipeline. The
+            // guard failures that produced this escalation have already been
+            // adjudicated by a human; re-running the chain would silently
+            // re-escalate (B-H4).
+            approvedEscalationLogId: $log->getId(),
         ));
 
         return ['status' => 'dispatched'];
@@ -468,30 +474,39 @@ class AdminEscalationController extends AbstractController
 
     private function publishMercureDecided(EditorialEscalationLog $log, string $decision, ?string $comment): void
     {
-        $payload = [
+        // T56.07 / ADR-022 D3 — PII strip at emit.
+        //
+        // The `deschide_news/admin_escalations` Mercure topic has no subscriber
+        // auth (mercure.yaml publish: '*' / subscribe: '*' — unauthenticated
+        // EventSource). Any party with the Mercure URL could listen. Therefore
+        // the payload on this topic MUST NOT carry:
+        //   - `decided_by`         (editor user id → identifies the human operator)
+        //   - `comment`             (editorial reasoning, up to 256 chars excerpt
+        //                            of the internal notes field)
+        //   - `comment_truncated`   (meta-flag that indirectly signals longer
+        //                            internal context exists)
+        //
+        // Frontend consumers use this event solely as a refetch trigger
+        // (see EscalationQueue.tsx: `onEvent: () => refreshAll()`). Full
+        // context — including decided_by, editorial notes, and all snapshot
+        // fields — is fetched via the authenticated REST GET
+        // /admin/escalations/{id} endpoint (ROLE_EDITOR).
+        //
+        // The $comment parameter is retained for signature stability with the
+        // two call sites (approve / reject) even though it is no longer
+        // emitted — keeping it allows future re-enabling (e.g. on a
+        // subscriber-authenticated variant of the topic) without touching
+        // callers.
+        unset($comment); // phpstan: intentional no-op — parameter preserved for signature.
+
+        $this->publishMercureEvent([
             'event' => 'decided',
             'decision' => $decision,
             'id' => $log->getId(),
             'category' => $log->getCategory()->value,
             'category_name' => $log->getCategory()->name,
             'decided_at' => $log->getDecidedAt()?->format(\DateTimeInterface::ATOM),
-            'decided_by' => $log->getDecidedBy()?->getId(),
-        ];
-
-        if ($comment !== null && $comment !== '') {
-            // Cap the excerpt tight on the wire so subscribers never receive a
-            // Mercure event larger than a handful of KB — the full note stays
-            // available via the REST endpoint for clients that need it.
-            $truncated = mb_strlen($comment) > self::MERCURE_EXCERPT_MAX_LENGTH;
-            $payload['comment'] = $truncated
-                ? mb_substr($comment, 0, self::MERCURE_EXCERPT_MAX_LENGTH)
-                : $comment;
-            $payload['comment_truncated'] = $truncated;
-        } else {
-            $payload['comment'] = null;
-        }
-
-        $this->publishMercureEvent($payload);
+        ]);
     }
 
     private function publishMercureExtended(EditorialEscalationLog $log, int $addedSeconds): void

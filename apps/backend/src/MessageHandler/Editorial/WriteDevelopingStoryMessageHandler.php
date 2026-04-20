@@ -10,16 +10,20 @@ use App\Entity\Editorial\SourceSignal;
 use App\Enum\ArticleStatus;
 use App\Enum\Editorial\VerdictType;
 use App\Message\Editorial\WriteDevelopingStoryMessage;
+use App\Repository\AppSettingRepository;
 use App\Repository\ArticleRepository;
 use App\Repository\Editorial\SourceSignalRepository;
 use App\Service\Editorial\Escalation\EscalationLogWriter;
 use App\Service\Editorial\Guard\GuardEscalationCategoryMapper;
 use App\Service\Editorial\Guard\GuardPipelineInterface;
 use App\Service\Editorial\Writer\DevelopingStoryWriter;
+use App\Service\Editorial\WriterThrottle;
 use App\Service\TranslationPriorityDispatcher;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
 
 /**
  * Async handler for {@see WriteDevelopingStoryMessage} (Sprint 55 T55.4,
@@ -49,11 +53,48 @@ class WriteDevelopingStoryMessageHandler
         private readonly ArticleRepository $articleRepository,
         private readonly SourceSignalRepository $signalRepository,
         private readonly EntityManagerInterface $em,
+        private readonly AppSettingRepository $appSettings,
+        private readonly WriterThrottle $writerThrottle,
+        private readonly MessageBusInterface $messageBus,
         private readonly LoggerInterface $logger,
     ) {}
 
     public function __invoke(WriteDevelopingStoryMessage $message): ?Article
     {
+        // Emergency circuit breaker (T56.02, ADR-022 D5). Short-circuits
+        // BEFORE any LLM call or guard invocation so mid-run halts work
+        // even with in-flight messages already dispatched to the queue.
+        if ($this->appSettings->getBool('editorial.emergency_halt', false)) {
+            $this->logger->info('emergency_halt.triggered', [
+                'handler' => self::class,
+                'message_class' => $message::class,
+                'message_id_hint' => $message->articleId,
+            ]);
+
+            return null;
+        }
+
+        // Writer throttle (T56.06, ADR-022 D2). Symmetric with
+        // WriteFlashMessageHandler — editor-approved escalations skip the
+        // gate; everything else gets re-enqueued on reject.
+        if ($message->approvedEscalationLogId === null) {
+            $rateLimit = $this->writerThrottle->consume();
+            if (!$rateLimit->isAccepted()) {
+                $retryAfterMs = $this->computeRetryAfterMs($rateLimit->getRetryAfter());
+                $this->logger->info('throttle.blocked', [
+                    'handler' => self::class,
+                    'message_class' => $message::class,
+                    'message_id_hint' => $message->articleId,
+                    'retry_after_ms' => $retryAfterMs,
+                    'limit' => $rateLimit->getLimit(),
+                ]);
+
+                $this->messageBus->dispatch($message, [new DelayStamp($retryAfterMs)]);
+
+                return null;
+            }
+        }
+
         try {
             $article = $this->articleRepository->find($message->articleId);
             if ($article === null) {
@@ -62,6 +103,36 @@ class WriteDevelopingStoryMessageHandler
                 ]);
 
                 return null;
+            }
+
+            // T56.10 — Idempotency guard (ADR-022 P1). Scan revision_history
+            // for an entry carrying the same primary signal id and silent-ACK
+            // if found. Prevents duplicate revision_count increments and
+            // duplicate revision entries on Messenger redelivery / scheduler
+            // tick overlap / aggregator double-dispatch.
+            //
+            // Bypass intentionally skips this check — an editor approving the
+            // same escalation twice is an explicit decision (UI-level debounce
+            // is the caller's responsibility). Throttle redeliveries interact
+            // correctly: the first delivery writes; the second delivery sees
+            // the signal already in history and skips here.
+            //
+            // Scan is O(n) on revision_history capped at 100 entries by
+            // Article::appendRevision — negligible vs. the downstream LLM call.
+            if ($message->approvedEscalationLogId === null) {
+                $revisionHistory = $article->getRevisionHistory() ?? [];
+                $existingSignalIds = array_column($revisionHistory, 'source_signal_id');
+                if (\in_array($message->primarySignalId, $existingSignalIds, true)) {
+                    $this->logger->info('idempotency.skip', [
+                        'handler' => self::class,
+                        'article_id' => $article->getId(),
+                        'primary_signal_id' => $message->primarySignalId,
+                        'existing_revision_count' => $article->getRevisionCount(),
+                        'message_id_hint' => $message->articleId,
+                    ]);
+
+                    return null;
+                }
             }
 
             $primary = $this->signalRepository->find($message->primarySignalId);
@@ -104,6 +175,15 @@ class WriteDevelopingStoryMessageHandler
                 return null;
             }
 
+            // T56.05 — editor approve-from-escalation bypass (symmetric with
+            // WriteFlashMessageHandler). Skip the Guard chain when the
+            // controller has marked this dispatch as editor-approved, else
+            // the same failures that triggered the original escalation would
+            // bounce us back into guard_flag / guard_escalated paths.
+            if ($message->approvedEscalationLogId !== null) {
+                return $this->retranslateWithEscalationBypass($updated, $message->approvedEscalationLogId);
+            }
+
             return $this->applyGuardAndRetranslate($updated, $primary, $supporting, $verdict);
         } catch (\Throwable $e) {
             // Contract: log + no-op, never rethrow. Matches VerifyClaimMessageHandler
@@ -119,6 +199,44 @@ class WriteDevelopingStoryMessageHandler
 
             return null;
         }
+    }
+
+    /**
+     * T56.06 — turn the RateLimiter's {@see \DateTimeImmutable} retry-after
+     * into a Messenger {@see DelayStamp} delay expressed in milliseconds.
+     * Mirrors {@see WriteFlashMessageHandler::computeRetryAfterMs()}.
+     */
+    private function computeRetryAfterMs(\DateTimeImmutable $retryAfter): int
+    {
+        $deltaSeconds = max(1, $retryAfter->getTimestamp() - time());
+
+        return min(3_600_000, $deltaSeconds * 1000);
+    }
+
+    /**
+     * T56.05 — re-translate the revised Article without running the Guard
+     * chain. Symmetric with {@see WriteFlashMessageHandler::publishWithEscalationBypass()}.
+     *
+     * Mirrors the guard-pass branch of {@see applyGuardAndRetranslate()}:
+     * dispatch a forced re-translation for EN+RU. No publishedLocales flip
+     * here — a developing-story Article is already public; only its body
+     * has been revised by the writer.
+     */
+    private function retranslateWithEscalationBypass(Article $article, int $approvedEscalationLogId): Article
+    {
+        $this->translationDispatcher->dispatch(
+            article: $article,
+            locales: ['ru', 'en'],
+            forceRetranslate: true,
+        );
+
+        $this->logger->info('write_developing_published.bypass', [
+            'article_id' => $article->getId(),
+            'revision' => $article->getRevisionCount(),
+            'escalation_log_id' => $approvedEscalationLogId,
+        ]);
+
+        return $article;
     }
 
     /**
