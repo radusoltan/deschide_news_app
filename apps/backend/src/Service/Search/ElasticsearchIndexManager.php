@@ -10,10 +10,9 @@ use Psr\Log\LoggerInterface;
 
 class ElasticsearchIndexManager
 {
-    private const INDEX_NAME = 'deschide_articles_trilingual';
-
     private ?Client $client;
     private readonly bool $enabled;
+    private readonly string $indexName;
 
     public function __construct(
         string $elasticsearchHost,
@@ -21,7 +20,9 @@ class ElasticsearchIndexManager
         string $elasticsearchPassword = '',
         bool $elasticsearchVerifySsl = true,
         private readonly LoggerInterface $logger = new \Psr\Log\NullLogger(),
+        string $elasticsearchIndexPrefix = 'deschide',
     ) {
+        $this->indexName = $elasticsearchIndexPrefix . '_articles_trilingual';
         $this->enabled = $elasticsearchHost !== '' && $elasticsearchHost !== '0';
 
         if ($this->enabled) {
@@ -51,7 +52,7 @@ class ElasticsearchIndexManager
 
     public function getIndexName(): string
     {
-        return self::INDEX_NAME;
+        return $this->indexName;
     }
 
     /**
@@ -63,7 +64,7 @@ class ElasticsearchIndexManager
             return;
         }
 
-        $indexName = self::INDEX_NAME;
+        $indexName = $this->indexName;
 
         try {
             $exists = $this->client->indices()->exists(['index' => $indexName])->asBool();

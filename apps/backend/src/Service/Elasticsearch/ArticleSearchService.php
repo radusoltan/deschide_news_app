@@ -19,7 +19,7 @@ class ArticleSearchService
 {
     private ?Client $client;
 
-    private string $indexPrefix = 'deschide_articles';
+    private readonly string $indexPrefix;
 
     private readonly bool $enabled;
 
@@ -27,8 +27,10 @@ class ArticleSearchService
         string $elasticsearchHost,
         string $elasticsearchUser = '',
         string $elasticsearchPassword = '',
-        bool $elasticsearchVerifySsl = true
+        bool $elasticsearchVerifySsl = true,
+        string $elasticsearchIndexPrefix = 'deschide',
     ) {
+        $this->indexPrefix = $elasticsearchIndexPrefix . '_articles';
         $this->enabled = '' !== $elasticsearchHost && '0' !== $elasticsearchHost;
 
         if ($this->enabled) {

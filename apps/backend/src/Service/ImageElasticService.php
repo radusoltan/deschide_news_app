@@ -12,7 +12,7 @@ class ImageElasticService
 {
     private ?Client $client;
 
-    private string $indexName = 'deschide_images';
+    private readonly string $indexName;
 
     private readonly bool $enabled;
 
@@ -20,8 +20,10 @@ class ImageElasticService
         string $elasticsearchHost,
         string $elasticsearchUser = '',
         string $elasticsearchPassword = '',
-        bool $elasticsearchVerifySsl = true
+        bool $elasticsearchVerifySsl = true,
+        string $elasticsearchIndexPrefix = 'deschide',
     ) {
+        $this->indexName = $elasticsearchIndexPrefix . '_images';
         $this->enabled = '' !== $elasticsearchHost && '0' !== $elasticsearchHost;
 
         if ($this->enabled) {
@@ -238,7 +240,7 @@ class ImageElasticService
         try {
             $this->client->delete([
                 'index' => $this->indexName,
-                'id' => $id,
+                'id' => (string) $id,
             ]);
         } catch (Exception $e) {
             // Document might not exist, ignore
