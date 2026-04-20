@@ -15,6 +15,7 @@ use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
+use App\Service\Editorial\Llm\LlmInvocationLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -72,6 +73,7 @@ PROMPT;
         private readonly SignalCategoryResolver $categoryResolver,
         private readonly AiAuthorProvider $aiAuthorProvider,
         private readonly EntityManagerInterface $em,
+        private readonly LlmInvocationLogger $llmInvocationLogger,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -148,18 +150,45 @@ PROMPT;
 
     /**
      * Invokes Haiku first, falls back to Gemini Flash on LlmUnavailableException.
-     * Both paths parse a JSON object response.
+     * Both paths parse a JSON object response and record one row per call
+     * into `llm_agent_call_log` via {@see LlmInvocationLogger} (T56.09).
      *
      * @return array<string, mixed>
      */
     private function invokeLlm(string $userPrompt): array
     {
+        // T56.09 — full prompt hash (system + user) for dedup / retry-detection
+        // analytics. Recorded against every invocation, Haiku or Gemini.
+        $fullPrompt = self::SYSTEM_PROMPT . "\n\n" . $userPrompt;
+        $promptHash = hash('sha256', $fullPrompt);
+
         try {
+            $haikuStart = (int) (microtime(true) * 1000);
             $result = $this->llmRetryExecutor->executeWithRetry(
                 agentId: self::AGENT_ID,
                 messages: [['role' => 'user', 'content' => $userPrompt]],
                 tier: self::PRIMARY_TIER,
                 systemPrompt: self::SYSTEM_PROMPT,
+            );
+            $haikuWallMs = (int) (microtime(true) * 1000) - $haikuStart;
+
+            /** @var array<string, mixed>|null $metrics */
+            $metrics = $result['metrics'] ?? null;
+            $this->llmInvocationLogger->logInvocation(
+                agentName: self::AGENT_ID,
+                promptHash: $promptHash,
+                // Prefer wrapper-reported duration; fall back to wall time
+                // when the wrapper did not surface it (Gemini fallback path).
+                durationMs: (int) ($metrics['duration_ms'] ?? $haikuWallMs),
+                inputTokens: (int) ($metrics['input_tokens'] ?? 0),
+                outputTokens: (int) ($metrics['output_tokens'] ?? 0),
+                cacheReadTokens: (int) ($metrics['cache_read_tokens'] ?? 0),
+                cacheCreationTokens: (int) ($metrics['cache_creation_tokens'] ?? 0),
+                costUsd: (float) ($metrics['cost_usd'] ?? 0.0),
+                model: $result['model'],
+                // FlashWriter produces content rather than a classification
+                // verdict — leave null so dashboards can filter writers out.
+                verdict: null,
             );
 
             return $this->decodeJson($result['content'], 'haiku');
@@ -170,11 +199,25 @@ PROMPT;
         }
 
         // Direct Gemini fallback (bypasses LlmRetryExecutor per audit hard rule 6).
-        $geminiPrompt = self::SYSTEM_PROMPT . "\n\n" . $userPrompt;
-        $raw = $this->geminiCliService->execute($geminiPrompt, [
+        $geminiStart = (int) (microtime(true) * 1000);
+        $raw = $this->geminiCliService->execute($fullPrompt, [
             'model' => self::FALLBACK_MODEL,
             'timeout' => 120,
         ]);
+        $geminiWallMs = (int) (microtime(true) * 1000) - $geminiStart;
+
+        // Gemini CLI wrapper does not expose token/cost metrics — record the
+        // call with wall-time duration and zero-sentinels. Analytics treat
+        // input+output both = 0 as "metrics missing" rather than "free call".
+        $this->llmInvocationLogger->logInvocation(
+            agentName: self::AGENT_ID,
+            promptHash: $promptHash,
+            durationMs: $geminiWallMs,
+            inputTokens: 0,
+            outputTokens: 0,
+            model: self::FALLBACK_MODEL,
+            verdict: null,
+        );
 
         return $this->decodeJson($raw, 'gemini_fallback');
     }

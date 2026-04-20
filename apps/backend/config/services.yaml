@@ -408,11 +408,11 @@ services:
     App\Service\Editorial\Guard\GuardPipelineInterface:
         alias: App\Service\Editorial\Guard\GuardPipeline
 
-    # Sprint 55 T55.16 — LLM cost summary CLI. Pin logDir to kernel param so
-    # the command reads the actual Monolog output directory (var/log by default).
-    App\Command\Editorial\LlmCostSummaryCommand:
-        arguments:
-            $logDir: '%kernel.logs_dir%'
+    # Sprint 55 T55.16 LLM cost summary CLI was pinned to %kernel.logs_dir%
+    # for its grep-based MVP. T56.09 switched the command to DB-backed
+    # aggregation against LlmAgentCallLogRepository, so the explicit
+    # $logDir arg is no longer required — autowiring handles the repository
+    # injection directly.
 
 # Test environment specific configuration
 when@test:
