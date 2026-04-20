@@ -20,6 +20,7 @@ use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
+use App\Service\Editorial\Llm\LlmPromptAssembler;
 use App\Service\Editorial\Writer\AiAuthorProvider;
 use App\Service\Editorial\Writer\FlashWriter;
 use App\Service\Editorial\Writer\SignalCategoryResolver;
@@ -63,6 +64,7 @@ class FlashWriterTest extends TestCase
             $this->aiAuthorProvider,
             $this->em,
             $this->llmInvocationLogger,
+            new LlmPromptAssembler(),
             $this->logger,
         );
     }

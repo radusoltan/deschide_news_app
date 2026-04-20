@@ -12,6 +12,7 @@ use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Escalation\EscalationClassifier;
+use App\Service\Editorial\Llm\LlmPromptAssembler;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -47,6 +48,7 @@ class EscalationClassifierTest extends TestCase
             $this->llmRetryExecutor,
             $this->geminiCliService,
             $this->appSettingRepository,
+            new LlmPromptAssembler(),
             $this->logger,
         );
     }
@@ -160,6 +162,7 @@ class EscalationClassifierTest extends TestCase
             $llm,
             $this->geminiCliService,
             $appSettings,
+            new LlmPromptAssembler(),
             $this->logger,
         );
 
