@@ -73,6 +73,17 @@
 #   - Never runs `supervisorctl restart` without explicit operator request;
 #     `reread + update` lets supervisord decide what to start/stop per autostart.
 #
+# .bak strategy asymmetry (design choice)
+# ---------------------------------------
+#
+# `.pre-sync-TS.bak` snapshots are created ONLY for system-side writes
+# (REPO-ONLY install, OVERLAP-DIFF-FULL with winner=repo, OVERLAP-DIFF-HYBRID).
+# Repo-side writes (SYSTEM-ONLY promote, OVERLAP-DIFF-FULL with winner=system)
+# rely on Git for rollback — `git checkout HEAD -- <path>` or `git reflog`
+# provide structured versioning superior to flat .bak snapshots for repo
+# content. This keeps /etc/supervisor/conf.d/ clean of asymmetric backups
+# that would never be exercised.
+#
 # Exit codes
 # ----------
 #   0  success (dry-run or apply)
