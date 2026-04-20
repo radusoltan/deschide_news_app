@@ -16,9 +16,17 @@ use Doctrine\ORM\Mapping as ORM;
  * cost — so the extended smoke (T56.12) can query aggregates via SQL instead
  * of parsing rotated log files.
  *
- * Immutable: no setters. Rows are created once by {@see \App\Service\Editorial\Llm\LlmInvocationLogger}
- * and are never updated thereafter. Retention policy is an operational decision
- * tracked as ADR-022 Open Question #2 (deferred to S57 post-first-week data).
+ * Near-immutable: only `verdict` can be set post-construction via
+ * {@see self::setVerdict()} (T57.03 `attachVerdict` flow, ADR-023 D2).
+ * All other properties remain readonly after the initial insert.
+ *
+ * Rationale for relaxing the invariant on one field: a gate's verdict is
+ * knowable only after the LLM response has been parsed — downstream of the
+ * executor-owned baseline write. Rather than defer the entire row until the
+ * agent completes parsing (which would lose observability on LLM calls whose
+ * parsing crashes), we persist the row at the end of the wire call and
+ * UPDATE the verdict column once the agent decides. Retention policy is an
+ * operational decision tracked as ADR-022 Open Question #2.
  *
  * Storage discipline:
  *   - `prompt_hash` is a SHA-256 hex digest of the full prompt, NOT the
@@ -48,6 +56,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'llm_agent_call_log')]
 #[ORM\Index(name: 'idx_llm_call_agent_created', columns: ['agent_name', 'created_at'])]
 #[ORM\Index(name: 'idx_llm_call_verdict', columns: ['verdict'])]
+#[ORM\UniqueConstraint(name: 'uniq_llm_call_invocation_id', columns: ['invocation_id'])]
 class LlmAgentCallLog
 {
     #[ORM\Id]
@@ -183,5 +192,15 @@ class LlmAgentCallLog
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    /**
+     * T57.03 (ADR-023 D2) — sole setter on this entity. Called by
+     * {@see \App\Service\Editorial\Llm\LlmInvocationLogger::attachVerdict()}
+     * once a gate finishes parsing the LLM response.
+     */
+    public function setVerdict(string $verdict): void
+    {
+        $this->verdict = $verdict;
     }
 }
