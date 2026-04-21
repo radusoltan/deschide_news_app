@@ -21,7 +21,6 @@ interface Article {
   aiGenerated?: boolean;
   aiConfidenceScore?: number | null;
   aiSourceCount?: number | null;
-  sourceClusterId?: number | null;
   topics?: Array<string | { id?: number; title?: string; slug?: string }>;
 }
 
