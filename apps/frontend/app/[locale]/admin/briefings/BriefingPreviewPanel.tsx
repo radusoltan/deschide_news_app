@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useCallback, useEffect, useState, useTransition } from 'react';
 import {
   fetchBriefings,
   type TopicBriefingItem,
@@ -47,9 +47,8 @@ export function BriefingPreviewPanel() {
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [topicFilter, setTopicFilter] = useState('');
-  const [initialized, setInitialized] = useState(false);
 
-  const loadBriefings = (selectedCadence: Cadence) => {
+  const loadBriefings = useCallback((selectedCadence: Cadence) => {
     startTransition(async () => {
       setError(null);
       const result = await fetchBriefings(
@@ -63,13 +62,12 @@ export function BriefingPreviewPanel() {
         setTotalItems(result.totalItems);
       }
     });
-  };
+  }, []);
 
-  // Load on first render
-  if (!initialized) {
-    setInitialized(true);
+  useEffect(() => {
     loadBriefings(cadence);
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCadenceChange = (newCadence: Cadence) => {
     setCadence(newCadence);

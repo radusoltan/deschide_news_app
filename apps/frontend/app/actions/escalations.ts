@@ -2,7 +2,6 @@
 
 import { getAccessToken } from '@/lib/dal';
 import type {
-  Escalation,
   EscalationApprovePayload,
   EscalationCategoryValue,
   EscalationEnvelope,
@@ -142,6 +141,3 @@ export async function extendSla(
     },
   );
 }
-
-// Re-export canonical types so callers can import from the action module.
-export type { Escalation };

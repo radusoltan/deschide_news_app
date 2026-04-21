@@ -87,7 +87,7 @@ class BriefingEligibilityGateServiceTest extends TestCase
     public function testEligibleDailyBriefing(): void
     {
         $this->configureAllEnabled();
-        $this->mockPrMetrics(8, 3.5);
+        $this->mockPrMetrics(8, 0.9);
 
         $topic = $this->createActiveTopic();
         $range = DateRange::lastDay();
@@ -97,14 +97,14 @@ class BriefingEligibilityGateServiceTest extends TestCase
         $this->assertTrue($decision->eligible);
         $this->assertSame(BriefingCadence::DAILY, $decision->cadence);
         $this->assertSame(8, $decision->prCount);
-        $this->assertSame(3.5, $decision->avgRelevance);
+        $this->assertSame(0.9, $decision->avgRelevance);
         $this->assertSame([], $decision->reasons);
     }
 
     public function testLowPrCountBlocks(): void
     {
         $this->configureAllEnabled();
-        $this->mockPrMetrics(2, 4.0);
+        $this->mockPrMetrics(2, 0.95);
 
         $topic = $this->createActiveTopic();
         $range = DateRange::lastDay();
@@ -118,7 +118,7 @@ class BriefingEligibilityGateServiceTest extends TestCase
     public function testLowRelevanceBlocks(): void
     {
         $this->configureAllEnabled();
-        $this->mockPrMetrics(10, 1.5);
+        $this->mockPrMetrics(10, 0.4);
 
         $topic = $this->createActiveTopic();
         $range = DateRange::lastDay();
@@ -132,8 +132,8 @@ class BriefingEligibilityGateServiceTest extends TestCase
     public function testHourlyCadenceRequiresHigherThresholds(): void
     {
         $this->configureAllEnabled();
-        // 3 PRs with 3.0 avg relevance = exactly at hourly threshold
-        $this->mockPrMetrics(3, 3.0);
+        // 3 PRs with 0.85 avg confidence = exactly at hourly threshold
+        $this->mockPrMetrics(3, 0.85);
 
         $topic = $this->createActiveTopic();
         $range = DateRange::lastHour();
@@ -146,7 +146,7 @@ class BriefingEligibilityGateServiceTest extends TestCase
     public function testWeeklyCadencePermissiveThresholds(): void
     {
         $this->configureAllEnabled();
-        $this->mockPrMetrics(10, 2.0);
+        $this->mockPrMetrics(10, 0.55);
 
         $topic = $this->createActiveTopic();
         $range = DateRange::lastWeek();
@@ -159,8 +159,8 @@ class BriefingEligibilityGateServiceTest extends TestCase
     public function testMultipleReasonsAccumulate(): void
     {
         $this->configureAllEnabled();
-        // Below both daily thresholds: count < 5, relevance < 2.5
-        $this->mockPrMetrics(2, 1.0);
+        // Below both daily thresholds: count < 5, confidence < 0.70
+        $this->mockPrMetrics(2, 0.4);
 
         $topic = $this->createActiveTopic();
         $range = DateRange::lastDay();
@@ -174,7 +174,7 @@ class BriefingEligibilityGateServiceTest extends TestCase
     public function testDecisionContainsCadence(): void
     {
         $this->configureAllEnabled();
-        $this->mockPrMetrics(15, 4.0);
+        $this->mockPrMetrics(15, 0.9);
 
         $topic = $this->createActiveTopic();
         $range = DateRange::lastWeek();
@@ -215,6 +215,7 @@ class BriefingEligibilityGateServiceTest extends TestCase
         $qb = $this->createMock(QueryBuilder::class);
         $qb->method('select')->willReturnSelf();
         $qb->method('from')->willReturnSelf();
+        $qb->method('join')->willReturnSelf();
         $qb->method('where')->willReturnSelf();
         $qb->method('andWhere')->willReturnSelf();
         $qb->method('setParameter')->willReturnSelf();

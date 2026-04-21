@@ -15,10 +15,20 @@ use Psr\Log\LoggerInterface;
 /**
  * Evaluates whether a topic is eligible for briefing generation at a given cadence.
  *
- * Per-cadence thresholds (ADR-016 D6):
- * - Hourly: min 3 PRs, avg relevance >= 3.0 (breaking news only, ~90% filter)
- * - Daily:  min 5 PRs, avg relevance >= 2.5 (~60% filter)
- * - Weekly: min 10 PRs, avg relevance >= 2.0 (~30% filter)
+ * Per-cadence thresholds (ADR-016 D6, amended 2026-04-21):
+ * - Hourly: min 3 PRs, avg confidence >= 0.85 (breaking news only, ~90% filter)
+ * - Daily:  min 5 PRs, avg confidence >= 0.70 (~60% filter)
+ * - Weekly: min 10 PRs, avg confidence >= 0.55 (~30% filter)
+ *
+ * "avgRelevance" in the public decision DTO corresponds to
+ * AVG(PressReleaseTopic.confidence) — a probability in [0.0, 1.0] emitted by
+ * the LLM classifier. The original ADR thresholds (3.0/2.5/2.0) were on an
+ * unimplemented 0-5 scale; the 2026-04-21 amendment rescaled them to the
+ * probability scale actually stored in `press_release_topics.confidence`.
+ *
+ * Window filter uses `pr.receivedAt` (ingestion time) to match
+ * TopicBriefingWriterService::findPressReleases and newsroom semantics
+ * ("briefing of last hour" = news ingested in last hour).
  */
 class BriefingEligibilityGateService
 {
@@ -91,9 +101,10 @@ class BriefingEligibilityGateService
         $qb = $this->em->createQueryBuilder()
             ->select('COUNT(prt.id) AS cnt, AVG(prt.confidence) AS avgConf')
             ->from(\App\Entity\PressReleaseTopic::class, 'prt')
+            ->join('prt.pressRelease', 'pr')
             ->where('prt.topic = :topic')
-            ->andWhere('prt.detectedAt >= :from')
-            ->andWhere('prt.detectedAt <= :to')
+            ->andWhere('pr.receivedAt >= :from')
+            ->andWhere('pr.receivedAt <= :to')
             ->setParameter('topic', $topic)
             ->setParameter('from', $range->from)
             ->setParameter('to', $range->to);
@@ -118,9 +129,9 @@ class BriefingEligibilityGateService
     private function defaultMinAvgRelevance(BriefingCadence $cadence): float
     {
         return match ($cadence) {
-            BriefingCadence::HOURLY => 3.0,
-            BriefingCadence::DAILY => 2.5,
-            BriefingCadence::WEEKLY => 2.0,
+            BriefingCadence::HOURLY => 0.85,
+            BriefingCadence::DAILY => 0.70,
+            BriefingCadence::WEEKLY => 0.55,
         };
     }
 }
