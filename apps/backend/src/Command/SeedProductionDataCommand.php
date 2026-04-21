@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -32,9 +33,72 @@ class SeedProductionDataCommand extends Command
         parent::__construct();
     }
 
+    protected function configure(): void
+    {
+        $this
+            ->addOption(
+                'staging',
+                null,
+                InputOption::VALUE_NONE,
+                'Seed editor user only (staging mode, rotated password). Skips categories/menu.'
+            )
+            ->addOption(
+                'initial-password',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Rotated password for staging editor user (required with --staging; >=12 chars, not "password", no whitespace)'
+            )
+            ->addOption(
+                'force',
+                null,
+                InputOption::VALUE_NONE,
+                'Rotate password on existing editor user (idempotent update). Only meaningful with --staging.'
+            );
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+
+        $isStaging = (bool) $input->getOption('staging');
+        $initialPassword = $input->getOption('initial-password');
+        $forceRotation = (bool) $input->getOption('force');
+
+        if ($isStaging) {
+            $io->title('Staging Credentials: Editor User Seed');
+
+            if (!\is_string($initialPassword) || '' === $initialPassword) {
+                $io->error('--staging requires --initial-password=<value>');
+
+                return Command::INVALID;
+            }
+            if ('password' === $initialPassword) {
+                $io->error('Literal "password" rejected. Use a strong password.');
+
+                return Command::INVALID;
+            }
+            if (\strlen($initialPassword) < 12) {
+                $io->error('Password must be >=12 characters.');
+
+                return Command::INVALID;
+            }
+            if (1 === preg_match('/\s/', $initialPassword)) {
+                $io->error('Password must not contain whitespace.');
+
+                return Command::INVALID;
+            }
+
+            $this->conn = $this->em->getConnection();
+
+            try {
+                return $this->seedStagingEditor($io, $initialPassword, $forceRotation);
+            } catch (\Throwable $e) {
+                $io->error($e->getMessage());
+
+                return Command::FAILURE;
+            }
+        }
+
         $io->title('Production Staging: Seed Data');
 
         $this->conn = $this->em->getConnection();
@@ -53,6 +117,54 @@ class SeedProductionDataCommand extends Command
 
             return Command::FAILURE;
         }
+    }
+
+    private function seedStagingEditor(SymfonyStyle $io, string $initialPassword, bool $forceRotation): int
+    {
+        $io->section('Seeding staging editor user');
+
+        $email = 'editor@news-app.local';
+        $existing = $this->conn->fetchOne('SELECT id FROM "user" WHERE email = ?', [$email]);
+
+        if ($existing) {
+            if (!$forceRotation) {
+                $io->error(\sprintf(
+                    'Editor user %s already exists in this DB. Use --force to rotate password.',
+                    $email
+                ));
+
+                return Command::FAILURE;
+            }
+
+            $user = $this->em->getRepository(User::class)->findOneBy(['email' => $email]);
+            if (!$user instanceof User) {
+                $io->error(\sprintf('User %s expected but not hydratable via ORM.', $email));
+
+                return Command::FAILURE;
+            }
+
+            $user->setPassword($this->hasher->hashPassword($user, $initialPassword));
+            $this->em->flush();
+
+            $io->success(\sprintf('Password rotated for %s (staging editor user).', $email));
+
+            return Command::SUCCESS;
+        }
+
+        $user = new User();
+        $user->setUsername('editor');
+        $user->setEmail($email);
+        $user->setFirstName('Editor');
+        $user->setLastName('User');
+        $user->setRoles(['ROLE_EDITOR']);
+        $user->setPassword($this->hasher->hashPassword($user, $initialPassword));
+
+        $this->em->persist($user);
+        $this->em->flush();
+
+        $io->success(\sprintf('Staging editor user %s seeded.', $email));
+
+        return Command::SUCCESS;
     }
 
     private function seedCategories(SymfonyStyle $io): void
