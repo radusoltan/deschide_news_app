@@ -9,12 +9,16 @@ use App\Entity\Topic;
 use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use App\Message\GenerateTopicArticleMessage;
+use App\Repository\AppSettingRepository;
 use App\Repository\PressReleaseRepository;
 use App\Service\Editorial\ArticleWriterService;
+use App\Service\Editorial\WriterThrottle;
 use App\Service\Verification\SemanticVerifierService;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Stamp\DelayStamp;
 
 /**
  * Async wrapper around the synchronous topic-window article generation
@@ -23,6 +27,13 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
  * Mirrors the command's per-topic sync logic exactly (ADR-019 D2):
  * fetch topic, fetch PRs, eligibility check, optional semantic dedup,
  * call writer, persist draft as PressRelease (status=PENDING).
+ *
+ * Handler entry ordering aligns with ADR-022 D5 + D2 (symmetric with
+ * WriteFlashMessageHandler / WriteDevelopingStoryMessageHandler):
+ *   emergency_halt (silent ack) → writer throttle (re-enqueue) → work.
+ * GenerateTopicArticleMessage carries no `approvedEscalationLogId`
+ * field, so the escalation bypass from the sibling L3 handlers does
+ * not apply here — every dispatch is subject to the throttle.
  *
  * Per-topic failures (topic not found / inactive, ineligibility, writer
  * null, dedup skip) are logged and the handler returns gracefully — the
@@ -39,11 +50,44 @@ final readonly class GenerateTopicArticleHandler
         private PressReleaseRepository $pressReleaseRepository,
         private ArticleWriterService $writerService,
         private SemanticVerifierService $semanticVerifier,
+        private AppSettingRepository $appSettings,
+        private WriterThrottle $writerThrottle,
+        private MessageBusInterface $messageBus,
         private LoggerInterface $logger,
     ) {}
 
     public function __invoke(GenerateTopicArticleMessage $message): void
     {
+        // Emergency circuit breaker (ADR-022 D5). Short-circuits before
+        // any LLM work so mid-run halts work even for in-flight messages.
+        if ($this->appSettings->getBool('editorial.emergency_halt', false)) {
+            $this->logger->info('emergency_halt.triggered', [
+                'handler' => self::class,
+                'message_class' => $message::class,
+                'topicId' => $message->topicId,
+            ]);
+
+            return;
+        }
+
+        // Writer throttle (ADR-022 D2). No escalation bypass here —
+        // GenerateTopicArticleMessage is always subject to the limit.
+        $rateLimit = $this->writerThrottle->consume();
+        if (!$rateLimit->isAccepted()) {
+            $retryAfterMs = $this->computeRetryAfterMs($rateLimit->getRetryAfter());
+            $this->logger->info('throttle.blocked', [
+                'handler' => self::class,
+                'message_class' => $message::class,
+                'topicId' => $message->topicId,
+                'retry_after_ms' => $retryAfterMs,
+                'limit' => $rateLimit->getLimit(),
+            ]);
+
+            $this->messageBus->dispatch($message, [new DelayStamp($retryAfterMs)]);
+
+            return;
+        }
+
         $topic = $this->em->find(Topic::class, $message->topicId);
 
         if ($topic === null) {
@@ -183,5 +227,17 @@ final readonly class GenerateTopicArticleHandler
         }
 
         return false;
+    }
+
+    /**
+     * Mirrors WriteDevelopingStoryMessageHandler::computeRetryAfterMs()
+     * — convert the RateLimiter retry-after moment into a bounded
+     * Messenger DelayStamp in milliseconds.
+     */
+    private function computeRetryAfterMs(\DateTimeImmutable $retryAfter): int
+    {
+        $deltaSeconds = max(1, $retryAfter->getTimestamp() - time());
+
+        return min(3_600_000, $deltaSeconds * 1000);
     }
 }

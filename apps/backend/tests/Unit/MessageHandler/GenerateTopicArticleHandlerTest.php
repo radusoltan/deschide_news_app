@@ -9,14 +9,19 @@ use App\Entity\PressRelease;
 use App\Entity\Topic;
 use App\Message\GenerateTopicArticleMessage;
 use App\MessageHandler\GenerateTopicArticleHandler;
+use App\Repository\AppSettingRepository;
 use App\Repository\PressReleaseRepository;
 use App\Service\Editorial\ArticleWriterService;
+use App\Service\Editorial\WriterThrottle;
 use App\Service\Verification\SemanticVerifierService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\RateLimiter\RateLimit;
 
 class GenerateTopicArticleHandlerTest extends TestCase
 {
@@ -24,6 +29,9 @@ class GenerateTopicArticleHandlerTest extends TestCase
     private PressReleaseRepository&MockObject $pressReleaseRepository;
     private ArticleWriterService&MockObject $writerService;
     private SemanticVerifierService&MockObject $semanticVerifier;
+    private AppSettingRepository&MockObject $appSettings;
+    private WriterThrottle&MockObject $writerThrottle;
+    private MessageBusInterface&MockObject $messageBus;
     private GenerateTopicArticleHandler $handler;
 
     protected function setUp(): void
@@ -32,14 +40,82 @@ class GenerateTopicArticleHandlerTest extends TestCase
         $this->pressReleaseRepository = $this->createMock(PressReleaseRepository::class);
         $this->writerService = $this->createMock(ArticleWriterService::class);
         $this->semanticVerifier = $this->createMock(SemanticVerifierService::class);
+        $this->appSettings = $this->createMock(AppSettingRepository::class);
+        $this->writerThrottle = $this->createMock(WriterThrottle::class);
+        $this->messageBus = $this->createMock(MessageBusInterface::class);
+
+        // Defaults: emergency_halt off + throttle accepts; individual tests
+        // that exercise those gates re-configure these mocks.
+        $this->appSettings->method('getBool')->willReturn(false);
+        $this->writerThrottle->method('consume')->willReturn($this->acceptedRateLimit());
 
         $this->handler = new GenerateTopicArticleHandler(
             $this->em,
             $this->pressReleaseRepository,
             $this->writerService,
             $this->semanticVerifier,
+            $this->appSettings,
+            $this->writerThrottle,
+            $this->messageBus,
             new NullLogger(),
         );
+    }
+
+    #[Test]
+    public function silentAckWhenEmergencyHaltSet(): void
+    {
+        // Fresh handler with emergency_halt ON — overrides the accept-by-default
+        // setUp configuration.
+        $appSettings = $this->createMock(AppSettingRepository::class);
+        $appSettings->method('getBool')
+            ->with('editorial.emergency_halt', false)
+            ->willReturn(true);
+
+        $handler = new GenerateTopicArticleHandler(
+            $this->em,
+            $this->pressReleaseRepository,
+            $this->writerService,
+            $this->semanticVerifier,
+            $appSettings,
+            $this->writerThrottle,
+            $this->messageBus,
+            new NullLogger(),
+        );
+
+        $this->em->expects($this->never())->method('find');
+        $this->writerThrottle->expects($this->never())->method('consume');
+        $this->messageBus->expects($this->never())->method('dispatch');
+
+        $handler($this->makeMessage(42));
+    }
+
+    #[Test]
+    public function reEnqueuesWithDelayWhenThrottleRejects(): void
+    {
+        // Throttle says "not accepted" — handler must dispatch the same
+        // message with a DelayStamp and return without calling the writer.
+        $rejected = $this->rejectedRateLimit(retryAfterSeconds: 60);
+        $throttle = $this->createMock(WriterThrottle::class);
+        $throttle->method('consume')->willReturn($rejected);
+
+        $handler = new GenerateTopicArticleHandler(
+            $this->em,
+            $this->pressReleaseRepository,
+            $this->writerService,
+            $this->semanticVerifier,
+            $this->appSettings,
+            $throttle,
+            $this->messageBus,
+            new NullLogger(),
+        );
+
+        $this->em->expects($this->never())->method('find');
+        $this->writerService->expects($this->never())->method('isEligibleForTopicWindow');
+        $this->messageBus->expects($this->once())
+            ->method('dispatch')
+            ->willReturnCallback(fn ($m) => new Envelope($m));
+
+        $handler($this->makeMessage(42));
     }
 
     #[Test]
@@ -264,6 +340,26 @@ class GenerateTopicArticleHandlerTest extends TestCase
             rawPrompt: 'p',
             rawResponse: '{}',
             topicId: 42,
+        );
+    }
+
+    private function acceptedRateLimit(): RateLimit
+    {
+        return new RateLimit(
+            availableTokens: 9,
+            retryAfter: new \DateTimeImmutable('+1 hour'),
+            accepted: true,
+            limit: 10,
+        );
+    }
+
+    private function rejectedRateLimit(int $retryAfterSeconds = 60): RateLimit
+    {
+        return new RateLimit(
+            availableTokens: 0,
+            retryAfter: new \DateTimeImmutable(sprintf('+%d seconds', $retryAfterSeconds)),
+            accepted: false,
+            limit: 10,
         );
     }
 }
