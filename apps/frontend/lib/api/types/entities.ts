@@ -2,7 +2,7 @@
  * Unified entity type barrel for all backend API entities.
  *
  * Re-exports canonical types from lib/types/ and adds missing entity
- * interfaces for StoryCluster, Source, User, and AppSetting.
+ * interfaces for Source, User, and AppSetting.
  */
 
 // Core entities
@@ -37,22 +37,6 @@ export type {
 export type { AuthTokens, LoginCredentials } from '@/lib/api-client';
 
 // --- Additional entities not yet defined elsewhere ---
-
-export interface StoryCluster {
-  '@id': string;
-  '@type': string;
-  id: number;
-  primaryHeadline: string;
-  summaryShort: string | null;
-  summaryMedium: string | null;
-  whyItMatters: string | null;
-  keyFacts: string[] | null;
-  sourceCount: number;
-  articleCount: number;
-  importanceScore: number;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface Source {
   '@id': string;

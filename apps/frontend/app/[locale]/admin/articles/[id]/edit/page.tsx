@@ -67,7 +67,6 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
   // Extract author IRIs from article.authors
   let authorIris: string[] = [];
   if (article.authors && Array.isArray(article.authors)) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     authorIris = article.authors.map((author: any) => {
       if (typeof author === 'string') {
         return author; // Already an IRI
@@ -82,7 +81,6 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
   let articleTags: Tag[] = [];
   if (article.tags && Array.isArray(article.tags)) {
     articleTags = article.tags
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((tag: any) => {
         if (typeof tag === 'object' && tag !== null && 'id' in tag) {
           return tag;
@@ -95,7 +93,6 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
   // Extract related article IDs
   let relatedArticleIds: number[] = [];
   if (article.relatedArticles && Array.isArray(article.relatedArticles)) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     relatedArticleIds = article.relatedArticles.map((relatedArticle: any) => {
       if (typeof relatedArticle === 'string') {
         // Extract ID from IRI like "/api/articles/123"
@@ -146,17 +143,6 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
             <div>
               <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
                 Articol generat AI
-                {article.sourceClusterId && (
-                  <>
-                    {' '}din cluster{' '}
-                    <Link
-                      href={`/${locale}/admin/story-clusters?highlight=${article.sourceClusterId}`}
-                      className="underline hover:no-underline"
-                    >
-                      #{article.sourceClusterId}
-                    </Link>
-                  </>
-                )}
               </p>
               <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
                 {article.aiSourceCount != null && `${article.aiSourceCount} surse`}
@@ -178,7 +164,6 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
       <div className="bg-surface dark:bg-surface-dark shadow-md sm:rounded-lg p-6">
         <ArticleEditWrapper
           locale={locale}
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
           article={{
             id: article.id,
             title: article.title,

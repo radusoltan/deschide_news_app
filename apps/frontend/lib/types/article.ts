@@ -75,7 +75,6 @@ export interface Article {
   aiGenerated?: boolean;
   aiConfidenceScore?: number | null;
   aiSourceCount?: number | null;
-  sourceClusterId?: number | null;
 }
 
 export interface ArticleListResponse {
