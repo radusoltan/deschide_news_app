@@ -79,7 +79,11 @@ class ClassifyArticlesIntegrationTest extends KernelTestCase
 
         // dry-run: the classifier stays untouched, but the SELECT must be
         // executed against the real DB so we can prove the NOT EXISTS filter.
-        $tester->execute(['--dry-run' => true, '--limit' => 100]);
+        // --limit 0 = all unclassified; needed because sibling integration
+        // tests leave >100 pre-existing unclassified PUBLISHED articles with
+        // lower IDs (ORDER BY id ASC would otherwise exclude our seed).
+        // Long-term DAMA isolation tracked under T52.15.
+        $tester->execute(['--dry-run' => true, '--limit' => 0]);
 
         $display = $tester->getDisplay();
         self::assertSame(0, $tester->getStatusCode());
@@ -95,16 +99,21 @@ class ClassifyArticlesIntegrationTest extends KernelTestCase
         $topicB = $this->seedTopic('t51c7-int-topicB-' . uniqid());
         $topicIdA = $topicA->getId();
         $topicIdB = $topicB->getId();
+        $targetArticleId = $article->getId();
 
         $classifier = static::getContainer()->get(BatchTopicClassifier::class);
         self::assertInstanceOf(BatchTopicClassifier::class, $classifier);
 
         // Inject a stub that returns a deterministic mapping for our article.
-        $stub = new class($this->em, $topicIdA, $topicIdB) extends BatchTopicClassifier {
+        // Stub filters by the seeded article id so --limit 0 (all unclassified)
+        // can be used without polluting the 260+ sibling fixtures left over by
+        // other integration tests. DAMA isolation tracked under T52.15.
+        $stub = new class($this->em, $topicIdA, $topicIdB, $targetArticleId) extends BatchTopicClassifier {
             public function __construct(
                 private readonly EntityManagerInterface $em2,
                 private readonly int $topicIdA,
                 private readonly int $topicIdB,
+                private readonly int $targetArticleId,
             ) {
                 // Intentionally skip parent::__construct — we override classifyBatch.
             }
@@ -115,6 +124,9 @@ class ClassifyArticlesIntegrationTest extends KernelTestCase
                 $topicA = $this->em2->find(Topic::class, $this->topicIdA);
                 $topicB = $this->em2->find(Topic::class, $this->topicIdB);
                 foreach ($articles as $article) {
+                    if ($article->getId() !== $this->targetArticleId) {
+                        continue;
+                    }
                     $article->addTopic($topicA);
                     $article->addTopic($topicB);
                     $result->classified++;
@@ -132,13 +144,11 @@ class ClassifyArticlesIntegrationTest extends KernelTestCase
         $command = new ClassifyArticlesCommand($this->em, $stub);
         $command->setName('app:articles:classify-topics');
         $tester = new CommandTester($command);
-        // Limit must exceed the count of pre-existing unclassified PUBLISHED
-        // articles left over by sibling integration tests; otherwise the
-        // ORDER BY id ASC + LIMIT window excludes the seeded article and the
-        // stub never sees it. Sibling testCommandFiltersOutAlreadyClassified...
-        // uses --limit 100 for the same reason. Long-term DAMA isolation
-        // tracked under T52.15.
-        $tester->execute(['--limit' => 100]);
+        // --limit 0 loads all unclassified PUBLISHED articles so the seeded
+        // one (highest id, appended at the end of ORDER BY id ASC) is always
+        // reached. Stub filters by targetArticleId so the 260+ sibling
+        // fixtures stay untouched. DAMA isolation tracked under T52.15.
+        $tester->execute(['--limit' => 0]);
 
         self::assertSame(0, $tester->getStatusCode());
         self::assertStringContainsString('Backfill Summary', $tester->getDisplay());
