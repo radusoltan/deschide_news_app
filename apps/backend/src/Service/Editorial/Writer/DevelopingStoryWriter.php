@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Writer;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentRequest;
 use App\Dto\Editorial\VerificationVerdict;
 use App\Entity\Article;
 use App\Entity\Editorial\SourceSignal;
@@ -11,7 +13,6 @@ use App\Enum\ArticleStatus;
 use App\Enum\ArticleType;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmPromptAssembler;
 use Doctrine\ORM\EntityManagerInterface;
@@ -83,7 +84,7 @@ Reply with the strict JSON object described in your system instructions (updated
 TEXT;
 
     public function __construct(
-        private readonly LlmRetryExecutor $llmRetryExecutor,
+        private readonly AgentDispatcher $dispatcher,
         private readonly GeminiCliService $geminiCliService,
         private readonly EntityManagerInterface $em,
         private readonly LlmPromptAssembler $promptAssembler,
@@ -232,15 +233,25 @@ TEXT;
     private function invokeLlm(string $userPrompt): array
     {
         try {
-            $result = $this->llmRetryExecutor->executeWithRetry(
+            $response = $this->dispatcher->dispatch(new AgentRequest(
                 agentId: self::AGENT_ID,
                 messages: [['role' => 'user', 'content' => $userPrompt]],
                 tier: self::PRIMARY_TIER,
                 systemPrompt: self::SYSTEM_PROMPT,
-            );
+            ));
 
-            return $this->decodeJson($result['content'], 'haiku');
+            return $this->decodeJson($response->content, 'haiku');
         } catch (LlmUnavailableException $e) {
+            // Pattern-B Gemini fallback preserved per ADR-024 Q3 (removed
+            // in T57.P8 when downgrade-only policy retires).
+            // EmergencyHaltException does NOT match this catch — unrelated
+            // RuntimeException sibling. Halt escapes invokeLlm() and
+            // propagates through write() (no outer catch by pre-existing
+            // design — Scenario A safety) up to the handler's top-level
+            // \\Throwable catch. No in-memory \$existing mutations are
+            // applied because the halt fires before line 124 parse;
+            // em->flush() at line 151 never reaches → existing Article
+            // remains bit-exact in DB.
             $this->logger->warning('developing_story_writer_haiku_unavailable_trying_gemini', [
                 'attempts' => $e->attempts,
             ]);
