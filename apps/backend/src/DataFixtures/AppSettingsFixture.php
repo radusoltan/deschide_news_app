@@ -183,6 +183,16 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         'agent.context.model_tier' => 'sonnet',
         'agent.context.fallback' => '',
         'agent.context.enabled' => 'true',
+
+        // ADR-024 D1 — Support layer (T57.P6). Topic classifier covers both
+        // PressReleaseTopicDetector (async per-PR 2-layer keyword+LLM) and
+        // TopicDetectorService (sync single-article). Shared semantic role →
+        // shared agent id. Haiku tier is sufficient for taxonomy lookup over
+        // the 116 seeded editorial topics; Gemini fallback retained until
+        // T57.P8 retires the downgrade-only policy.
+        'agent.topic_classifier.model_tier' => 'haiku',
+        'agent.topic_classifier.fallback' => 'gemini_flash',
+        'agent.topic_classifier.enabled' => 'true',
     ];
 
     /**

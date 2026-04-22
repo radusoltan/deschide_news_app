@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Topic;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentResponse;
 use App\Dto\Topic\TopicDetectionResult;
 use App\Entity\PressRelease;
 use App\Entity\Topic;
+use App\Enum\LlmModelTier;
 use App\Enum\TopicDetectionMethod;
 use App\Repository\TopicRepository;
 use App\Service\Ai\Provider\GeminiCliService;
+use App\Service\Ai\TierResolver;
 use App\Service\Topic\PressReleaseTopicDetector;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -21,19 +26,40 @@ class PressReleaseTopicDetectorTest extends TestCase
     private PressReleaseTopicDetector $detector;
     private TopicRepository&MockObject $topicRepo;
     private EntityManagerInterface&MockObject $em;
+    private AgentDispatcher&MockObject $dispatcher;
+    private TierResolver&MockObject $tierResolver;
     private GeminiCliService&MockObject $geminiCli;
 
     protected function setUp(): void
     {
         $this->topicRepo = $this->createMock(TopicRepository::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
+        $this->tierResolver = $this->createMock(TierResolver::class);
         $this->geminiCli = $this->createMock(GeminiCliService::class);
+
+        $this->tierResolver->method('resolve')->willReturn(LlmModelTier::HAIKU);
 
         $this->detector = new PressReleaseTopicDetector(
             $this->topicRepo,
             $this->em,
+            $this->dispatcher,
+            $this->tierResolver,
             $this->geminiCli,
             new NullLogger(),
+        );
+    }
+
+    private function agentResponse(string $content): AgentResponse
+    {
+        return new AgentResponse(
+            content: $content,
+            agentId: PressReleaseTopicDetector::AGENT_ID,
+            tier: LlmModelTier::HAIKU,
+            model: 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: '01JXXXXXXXXXXXXXXXXXXXXXXX',
+            metrics: null,
         );
     }
 
@@ -150,7 +176,7 @@ class PressReleaseTopicDetectorTest extends TestCase
         $this->assertLessThanOrEqual(5, \count($results));
     }
 
-    public function testDetectTriggersGeminiWhenKeywordConfidenceLow(): void
+    public function testDetectTriggersLlmWhenKeywordConfidenceLow(): void
     {
         $pr = $this->createPressRelease('Subiect ambiguu', 'Un text fără cuvinte-cheie clare.');
 
@@ -160,12 +186,12 @@ class PressReleaseTopicDetectorTest extends TestCase
         $this->topicRepo->method('getFullTree')
             ->willReturn([['id' => 1, 'title' => 'Politică', 'children' => []]]);
 
-        $this->geminiCli->expects($this->once())
-            ->method('execute')
-            ->willReturn('[{"topic_id": 1, "confidence": 0.85}]');
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->willReturn($this->agentResponse('[{"topic_id": 1, "confidence": 0.85}]'));
 
-        $this->geminiCli->method('extractJsonArray')
-            ->willReturn([['topic_id' => 1, 'confidence' => 0.85]]);
+        $this->geminiCli->expects($this->never())
+            ->method('execute');
 
         $results = $this->detector->detect($pr, useGeminiFallback: true);
 
@@ -173,7 +199,55 @@ class PressReleaseTopicDetectorTest extends TestCase
         $this->assertSame(TopicDetectionMethod::LLM, $results[0]->detectedBy);
     }
 
-    public function testDetectSkipsGeminiWhenKeywordConfidenceHigh(): void
+    public function testDetectFallsBackToGeminiOnDispatcherFailure(): void
+    {
+        $pr = $this->createPressRelease('Subiect ambiguu', 'Un text fără cuvinte-cheie clare.');
+
+        $this->topicRepo->method('findBy')
+            ->willReturn([]);
+
+        $this->topicRepo->method('getFullTree')
+            ->willReturn([['id' => 1, 'title' => 'Politică', 'children' => []]]);
+
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->willThrowException(new \RuntimeException('retry exhausted'));
+
+        $this->geminiCli->expects($this->once())
+            ->method('execute')
+            ->willReturn('[{"topic_id": 1, "confidence": 0.85}]');
+
+        $results = $this->detector->detect($pr, useGeminiFallback: true);
+
+        $this->assertNotEmpty($results);
+        $this->assertSame(TopicDetectionMethod::LLM, $results[0]->detectedBy);
+    }
+
+    public function testEmergencyHaltSkipsGeminiFallback(): void
+    {
+        $pr = $this->createPressRelease('Subiect ambiguu', 'Un text fără cuvinte-cheie clare.');
+
+        $this->topicRepo->method('findBy')
+            ->willReturn([]);
+
+        $this->topicRepo->method('getFullTree')
+            ->willReturn([['id' => 1, 'title' => 'Politică', 'children' => []]]);
+
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->willThrowException(new EmergencyHaltException(PressReleaseTopicDetector::AGENT_ID));
+
+        // Halt must propagate past the fallback — Gemini MUST NOT be called.
+        $this->geminiCli->expects($this->never())
+            ->method('execute');
+
+        $results = $this->detector->detect($pr, useGeminiFallback: true);
+
+        // Fail-open: halt resolves to keyword-only (empty here → []).
+        $this->assertEmpty($results);
+    }
+
+    public function testDetectSkipsLlmWhenKeywordConfidenceHigh(): void
     {
         $pr = $this->createPressRelease(
             'Energie energie energie gaz gaz electricitate',
@@ -185,6 +259,8 @@ class PressReleaseTopicDetectorTest extends TestCase
         $this->topicRepo->method('findBy')
             ->willReturn([$topic]);
 
+        $this->dispatcher->expects($this->never())
+            ->method('dispatch');
         $this->geminiCli->expects($this->never())
             ->method('execute');
 
@@ -194,7 +270,7 @@ class PressReleaseTopicDetectorTest extends TestCase
         $this->assertSame(TopicDetectionMethod::KEYWORD, $results[0]->detectedBy);
     }
 
-    public function testDetectDegradedModeOnGeminiFailure(): void
+    public function testDetectDegradedModeWhenBothDispatcherAndFallbackFail(): void
     {
         $pr = $this->createPressRelease('Subiect', 'Text scurt.');
 
@@ -204,6 +280,8 @@ class PressReleaseTopicDetectorTest extends TestCase
         $this->topicRepo->method('getFullTree')
             ->willReturn([]);
 
+        $this->dispatcher->method('dispatch')
+            ->willThrowException(new \RuntimeException('retry exhausted'));
         $this->geminiCli->method('execute')
             ->willThrowException(new \RuntimeException('Gemini timeout'));
 
@@ -213,13 +291,15 @@ class PressReleaseTopicDetectorTest extends TestCase
         $this->assertEmpty($results);
     }
 
-    public function testDetectWithoutGeminiFallback(): void
+    public function testDetectWithoutLlmFallback(): void
     {
         $pr = $this->createPressRelease('Subiect', 'Text.');
 
         $this->topicRepo->method('findBy')
             ->willReturn([]);
 
+        $this->dispatcher->expects($this->never())
+            ->method('dispatch');
         $this->geminiCli->expects($this->never())
             ->method('execute');
 
