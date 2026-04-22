@@ -51,7 +51,7 @@ use Psr\Log\LoggerInterface;
  * pipeline (briefing, topic classifier, translator) migrates in
  * T57.P4–P7.
  */
-final readonly class AgentDispatcher
+readonly class AgentDispatcher
 {
     private const EMERGENCY_HALT_KEY = 'editorial.emergency_halt';
 
