@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentResponse;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Entity\Editorial\SourceSignal;
 use App\Entity\Editorial\VerifiedSource;
@@ -12,7 +14,6 @@ use App\Enum\Editorial\VerdictType;
 use App\Enum\EditorialAlignment;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Verification\VerificationGate;
@@ -31,7 +32,7 @@ final class VerificationGateVerdictMappingTest extends TestCase
 {
     private const INVOCATION_ID = '01JFXXXXXXXXXXXXXXXXXXXXXX';
 
-    private LlmRetryExecutor&MockObject $executor;
+    private AgentDispatcher&MockObject $dispatcher;
     private TierResolver&MockObject $tierResolver;
     private AppSettingRepository&MockObject $settings;
     private LlmInvocationLogger&MockObject $invocationLogger;
@@ -42,7 +43,7 @@ final class VerificationGateVerdictMappingTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->executor = $this->createMock(LlmRetryExecutor::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
@@ -60,7 +61,7 @@ final class VerificationGateVerdictMappingTest extends TestCase
             });
 
         $this->gate = new VerificationGate(
-            $this->executor,
+            $this->dispatcher,
             $this->tierResolver,
             $this->settings,
             $this->invocationLogger,
@@ -149,8 +150,8 @@ final class VerificationGateVerdictMappingTest extends TestCase
     public function rule0BypassDoesNotWriteVerdictBecauseLlmNeverRuns(): void
     {
         // Rule 0 (escalation keyword) bypasses the LLM entirely. No
-        // executor call, no baseline row, no attachVerdict.
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        // dispatcher call, no baseline row, no attachVerdict.
+        $this->dispatcher->expects($this->never())->method('dispatch');
         $this->invocationLogger->expects($this->never())->method('attachVerdict');
 
         $graph = $this->makeGraph(1, ['wire_neutral'], ['1' => 1]);
@@ -175,16 +176,15 @@ final class VerificationGateVerdictMappingTest extends TestCase
     /** @param array<string, mixed> $sanity */
     private function mockSanityResponse(array $sanity): void
     {
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => json_encode($sanity, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
-            'agent_id' => 'verification_gate',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-            'invocation_id' => self::INVOCATION_ID,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(new AgentResponse(
+            content: json_encode($sanity, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            agentId: VerificationGate::AGENT_ID,
+            tier: LlmModelTier::HAIKU,
+            model: 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: self::INVOCATION_ID,
+            metrics: null,
+        ));
     }
 
     /**
