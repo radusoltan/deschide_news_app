@@ -12,6 +12,43 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'app_settings')]
 class AppSetting
 {
+    /**
+     * Keys whose updates require an operator-supplied `--reason` and are broadcast
+     * on Mercure with `isCritical: true` in the payload (T57.P3, ADR-024 D5).
+     *
+     * Supports glob wildcards via {@see fnmatch()}. `editorial.tier_overrides.*`
+     * matches any per-agent tier override key (e.g. `editorial.tier_overrides.flash_writer`).
+     * Exact string entries match verbatim.
+     *
+     * Extending this list requires no listener change — the listener resolves
+     * criticality dynamically at write time via {@see self::isCriticalKey()}.
+     *
+     * @var list<string>
+     */
+    public const CRITICAL_KEYS = [
+        'editorial.emergency_halt',
+        'editorial.pipeline.enabled',
+        'editorial.tier_overrides.*',
+    ];
+
+    /**
+     * Returns true when `$key` matches one of {@see self::CRITICAL_KEYS}, with
+     * glob-matching semantics (fnmatch): `*` matches any run of characters
+     * including dots. Bare-prefix matches (e.g. `editorial.tier_overrides` with
+     * no trailing segment) do NOT match `editorial.tier_overrides.*` — the
+     * wildcard requires at least one character in the segment position.
+     */
+    public static function isCriticalKey(string $key): bool
+    {
+        foreach (self::CRITICAL_KEYS as $pattern) {
+            if (fnmatch($pattern, $key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     #[ORM\Id]
     #[ORM\Column(length: 100)]
     private string $key;
