@@ -4,23 +4,47 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
 use App\Repository\TopicRepository;
 use App\Service\Ai\Provider\GeminiCliService;
+use App\Service\Ai\TierResolver;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Synchronous topic classifier for articles + press releases.
+ *
+ * T57.P6 — migrated to {@see AgentDispatcher} on shared `topic_classifier`
+ * agent id (Haiku tier per ADR-024 D1), parallel to
+ * {@see \App\Service\Topic\PressReleaseTopicDetector}. Gemini CLI fallback
+ * retained inline until T57.P8; {@see EmergencyHaltException} rethrows past
+ * the fallback so halt propagates cleanly to the outer catch-all and
+ * resolves to the existing fail-open empty-array contract.
+ *
+ * Output schema preserved: objects with `topicId: int`, `confidence: string`
+ * (`high`|`medium`|`low`), `reason: string`. NOT the float-confidence shape
+ * emitted by PressReleaseTopicDetector — the two services answer different
+ * downstream consumers (suggestedTopics JSON vs PressReleaseTopic pivot).
+ */
 class TopicDetectorService
 {
+    public const AGENT_ID = 'topic_classifier';
+
     private const TIMEOUT = 60;
 
     public function __construct(
         private readonly TopicRepository $topicRepository,
+        private readonly AgentDispatcher $dispatcher,
+        private readonly TierResolver $tierResolver,
         private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
         private readonly string $projectDir,
     ) {}
 
     /**
-     * Detect relevant topics for an article using Gemini CLI.
+     * Detect relevant topics for an article via LLM (dispatcher-first, Gemini
+     * fallback on retry exhaustion / transport failure).
      *
      * @return array<int, array{topicId: int, confidence: string, reason: string}>
      */
@@ -35,11 +59,27 @@ class TopicDetectorService
         $prompt = $this->buildPrompt($title, $lead, $content, $formattedTree);
 
         try {
-            $result = $this->callGemini($prompt);
+            try {
+                $tier = $this->tierResolver->resolve(self::AGENT_ID);
+                $response = $this->dispatcher->dispatch(new AgentRequest(
+                    agentId: self::AGENT_ID,
+                    messages: [['role' => 'user', 'content' => $prompt]],
+                    tier: $tier,
+                ));
+                $result = $response->content;
+            } catch (EmergencyHaltException) {
+                throw new \RuntimeException('emergency_halt');
+            } catch (\Throwable $e) {
+                $this->logger->warning('TopicDetectorService: dispatcher failed, falling back to Gemini', [
+                    'error' => $e->getMessage(),
+                    'title' => $title,
+                ]);
+                $result = $this->callGemini($prompt);
+            }
 
             return $this->parseAndValidate($result);
         } catch (\Throwable $e) {
-            $this->logger->warning('TopicDetectorService: Gemini detection failed', [
+            $this->logger->warning('TopicDetectorService: detection failed', [
                 'error' => $e->getMessage(),
                 'title' => $title,
             ]);
