@@ -29,6 +29,12 @@ class AppSetting
         'editorial.emergency_halt',
         'editorial.pipeline.enabled',
         'editorial.tier_overrides.*',
+        // T57.P4+P5 — legacy Gemini rollback flags for the briefing writer.
+        // Flipping any of these routes production briefings through the
+        // pre-migration Gemini draft + Claude polish path; operational
+        // override with production blast radius, semantically parallel to
+        // `editorial.tier_overrides.*`.
+        'briefing.llm.use_legacy_gemini_*',
     ];
 
     /**

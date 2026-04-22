@@ -4,37 +4,70 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
 use App\Entity\PressRelease;
 use App\Entity\Topic;
 use App\Entity\TopicBriefing;
 use App\Enum\BriefingCadence;
 use App\Enum\BriefingStatus;
+use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\AnthropicClientInterface;
 use App\Service\Ai\Provider\GeminiCliException;
 use App\Service\Ai\Provider\GeminiCliService;
+use App\Service\Ai\TierResolver;
 use App\ValueObject\DateRange;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Generates topic briefings using a dual-LLM chain: Gemini draft → Claude polish.
+ * Generates topic briefings via the editorial LLM pipeline.
  *
- * Pattern: same as ClusterSummaryService with 64KB safety:
+ * T57.P4+P5 — migrated to {@see AgentDispatcher} with cadence-branched tier
+ * resolution (ADR-024 D1):
+ *
+ * - **DAILY** → Sonnet draft. No polish chain. No fallback (status=FAILED on
+ *   dispatcher exhaustion). 100% LlmAgentCallLog coverage via dispatcher.
+ * - **HOURLY** → Haiku draft → Sonnet polish as a SECOND dispatcher call
+ *   under `briefing_hourly_polish` agent id (preserves ADR-024 D2 100%
+ *   coverage invariant). Gemini CLI fallback retained inline until T57.P8
+ *   retires the downgrade-only policy. Polish failure is NON-FATAL: briefing
+ *   persists as DRAFT with Haiku content.
+ * - **WEEKLY** → Sonnet draft. No polish. No fallback. Same contract as DAILY.
+ *
+ * Halt propagation: {@see EmergencyHaltException} thrown by the dispatcher's
+ * pre-LLM `editorial.emergency_halt` circuit breaker is rethrown past the
+ * Gemini fallback catch (HOURLY) so halts do NOT silently bypass the circuit
+ * breaker. Halt during DRAFT dispatch → status=FAILED. Halt during POLISH
+ * dispatch → status=DRAFT preserved (polish is best-effort).
+ *
+ * Legacy rollback: `briefing.llm.use_legacy_gemini_{daily,hourly,weekly}`
+ * AppSettings flags (critical per {@see \App\Entity\AppSetting::CRITICAL_KEYS},
+ * `--reason` mandatory on flip) route the respective cadence back through the
+ * pre-migration Gemini draft + Claude polish path without a code revert. The
+ * legacy path emits NO LlmAgentCallLog rows — intentional, since the whole
+ * point of the rollback is to return to pre-P4+P5 observability.
+ *
+ * Dual-LLM 64KB safety preserved:
  * - Max 15 PRs per prompt, 500 chars each
  * - Warn if prompt exceeds 50KB
- *
- * Fallback (ADR-016 D5):
- * - Gemini draft = baseline. If fails → return null, no briefing.
- * - Claude polish = upgrade. If fails → persist Gemini draft with claude_polished=false.
  */
 class TopicBriefingWriterService
 {
+    public const AGENT_ID_DAILY = 'briefing_daily';
+    public const AGENT_ID_HOURLY = 'briefing_hourly';
+    public const AGENT_ID_WEEKLY = 'briefing_weekly';
+    public const AGENT_ID_HOURLY_POLISH = 'briefing_hourly_polish';
+
     private const MAX_PRS_IN_PROMPT = 15;
     private const MAX_CONTENT_PER_PR = 500;
     private const PROMPT_SIZE_WARNING_BYTES = 50_000;
 
     public function __construct(
+        private readonly AgentDispatcher $dispatcher,
+        private readonly TierResolver $tierResolver,
         private readonly GeminiCliService $geminiCli,
         private readonly AnthropicClientInterface $claudeCli,
         private readonly AppSettingRepository $settings,
@@ -45,7 +78,9 @@ class TopicBriefingWriterService
     /**
      * Generate a briefing for a topic in the given cadence and date range.
      *
-     * Returns null if Gemini draft fails (no briefing created).
+     * Returns null on pre-LLM gating failure (no PRs). Returns the briefing
+     * entity on both success and post-LLM failure paths — caller distinguishes
+     * via {@see TopicBriefing::getStatus()}.
      */
     public function generate(Topic $topic, BriefingCadence $cadence, DateRange $range): ?TopicBriefing
     {
@@ -55,7 +90,6 @@ class TopicBriefingWriterService
         $this->em->persist($briefing);
         $this->em->flush();
 
-        // 1. Query PRs for context
         $pressReleases = $this->findPressReleases($topic, $range);
         $briefing->setPrCount(\count($pressReleases));
 
@@ -70,10 +104,207 @@ class TopicBriefingWriterService
             return null;
         }
 
-        // 2. Gemini draft (baseline)
-        $prompt = $this->buildGeminiPrompt($topic, $cadence, $pressReleases);
+        if ($this->shouldUseLegacy($cadence)) {
+            return $this->generateViaLegacyPath($briefing, $topic, $cadence, $pressReleases);
+        }
+
+        return $this->generateViaDispatcherPath($briefing, $topic, $cadence, $pressReleases);
+    }
+
+    /**
+     * Post-T57.P4+P5 main path — draft via AgentDispatcher, optional polish via
+     * a second dispatcher call for HOURLY only.
+     *
+     * @param list<PressRelease> $pressReleases
+     */
+    private function generateViaDispatcherPath(
+        TopicBriefing $briefing,
+        Topic $topic,
+        BriefingCadence $cadence,
+        array $pressReleases,
+    ): ?TopicBriefing {
+        $prompt = $this->buildDraftPrompt($topic, $cadence, $pressReleases);
+        $agentId = $this->resolveAgentId($cadence);
+
+        try {
+            $rawDraft = $this->dispatchDraft($agentId, $prompt, $cadence);
+        } catch (\RuntimeException $e) {
+            // Emergency halt or non-recoverable dispatcher+fallback failure.
+            $briefing->setStatus(BriefingStatus::FAILED);
+            $this->em->flush();
+            $this->logger->warning('TopicBriefingWriter: draft exhausted, marking FAILED', [
+                'topicId' => $topic->getId(),
+                'cadence' => $cadence->value,
+                'reason' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        $parsed = $this->parseJsonResponse($rawDraft);
+        if ($parsed === null) {
+            $briefing->setStatus(BriefingStatus::FAILED);
+            $briefing->setGeminiDraftRaw($rawDraft);
+            $this->em->flush();
+            $this->logger->warning('TopicBriefingWriter: failed to parse draft JSON', [
+                'topicId' => $topic->getId(),
+                'cadence' => $cadence->value,
+                'rawLength' => \strlen($rawDraft),
+            ]);
+
+            return null;
+        }
+
+        $this->applyParsedData($briefing, $parsed);
+        $briefing->setGeminiDraftRaw($rawDraft);
+        $briefing->setStatus(BriefingStatus::DRAFT);
+        $briefing->setGeneratedAt(new \DateTimeImmutable());
+
+        if ($this->shouldPolish($cadence)) {
+            $polished = $this->dispatchPolish($briefing);
+            if ($polished) {
+                $briefing->setClaudePolished(true);
+                $briefing->setStatus(BriefingStatus::POLISHED);
+            }
+            // On polish failure (including halt): DRAFT status preserved,
+            // briefing remains usable. Polish is best-effort per AC#10.
+        }
+
+        $this->em->flush();
+
+        $this->logger->info('TopicBriefingWriter: generated briefing', [
+            'topicId' => $topic->getId(),
+            'cadence' => $cadence->value,
+            'briefingId' => $briefing->getId(),
+            'prCount' => $briefing->getPrCount(),
+            'claudePolished' => $briefing->isClaudePolished(),
+            'path' => 'dispatcher',
+        ]);
+
+        return $briefing;
+    }
+
+    /**
+     * Dispatch the draft call. On emergency halt, rethrow so the caller marks
+     * FAILED without silently routing through fallback. On generic dispatcher
+     * failure: HOURLY cadence retries via Gemini inline (retained until
+     * T57.P8); DAILY/WEEKLY propagate failure upward (no fallback per ADR-024
+     * D1 — Sonnet → Gemini would be a silent quality downgrade).
+     *
+     * @throws \RuntimeException with message `emergency_halt` on halt, or the
+     *         upstream error message on exhausted fallback.
+     */
+    private function dispatchDraft(string $agentId, string $prompt, BriefingCadence $cadence): string
+    {
+        try {
+            $tier = $this->tierResolver->resolve($agentId);
+            $response = $this->dispatcher->dispatch(new AgentRequest(
+                agentId: $agentId,
+                messages: [['role' => 'user', 'content' => $prompt]],
+                tier: $tier,
+            ));
+
+            return $response->content;
+        } catch (EmergencyHaltException) {
+            throw new \RuntimeException('emergency_halt');
+        } catch (\Throwable $e) {
+            if (!$this->shouldFallback($cadence)) {
+                throw new \RuntimeException(
+                    'draft dispatcher failed (no fallback for cadence): ' . $e->getMessage(),
+                    0,
+                    $e,
+                );
+            }
+
+            $this->logger->warning('TopicBriefingWriter: draft dispatcher failed, falling back to Gemini', [
+                'agentId' => $agentId,
+                'cadence' => $cadence->value,
+                'error' => $e->getMessage(),
+            ]);
+
+            try {
+                $geminiTimeout = $this->settings->getInt('briefing.llm.gemini_timeout', 120);
+
+                return $this->geminiCli->execute($prompt, ['timeout' => $geminiTimeout]);
+            } catch (GeminiCliException $geminiError) {
+                throw new \RuntimeException(
+                    'draft dispatcher + Gemini fallback both failed: ' . $geminiError->getMessage(),
+                    0,
+                    $geminiError,
+                );
+            }
+        }
+    }
+
+    /**
+     * HOURLY polish step routed through the dispatcher under its own agent id
+     * to preserve ADR-024 D2 100% LlmAgentCallLog coverage. Failures are
+     * non-fatal — the caller keeps the Haiku DRAFT.
+     */
+    private function dispatchPolish(TopicBriefing $briefing): bool
+    {
+        $prompt = $this->buildClaudePolishPrompt($briefing);
+
+        try {
+            $tier = $this->tierResolver->resolve(self::AGENT_ID_HOURLY_POLISH);
+            $response = $this->dispatcher->dispatch(new AgentRequest(
+                agentId: self::AGENT_ID_HOURLY_POLISH,
+                messages: [['role' => 'user', 'content' => $prompt]],
+                tier: $tier,
+                systemPrompt: 'You are a senior Moldovan news editor. Polish the editorial briefing for journalistic quality.',
+            ));
+        } catch (EmergencyHaltException) {
+            $this->logger->info('TopicBriefingWriter: polish halted, keeping DRAFT', [
+                'briefingId' => $briefing->getId(),
+            ]);
+
+            return false;
+        } catch (\Throwable $e) {
+            $this->logger->warning('TopicBriefingWriter: polish dispatcher failed, keeping DRAFT', [
+                'briefingId' => $briefing->getId(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        $parsed = $this->parseJsonResponse($response->content);
+        if ($parsed === null) {
+            $this->logger->warning('TopicBriefingWriter: polish response not parseable, keeping DRAFT', [
+                'briefingId' => $briefing->getId(),
+                'rawLength' => \strlen($response->content),
+            ]);
+
+            return false;
+        }
+
+        $this->applyParsedData($briefing, $parsed);
+
+        return true;
+    }
+
+    /**
+     * Pre-T57.P4+P5 code path, retained for rollback. Gated by
+     * `briefing.llm.use_legacy_gemini_{cadence}` AppSettings. Emits no
+     * LlmAgentCallLog rows — intentional regression to pre-migration
+     * observability when the rollback is invoked.
+     *
+     * @param list<PressRelease> $pressReleases
+     */
+    private function generateViaLegacyPath(
+        TopicBriefing $briefing,
+        Topic $topic,
+        BriefingCadence $cadence,
+        array $pressReleases,
+    ): ?TopicBriefing {
+        $this->logger->info('TopicBriefingWriter: legacy Gemini path active (rollback flag set)', [
+            'topicId' => $topic->getId(),
+            'cadence' => $cadence->value,
+        ]);
+
+        $prompt = $this->buildDraftPrompt($topic, $cadence, $pressReleases);
         $geminiTimeout = $this->settings->getInt('briefing.llm.gemini_timeout', 120);
-        $rawDraft = $this->callGemini($prompt, $geminiTimeout);
+        $rawDraft = $this->callGeminiLegacy($prompt, $geminiTimeout);
 
         if ($rawDraft === null) {
             $briefing->setStatus(BriefingStatus::FAILED);
@@ -87,7 +318,7 @@ class TopicBriefingWriterService
             $briefing->setStatus(BriefingStatus::FAILED);
             $briefing->setGeminiDraftRaw($rawDraft);
             $this->em->flush();
-            $this->logger->warning('TopicBriefingWriter: failed to parse Gemini JSON', [
+            $this->logger->warning('TopicBriefingWriter: failed to parse Gemini JSON (legacy path)', [
                 'topicId' => $topic->getId(),
                 'rawLength' => \strlen($rawDraft),
             ]);
@@ -95,22 +326,18 @@ class TopicBriefingWriterService
             return null;
         }
 
-        // Apply Gemini draft to briefing
         $this->applyParsedData($briefing, $parsed);
         $briefing->setGeminiDraftRaw($rawDraft);
         $briefing->setStatus(BriefingStatus::DRAFT);
         $briefing->setGeneratedAt(new \DateTimeImmutable());
 
-        // 3. Claude polish (upgrade, optional)
         $polishEnabled = $this->settings->getBool('briefing.llm.polish_enabled', true);
-
         if ($polishEnabled) {
-            $polished = $this->polishWithClaude($briefing);
+            $polished = $this->polishWithClaudeLegacy($briefing);
             if ($polished) {
                 $briefing->setClaudePolished(true);
                 $briefing->setStatus(BriefingStatus::POLISHED);
             }
-            // On Claude failure: Gemini draft persists with claude_polished=false
         }
 
         $this->em->flush();
@@ -121,15 +348,42 @@ class TopicBriefingWriterService
             'briefingId' => $briefing->getId(),
             'prCount' => $briefing->getPrCount(),
             'claudePolished' => $briefing->isClaudePolished(),
+            'path' => 'legacy_gemini',
         ]);
 
         return $briefing;
     }
 
+    private function resolveAgentId(BriefingCadence $cadence): string
+    {
+        return match ($cadence) {
+            BriefingCadence::DAILY => self::AGENT_ID_DAILY,
+            BriefingCadence::HOURLY => self::AGENT_ID_HOURLY,
+            BriefingCadence::WEEKLY => self::AGENT_ID_WEEKLY,
+        };
+    }
+
+    private function shouldPolish(BriefingCadence $cadence): bool
+    {
+        return $cadence === BriefingCadence::HOURLY;
+    }
+
+    private function shouldFallback(BriefingCadence $cadence): bool
+    {
+        return $cadence === BriefingCadence::HOURLY;
+    }
+
+    private function shouldUseLegacy(BriefingCadence $cadence): bool
+    {
+        $key = 'briefing.llm.use_legacy_gemini_' . $cadence->value;
+
+        return $this->settings->getBool($key, false);
+    }
+
     /**
      * @param list<PressRelease> $pressReleases
      */
-    private function buildGeminiPrompt(Topic $topic, BriefingCadence $cadence, array $pressReleases): string
+    private function buildDraftPrompt(Topic $topic, BriefingCadence $cadence, array $pressReleases): string
     {
         $topicTitle = $topic->getTitle();
         $cadenceLabel = $cadence->value;
@@ -197,12 +451,12 @@ class TopicBriefingWriterService
         return $prompt;
     }
 
-    private function callGemini(string $prompt, int $timeout): ?string
+    private function callGeminiLegacy(string $prompt, int $timeout): ?string
     {
         try {
             return $this->geminiCli->execute($prompt, ['timeout' => $timeout]);
         } catch (GeminiCliException $e) {
-            $this->logger->error('TopicBriefingWriter: Gemini failed', [
+            $this->logger->error('TopicBriefingWriter: Gemini failed (legacy path)', [
                 'error' => $e->getMessage(),
             ]);
 
@@ -210,22 +464,20 @@ class TopicBriefingWriterService
         }
     }
 
-    private function polishWithClaude(TopicBriefing $briefing): bool
+    private function polishWithClaudeLegacy(TopicBriefing $briefing): bool
     {
-        $claudeTimeout = $this->settings->getInt('briefing.llm.claude_timeout', 120);
-
         $prompt = $this->buildClaudePolishPrompt($briefing);
 
         try {
             $result = $this->claudeCli->chat(
                 [['role' => 'user', 'content' => $prompt]],
-                'claude-sonnet-4-6',
+                LlmModelTier::SONNET->toModelString(),
                 'You are a senior Moldovan news editor. Polish the editorial briefing for journalistic quality.',
             );
 
             $parsed = $this->parseJsonResponse($result);
             if ($parsed === null) {
-                $this->logger->warning('TopicBriefingWriter: Claude polish response not parseable', [
+                $this->logger->warning('TopicBriefingWriter: Claude polish response not parseable (legacy)', [
                     'briefingId' => $briefing->getId(),
                     'rawLength' => \strlen($result),
                 ]);
@@ -237,7 +489,7 @@ class TopicBriefingWriterService
 
             return true;
         } catch (\Throwable $e) {
-            $this->logger->warning('TopicBriefingWriter: Claude polish failed, keeping Gemini draft', [
+            $this->logger->warning('TopicBriefingWriter: Claude polish failed, keeping Gemini draft (legacy)', [
                 'briefingId' => $briefing->getId(),
                 'error' => $e->getMessage(),
             ]);

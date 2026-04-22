@@ -68,8 +68,19 @@ class AppSettingTest extends TestCase
                 'editorial.emergency_halt',
                 'editorial.pipeline.enabled',
                 'editorial.tier_overrides.*',
+                'briefing.llm.use_legacy_gemini_*',
             ],
             AppSetting::CRITICAL_KEYS,
         );
+    }
+
+    public function testGlobMatchBriefingLegacyGeminiFlags(): void
+    {
+        // T57.P4+P5 — per-cadence legacy rollback flags carry production blast
+        // radius equivalent to editorial.tier_overrides.*; flips require
+        // operator-supplied `--reason` via app:settings:set.
+        $this->assertTrue(AppSetting::isCriticalKey('briefing.llm.use_legacy_gemini_daily'));
+        $this->assertTrue(AppSetting::isCriticalKey('briefing.llm.use_legacy_gemini_hourly'));
+        $this->assertTrue(AppSetting::isCriticalKey('briefing.llm.use_legacy_gemini_weekly'));
     }
 }

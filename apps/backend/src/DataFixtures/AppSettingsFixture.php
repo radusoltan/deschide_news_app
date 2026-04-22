@@ -193,6 +193,43 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         'agent.topic_classifier.model_tier' => 'haiku',
         'agent.topic_classifier.fallback' => 'gemini_flash',
         'agent.topic_classifier.enabled' => 'true',
+
+        // ADR-024 D1 — Briefing (T57.P4+P5). TopicBriefingWriterService
+        // resolves tier per BriefingCadence:
+        //   DAILY   → Sonnet draft, no polish, no fallback (FAILED on exhaust)
+        //   HOURLY  → Haiku draft, Sonnet polish (via briefing_hourly_polish),
+        //             Gemini fallback retained until T57.P8
+        //   WEEKLY  → Sonnet draft, no polish, no fallback (FAILED on exhaust)
+        // Polish runs as a separate dispatcher call to preserve the 100%
+        // LlmAgentCallLog coverage invariant (ADR-024 D2). Polish failure is
+        // non-fatal: briefing persists as DRAFT with Haiku content.
+        'agent.briefing_daily.model_tier' => 'sonnet',
+        'agent.briefing_daily.fallback' => '',
+        'agent.briefing_daily.enabled' => 'true',
+        'agent.briefing_hourly.model_tier' => 'haiku',
+        'agent.briefing_hourly.fallback' => 'gemini_flash',
+        'agent.briefing_hourly.enabled' => 'true',
+        'agent.briefing_weekly.model_tier' => 'sonnet',
+        'agent.briefing_weekly.fallback' => '',
+        'agent.briefing_weekly.enabled' => 'true',
+        'agent.briefing_hourly_polish.model_tier' => 'sonnet',
+        'agent.briefing_hourly_polish.fallback' => '',
+        'agent.briefing_hourly_polish.enabled' => 'true',
+    ];
+
+    /**
+     * Briefing LLM runtime flags (T57.P4+P5). Operational rollback switches
+     * per cadence: flipping any of these routes the respective cadence back
+     * through the pre-migration Gemini draft + Claude polish path without a
+     * code revert. CRITICAL per AppSetting::CRITICAL_KEYS — flips require
+     * operator-supplied `--reason` via `app:settings:set`.
+     *
+     * @var array<string, string>
+     */
+    private const BRIEFING_LEGACY_DEFAULTS = [
+        'briefing.llm.use_legacy_gemini_daily' => 'false',
+        'briefing.llm.use_legacy_gemini_hourly' => 'false',
+        'briefing.llm.use_legacy_gemini_weekly' => 'false',
     ];
 
     /**
@@ -281,6 +318,10 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         }
 
         foreach (self::WRITER_GUARD_ESCALATION_DEFAULTS as $key => $value) {
+            $this->upsertIfMissing($manager, $key, $value);
+        }
+
+        foreach (self::BRIEFING_LEGACY_DEFAULTS as $key => $value) {
             $this->upsertIfMissing($manager, $key, $value);
         }
 
