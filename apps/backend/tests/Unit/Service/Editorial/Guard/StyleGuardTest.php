@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Guard;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
+use App\Dto\Agent\AgentResponse;
 use App\Entity\Article;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Guard\DiacriticsValidator;
 use App\Service\Editorial\Guard\StyleGuard;
@@ -17,11 +20,11 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Unit test for {@see StyleGuard} (Sprint 55 T55.6).
+ * Unit test for {@see StyleGuard} (Sprint 55 T55.6; T57.P2c.2 AgentDispatcher migration).
  */
 class StyleGuardTest extends TestCase
 {
-    private LlmRetryExecutor&MockObject $llmRetryExecutor;
+    private AgentDispatcher&MockObject $dispatcher;
     private GeminiCliService&MockObject $geminiCliService;
     private LlmInvocationLogger&MockObject $invocationLogger;
     private LoggerInterface&MockObject $logger;
@@ -29,14 +32,14 @@ class StyleGuardTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->llmRetryExecutor = $this->createMock(LlmRetryExecutor::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->geminiCliService = $this->createMock(GeminiCliService::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->guard = new StyleGuard(
             new DiacriticsValidator(),
-            $this->llmRetryExecutor,
+            $this->dispatcher,
             $this->geminiCliService,
             $this->invocationLogger,
             $this->logger,
@@ -45,15 +48,9 @@ class StyleGuardTest extends TestCase
 
     public function testHaikuPassProducesClearVerdict(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => json_encode(['passed' => true, 'issues' => []], JSON_THROW_ON_ERROR),
-            'agent_id' => 'style_guard',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            json_encode(['passed' => true, 'issues' => []], JSON_THROW_ON_ERROR),
+        ));
 
         $article = $this->articleWith('Titlu curat', 'Lead clar', 'Corp cu diacritice: ș, ț.');
         $part = $this->guard->validate($article);
@@ -65,15 +62,9 @@ class StyleGuardTest extends TestCase
 
     public function testDiacriticsViolationProducesFailure(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => json_encode(['passed' => true, 'issues' => []], JSON_THROW_ON_ERROR),
-            'agent_id' => 'style_guard',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            json_encode(['passed' => true, 'issues' => []], JSON_THROW_ON_ERROR),
+        ));
 
         $article = $this->articleWith('Titlu greşit', 'Lead ok', 'Corp ok.');
         $part = $this->guard->validate($article);
@@ -85,8 +76,8 @@ class StyleGuardTest extends TestCase
 
     public function testHighSeverityLlmIssuesProduceFailures(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => json_encode([
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            json_encode([
                 'passed' => false,
                 'issues' => [
                     [
@@ -97,13 +88,7 @@ class StyleGuardTest extends TestCase
                     ],
                 ],
             ], JSON_THROW_ON_ERROR),
-            'agent_id' => 'style_guard',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        ));
 
         $article = $this->articleWith('Titlu', 'Lead', 'Corp.');
         $part = $this->guard->validate($article);
@@ -117,8 +102,8 @@ class StyleGuardTest extends TestCase
 
     public function testLowSeverityLlmIssuesProduceWarnings(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => json_encode([
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            json_encode([
                 'passed' => true,
                 'issues' => [
                     [
@@ -129,13 +114,7 @@ class StyleGuardTest extends TestCase
                     ],
                 ],
             ], JSON_THROW_ON_ERROR),
-            'agent_id' => 'style_guard',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        ));
 
         $article = $this->articleWith('Titlu', 'Lead', 'Corp.');
         $part = $this->guard->validate($article);
@@ -148,7 +127,7 @@ class StyleGuardTest extends TestCase
 
     public function testLlmUnavailableFailsOpenWithWarning(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willThrowException(
+        $this->dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException(
                 agentId: 'style_guard',
                 tier: LlmModelTier::HAIKU,
@@ -172,7 +151,7 @@ class StyleGuardTest extends TestCase
     {
         // Diacritics runs deterministically — it MUST still catch violations
         // even when the LLM path fails.
-        $this->llmRetryExecutor->method('executeWithRetry')->willThrowException(
+        $this->dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException(
                 agentId: 'style_guard',
                 tier: LlmModelTier::HAIKU,
@@ -194,7 +173,7 @@ class StyleGuardTest extends TestCase
 
     public function testGeminiFallbackUsedWhenHaikuExhausted(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willThrowException(
+        $this->dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException(
                 agentId: 'style_guard',
                 tier: LlmModelTier::HAIKU,
@@ -210,6 +189,81 @@ class StyleGuardTest extends TestCase
         $part = $this->guard->validate($article);
 
         $this->assertTrue($part->isPassing());
+    }
+
+    /**
+     * T57.P2c.2 acceptance (d'): CRITICAL — editorial.emergency_halt must NOT
+     * trigger Gemini fallback. The halt is a deliberate operator decision to
+     * stop the pipeline; falling back to an alternate route would defeat the
+     * intent. Codifies "halt means halt, not alternate route" at the test
+     * level so a future refactor widening catch(LlmUnavailableException) to
+     * catch(\RuntimeException) — which would also match EmergencyHaltException
+     * since both extend RuntimeException — cannot silently reintroduce the
+     * undesired fallback-on-halt behavior.
+     *
+     * Three asserts per orchestrator directive:
+     *   1. GeminiCliService never called (fallback is NOT triggered).
+     *   2. Guard re-throws EmergencyHaltException (propagates up to handler).
+     *   3. LlmInvocationLogger::logInvocation never called directly (covers
+     *      the edge case where Gemini fallback does NOT trigger but the
+     *      agent attempts direct Gemini logging anyway).
+     */
+    public function testEmergencyHaltExceptionPropagatesWithoutTriggeringGeminiFallback(): void
+    {
+        $this->dispatcher->method('dispatch')->willThrowException(
+            new EmergencyHaltException('style_guard'),
+        );
+
+        $this->geminiCliService->expects($this->never())->method('execute');
+        $this->invocationLogger->expects($this->never())->method('logInvocation');
+
+        $this->expectException(EmergencyHaltException::class);
+
+        $article = $this->articleWith('Titlu', 'Lead', 'Corp cu ș și ț.');
+        $this->guard->validate($article);
+    }
+
+    /**
+     * T57.P2c.2 acceptance (c + AgentRequest shape): the dispatcher receives
+     * an AgentRequest carrying agentId=style_guard, the hardcoded HAIKU tier
+     * (Pattern-B constant, not TierResolver-driven), the system prompt, and
+     * no tierVariant (StyleGuard has no variant — single tier key per
+     * ADR-020 D5). Verifies the DTO shape at the dispatcher boundary.
+     */
+    public function testDispatchReceivesAgentRequestWithHardcodedHaikuTier(): void
+    {
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AgentRequest $req): bool {
+                $this->assertSame('style_guard', $req->agentId);
+                $this->assertSame(LlmModelTier::HAIKU, $req->tier);
+                $this->assertNotNull($req->systemPrompt);
+                $this->assertStringContainsString('redactor-șef', $req->systemPrompt);
+                $this->assertCount(1, $req->messages);
+                $this->assertSame('user', $req->messages[0]['role']);
+                $this->assertNull($req->tierVariant, 'StyleGuard has no variant');
+
+                return true;
+            }))
+            ->willReturn($this->buildResponse(
+                json_encode(['passed' => true, 'issues' => []], JSON_THROW_ON_ERROR),
+            ));
+
+        $article = $this->articleWith('Titlu curat', 'Lead clar', 'Corp cu diacritice: ș, ț.');
+        $this->guard->validate($article);
+    }
+
+    private function buildResponse(string $content): AgentResponse
+    {
+        return new AgentResponse(
+            content: $content,
+            agentId: 'style_guard',
+            tier: LlmModelTier::HAIKU,
+            model: 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: '01JE0Q9ZXJQ8YHZR3S3M7E2P5H',
+            metrics: null,
+        );
     }
 
     private function articleWith(string $title, string $lead, string $content): Article

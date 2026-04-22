@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Guard;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
 use App\Entity\Article;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use Psr\Log\LoggerInterface;
@@ -63,7 +65,7 @@ PROMPT;
 
     public function __construct(
         private readonly DiacriticsValidator $diacriticsValidator,
-        private readonly LlmRetryExecutor $llmRetryExecutor,
+        private readonly AgentDispatcher $dispatcher,
         private readonly GeminiCliService $geminiCliService,
         private readonly LlmInvocationLogger $invocationLogger,
         private readonly LoggerInterface $logger,
@@ -107,6 +109,15 @@ PROMPT;
                     $failures[] = $line;
                 }
             }
+        } catch (EmergencyHaltException $e) {
+            // ADR-024 D2 + T57.P2c.2 decision: halt is structurally different
+            // from LLM unavailable (deliberate operator decision vs transient
+            // infrastructure). Propagate up to the handler's defense-in-depth
+            // silent-ACK terminal instead of falling through to fail-open.
+            // Conflating halt with fail-open would let articles publish with
+            // pass-with-warning during emergency — wasted work is strictly
+            // better than compromised content during a halt.
+            throw $e;
         } catch (\Throwable $e) {
             $this->logger->warning('style_guard_llm_skipped', [
                 'article_id' => $article->getId(),
@@ -130,26 +141,33 @@ PROMPT;
         $userPrompt = $this->buildUserPrompt($article);
 
         try {
-            $result = $this->llmRetryExecutor->executeWithRetry(
+            $response = $this->dispatcher->dispatch(new AgentRequest(
                 agentId: self::AGENT_ID,
                 messages: [['role' => 'user', 'content' => $userPrompt]],
                 tier: self::PRIMARY_TIER,
                 systemPrompt: self::SYSTEM_PROMPT,
-            );
+            ));
 
-            $decoded = $this->decodeJson($result['content']);
+            $decoded = $this->decodeJson($response->content);
 
-            // T57.03 (ADR-023 D2) — attach verdict to executor-owned row.
-            $invocationId = $result['invocation_id'] ?? null;
-            if ($invocationId !== null) {
+            // T57.03 (ADR-023 D2) — attach verdict to executor-owned row
+            // (T57.P2c.2: executor writes the W' baseline transitively via
+            // the dispatcher; invocation_id flows through AgentResponse DTO).
+            if ($response->invocationId !== null) {
                 $this->invocationLogger->attachVerdict(
-                    $invocationId,
+                    $response->invocationId,
                     $this->mapVerdict($decoded),
                 );
             }
 
             return $decoded;
         } catch (LlmUnavailableException $e) {
+            // Pattern-B Gemini fallback preserved per ADR-024 Q3 (to be
+            // removed in T57.P8 when downgrade-only policy retires).
+            // EmergencyHaltException would NOT match this catch clause —
+            // different exception type, unrelated by inheritance. Halt
+            // propagates past this block and through the caller's outer
+            // EmergencyHaltException catch in validate().
             $this->logger->warning('style_guard_haiku_unavailable_trying_gemini', [
                 'attempts' => $e->attempts,
             ]);

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Guard;
 
+use App\Agent\AgentDispatcher;
 use App\Entity\Article;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Guard\DiacriticsValidator;
 use App\Service\Editorial\Guard\StyleGuard;
@@ -26,11 +26,11 @@ final class StyleGuardGeminiFallbackLoggingTest extends TestCase
     #[Test]
     public function geminiFallbackInvokesLogInvocationWithInlineVerdict(): void
     {
-        $executor = $this->createMock(LlmRetryExecutor::class);
+        $dispatcher = $this->createMock(AgentDispatcher::class);
         $gemini = $this->createMock(GeminiCliService::class);
         $invocationLogger = $this->createMock(LlmInvocationLogger::class);
 
-        $executor->method('executeWithRetry')->willThrowException(
+        $dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException('style_guard', LlmModelTier::HAIKU, LlmModelTier::GEMINI_FLASH, 4),
         );
         $gemini->expects($this->once())->method('execute')->willReturn(
@@ -69,7 +69,7 @@ final class StyleGuardGeminiFallbackLoggingTest extends TestCase
 
         $guard = new StyleGuard(
             new DiacriticsValidator(),
-            $executor,
+            $dispatcher,
             $gemini,
             $invocationLogger,
             $this->createMock(LoggerInterface::class),
