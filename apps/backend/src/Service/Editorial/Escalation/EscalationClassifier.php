@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Escalation;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
 use App\Entity\Topic;
 use App\Enum\Editorial\EscalationCategory;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Llm\LlmPromptAssembler;
@@ -126,7 +128,7 @@ Răspunde cu un singur obiect JSON strict, cu schema definită în instrucțiuni
 TEXT;
 
     public function __construct(
-        private readonly LlmRetryExecutor $llmRetryExecutor,
+        private readonly AgentDispatcher $dispatcher,
         private readonly GeminiCliService $geminiCliService,
         private readonly AppSettingRepository $appSettingRepository,
         private readonly LlmPromptAssembler $promptAssembler,
@@ -147,6 +149,16 @@ TEXT;
 
         try {
             $payload = $this->invokeLlm($userPrompt);
+        } catch (EmergencyHaltException $e) {
+            // ADR-024 D2 + T57.P2c.3 decision: halt is structurally different
+            // from LLM unavailable (deliberate operator decision vs transient
+            // infrastructure). Propagate up to the handler's defense-in-depth
+            // silent-ACK terminal instead of falling through to fail-open.
+            // Fail-open here would return null category → handler treats as
+            // "no escalation detected" → article could advance in-pipeline
+            // during halt. Wasted work is strictly better than compromised
+            // editorial flow during a halt.
+            throw $e;
         } catch (\Throwable $e) {
             $this->logger->warning('escalation_classifier_llm_unavailable', [
                 'error' => $e->getMessage(),
@@ -203,26 +215,32 @@ TEXT;
     private function invokeLlm(string $userPrompt): array
     {
         try {
-            $result = $this->llmRetryExecutor->executeWithRetry(
+            $response = $this->dispatcher->dispatch(new AgentRequest(
                 agentId: self::AGENT_ID,
                 messages: [['role' => 'user', 'content' => $userPrompt]],
                 tier: self::PRIMARY_TIER,
                 systemPrompt: self::SYSTEM_PROMPT,
-            );
+            ));
 
-            $decoded = $this->decodeJson($result['content']);
+            $decoded = $this->decodeJson($response->content);
 
-            // T57.03 (ADR-023 D2) — attach verdict to executor-owned row.
-            $invocationId = $result['invocation_id'] ?? null;
-            if ($invocationId !== null) {
+            // T57.03 (ADR-023 D2) — attach verdict to executor-owned row
+            // (T57.P2c.3: executor writes the W' baseline transitively via
+            // the dispatcher; invocation_id flows through AgentResponse DTO).
+            if ($response->invocationId !== null) {
                 $this->invocationLogger->attachVerdict(
-                    $invocationId,
+                    $response->invocationId,
                     $this->mapVerdict($decoded),
                 );
             }
 
             return $decoded;
         } catch (LlmUnavailableException $e) {
+            // Pattern-B Gemini fallback preserved per ADR-024 Q3 (removed
+            // in T57.P8 when downgrade-only policy retires).
+            // EmergencyHaltException does NOT match this catch — unrelated
+            // RuntimeException sibling. Halt escapes invokeLlm and hits the
+            // outer EmergencyHaltException catch in classify().
             $this->logger->warning('escalation_classifier_haiku_unavailable_trying_gemini', [
                 'attempts' => $e->attempts,
             ]);

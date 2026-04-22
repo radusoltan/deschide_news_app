@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Escalation;
 
+use App\Agent\AgentDispatcher;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Escalation\EscalationClassifier;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
@@ -26,7 +26,7 @@ final class EscalationClassifierGeminiFallbackLoggingTest extends TestCase
     #[Test]
     public function geminiFallbackInvokesLogInvocationWithInlineVerdict(): void
     {
-        $executor = $this->createMock(LlmRetryExecutor::class);
+        $dispatcher = $this->createMock(AgentDispatcher::class);
         $gemini = $this->createMock(GeminiCliService::class);
         $settings = $this->createMock(AppSettingRepository::class);
         $invocationLogger = $this->createMock(LlmInvocationLogger::class);
@@ -34,7 +34,7 @@ final class EscalationClassifierGeminiFallbackLoggingTest extends TestCase
         $settings->method('getBool')->willReturn(true);
         $settings->method('get')->willReturn('v1');
 
-        $executor->method('executeWithRetry')->willThrowException(
+        $dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException('escalation_classifier', LlmModelTier::HAIKU, LlmModelTier::GEMINI_FLASH, 4),
         );
         $gemini->expects($this->once())->method('execute')->willReturn(
@@ -72,7 +72,7 @@ final class EscalationClassifierGeminiFallbackLoggingTest extends TestCase
         $invocationLogger->expects($this->never())->method('attachVerdict');
 
         $classifier = new EscalationClassifier(
-            $executor,
+            $dispatcher,
             $gemini,
             $settings,
             new LlmPromptAssembler(),
