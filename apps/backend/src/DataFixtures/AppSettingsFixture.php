@@ -215,6 +215,17 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         'agent.briefing_hourly_polish.model_tier' => 'sonnet',
         'agent.briefing_hourly_polish.fallback' => '',
         'agent.briefing_hourly_polish.enabled' => 'true',
+
+        // ADR-024 D1 — Translation (T57.P7). Only agent retained on Gemini CLI
+        // post-redistribution (quality-confirmed RO↔EN↔RU). No fallback per
+        // ADR-024 D1: on exhaustion the translator contract is "skip + manual
+        // flag" rather than cross-provider degrade. Timeout is higher than the
+        // dispatcher default because articles can be long-form and per-locale
+        // calls still need headroom over the 64KB output boundary.
+        'agent.journalistic_translator.model_tier' => 'gemini_flash',
+        'agent.journalistic_translator.fallback' => '',
+        'agent.journalistic_translator.enabled' => 'true',
+        'agent.journalistic_translator.timeout_seconds' => '300',
     ];
 
     /**
