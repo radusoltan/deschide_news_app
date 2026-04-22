@@ -36,7 +36,7 @@ class AppSettingAuditLog
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::BIGINT)]
-    private ?string $id = null;
+    private ?int $id = null;
 
     #[ORM\Column(name: 'setting_key', length: 100)]
     private string $settingKey;
@@ -83,7 +83,7 @@ class AppSettingAuditLog
         $this->changedAt = $changedAt ?? new \DateTimeImmutable();
     }
 
-    public function getId(): ?string
+    public function getId(): ?int
     {
         return $this->id;
     }
