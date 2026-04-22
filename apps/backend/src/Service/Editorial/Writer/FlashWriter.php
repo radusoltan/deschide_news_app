@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Writer;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentRequest;
 use App\Dto\Editorial\VerificationVerdict;
 use App\Entity\Article;
 use App\Entity\Editorial\SourceSignal;
@@ -13,7 +15,6 @@ use App\Enum\ArticleType;
 use App\Enum\Editorial\VerdictType;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Llm\LlmPromptAssembler;
@@ -82,7 +83,7 @@ Reply with the strict JSON object described in your system instructions (title, 
 TEXT;
 
     public function __construct(
-        private readonly LlmRetryExecutor $llmRetryExecutor,
+        private readonly AgentDispatcher $dispatcher,
         private readonly GeminiCliService $geminiCliService,
         private readonly SignalCategoryResolver $categoryResolver,
         private readonly AiAuthorProvider $aiAuthorProvider,
@@ -196,15 +197,23 @@ TEXT;
         $promptHash = hash('sha256', $fullPrompt);
 
         try {
-            $result = $this->llmRetryExecutor->executeWithRetry(
+            $response = $this->dispatcher->dispatch(new AgentRequest(
                 agentId: self::AGENT_ID,
                 messages: [['role' => 'user', 'content' => $userPrompt]],
                 tier: self::PRIMARY_TIER,
                 systemPrompt: self::SYSTEM_PROMPT,
-            );
+            ));
 
-            return $this->decodeJson($result['content'], 'haiku');
+            return $this->decodeJson($response->content, 'haiku');
         } catch (LlmUnavailableException $e) {
+            // Pattern-B Gemini fallback preserved per ADR-024 Q3 (removed
+            // in T57.P8 when downgrade-only policy retires).
+            // EmergencyHaltException does NOT match this catch — unrelated
+            // RuntimeException sibling. Halt escapes invokeLlm() and
+            // propagates through write() (which has NO outer catch by
+            // pre-existing design — Scenario A safety) up to the handler's
+            // top-level \\Throwable catch. Net effect: zero orphan Article
+            // rows because persist()+flush() at write()'s tail never execute.
             $this->logger->warning('flash_writer_haiku_unavailable_trying_gemini', [
                 'attempts' => $e->attempts,
             ]);

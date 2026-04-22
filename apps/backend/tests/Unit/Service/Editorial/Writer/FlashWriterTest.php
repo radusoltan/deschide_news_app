@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Writer;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
+use App\Dto\Agent\AgentResponse;
 use App\Dto\Editorial\VerificationVerdict;
 use App\Entity\Article;
 use App\Entity\Author;
@@ -17,7 +21,6 @@ use App\Enum\Editorial\VerdictType;
 use App\Enum\EditorialAlignment;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Llm\LlmPromptAssembler;
@@ -30,7 +33,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Unit test for {@see FlashWriter} (Sprint 55 T55.3).
+ * Unit test for {@see FlashWriter} (Sprint 55 T55.3; T57.P2c.4 AgentDispatcher migration).
  *
  * The writer orchestrates: LLM call → JSON parse → Category/Author resolution →
  * Article construction → persist → dispatch translations. Every collaborator is
@@ -38,7 +41,7 @@ use Psr\Log\LoggerInterface;
  */
 class FlashWriterTest extends TestCase
 {
-    private LlmRetryExecutor&MockObject $llmRetryExecutor;
+    private AgentDispatcher&MockObject $dispatcher;
     private GeminiCliService&MockObject $geminiCliService;
     private SignalCategoryResolver&MockObject $categoryResolver;
     private AiAuthorProvider&MockObject $aiAuthorProvider;
@@ -49,7 +52,7 @@ class FlashWriterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->llmRetryExecutor = $this->createMock(LlmRetryExecutor::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->geminiCliService = $this->createMock(GeminiCliService::class);
         $this->categoryResolver = $this->createMock(SignalCategoryResolver::class);
         $this->aiAuthorProvider = $this->createMock(AiAuthorProvider::class);
@@ -58,7 +61,7 @@ class FlashWriterTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->writer = new FlashWriter(
-            $this->llmRetryExecutor,
+            $this->dispatcher,
             $this->geminiCliService,
             $this->categoryResolver,
             $this->aiAuthorProvider,
@@ -71,23 +74,16 @@ class FlashWriterTest extends TestCase
 
     public function testHaikuHappyPathProducesArticleAndDispatchesTranslations(): void
     {
-        $this->llmRetryExecutor->expects($this->once())
-            ->method('executeWithRetry')
-            ->with(
-                'flash_writer',
-                $this->isArray(),
-                LlmModelTier::HAIKU,
-                $this->isString(),
-            )
-            ->willReturn([
-                'content' => $this->happyPathResponse(),
-                'agent_id' => 'flash_writer',
-                'tier' => 'haiku',
-                'model' => 'claude-haiku-4-5-20251001',
-                'attempts' => 1,
-                'fallback_detected' => false,
-                'metrics' => null,
-            ]);
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AgentRequest $req): bool {
+                $this->assertSame('flash_writer', $req->agentId);
+                $this->assertSame(LlmModelTier::HAIKU, $req->tier);
+                $this->assertIsString($req->systemPrompt);
+
+                return true;
+            }))
+            ->willReturn($this->happyPathAgentResponse());
 
         $this->geminiCliService->expects($this->never())->method('execute');
 
@@ -141,7 +137,7 @@ class FlashWriterTest extends TestCase
 
     public function testGeminiFallbackWhenHaikuUnavailable(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willThrowException(
+        $this->dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException(
                 agentId: 'flash_writer',
                 tier: LlmModelTier::HAIKU,
@@ -175,19 +171,14 @@ class FlashWriterTest extends TestCase
 
     public function testT5703HaikuPathDelegatesLoggingToExecutor(): void
     {
-        // T57.03 (ADR-023 D2) — the Haiku baseline row is now written by
-        // LlmRetryExecutor, not by FlashWriter. FlashWriter no longer calls
+        // T57.03 (ADR-023 D2) — the Haiku baseline row is written by
+        // LlmRetryExecutor (T57.P2c.4: now via AgentDispatcher→executor
+        // transitively), not by FlashWriter. FlashWriter no longer calls
         // logInvocation() on the Claude path; the executor handles it on
         // every successful invocation for W' universal coverage. The Gemini
         // fallback path still self-logs (next test).
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(),
-            'agent_id' => 'flash_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => [
+        $this->dispatcher->method('dispatch')->willReturn($this->happyPathAgentResponse(
+            metrics: [
                 'input_tokens' => 1024,
                 'output_tokens' => 256,
                 'cache_read_tokens' => 128,
@@ -195,8 +186,8 @@ class FlashWriterTest extends TestCase
                 'cost_usd' => 0.0175,
                 'duration_ms' => 1500,
             ],
-            'invocation_id' => '01JFXXXXXXXXXXXXXXXXXXXXXX',
-        ]);
+            invocationId: '01JFXXXXXXXXXXXXXXXXXXXXXX',
+        ));
         $this->categoryResolver->method('resolve')->willReturn($this->mockCategory('politica'));
         $this->aiAuthorProvider->method('getOrCreate')->willReturn($this->mockAuthor());
 
@@ -217,7 +208,7 @@ class FlashWriterTest extends TestCase
         // T56.09 — Gemini CLI fallback path does not expose wrapper metrics;
         // the hook must still record a row using wall-clock duration and
         // explicit zeros (not garbage) for token/cost fields.
-        $this->llmRetryExecutor->method('executeWithRetry')->willThrowException(
+        $this->dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException(
                 agentId: 'flash_writer',
                 tier: LlmModelTier::HAIKU,
@@ -252,15 +243,9 @@ class FlashWriterTest extends TestCase
 
     public function testThrowsWhenLlmResponseIsNotJson(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => 'Acesta nu este JSON, ci text liber.',
-            'agent_id' => 'flash_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(
+            $this->buildAgentResponse('Acesta nu este JSON, ci text liber.'),
+        );
 
         $this->em->expects($this->never())->method('persist');
         $this->em->expects($this->never())->method('flush');
@@ -278,15 +263,7 @@ class FlashWriterTest extends TestCase
     {
         $fenced = "```json\n" . $this->happyPathResponse() . "\n```";
 
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $fenced,
-            'agent_id' => 'flash_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildAgentResponse($fenced));
 
         $this->categoryResolver->method('resolve')->willReturn($this->mockCategory('politica'));
         $this->aiAuthorProvider->method('getOrCreate')->willReturn($this->mockAuthor());
@@ -302,15 +279,7 @@ class FlashWriterTest extends TestCase
 
     public function testFlashWithAttributionVerdictSetsInternalSummaryFlag(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(),
-            'agent_id' => 'flash_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->happyPathAgentResponse());
 
         $this->categoryResolver->method('resolve')->willReturn($this->mockCategory('externe'));
         $this->aiAuthorProvider->method('getOrCreate')->willReturn($this->mockAuthor());
@@ -331,15 +300,7 @@ class FlashWriterTest extends TestCase
 
     public function testSupportingSignalsIncrementAiSourceCount(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(),
-            'agent_id' => 'flash_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->happyPathAgentResponse());
 
         $this->categoryResolver->method('resolve')->willReturn($this->mockCategory('politica'));
         $this->aiAuthorProvider->method('getOrCreate')->willReturn($this->mockAuthor());
@@ -360,15 +321,7 @@ class FlashWriterTest extends TestCase
 
     public function testTopicAssociationWhenTopicPassed(): void
     {
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(),
-            'agent_id' => 'flash_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->happyPathAgentResponse());
 
         $this->categoryResolver->method('resolve')->willReturn($this->mockCategory('politica'));
         $this->aiAuthorProvider->method('getOrCreate')->willReturn($this->mockAuthor());
@@ -382,6 +335,113 @@ class FlashWriterTest extends TestCase
         $article = $this->writer->write($primary, [], $verdict, $topic);
 
         $this->assertTrue($article->getTopics()->contains($topic));
+    }
+
+    /**
+     * T57.P2c.4 acceptance (d'): CRITICAL — editorial.emergency_halt must NOT
+     * trigger Gemini fallback AND must NOT leave orphan Article rows in the
+     * DB. This test codifies Scenario-A persistence safety empirically: the
+     * EntityManager's persist() and flush() must NEVER be invoked when halt
+     * propagates from the dispatcher.
+     *
+     * Four asserts per orchestrator directive + Scenario-A codification:
+     *   1. GeminiCliService never called (fallback is NOT triggered).
+     *   2. LlmInvocationLogger::logInvocation never called (direct Gemini log).
+     *   3. EntityManager::persist and flush never called (ZERO orphan rows).
+     *   4. Writer re-throws EmergencyHaltException (propagates up to handler).
+     *
+     * The em->never() assertions convert the observable Scenario-A property
+     * (FlashWriter line 105→113 invoke-then-persist, confirmed during P2c.4
+     * Discovery) into a test-guaranteed invariant. A future refactor that
+     * introduces a pre-LLM shell-Article persist pattern (Scenario-B) would
+     * fail this test immediately — regression guard against orphan-row risk.
+     */
+    public function testEmergencyHaltExceptionPropagatesWithoutPersistingOrFallingBackToGemini(): void
+    {
+        $this->dispatcher->method('dispatch')->willThrowException(
+            new EmergencyHaltException('flash_writer'),
+        );
+
+        // No Gemini fallback.
+        $this->geminiCliService->expects($this->never())->method('execute');
+        // No direct Gemini logging.
+        $this->llmInvocationLogger->expects($this->never())->method('logInvocation');
+        // Scenario-A codification: no persist, no flush → zero orphan rows.
+        $this->em->expects($this->never())->method('persist');
+        $this->em->expects($this->never())->method('flush');
+
+        $this->expectException(EmergencyHaltException::class);
+
+        $primary = $this->mockSignal(200, 'Titlu halt-test', 'Rezumat');
+        $verdict = new VerificationVerdict(VerdictType::FULL_FLASH, 'ok', confidence: 0.9);
+
+        $this->writer->write($primary, [], $verdict);
+    }
+
+    /**
+     * T57.P2c.4 acceptance (c + AgentRequest shape): the dispatcher receives
+     * an AgentRequest carrying agentId=flash_writer, hardcoded HAIKU tier
+     * (Pattern-B constant, not TierResolver-driven), the system prompt, and
+     * no tierVariant (FlashWriter has no variant — single tier per
+     * ADR-020 D5 Tier B).
+     */
+    public function testDispatchReceivesAgentRequestWithHardcodedHaikuTier(): void
+    {
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AgentRequest $req): bool {
+                $this->assertSame('flash_writer', $req->agentId);
+                $this->assertSame(LlmModelTier::HAIKU, $req->tier);
+                $this->assertNotNull($req->systemPrompt);
+                $this->assertStringContainsString('editor al redacției Deschide', $req->systemPrompt);
+                $this->assertCount(1, $req->messages);
+                $this->assertSame('user', $req->messages[0]['role']);
+                $this->assertNull($req->tierVariant, 'FlashWriter has no variant');
+
+                return true;
+            }))
+            ->willReturn($this->happyPathAgentResponse());
+
+        $this->categoryResolver->method('resolve')->willReturn($this->mockCategory('politica'));
+        $this->aiAuthorProvider->method('getOrCreate')->willReturn($this->mockAuthor());
+
+        $primary = $this->mockSignal(1, 'T', 'S');
+        $verdict = new VerificationVerdict(VerdictType::FULL_FLASH, 'ok', confidence: 0.9);
+
+        $this->writer->write($primary, [], $verdict);
+    }
+
+    /**
+     * @param array<string, mixed>|null $metrics
+     */
+    private function happyPathAgentResponse(
+        ?array $metrics = null,
+        ?string $invocationId = '01JE0Q9ZXJQ8YHZR3S3M7E2P5H',
+    ): AgentResponse {
+        return $this->buildAgentResponse(
+            content: $this->happyPathResponse(),
+            metrics: $metrics,
+            invocationId: $invocationId,
+        );
+    }
+
+    /**
+     * @param array<string, mixed>|null $metrics
+     */
+    private function buildAgentResponse(
+        string $content,
+        ?array $metrics = null,
+        ?string $invocationId = '01JE0Q9ZXJQ8YHZR3S3M7E2P5H',
+    ): AgentResponse {
+        return new AgentResponse(
+            content: $content,
+            agentId: 'flash_writer',
+            tier: LlmModelTier::HAIKU,
+            model: 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: $invocationId,
+            metrics: $metrics,
+        );
     }
 
     private function happyPathResponse(): string
