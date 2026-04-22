@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Guard;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
 use App\Entity\Article;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use Psr\Log\LoggerInterface;
@@ -73,7 +75,7 @@ PROMPT;
 
     public function __construct(
         private readonly LegalCategoryDetector $categoryDetector,
-        private readonly LlmRetryExecutor $llmRetryExecutor,
+        private readonly AgentDispatcher $dispatcher,
         private readonly GeminiCliService $geminiCliService,
         private readonly AppSettingRepository $appSettingRepository,
         private readonly LlmInvocationLogger $invocationLogger,
@@ -91,6 +93,16 @@ PROMPT;
 
         try {
             $llmResult = $this->invokeLlm($article, $tier, $isCategory6);
+        } catch (EmergencyHaltException $e) {
+            // ADR-024 D2 + T57.P2c.2 decision: halt is structurally different
+            // from LLM unavailable (deliberate operator decision vs transient
+            // infrastructure). Propagate up to the handler's defense-in-depth
+            // silent-ACK terminal instead of falling through to the Cat6
+            // fail-closed / general fail-open branches below. Without this
+            // explicit catch, the generic \\Throwable clause below would
+            // convert a halt into a CATEGORY_6 escalation for Cat6 articles
+            // — silently swallowing the operator's halt signal.
+            throw $e;
         } catch (\Throwable $e) {
             $this->logger->warning('legal_guard_llm_unavailable', [
                 'article_id' => $article->getId(),
@@ -142,27 +154,33 @@ PROMPT;
         );
 
         try {
-            $result = $this->llmRetryExecutor->executeWithRetry(
+            $response = $this->dispatcher->dispatch(new AgentRequest(
                 agentId: self::AGENT_ID_GENERAL,
                 messages: [['role' => 'user', 'content' => $userPrompt]],
                 tier: $tier,
                 systemPrompt: self::SYSTEM_PROMPT,
-            );
+            ));
 
-            $decoded = $this->decodeJson($result['content']);
+            $decoded = $this->decodeJson($response->content);
 
             // T57.03 (ADR-023 D2) — P' coverage. Attach the parsed verdict
-            // to the executor-owned baseline row.
-            $invocationId = $result['invocation_id'] ?? null;
-            if ($invocationId !== null) {
+            // to the executor-owned baseline row (T57.P2c.2: executor
+            // writes the W' baseline transitively via the dispatcher;
+            // invocation_id flows through AgentResponse DTO).
+            if ($response->invocationId !== null) {
                 $this->invocationLogger->attachVerdict(
-                    $invocationId,
+                    $response->invocationId,
                     $this->mapVerdict($decoded, $isCategory6),
                 );
             }
 
             return $decoded;
         } catch (LlmUnavailableException $e) {
+            // Pattern-B Gemini fallback preserved per ADR-024 Q3 (removed
+            // in T57.P8 when downgrade-only policy retires).
+            // EmergencyHaltException does NOT match this catch —
+            // unrelated RuntimeException sibling. Halt escapes invokeLlm
+            // and hits the outer EmergencyHaltException catch in validate().
             $this->logger->warning('legal_guard_primary_tier_unavailable_trying_gemini', [
                 'tier' => $tier->value,
                 'attempts' => $e->attempts,

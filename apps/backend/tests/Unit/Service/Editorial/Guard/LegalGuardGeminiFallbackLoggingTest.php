@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Guard;
 
+use App\Agent\AgentDispatcher;
 use App\Entity\AppSetting;
 use App\Entity\Article;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Guard\LegalCategoryDetector;
 use App\Service\Editorial\Guard\LegalGuard;
@@ -29,7 +29,7 @@ final class LegalGuardGeminiFallbackLoggingTest extends TestCase
     #[Test]
     public function geminiFallbackInvokesLogInvocationWithInlineVerdict(): void
     {
-        $executor = $this->createMock(LlmRetryExecutor::class);
+        $dispatcher = $this->createMock(AgentDispatcher::class);
         $gemini = $this->createMock(GeminiCliService::class);
         $settings = $this->createMock(AppSettingRepository::class);
         $invocationLogger = $this->createMock(LlmInvocationLogger::class);
@@ -43,7 +43,7 @@ final class LegalGuardGeminiFallbackLoggingTest extends TestCase
         );
 
         // Force Claude tier exhaustion → gate falls back to Gemini.
-        $executor->method('executeWithRetry')->willThrowException(
+        $dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException('legal_guard', LlmModelTier::HAIKU, LlmModelTier::GEMINI_FLASH, 4),
         );
         $gemini->expects($this->once())->method('execute')->willReturn(
@@ -85,7 +85,7 @@ final class LegalGuardGeminiFallbackLoggingTest extends TestCase
 
         $guard = new LegalGuard(
             new LegalCategoryDetector(),
-            $executor,
+            $dispatcher,
             $gemini,
             $settings,
             $invocationLogger,
