@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
+use App\Dto\Agent\AgentResponse;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Dto\Editorial\EditorialContext;
 use App\Entity\Editorial\SourceSignal;
@@ -12,7 +16,6 @@ use App\Entity\Source;
 use App\Enum\EditorialAlignment;
 use App\Enum\LlmModelTier;
 use App\Service\Aggregator\ElasticsearchSimilarityService;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use App\Service\Editorial\Verification\ContextAgent;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -22,14 +25,14 @@ use Psr\Log\NullLogger;
 class ContextAgentTest extends TestCase
 {
     private ElasticsearchSimilarityService&MockObject $similarity;
-    private LlmRetryExecutor&MockObject $executor;
+    private AgentDispatcher&MockObject $dispatcher;
     private TierResolver&MockObject $tierResolver;
     private ContextAgent $agent;
 
     protected function setUp(): void
     {
         $this->similarity = $this->createMock(ElasticsearchSimilarityService::class);
-        $this->executor = $this->createMock(LlmRetryExecutor::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
 
         // Default: agent enabled, resolves to Sonnet.
@@ -42,7 +45,7 @@ class ContextAgentTest extends TestCase
 
         $this->agent = new ContextAgent(
             $this->similarity,
-            $this->executor,
+            $this->dispatcher,
             $this->tierResolver,
             new NullLogger(),
         );
@@ -55,13 +58,13 @@ class ContextAgentTest extends TestCase
 
         $agent = new ContextAgent(
             $this->similarity,
-            $this->executor,
+            $this->dispatcher,
             $tierResolver,
             new NullLogger(),
         );
 
         $this->similarity->expects($this->never())->method('findSimilar');
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         $context = $agent->gather($this->makeGraph(), [$this->makeSignal(1, tier: 1)]);
 
@@ -73,7 +76,7 @@ class ContextAgentTest extends TestCase
     public function testEmptySignalsReturnsNovel(): void
     {
         $this->similarity->expects($this->never())->method('findSimilar');
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         $context = $this->agent->gather($this->makeGraph(), []);
 
@@ -83,7 +86,7 @@ class ContextAgentTest extends TestCase
     public function testZeroEsHitsReturnsNovelWithoutLlmCall(): void
     {
         $this->similarity->method('findSimilar')->willReturn([]);
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         $context = $this->agent->gather($this->makeGraph(), [$this->makeSignal(1, tier: 1)]);
 
@@ -100,23 +103,19 @@ class ContextAgentTest extends TestCase
             ['score' => 0.70, 'articleId' => 103, 'title' => 'Reacții politice'],
         ]);
 
-        $this->executor->expects($this->once())
-            ->method('executeWithRetry')
-            ->with(
-                ContextAgent::AGENT_ID,
-                $this->isType('array'),
-                LlmModelTier::SONNET,
-                $this->isType('string'),
-            )
-            ->willReturn([
-                'content' => '{"narrative_thread":"Noile rapoarte continuă tendința de intensificare observată în ultimele săptămâni, conturând o escaladare treptată a semnalelor oficiale."}',
-                'agent_id' => 'context',
-                'tier' => 'sonnet',
-                'model' => 'claude-sonnet-4-6',
-                'attempts' => 1,
-                'fallback_detected' => false,
-                'metrics' => null,
-            ]);
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AgentRequest $req): bool {
+                $this->assertSame(ContextAgent::AGENT_ID, $req->agentId);
+                $this->assertSame(LlmModelTier::SONNET, $req->tier);
+                $this->assertNotNull($req->systemPrompt);
+                $this->assertNull($req->tierVariant, 'ContextAgent has no variant');
+
+                return true;
+            }))
+            ->willReturn($this->buildResponse(
+                '{"narrative_thread":"Noile rapoarte continuă tendința de intensificare observată în ultimele săptămâni, conturând o escaladare treptată a semnalelor oficiale."}',
+            ));
 
         $context = $this->agent->gather($this->makeGraph(), [$this->makeSignal(1, tier: 1)]);
 
@@ -136,15 +135,9 @@ class ContextAgentTest extends TestCase
         }
         $this->similarity->method('findSimilar')->willReturn($manyHits);
 
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"narrative_thread":"Context."}',
-            'agent_id' => 'context',
-            'tier' => 'sonnet',
-            'model' => 'claude-sonnet-4-6',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(
+            $this->buildResponse('{"narrative_thread":"Context."}'),
+        );
 
         $context = $this->agent->gather($this->makeGraph(), [$this->makeSignal(1, tier: 1)]);
 
@@ -157,7 +150,7 @@ class ContextAgentTest extends TestCase
             ['score' => 0.9, 'articleId' => 1, 'title' => 'Ceva'],
         ]);
 
-        $this->executor->method('executeWithRetry')
+        $this->dispatcher->method('dispatch')
             ->willThrowException(new \RuntimeException('Sonnet unavailable'));
 
         $context = $this->agent->gather($this->makeGraph(), [$this->makeSignal(1, tier: 1)]);
@@ -174,15 +167,9 @@ class ContextAgentTest extends TestCase
             ['score' => 0.9, 'articleId' => 1, 'title' => 'Ceva'],
         ]);
 
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => 'Nu pot procesa această cerere.',
-            'agent_id' => 'context',
-            'tier' => 'sonnet',
-            'model' => 'claude-sonnet-4-6',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(
+            $this->buildResponse('Nu pot procesa această cerere.'),
+        );
 
         $context = $this->agent->gather($this->makeGraph(), [$this->makeSignal(1, tier: 1)]);
 
@@ -220,6 +207,41 @@ class ContextAgentTest extends TestCase
         $this->assertTrue($novel->isNovelClaim);
         $this->assertSame([], $novel->relatedArticles);
         $this->assertNull($novel->narrativeThread);
+    }
+
+    /**
+     * T57.P2c.1 acceptance (d): editorial.emergency_halt raised by the
+     * dispatcher fails-open to null narrative. ES hits are already populated
+     * before the dispatch call, so isNovelClaim stays false — halt means
+     * "no narrative this cycle", not "pretend nothing was found in ES".
+     */
+    public function testEmergencyHaltFailsOpenToNullNarrative(): void
+    {
+        $this->similarity->method('findSimilar')->willReturn([
+            ['score' => 0.9, 'articleId' => 1, 'title' => 'Article-from-es'],
+        ]);
+
+        $this->dispatcher->method('dispatch')
+            ->willThrowException(new EmergencyHaltException(ContextAgent::AGENT_ID));
+
+        $context = $this->agent->gather($this->makeGraph(), [$this->makeSignal(1, tier: 1)]);
+
+        $this->assertFalse($context->isNovelClaim, 'ES hits present → not novel');
+        $this->assertNull($context->narrativeThread, 'Halt resolves to null narrative');
+        $this->assertCount(1, $context->relatedArticles);
+    }
+
+    private function buildResponse(string $content): AgentResponse
+    {
+        return new AgentResponse(
+            content: $content,
+            agentId: ContextAgent::AGENT_ID,
+            tier: LlmModelTier::SONNET,
+            model: 'claude-sonnet-4-6',
+            attempts: 1,
+            invocationId: '01JE0Q9ZXJQ8YHZR3S3M7E2P5H',
+            metrics: null,
+        );
     }
 
     private function makeGraph(): ClaimOriginGraph
