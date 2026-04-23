@@ -10,7 +10,6 @@ use App\Entity\AppSetting;
 use App\Entity\Article;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Guard\LegalCategoryDetector;
 use App\Service\Editorial\Guard\LegalGuard;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
@@ -30,7 +29,6 @@ final class LegalGuardVerdictMappingTest extends TestCase
     private const INVOCATION_ID = '01JFXXXXXXXXXXXXXXXXXXXXXX';
 
     private AgentDispatcher&MockObject $dispatcher;
-    private GeminiCliService&MockObject $geminiCliService;
     private AppSettingRepository&MockObject $settings;
     private LlmInvocationLogger&MockObject $invocationLogger;
     private LegalGuard $guard;
@@ -41,7 +39,6 @@ final class LegalGuardVerdictMappingTest extends TestCase
     protected function setUp(): void
     {
         $this->dispatcher = $this->createMock(AgentDispatcher::class);
-        $this->geminiCliService = $this->createMock(GeminiCliService::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
 
@@ -63,7 +60,6 @@ final class LegalGuardVerdictMappingTest extends TestCase
         $this->guard = new LegalGuard(
             new LegalCategoryDetector(),
             $this->dispatcher,
-            $this->geminiCliService,
             $this->settings,
             $this->invocationLogger,
             $this->createMock(LoggerInterface::class),

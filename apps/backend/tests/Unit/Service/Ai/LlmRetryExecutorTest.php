@@ -10,7 +10,6 @@ use App\Service\Ai\Exception\ClaudeCliPermanentException;
 use App\Service\Ai\Exception\ClaudeCliTransientException;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
-use App\Service\Ai\TierResolver;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -21,18 +20,15 @@ use Symfony\Component\Process\Process;
 class LlmRetryExecutorTest extends TestCase
 {
     private AnthropicClientInterface&MockObject $client;
-    private TierResolver&MockObject $tierResolver;
     private LlmInvocationLogger&MockObject $invocationLogger;
     private LlmRetryExecutor $executor;
 
     protected function setUp(): void
     {
         $this->client = $this->createMock(AnthropicClientInterface::class);
-        $this->tierResolver = $this->createMock(TierResolver::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->executor = new LlmRetryExecutor(
             $this->client,
-            $this->tierResolver,
             new NullLogger(),
             $this->invocationLogger,
             [0, 0, 0],
@@ -114,7 +110,6 @@ class LlmRetryExecutorTest extends TestCase
         $this->assertSame('haiku', $result['tier']);
         $this->assertSame('claude-haiku-4-5-20251001', $result['model']);
         $this->assertSame(1, $result['attempts']);
-        $this->assertFalse($result['fallback_detected']);
     }
 
     public function testSystemPromptIsForwarded(): void
@@ -154,7 +149,6 @@ class LlmRetryExecutorTest extends TestCase
 
         $this->assertSame('success', $result['content']);
         $this->assertSame(3, $result['attempts']);
-        $this->assertFalse($result['fallback_detected']);
     }
 
     public function testProcessTimeoutIsTreatedAsTransient(): void
@@ -181,16 +175,14 @@ class LlmRetryExecutorTest extends TestCase
         $this->assertSame(2, $result['attempts']);
     }
 
-    public function testExhaustedRetriesWithFallbackThrowsLlmUnavailable(): void
+    public function testExhaustedRetriesThrowLlmUnavailableWithoutFallbackTier(): void
     {
+        // ADR-024 D3 (T57.P8) — retry exhaust hard-fails with a null
+        // invocation_id (executor only opens an LlmAgentCallLog row on
+        // successful invocations in P8; exhaust-row writing is S58+).
         $this->client->expects($this->exactly(4))
             ->method('chat')
             ->willThrowException(new ClaudeCliTransientException('529'));
-
-        $this->tierResolver->expects($this->once())
-            ->method('resolveFallback')
-            ->with('source_attribution')
-            ->willReturn(LlmModelTier::GEMINI_FLASH);
 
         try {
             $this->executor->executeWithRetry(
@@ -202,35 +194,9 @@ class LlmRetryExecutorTest extends TestCase
         } catch (LlmUnavailableException $e) {
             $this->assertSame('source_attribution', $e->agentId);
             $this->assertSame(LlmModelTier::HAIKU, $e->tier);
-            $this->assertSame(LlmModelTier::GEMINI_FLASH, $e->fallbackTier);
             $this->assertSame(4, $e->attempts);
-            $this->assertTrue($e->isFallbackDetected());
+            $this->assertNull($e->getInvocationId(), 'invocation_id is null on exhaust — no row opened');
             $this->assertInstanceOf(ClaudeCliTransientException::class, $e->getPrevious());
-        }
-    }
-
-    public function testExhaustedRetriesWithoutFallbackStillThrowsButFallbackNotDetected(): void
-    {
-        $this->client->expects($this->exactly(4))
-            ->method('chat')
-            ->willThrowException(new ClaudeCliTransientException('rate_limit'));
-
-        $this->tierResolver->expects($this->once())
-            ->method('resolveFallback')
-            ->with('context')
-            ->willReturn(null);
-
-        try {
-            $this->executor->executeWithRetry(
-                'context',
-                [['role' => 'user', 'content' => 'x']],
-                LlmModelTier::SONNET,
-            );
-            $this->fail('Expected LlmUnavailableException');
-        } catch (LlmUnavailableException $e) {
-            $this->assertSame('context', $e->agentId);
-            $this->assertNull($e->fallbackTier);
-            $this->assertFalse($e->isFallbackDetected());
         }
     }
 
@@ -239,9 +205,6 @@ class LlmRetryExecutorTest extends TestCase
         $this->client->expects($this->once())
             ->method('chat')
             ->willThrowException(new ClaudeCliPermanentException('invalid_api_key'));
-
-        $this->tierResolver->expects($this->never())
-            ->method('resolveFallback');
 
         $this->expectException(ClaudeCliPermanentException::class);
 
@@ -252,8 +215,10 @@ class LlmRetryExecutorTest extends TestCase
         );
     }
 
-    public function testGeminiFlashTierIsRejectedInSprint54(): void
+    public function testGeminiFlashTierIsRejectedByClaudeCliTransportGuard(): void
     {
+        // Executor remains claude_cli-only by construction post-T57.P7.C1;
+        // Gemini transport is routed by AgentDispatcher directly.
         $this->client->expects($this->never())->method('chat');
 
         $this->expectException(\InvalidArgumentException::class);

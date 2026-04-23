@@ -139,12 +139,14 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
     /**
      * Per-agent LLM tier AppSettings (Sprint 54 T54.1, ADR-020 D5).
      *
-     * Each editorial agent declares three keys:
+     * Each editorial agent declares two keys:
      *   - `agent.{id}.model_tier` (or variants like `model_tier_simple` /
      *     `model_tier_conflict` for verification_gate): primary {@see \App\Enum\LlmModelTier} value
-     *   - `agent.{id}.fallback`: secondary tier used by LlmRetryExecutor when
-     *     primary exhausts; empty string means "no fallback" (Tier B/C in ADR-020 D5)
      *   - `agent.{id}.enabled`: gate — false skips the LLM call entirely
+     *
+     * Per ADR-024 D3 (T57.P8) the `agent.{id}.fallback` key has been retired
+     * together with the downgrade-only policy — on retry exhaust the caller
+     * emits `editorial_review_queue` and rethrows, no cross-provider fallback.
      *
      * Resolved through {@see \App\Service\Ai\TierResolver}. The pipeline
      * master switch (`editorial.pipeline.enabled`) overrides these; an
@@ -156,16 +158,13 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
     private const AGENT_TIER_DEFAULTS = [
         // SourceAttributionExtractor (T54.7) — extracts `source_attribution`
         // and `source_links_out` from each signal. Cheap per-signal call,
-        // Haiku is sufficient; Gemini fallback keeps extraction flowing if
-        // Anthropic is unavailable.
+        // Haiku is sufficient.
         'agent.source_attribution.model_tier' => 'haiku',
-        'agent.source_attribution.fallback' => 'gemini_flash',
         'agent.source_attribution.enabled' => 'true',
 
         // SignalAggregator (T54.8) — clusters signals + runs LLM semantic
-        // gate on each candidate cluster. Haiku primary, Gemini fallback.
+        // gate on each candidate cluster. Haiku primary.
         'agent.signal_aggregator.model_tier' => 'haiku',
-        'agent.signal_aggregator.fallback' => 'gemini_flash',
         'agent.signal_aggregator.enabled' => 'true',
 
         // VerificationGate (T54.9) — D3 publication matrix. Two variants:
@@ -173,57 +172,45 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         // conflict (contradictory claims across chains) escalates to Sonnet.
         'agent.verification_gate.model_tier_simple' => 'haiku',
         'agent.verification_gate.model_tier_conflict' => 'sonnet',
-        'agent.verification_gate.fallback' => 'gemini_flash',
         'agent.verification_gate.enabled' => 'true',
 
         // ContextAgent (T54.11) — Elasticsearch MLT + Sonnet narrative
-        // synthesis. No fallback per ADR-020 D5 Tier B: Gemini produces
-        // lower-quality narrative and we'd rather return isNovelClaim=true
-        // than emit weak context.
+        // synthesis.
         'agent.context.model_tier' => 'sonnet',
-        'agent.context.fallback' => '',
         'agent.context.enabled' => 'true',
 
         // ADR-024 D1 — Support layer (T57.P6). Topic classifier covers both
         // PressReleaseTopicDetector (async per-PR 2-layer keyword+LLM) and
         // TopicDetectorService (sync single-article). Shared semantic role →
         // shared agent id. Haiku tier is sufficient for taxonomy lookup over
-        // the 116 seeded editorial topics; Gemini fallback retained until
-        // T57.P8 retires the downgrade-only policy.
+        // the 116 seeded editorial topics.
         'agent.topic_classifier.model_tier' => 'haiku',
-        'agent.topic_classifier.fallback' => 'gemini_flash',
         'agent.topic_classifier.enabled' => 'true',
 
         // ADR-024 D1 — Briefing (T57.P4+P5). TopicBriefingWriterService
         // resolves tier per BriefingCadence:
-        //   DAILY   → Sonnet draft, no polish, no fallback (FAILED on exhaust)
-        //   HOURLY  → Haiku draft, Sonnet polish (via briefing_hourly_polish),
-        //             Gemini fallback retained until T57.P8
-        //   WEEKLY  → Sonnet draft, no polish, no fallback (FAILED on exhaust)
+        //   DAILY   → Sonnet draft, no polish (FAILED on exhaust)
+        //   HOURLY  → Haiku draft, Sonnet polish (via briefing_hourly_polish)
+        //   WEEKLY  → Sonnet draft, no polish (FAILED on exhaust)
         // Polish runs as a separate dispatcher call to preserve the 100%
         // LlmAgentCallLog coverage invariant (ADR-024 D2). Polish failure is
         // non-fatal: briefing persists as DRAFT with Haiku content.
         'agent.briefing_daily.model_tier' => 'sonnet',
-        'agent.briefing_daily.fallback' => '',
         'agent.briefing_daily.enabled' => 'true',
         'agent.briefing_hourly.model_tier' => 'haiku',
-        'agent.briefing_hourly.fallback' => 'gemini_flash',
         'agent.briefing_hourly.enabled' => 'true',
         'agent.briefing_weekly.model_tier' => 'sonnet',
-        'agent.briefing_weekly.fallback' => '',
         'agent.briefing_weekly.enabled' => 'true',
         'agent.briefing_hourly_polish.model_tier' => 'sonnet',
-        'agent.briefing_hourly_polish.fallback' => '',
         'agent.briefing_hourly_polish.enabled' => 'true',
 
         // ADR-024 D1 — Translation (T57.P7). Only agent retained on Gemini CLI
-        // post-redistribution (quality-confirmed RO↔EN↔RU). No fallback per
-        // ADR-024 D1: on exhaustion the translator contract is "skip + manual
-        // flag" rather than cross-provider degrade. Timeout is higher than the
-        // dispatcher default because articles can be long-form and per-locale
-        // calls still need headroom over the 64KB output boundary.
+        // post-redistribution (quality-confirmed RO↔EN↔RU). On exhaustion the
+        // translator contract is "skip + manual flag" rather than cross-
+        // provider degrade. Timeout is higher than the dispatcher default
+        // because articles can be long-form and per-locale calls still need
+        // headroom over the 64KB output boundary.
         'agent.journalistic_translator.model_tier' => 'gemini_flash',
-        'agent.journalistic_translator.fallback' => '',
         'agent.journalistic_translator.enabled' => 'true',
         'agent.journalistic_translator.timeout_seconds' => '300',
     ];
@@ -255,43 +242,37 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
      * @var array<string, string>
      */
     private const WRITER_GUARD_ESCALATION_DEFAULTS = [
-        // Writers (T55.3, T55.4) — Haiku primary, Gemini Flash fallback (direct
-        // GeminiCliService call, bypassing LlmRetryExecutor per audit hard rule 6).
+        // Writers (T55.3, T55.4) — Haiku primary. Post-ADR-024 D3 (T57.P8)
+        // there is no cross-provider fallback; on retry exhaust the writer
+        // emits `editorial_review_queue` and rethrows.
         'agent.flash_writer.model_tier' => 'haiku',
-        'agent.flash_writer.fallback' => 'gemini_flash',
         'agent.flash_writer.enabled' => 'true',
         'agent.developing_story_writer.model_tier' => 'haiku',
-        'agent.developing_story_writer.fallback' => 'gemini_flash',
         'agent.developing_story_writer.enabled' => 'true',
 
         // LongformSynthesizer (S56 — seed disabled). Sonnet-only per Tier B
-        // guidance (no Gemini fallback for long narrative synthesis).
+        // guidance.
         'agent.longform_synthesizer.model_tier' => 'sonnet',
-        'agent.longform_synthesizer.fallback' => '',
         'agent.longform_synthesizer.enabled' => 'false',
 
         // HeadlineOptimizer (S56 — seed disabled per audit D14). Sonnet-primary
-        // for editorial polish, Gemini fallback for bulk processing.
+        // for editorial polish.
         'agent.headline_optimizer.model_tier' => 'sonnet',
-        'agent.headline_optimizer.fallback' => 'gemini_flash',
         'agent.headline_optimizer.enabled' => 'false',
 
         // Guards (T55.6, T55.7). LegalGuard splits by category: general cases
         // run on Haiku; Category 6 (personalised criminal accusations per
         // ADR-020 D7) escalates to Sonnet for nuance.
         'agent.style_guard.model_tier' => 'haiku',
-        'agent.style_guard.fallback' => 'gemini_flash',
         'agent.style_guard.enabled' => 'true',
         'agent.legal_guard.model_tier_general' => 'haiku',
         'agent.legal_guard.model_tier_categ6' => 'sonnet',
-        'agent.legal_guard.fallback' => 'gemini_flash',
         'agent.legal_guard.enabled' => 'true',
 
-        // EscalationClassifier (T55.8) — Haiku with Gemini fallback. Fail-open:
-        // classifier null result does not block the pipeline; handler uses a
-        // generic family default and logs the gap.
+        // EscalationClassifier (T55.8) — Haiku. Post-T57.P8 a retry exhaust
+        // fails closed with `editorial_review_queue`; other unexpected errors
+        // still return null (handler uses a generic family default).
         'agent.escalation_classifier.model_tier' => 'haiku',
-        'agent.escalation_classifier.fallback' => 'gemini_flash',
         'agent.escalation_classifier.enabled' => 'true',
 
         // SLA window + expiry (T55.8, T55.11). Day/night bands mirror the

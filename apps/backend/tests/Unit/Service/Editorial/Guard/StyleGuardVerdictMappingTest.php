@@ -8,7 +8,6 @@ use App\Agent\AgentDispatcher;
 use App\Dto\Agent\AgentResponse;
 use App\Entity\Article;
 use App\Enum\LlmModelTier;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Guard\DiacriticsValidator;
 use App\Service\Editorial\Guard\StyleGuard;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
@@ -27,7 +26,6 @@ final class StyleGuardVerdictMappingTest extends TestCase
     private const INVOCATION_ID = '01JFXXXXXXXXXXXXXXXXXXXXXX';
 
     private AgentDispatcher&MockObject $dispatcher;
-    private GeminiCliService&MockObject $geminiCliService;
     private LlmInvocationLogger&MockObject $invocationLogger;
     private StyleGuard $guard;
 
@@ -36,7 +34,6 @@ final class StyleGuardVerdictMappingTest extends TestCase
     protected function setUp(): void
     {
         $this->dispatcher = $this->createMock(AgentDispatcher::class);
-        $this->geminiCliService = $this->createMock(GeminiCliService::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
 
         $this->invocationLogger
@@ -48,7 +45,6 @@ final class StyleGuardVerdictMappingTest extends TestCase
         $this->guard = new StyleGuard(
             new DiacriticsValidator(),
             $this->dispatcher,
-            $this->geminiCliService,
             $this->invocationLogger,
             $this->createMock(LoggerInterface::class),
         );

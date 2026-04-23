@@ -15,18 +15,20 @@ use Symfony\Component\Process\Exception\ProcessTimedOutException;
 
 /**
  * Wraps an {@see AnthropicClientInterface} call with exponential-backoff retry
- * and fallback-detection logging (ADR-020 D5, Sprint 54 T54.2).
+ * on the caller-supplied tier. Per ADR-024 D3 (T57.P8) the downgrade-only
+ * policy has been retired — on exhaust the executor throws
+ * {@see LlmUnavailableException} and callers log `editorial_review_queue`
+ * before rethrowing; there is no automatic cross-provider fallback.
  *
  * Retry policy: up to 4 attempts total (1 initial + 3 retries) separated by
  * 2s / 4s / 8s sleeps. Retries fire only on transient subprocess errors —
  * rate-limit / 529 / overload patterns and process timeouts. 4xx-equivalent
  * permanent errors (auth, bad_request, malformed JSON) throw immediately.
  *
- * Fallback detection is log-only in Sprint 54: on exhaustion, if the agent
- * has a non-empty `agent.{id}.fallback` AppSetting, a structured log line
- * `llm_fallback_detected` and a Sentry breadcrumb are emitted, and the
- * caller receives an {@see LlmUnavailableException} with the fallback tier
- * attached. Actual provider rerouting is deferred to Sprint 56.
+ * Transport guard: the executor only routes tiers whose transport is
+ * `claude_cli`; non-Claude tiers (e.g. `gemini_flash`) are rejected with
+ * `\InvalidArgumentException`. Gemini transport is handled separately by
+ * {@see \App\Agent\AgentDispatcher} since T57.P7.C1.
  *
  * Cost observability: when the underlying client is a {@see ClaudeCliClient},
  * the CLI JSON envelope's token/cost metrics are copied into the `llm_agent_call`
@@ -46,7 +48,6 @@ class LlmRetryExecutor
      */
     public function __construct(
         private readonly AnthropicClientInterface $client,
-        private readonly TierResolver $tierResolver,
         private readonly LoggerInterface $logger,
         private readonly LlmInvocationLogger $invocationLogger,
         private readonly array $backoffSeconds = self::DEFAULT_BACKOFF_SECONDS,
@@ -55,7 +56,7 @@ class LlmRetryExecutor
     /**
      * @param list<array{role: string, content: string}> $messages
      *
-     * @return array{content: string, agent_id: string, tier: string, model: string, attempts: int, fallback_detected: bool, metrics: array<string, mixed>|null, invocation_id: string|null}
+     * @return array{content: string, agent_id: string, tier: string, model: string, attempts: int, metrics: array<string, mixed>|null, invocation_id: string|null}
      */
     public function executeWithRetry(
         string $agentId,
@@ -65,8 +66,8 @@ class LlmRetryExecutor
     ): array {
         if ($tier->transport() !== 'claude_cli') {
             throw new \InvalidArgumentException(sprintf(
-                'LlmRetryExecutor (S54) only routes claude_cli tiers; got "%s". '
-                . 'Gemini provider rerouting lands in Sprint 56.',
+                'LlmRetryExecutor only routes claude_cli tiers; got "%s". '
+                . 'Gemini transport is handled by AgentDispatcher directly (T57.P7.C1).',
                 $tier->value,
             ));
         }
@@ -96,7 +97,6 @@ class LlmRetryExecutor
                         'model' => $model,
                         'attempts' => $attempt,
                         'transport' => $tier->transport(),
-                        'fallback_detected' => false,
                     ],
                     $this->extractMetricFields($metrics),
                 ));
@@ -128,7 +128,6 @@ class LlmRetryExecutor
                     'tier' => $tier->value,
                     'model' => $model,
                     'attempts' => $attempt,
-                    'fallback_detected' => false,
                     'metrics' => $metrics,
                     'invocation_id' => $invocationId,
                 ];
@@ -175,34 +174,25 @@ class LlmRetryExecutor
             }
         }
 
-        $fallback = $this->tierResolver->resolveFallback($agentId);
-        $fallbackDetected = $fallback !== null;
-        $fallbackTierValue = $fallback === null ? null : $fallback->value;
-        $lastErrorMessage = $lastException->getMessage();
-
-        $this->logger->error('llm_fallback_detected', [
+        $this->logger->error('llm_retry_exhausted', [
             'agent_id' => $agentId,
             'tier' => $tier->value,
             'attempts' => self::MAX_ATTEMPTS,
-            'fallback_detected' => $fallbackDetected,
-            'fallback_tier' => $fallbackTierValue,
-            'last_error' => $lastErrorMessage,
+            'last_error' => $lastException->getMessage(),
         ]);
 
         $this->breadcrumb(
             Breadcrumb::LEVEL_ERROR,
-            'llm.fallback_detected',
+            'llm.retry_exhausted',
             sprintf(
-                'Exhausted %d attempts on agent=%s tier=%s; fallback=%s',
+                'Exhausted %d attempts on agent=%s tier=%s',
                 self::MAX_ATTEMPTS,
                 $agentId,
                 $tier->value,
-                $fallbackTierValue ?? 'none',
             ),
             [
                 'agent_id' => $agentId,
                 'tier' => $tier->value,
-                'fallback_tier' => $fallbackTierValue,
                 'attempts' => self::MAX_ATTEMPTS,
             ],
         );
@@ -210,8 +200,8 @@ class LlmRetryExecutor
         throw new LlmUnavailableException(
             agentId: $agentId,
             tier: $tier,
-            fallbackTier: $fallback,
             attempts: self::MAX_ATTEMPTS,
+            invocationId: null,
             previous: $lastException,
         );
     }

@@ -94,7 +94,6 @@ class AgentDispatcherTest extends TestCase
                 'tier' => 'haiku',
                 'model' => 'claude-haiku-4-5-20251001',
                 'attempts' => 1,
-                'fallback_detected' => false,
                 'metrics' => ['input_tokens' => 100, 'output_tokens' => 30],
                 'invocation_id' => '01JE0Q9ZXJQ8YHZR3S3M7E2P5H',
             ]);
@@ -129,7 +128,6 @@ class AgentDispatcherTest extends TestCase
             'tier' => 'sonnet',
             'model' => 'claude-sonnet-4-6',
             'attempts' => 1,
-            'fallback_detected' => false,
             'metrics' => null,
             'invocation_id' => $knownUlid,
         ]);
@@ -158,7 +156,6 @@ class AgentDispatcherTest extends TestCase
             'tier' => 'sonnet',
             'model' => 'claude-sonnet-4-6',
             'attempts' => 1,
-            'fallback_detected' => false,
             'metrics' => null,
             // invocation_id absent — LlmInvocationLogger persistence failure case
         ]);
@@ -196,7 +193,6 @@ class AgentDispatcherTest extends TestCase
                 'tier' => 'sonnet',
                 'model' => 'claude-sonnet-4-6',
                 'attempts' => 1,
-                'fallback_detected' => false,
                 'metrics' => null,
                 'invocation_id' => 'x',
             ]);
@@ -253,7 +249,6 @@ class AgentDispatcherTest extends TestCase
             'tier' => 'haiku',
             'model' => 'claude-haiku-4-5-20251001',
             'attempts' => 1,
-            'fallback_detected' => false,
             'metrics' => null,
             'invocation_id' => '01JE0Q9ZXJQ8YHZR3S3M7E2P5H',
         ]);

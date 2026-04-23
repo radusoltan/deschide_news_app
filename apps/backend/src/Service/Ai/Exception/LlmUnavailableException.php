@@ -8,37 +8,39 @@ use App\Enum\LlmModelTier;
 
 /**
  * Thrown by {@see \App\Service\Ai\LlmRetryExecutor} when all retries on the
- * primary tier have exhausted. Carries the fallback tier (if configured) so
- * callers can decide whether to degrade gracefully — actual fallback rerouting
- * lands in Sprint 56 per ADR-020 D5.
+ * requested tier have exhausted. Per ADR-024 D3 (T57.P8), the downgrade-only
+ * policy has been retired — there is no automatic fallback tier anymore; the
+ * caller is expected to surface the failure via the `editorial_review_queue`
+ * log line and let the exception propagate.
+ *
+ * `invocationId` is carried for telemetry correlation but is always `null`
+ * on the exhaust path in P8 (the executor only opens {@see \App\Service\Editorial\Llm\LlmInvocationLogger}
+ * rows on successful invocations). Populating exhaust-path rows is a S58+
+ * follow-up captured as cleanup debt.
  */
 final class LlmUnavailableException extends \RuntimeException
 {
     public function __construct(
         public readonly string $agentId,
         public readonly LlmModelTier $tier,
-        public readonly ?LlmModelTier $fallbackTier,
         public readonly int $attempts,
+        public readonly ?string $invocationId = null,
         ?\Throwable $previous = null,
     ) {
-        $fallbackLabel = $fallbackTier === null ? 'none' : $fallbackTier->value;
-
         parent::__construct(
             sprintf(
-                'LLM agent "%s" exhausted %d attempts on tier %s. Fallback tier: %s '
-                . '(rerouting deferred to Sprint 56).',
+                'LLM agent "%s" exhausted %d attempts on tier %s. Marked for editorial review.',
                 $agentId,
                 $attempts,
                 $tier->value,
-                $fallbackLabel,
             ),
             0,
             $previous,
         );
     }
 
-    public function isFallbackDetected(): bool
+    public function getInvocationId(): ?string
     {
-        return $this->fallbackTier !== null;
+        return $this->invocationId;
     }
 }

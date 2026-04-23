@@ -8,12 +8,10 @@ use App\Agent\AgentDispatcher;
 use App\Agent\Exception\EmergencyHaltException;
 use App\Dto\Agent\AgentRequest;
 use App\Dto\Agent\AgentResponse;
-use App\Entity\AppSetting;
 use App\Enum\Editorial\EscalationCategory;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Escalation\EscalationClassifier;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Llm\LlmPromptAssembler;
@@ -22,17 +20,17 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Unit test for {@see EscalationClassifier} (Sprint 55 T55.8).
+ * Unit test for {@see EscalationClassifier} (Sprint 55 T55.8; T57.P8
+ * ADR-024 D3 downgrade-only policy retirement).
  *
  * The empirical 50-claim benchmark lives in EscalationClassifierEmpiricalTest
  * and is gated behind RUN_EMPIRICAL_ESCALATION=1. This test covers the
  * deterministic plumbing: enabled-gate, JSON parsing, confidence threshold,
- * fail-open behavior, enum mapping.
+ * fail-open on non-LlmUnavailable errors, enum mapping.
  */
 class EscalationClassifierTest extends TestCase
 {
     private AgentDispatcher&MockObject $dispatcher;
-    private GeminiCliService&MockObject $geminiCliService;
     private AppSettingRepository&MockObject $appSettingRepository;
     private LlmInvocationLogger&MockObject $invocationLogger;
     private LoggerInterface&MockObject $logger;
@@ -41,7 +39,6 @@ class EscalationClassifierTest extends TestCase
     protected function setUp(): void
     {
         $this->dispatcher = $this->createMock(AgentDispatcher::class);
-        $this->geminiCliService = $this->createMock(GeminiCliService::class);
         $this->appSettingRepository = $this->createMock(AppSettingRepository::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->logger = $this->createMock(LoggerInterface::class);
@@ -52,7 +49,6 @@ class EscalationClassifierTest extends TestCase
 
         $this->classifier = new EscalationClassifier(
             $this->dispatcher,
-            $this->geminiCliService,
             $this->appSettingRepository,
             new LlmPromptAssembler(),
             $this->invocationLogger,
@@ -107,7 +103,6 @@ class EscalationClassifierTest extends TestCase
 
     public function testConfidenceBelowThresholdReturnsNull(): void
     {
-        // is_escalation=true but confidence 0.5 < 0.7 → null + low-confidence log.
         $this->expectLlmResponse([
             'category' => 'CATEGORY_6_CRIMINAL_ACCUSATION',
             'is_escalation' => true,
@@ -167,7 +162,6 @@ class EscalationClassifierTest extends TestCase
 
         $classifier = new EscalationClassifier(
             $dispatcher,
-            $this->geminiCliService,
             $appSettings,
             new LlmPromptAssembler(),
             $this->invocationLogger,
@@ -177,14 +171,59 @@ class EscalationClassifierTest extends TestCase
         $this->assertNull($classifier->classify('x', 'y'));
     }
 
-    public function testLlmUnavailableReturnsNullFailOpen(): void
+    /**
+     * T57.P8 (ADR-024 D3) — retry exhaust fails closed. Pre-P8 behavior was
+     * null-return fail-open on any Throwable from the LLM call; now
+     * LlmUnavailable propagates with the uniform D2 log line.
+     */
+    public function testLlmUnavailablePropagatesWithEditorialReviewLog(): void
     {
         $this->dispatcher->method('dispatch')->willThrowException(
-            new LlmUnavailableException('escalation_classifier', LlmModelTier::HAIKU, LlmModelTier::GEMINI_FLASH, 4),
+            new LlmUnavailableException(
+                agentId: 'escalation_classifier',
+                tier: LlmModelTier::HAIKU,
+                attempts: 4,
+            ),
         );
-        $this->geminiCliService->method('execute')->willThrowException(
-            new \RuntimeException('Gemini timeout'),
-        );
+
+        $captured = null;
+        $this->logger->expects($this->atLeastOnce())
+            ->method('warning')
+            ->willReturnCallback(function (string $channel, array $payload) use (&$captured): void {
+                if ($channel === 'editorial_review_queue') {
+                    $captured = $payload;
+                }
+            });
+
+        $this->expectException(LlmUnavailableException::class);
+
+        try {
+            $this->classifier->classify('party leader boycotts', 'source');
+        } finally {
+            $this->assertIsArray($captured, 'editorial_review_queue log line must be emitted');
+            $this->assertSame('escalation_classifier', $captured['agent_id']);
+            $this->assertSame('escalation_candidate', $captured['entity_type']);
+            $this->assertNull($captured['entity_id']);
+            $this->assertSame(['topic_id' => null], $captured['entity_refs']);
+            $this->assertNull($captured['invocation_id']);
+            $this->assertSame('haiku', $captured['tier_attempted']);
+            $this->assertSame('haiku_exhausted', $captured['reason']);
+        }
+    }
+
+    public function testDecodeErrorPathFailsOpen(): void
+    {
+        // Non-LlmUnavailable throwables still hit the null-return fail-open
+        // branch (decode errors, etc.) — pre-P8 hygiene preserved.
+        $this->dispatcher->method('dispatch')->willReturn(new AgentResponse(
+            content: 'not a json document',
+            agentId: 'escalation_classifier',
+            tier: LlmModelTier::HAIKU,
+            model: 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: null,
+            metrics: null,
+        ));
 
         $this->logger->expects($this->atLeastOnce())
             ->method('warning')
@@ -193,25 +232,6 @@ class EscalationClassifierTest extends TestCase
         $result = $this->classifier->classify('claim', 'source');
 
         $this->assertNull($result);
-    }
-
-    public function testGeminiFallbackUsedWhenHaikuExhausted(): void
-    {
-        $this->dispatcher->method('dispatch')->willThrowException(
-            new LlmUnavailableException('escalation_classifier', LlmModelTier::HAIKU, LlmModelTier::GEMINI_FLASH, 4),
-        );
-        $this->geminiCliService->expects($this->once())
-            ->method('execute')
-            ->willReturn(json_encode([
-                'category' => 'FAMILY_D_CEC_PARTY_LEADERS',
-                'is_escalation' => true,
-                'confidence' => 0.8,
-                'rationale' => 'Boicot electoral',
-            ], JSON_THROW_ON_ERROR));
-
-        $result = $this->classifier->classify('party leader boycotts', 'source');
-
-        $this->assertSame(EscalationCategory::FAMILY_D_CEC_PARTY_LEADERS, $result);
     }
 
     public function testCodeFencedJsonResponseHandled(): void
@@ -231,26 +251,15 @@ class EscalationClassifierTest extends TestCase
     }
 
     /**
-     * T57.P2c.3 acceptance (d'): CRITICAL — editorial.emergency_halt must NOT
-     * trigger Gemini fallback. Codifies "halt means halt, not alternate route"
-     * at the test level. EscalationClassifier's pre-P2 outer catch (\\Throwable)
-     * would have swallowed EmergencyHaltException into null (fail-open) →
-     * handler would treat as "no escalation detected" and the article could
-     * advance in-pipeline during halt. Explicit EmergencyHaltException
-     * re-throw prevents this.
-     *
-     * Three asserts per orchestrator directive:
-     *   1. GeminiCliService never called (fallback is NOT triggered).
-     *   2. Classifier re-throws EmergencyHaltException.
-     *   3. LlmInvocationLogger::logInvocation never called directly.
+     * T57.P2c.3 acceptance (d'): CRITICAL — editorial.emergency_halt must
+     * propagate past classify() without being swallowed into null fail-open.
      */
-    public function testEmergencyHaltExceptionPropagatesWithoutTriggeringGeminiFallback(): void
+    public function testEmergencyHaltExceptionPropagates(): void
     {
         $this->dispatcher->method('dispatch')->willThrowException(
             new EmergencyHaltException('escalation_classifier'),
         );
 
-        $this->geminiCliService->expects($this->never())->method('execute');
         $this->invocationLogger->expects($this->never())->method('logInvocation');
 
         $this->expectException(EmergencyHaltException::class);
@@ -259,11 +268,7 @@ class EscalationClassifierTest extends TestCase
     }
 
     /**
-     * T57.P2c.3 acceptance (c + AgentRequest shape): the dispatcher receives
-     * an AgentRequest carrying agentId=escalation_classifier, hardcoded HAIKU
-     * tier (Pattern-B constant — ADR-022 D6 locks FN=2% baseline at Haiku),
-     * the system prompt, and no tierVariant (EscalationClassifier has no
-     * variant — single tier per ADR-020 D5).
+     * T57.P2c.3 acceptance (c + AgentRequest shape).
      */
     public function testDispatchReceivesAgentRequestWithHardcodedHaikuTier(): void
     {

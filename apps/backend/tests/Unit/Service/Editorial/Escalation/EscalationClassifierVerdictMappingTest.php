@@ -9,7 +9,6 @@ use App\Dto\Agent\AgentResponse;
 use App\Enum\Editorial\EscalationCategory;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Escalation\EscalationClassifier;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Llm\LlmPromptAssembler;
@@ -31,7 +30,6 @@ final class EscalationClassifierVerdictMappingTest extends TestCase
     private const INVOCATION_ID = '01JFXXXXXXXXXXXXXXXXXXXXXX';
 
     private AgentDispatcher&MockObject $dispatcher;
-    private GeminiCliService&MockObject $geminiCliService;
     private AppSettingRepository&MockObject $settings;
     private LlmInvocationLogger&MockObject $invocationLogger;
     private EscalationClassifier $classifier;
@@ -41,7 +39,6 @@ final class EscalationClassifierVerdictMappingTest extends TestCase
     protected function setUp(): void
     {
         $this->dispatcher = $this->createMock(AgentDispatcher::class);
-        $this->geminiCliService = $this->createMock(GeminiCliService::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
 
@@ -56,7 +53,6 @@ final class EscalationClassifierVerdictMappingTest extends TestCase
 
         $this->classifier = new EscalationClassifier(
             $this->dispatcher,
-            $this->geminiCliService,
             $this->settings,
             new LlmPromptAssembler(),
             $this->invocationLogger,

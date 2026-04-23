@@ -13,8 +13,9 @@ use App\Repository\AppSettingRepository;
  *
  * Supports tier variants (e.g. `verification_gate` has both
  * `model_tier_simple` and `model_tier_conflict`) via the `$variant` argument.
- * Also exposes the per-agent fallback tier and the enabled flag so services
- * can gate LLM calls without each one re-reading AppSettings directly.
+ * Also exposes the enabled flag so services can gate LLM calls without each
+ * one re-reading AppSettings directly. Per ADR-024 D3 (T57.P8) the per-agent
+ * fallback accessor has been retired together with the downgrade-only policy.
  */
 class TierResolver
 {
@@ -42,22 +43,6 @@ class TierResolver
                 'Missing AppSetting "%s" — run AppSettingsFixture to seed agent tiers.',
                 $key,
             ));
-        }
-
-        return LlmModelTier::from($value);
-    }
-
-    /**
-     * Resolve the fallback tier for an agent. Returns null when the fallback
-     * setting is missing or explicitly empty string (ADR-020 D5 Tier B/C:
-     * some agents intentionally have no fallback, e.g. `context`).
-     */
-    public function resolveFallback(string $agentId): ?LlmModelTier
-    {
-        $value = $this->settings->get(sprintf('agent.%s.fallback', $agentId));
-
-        if ($value === null || $value === '') {
-            return null;
         }
 
         return LlmModelTier::from($value);

@@ -10,7 +10,6 @@ use App\Dto\Agent\AgentRequest;
 use App\Entity\Article;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use Psr\Log\LoggerInterface;
 
@@ -29,14 +28,16 @@ use Psr\Log\LoggerInterface;
  * grounds for ESCALATE_HUMAN, only editor review. Legal Category 6 is the
  * only escalation path (LegalGuard T55.7).
  *
- * LLM unavailability is fail-open: returns a pass-with-warning part so the
- * pipeline keeps flowing.
+ * LLM retry exhaust (post-ADR-024 D3 / T57.P8): fail-closed.
+ * {@see LlmUnavailableException} is logged as `editorial_review_queue` and
+ * rethrown past {@see self::validate()}; the fail-open warning branch is
+ * preserved for other unexpected throwables (decode errors, etc.), not for
+ * LLM-retry exhaustion.
  */
 class StyleGuard implements GuardInterface
 {
     private const AGENT_ID = 'style_guard';
     private const PRIMARY_TIER = LlmModelTier::HAIKU;
-    private const FALLBACK_MODEL = 'gemini-2.5-flash';
 
     private const SYSTEM_PROMPT = <<<'PROMPT'
 Ești un redactor-șef al redacției Deschide. Evaluezi respectarea stilului editorial într-un articol publicat în limba română.
@@ -66,7 +67,6 @@ PROMPT;
     public function __construct(
         private readonly DiacriticsValidator $diacriticsValidator,
         private readonly AgentDispatcher $dispatcher,
-        private readonly GeminiCliService $geminiCliService,
         private readonly LlmInvocationLogger $invocationLogger,
         private readonly LoggerInterface $logger,
     ) {}
@@ -88,7 +88,7 @@ PROMPT;
             }
         }
 
-        // 2. LLM style check (fail-open).
+        // 2. LLM style check.
         try {
             $llmResult = $this->invokeLlm($article);
             foreach ($this->extractIssues($llmResult) as $issue) {
@@ -118,6 +118,22 @@ PROMPT;
             // pass-with-warning during emergency — wasted work is strictly
             // better than compromised content during a halt.
             throw $e;
+        } catch (LlmUnavailableException $e) {
+            // ADR-024 D3 (T57.P8) — fail-closed on retry exhaust. Emit the
+            // uniform editorial-review signal and rethrow; the pre-P8
+            // fail-open warning branch below now only covers unexpected
+            // throwables (e.g. decode errors), not LLM exhaustion.
+            $this->logger->warning('editorial_review_queue', [
+                'agent_id' => self::AGENT_ID,
+                'entity_type' => 'article',
+                'entity_id' => $article->getId(),
+                'entity_refs' => [],
+                'invocation_id' => $e->getInvocationId(),
+                'tier_attempted' => $e->tier->value,
+                'reason' => sprintf('%s_exhausted', $e->tier->value),
+            ]);
+
+            throw $e;
         } catch (\Throwable $e) {
             $this->logger->warning('style_guard_llm_skipped', [
                 'article_id' => $article->getId(),
@@ -140,58 +156,24 @@ PROMPT;
     {
         $userPrompt = $this->buildUserPrompt($article);
 
-        try {
-            $response = $this->dispatcher->dispatch(new AgentRequest(
-                agentId: self::AGENT_ID,
-                messages: [['role' => 'user', 'content' => $userPrompt]],
-                tier: self::PRIMARY_TIER,
-                systemPrompt: self::SYSTEM_PROMPT,
-            ));
+        $response = $this->dispatcher->dispatch(new AgentRequest(
+            agentId: self::AGENT_ID,
+            messages: [['role' => 'user', 'content' => $userPrompt]],
+            tier: self::PRIMARY_TIER,
+            systemPrompt: self::SYSTEM_PROMPT,
+        ));
 
-            $decoded = $this->decodeJson($response->content);
+        $decoded = $this->decodeJson($response->content);
 
-            // T57.03 (ADR-023 D2) — attach verdict to executor-owned row
-            // (T57.P2c.2: executor writes the W' baseline transitively via
-            // the dispatcher; invocation_id flows through AgentResponse DTO).
-            if ($response->invocationId !== null) {
-                $this->invocationLogger->attachVerdict(
-                    $response->invocationId,
-                    $this->mapVerdict($decoded),
-                );
-            }
-
-            return $decoded;
-        } catch (LlmUnavailableException $e) {
-            // Pattern-B Gemini fallback preserved per ADR-024 Q3 (to be
-            // removed in T57.P8 when downgrade-only policy retires).
-            // EmergencyHaltException would NOT match this catch clause —
-            // different exception type, unrelated by inheritance. Halt
-            // propagates past this block and through the caller's outer
-            // EmergencyHaltException catch in validate().
-            $this->logger->warning('style_guard_haiku_unavailable_trying_gemini', [
-                'attempts' => $e->attempts,
-            ]);
+        // T57.03 (ADR-023 D2) — attach verdict to executor-owned row
+        // (T57.P2c.2: executor writes the W' baseline transitively via
+        // the dispatcher; invocation_id flows through AgentResponse DTO).
+        if ($response->invocationId !== null) {
+            $this->invocationLogger->attachVerdict(
+                $response->invocationId,
+                $this->mapVerdict($decoded),
+            );
         }
-
-        // T57.03 — Gemini self-logs for cost parity with the Claude path.
-        $geminiPrompt = self::SYSTEM_PROMPT . "\n\n" . $userPrompt;
-        $geminiStart = (int) (microtime(true) * 1000);
-        $raw = $this->geminiCliService->execute($geminiPrompt, [
-            'model' => self::FALLBACK_MODEL,
-            'timeout' => 60,
-        ]);
-        $geminiWallMs = (int) (microtime(true) * 1000) - $geminiStart;
-        $decoded = $this->decodeJson($raw);
-
-        $this->invocationLogger->logInvocation(
-            agentName: self::AGENT_ID,
-            promptHash: hash('xxh128', $geminiPrompt),
-            durationMs: $geminiWallMs,
-            inputTokens: 0,
-            outputTokens: 0,
-            model: self::FALLBACK_MODEL,
-            verdict: $this->mapVerdict($decoded),
-        );
 
         return $decoded;
     }

@@ -13,7 +13,6 @@ use App\Entity\Article;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Guard\LegalCategoryDetector;
 use App\Service\Editorial\Guard\LegalGuard;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
@@ -22,16 +21,12 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Unit test for {@see LegalGuard} (Sprint 55 T55.7; T57.P2c.2 AgentDispatcher migration).
- *
- * LegalCategoryDetector runs as a real instance because it's pure / stateless;
- * the LLM path and AppSetting lookups are mocked to isolate LegalGuard's
- * severity-mapping + tier-selection + fail-closed/open logic.
+ * Unit test for {@see LegalGuard} (Sprint 55 T55.7; T57.P2c.2 AgentDispatcher
+ * migration; T57.P8 ADR-024 D3 downgrade-only policy retirement).
  */
 class LegalGuardTest extends TestCase
 {
     private AgentDispatcher&MockObject $dispatcher;
-    private GeminiCliService&MockObject $geminiCliService;
     private AppSettingRepository&MockObject $appSettingRepository;
     private LlmInvocationLogger&MockObject $invocationLogger;
     private LoggerInterface&MockObject $logger;
@@ -43,7 +38,6 @@ class LegalGuardTest extends TestCase
     protected function setUp(): void
     {
         $this->dispatcher = $this->createMock(AgentDispatcher::class);
-        $this->geminiCliService = $this->createMock(GeminiCliService::class);
         $this->appSettingRepository = $this->createMock(AppSettingRepository::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->logger = $this->createMock(LoggerInterface::class);
@@ -53,7 +47,6 @@ class LegalGuardTest extends TestCase
         $this->guard = new LegalGuard(
             new LegalCategoryDetector(),
             $this->dispatcher,
-            $this->geminiCliService,
             $this->appSettingRepository,
             $this->invocationLogger,
             $this->logger,
@@ -100,8 +93,6 @@ class LegalGuardTest extends TestCase
 
     public function testCategory6AlwaysEscalatesEvenIfLlmSaysPassed(): void
     {
-        // Fail-safe: the LLM may disagree with the keyword detector, but the
-        // keyword pattern alone triggers ESCALATE_HUMAN per audit D8.
         $this->expectLlmCall(
             tier: LlmModelTier::SONNET,
             response: ['passed' => true, 'risks' => []],
@@ -120,8 +111,6 @@ class LegalGuardTest extends TestCase
 
     public function testHighSeverityOnGeneralArticleAlsoEscalates(): void
     {
-        // A non-Cat6 article can still hit the escalation path if the LLM
-        // returns a high-severity risk finding.
         $this->expectLlmCall(
             tier: LlmModelTier::HAIKU,
             response: ['passed' => false, 'risks' => [
@@ -182,35 +171,94 @@ class LegalGuardTest extends TestCase
         $this->assertSame([], $part->failures);
     }
 
-    public function testLlmUnavailableFailsOpenOnGeneralArticle(): void
+    /**
+     * T57.P8 (ADR-024 D3) — retry exhaust fails closed. The pre-P8 fail-open
+     * branch is preserved only for non-LlmUnavailable throwables (decode
+     * errors, etc.); LlmUnavailable rethrows with the uniform D2 log line.
+     */
+    public function testLlmUnavailablePropagatesWithEditorialReviewLogOnGeneralArticle(): void
     {
         $this->dispatcher->method('dispatch')->willThrowException(
-            new LlmUnavailableException('legal_guard', LlmModelTier::HAIKU, LlmModelTier::GEMINI_FLASH, 4),
+            new LlmUnavailableException(
+                agentId: 'legal_guard',
+                tier: LlmModelTier::HAIKU,
+                attempts: 4,
+            ),
         );
-        $this->geminiCliService->method('execute')->willThrowException(
-            new \RuntimeException('Gemini CLI timeout'),
-        );
+
+        $captured = null;
+        $this->logger->expects($this->atLeastOnce())
+            ->method('warning')
+            ->willReturnCallback(function (string $channel, array $payload) use (&$captured): void {
+                if ($channel === 'editorial_review_queue') {
+                    $captured = $payload;
+                }
+            });
+
+        $this->expectException(LlmUnavailableException::class);
 
         $article = $this->makeArticle(
             title: 'Agenda legislativă',
             content: 'Comunicat factual despre proiecte noi.',
         );
 
-        $part = $this->guard->validate($article);
-
-        $this->assertTrue($part->isPassing(), 'General article fails open on LLM unavailability');
-        $this->assertNotEmpty($part->warnings);
-        $this->assertNull($part->escalationCode);
+        try {
+            $this->guard->validate($article);
+        } finally {
+            $this->assertIsArray($captured, 'editorial_review_queue log line must be emitted');
+            $this->assertSame('legal_guard', $captured['agent_id']);
+            $this->assertSame('article', $captured['entity_type']);
+            $this->assertNull($captured['entity_id'], 'Article has no id in this test fixture');
+            $this->assertSame([], $captured['entity_refs']);
+            $this->assertNull($captured['invocation_id']);
+            $this->assertSame('haiku', $captured['tier_attempted']);
+            $this->assertSame('haiku_exhausted', $captured['reason']);
+        }
     }
 
-    public function testLlmUnavailableFailsClosedOnCategory6Article(): void
+    /**
+     * T57.P8 — on Category 6 articles the pre-P8 fail-closed-with-
+     * ESCALATION_CODE_UNAVAILABLE branch no longer fires for LlmUnavailable
+     * (only for other throwables). Instead the exception propagates so the
+     * message handler decides the outcome.
+     */
+    public function testLlmUnavailableOnCategory6ArticleAlsoPropagates(): void
     {
         $this->dispatcher->method('dispatch')->willThrowException(
-            new LlmUnavailableException('legal_guard', LlmModelTier::SONNET, null, 4),
+            new LlmUnavailableException(
+                agentId: 'legal_guard',
+                tier: LlmModelTier::SONNET,
+                attempts: 4,
+            ),
         );
-        $this->geminiCliService->method('execute')->willThrowException(
-            new \RuntimeException('Gemini CLI timeout'),
+
+        $this->logger->expects($this->atLeastOnce())
+            ->method('warning')
+            ->with('editorial_review_queue', $this->isArray());
+
+        $this->expectException(LlmUnavailableException::class);
+
+        $article = $this->makeArticle(
+            title: 'Ion Popescu acuzat de corupție',
+            content: 'Un denunțător afirmă că Ion Popescu ar fi primit mită.',
         );
+
+        $this->guard->validate($article);
+    }
+
+    public function testDecodeErrorFailsClosedOnCategory6Article(): void
+    {
+        // Non-LlmUnavailable throwables (e.g. decode errors on bad payload)
+        // keep the pre-P8 fail-closed-on-Cat6 safety net.
+        $this->dispatcher->method('dispatch')->willReturn(new AgentResponse(
+            content: 'not a json document',
+            agentId: 'legal_guard',
+            tier: LlmModelTier::SONNET,
+            model: 'claude-sonnet-4-6',
+            attempts: 1,
+            invocationId: null,
+            metrics: null,
+        ));
 
         $article = $this->makeArticle(
             title: 'Ion Popescu acuzat de corupție',
@@ -221,26 +269,6 @@ class LegalGuardTest extends TestCase
 
         $this->assertFalse($part->isPassing());
         $this->assertSame(LegalGuard::ESCALATION_CODE_UNAVAILABLE, $part->escalationCode);
-        $this->assertNotEmpty($part->failures);
-    }
-
-    public function testGeminiFallbackUsedWhenPrimaryTierExhausted(): void
-    {
-        $this->dispatcher->method('dispatch')->willThrowException(
-            new LlmUnavailableException('legal_guard', LlmModelTier::HAIKU, LlmModelTier::GEMINI_FLASH, 4),
-        );
-        $this->geminiCliService->expects($this->once())
-            ->method('execute')
-            ->willReturn(json_encode(['passed' => true, 'risks' => []], JSON_THROW_ON_ERROR));
-
-        $article = $this->makeArticle(
-            title: 'Agenda',
-            content: 'Corp neutru.',
-        );
-
-        $part = $this->guard->validate($article);
-
-        $this->assertTrue($part->isPassing());
     }
 
     public function testMissingTierSettingFallsBackToDefaults(): void
@@ -251,7 +279,6 @@ class LegalGuardTest extends TestCase
         $this->guard = new LegalGuard(
             new LegalCategoryDetector(),
             $this->dispatcher,
-            $this->geminiCliService,
             $this->appSettingRepository,
             $this->invocationLogger,
             $this->logger,
@@ -269,36 +296,18 @@ class LegalGuardTest extends TestCase
 
     /**
      * T57.P2c.2 acceptance (d'): CRITICAL — editorial.emergency_halt must NOT
-     * trigger Gemini fallback AND must NOT convert to a CATEGORY_6 escalation
-     * on Cat6 articles (which the generic \\Throwable catch in validate()
-     * would otherwise do — silently swallowing the operator's halt signal
-     * into what looks like a Cat6 legal-review escalation).
-     *
-     * Codifies "halt means halt, not alternate route" at the test level.
-     * Uses Cat6-triggering article content because LegalGuard's fail-closed
-     * behavior on Cat6 is the dangerous path — if a future refactor widened
-     * the catch clause or removed the explicit EmergencyHaltException case,
-     * the halt would be swallowed into a CATEGORY_6 escalation row,
-     * indistinguishable from a genuine Cat6 detection.
-     *
-     * Three asserts per orchestrator directive:
-     *   1. GeminiCliService never called (fallback is NOT triggered).
-     *   2. Guard re-throws EmergencyHaltException (propagates up to handler).
-     *   3. LlmInvocationLogger::logInvocation never called directly.
+     * convert to a CATEGORY_6 escalation on Cat6 articles.
      */
-    public function testEmergencyHaltExceptionPropagatesWithoutTriggeringGeminiFallbackOnCategory6(): void
+    public function testEmergencyHaltExceptionPropagatesOnCategory6(): void
     {
         $this->dispatcher->method('dispatch')->willThrowException(
             new EmergencyHaltException('legal_guard'),
         );
 
-        $this->geminiCliService->expects($this->never())->method('execute');
         $this->invocationLogger->expects($this->never())->method('logInvocation');
 
         $this->expectException(EmergencyHaltException::class);
 
-        // Deliberately Cat6-matching article — exercises the dangerous path
-        // where a swallowed halt would become a CATEGORY_6 escalation.
         $article = $this->makeArticle(
             title: 'Ion Popescu acuzat de corupție',
             content: 'Un denunțător afirmă că Ion Popescu ar fi primit mită.',
@@ -307,12 +316,7 @@ class LegalGuardTest extends TestCase
     }
 
     /**
-     * T57.P2c.2 acceptance (c + AgentRequest shape): the dispatcher receives
-     * an AgentRequest carrying agentId=legal_guard, a tier resolved via
-     * direct AppSettings read (Pattern-B Category-6 routing — Sonnet for
-     * Cat6, Haiku otherwise), the system prompt, and no tierVariant
-     * (LegalGuard uses full AppSettings key switching, not variant suffix
-     * semantics — unlike VerificationGate).
+     * T57.P2c.2 acceptance (c + AgentRequest shape).
      */
     public function testDispatchReceivesAgentRequestWithCategory6ResolvedTier(): void
     {

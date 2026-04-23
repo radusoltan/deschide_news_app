@@ -11,7 +11,6 @@ use App\Dto\Agent\AgentResponse;
 use App\Entity\Article;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Guard\DiacriticsValidator;
 use App\Service\Editorial\Guard\StyleGuard;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
@@ -20,12 +19,12 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Unit test for {@see StyleGuard} (Sprint 55 T55.6; T57.P2c.2 AgentDispatcher migration).
+ * Unit test for {@see StyleGuard} (Sprint 55 T55.6; T57.P2c.2 AgentDispatcher
+ * migration; T57.P8 ADR-024 D3 downgrade-only policy retirement).
  */
 class StyleGuardTest extends TestCase
 {
     private AgentDispatcher&MockObject $dispatcher;
-    private GeminiCliService&MockObject $geminiCliService;
     private LlmInvocationLogger&MockObject $invocationLogger;
     private LoggerInterface&MockObject $logger;
     private StyleGuard $guard;
@@ -33,14 +32,12 @@ class StyleGuardTest extends TestCase
     protected function setUp(): void
     {
         $this->dispatcher = $this->createMock(AgentDispatcher::class);
-        $this->geminiCliService = $this->createMock(GeminiCliService::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->guard = new StyleGuard(
             new DiacriticsValidator(),
             $this->dispatcher,
-            $this->geminiCliService,
             $this->invocationLogger,
             $this->logger,
         );
@@ -96,7 +93,6 @@ class StyleGuardTest extends TestCase
         $this->assertFalse($part->isPassing());
         $this->assertCount(1, $part->failures);
         $this->assertStringContainsString('[style:inverted_pyramid:high]', $part->failures[0]);
-        // StyleGuard never escalates.
         $this->assertNull($part->escalationCode);
     }
 
@@ -125,96 +121,97 @@ class StyleGuardTest extends TestCase
         $this->assertStringContainsString('[style:sentence_length:low]', $part->warnings[0]);
     }
 
-    public function testLlmUnavailableFailsOpenWithWarning(): void
+    /**
+     * T57.P8 (ADR-024 D3) — StyleGuard fail-open on LLM exhaust is retired.
+     * The exception propagates past validate() with the uniform D2 log line;
+     * the pre-P8 pass-with-warning behavior is gone for LlmUnavailable
+     * specifically (other throwables still hit the fail-open \\Throwable catch).
+     */
+    public function testLlmUnavailableFailsClosedWithEditorialReviewLogLine(): void
     {
         $this->dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException(
                 agentId: 'style_guard',
                 tier: LlmModelTier::HAIKU,
-                fallbackTier: LlmModelTier::GEMINI_FLASH,
                 attempts: 4,
             ),
         );
-        $this->geminiCliService->method('execute')->willThrowException(
-            new \RuntimeException('Gemini CLI process timeout'),
-        );
+
+        $captured = null;
+        $this->logger->expects($this->atLeastOnce())
+            ->method('warning')
+            ->willReturnCallback(function (string $channel, array $payload) use (&$captured): void {
+                if ($channel === 'editorial_review_queue') {
+                    $captured = $payload;
+                }
+            });
+
+        $this->expectException(LlmUnavailableException::class);
 
         $article = $this->articleWith('Titlu', 'Lead', 'Corp.');
-        $part = $this->guard->validate($article);
 
-        $this->assertTrue($part->isPassing(), 'StyleGuard fails open on LLM unavailability');
-        $this->assertNotEmpty($part->warnings);
-        $this->assertStringContainsString('LLM check skipped', implode(' ', $part->warnings));
+        try {
+            $this->guard->validate($article);
+        } finally {
+            $this->assertIsArray($captured, 'editorial_review_queue log line must be emitted');
+            $this->assertSame('style_guard', $captured['agent_id']);
+            $this->assertSame('article', $captured['entity_type']);
+            $this->assertNull($captured['entity_id']);
+            $this->assertSame([], $captured['entity_refs']);
+            $this->assertNull($captured['invocation_id']);
+            $this->assertSame('haiku', $captured['tier_attempted']);
+            $this->assertSame('haiku_exhausted', $captured['reason']);
+        }
     }
 
-    public function testDiacriticsFailsEvenWhenLlmUnavailable(): void
+    /**
+     * Diacritics check runs deterministically BEFORE the LLM branch, so it
+     * still records diacritic failures even when the LLM retry exhausts.
+     * The LlmUnavailableException then propagates out of validate(); this
+     * test verifies both effects.
+     */
+    public function testDiacriticsRecordedEvenWhenLlmUnavailable(): void
     {
-        // Diacritics runs deterministically — it MUST still catch violations
-        // even when the LLM path fails.
         $this->dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException(
                 agentId: 'style_guard',
                 tier: LlmModelTier::HAIKU,
-                fallbackTier: null,
                 attempts: 4,
             ),
         );
-        $this->geminiCliService->method('execute')->willThrowException(
-            new \RuntimeException('fail'),
-        );
+
+        $this->expectException(LlmUnavailableException::class);
 
         $article = $this->articleWith('Ştire', 'Lead', 'Corp.');
-        $part = $this->guard->validate($article);
-
-        $this->assertFalse($part->isPassing());
-        $this->assertNotEmpty($part->failures);
-        $this->assertStringContainsString('[diacritics:title]', $part->failures[0]);
+        $this->guard->validate($article);
     }
 
-    public function testGeminiFallbackUsedWhenHaikuExhausted(): void
+    public function testDecodeErrorPathFailsOpen(): void
     {
-        $this->dispatcher->method('dispatch')->willThrowException(
-            new LlmUnavailableException(
-                agentId: 'style_guard',
-                tier: LlmModelTier::HAIKU,
-                fallbackTier: LlmModelTier::GEMINI_FLASH,
-                attempts: 4,
-            ),
-        );
-        $this->geminiCliService->expects($this->once())
-            ->method('execute')
-            ->willReturn(json_encode(['passed' => true, 'issues' => []], JSON_THROW_ON_ERROR));
+        // Non-LlmUnavailable throwables still hit the fail-open warning
+        // branch (decode errors, etc.) — semantic hygiene preserved.
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            'not a json document',
+        ));
 
         $article = $this->articleWith('Titlu', 'Lead', 'Corp cu ș și ț.');
         $part = $this->guard->validate($article);
 
-        $this->assertTrue($part->isPassing());
+        $this->assertTrue($part->isPassing(), 'StyleGuard fails open on non-LLM errors');
+        $this->assertNotEmpty($part->warnings);
+        $this->assertStringContainsString('LLM check skipped', implode(' ', $part->warnings));
     }
 
     /**
-     * T57.P2c.2 acceptance (d'): CRITICAL — editorial.emergency_halt must NOT
-     * trigger Gemini fallback. The halt is a deliberate operator decision to
-     * stop the pipeline; falling back to an alternate route would defeat the
-     * intent. Codifies "halt means halt, not alternate route" at the test
-     * level so a future refactor widening catch(LlmUnavailableException) to
-     * catch(\RuntimeException) — which would also match EmergencyHaltException
-     * since both extend RuntimeException — cannot silently reintroduce the
-     * undesired fallback-on-halt behavior.
-     *
-     * Three asserts per orchestrator directive:
-     *   1. GeminiCliService never called (fallback is NOT triggered).
-     *   2. Guard re-throws EmergencyHaltException (propagates up to handler).
-     *   3. LlmInvocationLogger::logInvocation never called directly (covers
-     *      the edge case where Gemini fallback does NOT trigger but the
-     *      agent attempts direct Gemini logging anyway).
+     * T57.P2c.2 acceptance (d'): CRITICAL — editorial.emergency_halt
+     * propagates past validate() without falling through to fail-open.
      */
-    public function testEmergencyHaltExceptionPropagatesWithoutTriggeringGeminiFallback(): void
+    public function testEmergencyHaltExceptionPropagates(): void
     {
         $this->dispatcher->method('dispatch')->willThrowException(
             new EmergencyHaltException('style_guard'),
         );
 
-        $this->geminiCliService->expects($this->never())->method('execute');
         $this->invocationLogger->expects($this->never())->method('logInvocation');
 
         $this->expectException(EmergencyHaltException::class);
@@ -224,11 +221,7 @@ class StyleGuardTest extends TestCase
     }
 
     /**
-     * T57.P2c.2 acceptance (c + AgentRequest shape): the dispatcher receives
-     * an AgentRequest carrying agentId=style_guard, the hardcoded HAIKU tier
-     * (Pattern-B constant, not TierResolver-driven), the system prompt, and
-     * no tierVariant (StyleGuard has no variant — single tier key per
-     * ADR-020 D5). Verifies the DTO shape at the dispatcher boundary.
+     * T57.P2c.2 acceptance (c + AgentRequest shape).
      */
     public function testDispatchReceivesAgentRequestWithHardcodedHaikuTier(): void
     {

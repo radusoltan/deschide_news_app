@@ -132,7 +132,6 @@ class SourceAttributionExtractorTest extends TestCase
             ->willThrowException(new LlmUnavailableException(
                 agentId: SourceAttributionExtractor::AGENT_ID,
                 tier: LlmModelTier::HAIKU,
-                fallbackTier: LlmModelTier::GEMINI_FLASH,
                 attempts: 4,
             ));
 
