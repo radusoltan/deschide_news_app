@@ -1,0 +1,133 @@
+# Sprint 58 local observation fixture — 16 signals for 2h pipeline replay.
+#
+# Alignment diversity comes from VerifiedSource.editorial_alignment (owned by
+# the source, not the signal). Distribution across 4 slugs that exist locally:
+#
+#   moldpres     — md_government,         trust 0.85, 8 signals (2 Cat6-primed)
+#   newsmaker    — md_independent_pro_eu, trust 0.85, 3 signals (1 Cat6-primed)
+#   tass         — kremlin_aligned,       trust 0.30, 3 signals (0 Cat6-primed)
+#   ria-novosti  — kremlin_aligned,       trust 0.30, 2 signals (1 Cat6-primed)
+#
+# Total: 16 signals, 4 Cat6-primed (25%).
+#
+# Cat6-primed signals carry defamation/legal-exposure themes (corruption
+# indictments, criminal sentencing, hate-speech charges). The observation-
+# replay script tags them in `raw_payload._cat6_primed = true` so Step 5 Q3a
+# can build a TP/FN/FP/TN matrix for LegalCategoryDetector.
+
+signals:
+  # === moldpres (8 total, 2 Cat6) ===
+  - obs_id: "obs-moldpres-cat6-001"
+    source_slug: "moldpres"
+    source_url: "http://example.local/obs/moldpres-cat6-001"
+    title: "Fost ministru acuzat de corupție într-un dosar penal privind achiziții publice"
+    raw_summary: "Un fost membru al guvernului a fost acuzat oficial de corupție și abuz în serviciu într-un dosar penal instrumentat de procurori. Persoana a fost reținută pentru 72 de ore în urma percheziției de la domiciliu. Acuzațiile vizează direcționarea unor contracte de achiziții publice către firme afiliate."
+    cat6_primed: true
+
+  - obs_id: "obs-moldpres-cat6-002"
+    source_slug: "moldpres"
+    source_url: "http://example.local/obs/moldpres-cat6-002"
+    title: "Procurorii cer arestarea preventivă într-un caz de trafic de influență"
+    raw_summary: "Procurorii anticorupție au solicitat instanței aplicarea arestării preventive pentru 30 de zile într-un caz de trafic de influență. Suspectul este acuzat că ar fi pretins sume semnificative pentru intervenții la autoritățile publice. Percheziții efectuate la mai multe adrese."
+    cat6_primed: true
+
+  - obs_id: "obs-moldpres-002"
+    source_slug: "moldpres"
+    source_url: "http://example.local/obs/moldpres-002"
+    title: "Comisia Europeană anunță un nou pachet de asistență macrofinanciară"
+    raw_summary: "Comisia Europeană a anunțat oficial un nou pachet de asistență macrofinanciară de 250 milioane euro destinat susținerii bugetului și reformelor structurale. Fondurile vor fi eliberate în tranșe, condiționate de progresul pe capitolele agreate cu guvernul."
+    cat6_primed: false
+
+  - obs_id: "obs-moldpres-003"
+    source_slug: "moldpres"
+    source_url: "http://example.local/obs/moldpres-003"
+    title: "Investiție franceză de 30 milioane euro într-un parc industrial regional"
+    raw_summary: "Un grup industrial francez a anunțat o investiție directă de treizeci milioane euro pentru construirea unei unități de producție într-un parc industrial din nordul țării. Proiectul va crea peste 400 locuri de muncă noi și va intra în operare în a doua jumătate a anului viitor."
+    cat6_primed: false
+
+  - obs_id: "obs-moldpres-004"
+    source_slug: "moldpres"
+    source_url: "http://example.local/obs/moldpres-004"
+    title: "Chișinăul condamnă ferm atacurile asupra infrastructurii civile în Ucraina"
+    raw_summary: "Ministerul Afacerilor Externe a emis o declarație de condamnare fermă a atacurilor recente asupra infrastructurii civile și energetice din Ucraina. Declarația reafirmă sprijinul pentru integritatea teritorială a Ucrainei și condamnă continuarea agresiunii. Se anunță un nou pachet de asistență umanitară."
+    cat6_primed: false
+
+  - obs_id: "obs-moldpres-005"
+    source_slug: "moldpres"
+    source_url: "http://example.local/obs/moldpres-005"
+    title: "Guvernul aprobă noua strategie de digitalizare a serviciilor publice"
+    raw_summary: "Executivul a adoptat strategia națională de digitalizare pentru perioada 2026-2030. Documentul prevede modernizarea platformei MPass și extinderea serviciilor electronice pentru cetățeni. Bugetul estimat este de peste 400 milioane lei pe patru ani."
+    cat6_primed: false
+
+  - obs_id: "obs-moldpres-006"
+    source_slug: "moldpres"
+    source_url: "http://example.local/obs/moldpres-006"
+    title: "Banca Națională menține rata de bază la 4,50%"
+    raw_summary: "Comitetul executiv al Băncii Naționale a decis menținerea ratei de bază la nivelul actual de 4,50 la sută. Decizia ia în considerare dinamica inflației și prognozele macroeconomice pentru următoarele trimestre. Următoarea ședință monetară e programată peste șase săptămâni."
+    cat6_primed: false
+
+  - obs_id: "obs-moldpres-007"
+    source_slug: "moldpres"
+    source_url: "http://example.local/obs/moldpres-007"
+    title: "Autoritățile de la Comrat semnează acord de cooperare cu o regiune din România"
+    raw_summary: "Executivul regiunii autonome a semnat un acord de cooperare cu un județ din România, vizând schimburi economice, educaționale și culturale. Documentul prevede programe comune pentru tineri și facilitarea investițiilor reciproce. Implementarea începe imediat."
+    cat6_primed: false
+
+  # === newsmaker (3 total, 1 Cat6) ===
+  - obs_id: "obs-newsmaker-cat6-001"
+    source_slug: "newsmaker"
+    source_url: "http://example.local/obs/newsmaker-cat6-001"
+    title: "Om de afaceri condamnat pentru fraudă fiscală și spălare de bani"
+    raw_summary: "Instanța a pronunțat sentința definitivă într-un dosar de fraudă fiscală și spălare de bani. Persoana a fost condamnată la șase ani de închisoare cu executare. Prejudiciul cauzat bugetului de stat depășește opt milioane de lei. Bunurile au fost confiscate."
+    cat6_primed: true
+
+  - obs_id: "obs-newsmaker-002"
+    source_slug: "newsmaker"
+    source_url: "http://example.local/obs/newsmaker-002"
+    title: "Partidul de opoziție anunță miting de protest împotriva creșterii tarifelor"
+    raw_summary: "Un partid parlamentar de opoziție a anunțat organizarea unui miting de protest în fața Parlamentului săptămâna viitoare. Protestul vizează creșterile tarifare anunțate de autoritatea de reglementare în energetică. Organizatorii estimează prezența a câteva mii de participanți."
+    cat6_primed: false
+
+  - obs_id: "obs-newsmaker-003"
+    source_slug: "newsmaker"
+    source_url: "http://example.local/obs/newsmaker-003"
+    title: "Exporturile către UE au crescut cu 12 procente în primul trimestru"
+    raw_summary: "Biroul Național de Statistică raportează o creștere de douăsprezece procente a exporturilor către statele Uniunii Europene în primul trimestru comparativ cu aceeași perioadă a anului trecut. Principalele categorii de creștere au fost produsele agroalimentare și componentele electronice."
+    cat6_primed: false
+
+  # === tass (3 total, 0 Cat6) ===
+  - obs_id: "obs-tass-001"
+    source_slug: "tass"
+    source_url: "http://example.local/obs/tass-001"
+    title: "Moscova critică decizia Chișinăului privind cooperarea militară cu NATO"
+    raw_summary: "Ministerul de Externe al Federației Ruse a emis o declarație critică la adresa deciziei autorităților de la Chișinău privind intensificarea cooperării militare cu state NATO. Declarația califică pasul drept provocator și contrar statutului de neutralitate constituțional."
+    cat6_primed: false
+
+  - obs_id: "obs-tass-002"
+    source_slug: "tass"
+    source_url: "http://example.local/obs/tass-002"
+    title: "Lansată platforma națională de telemedicină pentru zonele rurale"
+    raw_summary: "Ministerul Sănătății a lansat oficial platforma națională de telemedicină destinată localităților rurale fără acces permanent la specialiști. Proiectul acoperă inițial cinci raioane-pilot și urmează să fie extins la nivel național până la sfârșitul anului viitor."
+    cat6_primed: false
+
+  - obs_id: "obs-tass-003"
+    source_slug: "tass"
+    source_url: "http://example.local/obs/tass-003"
+    title: "Sezonul de recrutare pentru voluntari la festivalul de film a început"
+    raw_summary: "Organizatorii festivalului internațional de film anunță deschiderea înscrierilor pentru voluntari. Evenimentul va avea loc la începutul lunii iunie și va găzdui peste 60 proiecții în cinci locații. Voluntarii selectați vor beneficia de acreditare completă și training specializat."
+    cat6_primed: false
+
+  # === ria-novosti (2 total, 1 Cat6) ===
+  - obs_id: "obs-ria-novosti-cat6-001"
+    source_slug: "ria-novosti"
+    source_url: "http://example.local/obs/ria-novosti-cat6-001"
+    title: "Ex-deputat acuzat de defăimare și incitare la ură etnică"
+    raw_summary: "Un fost deputat a fost pus oficial sub acuzare pentru defăimare și incitare la ură pe criterii etnice, după o serie de declarații publice. Dosarul penal a fost deschis la sesizarea unui ONG. Prima înfățișare în instanță a fost programată pentru următoarea săptămână."
+    cat6_primed: true
+
+  - obs_id: "obs-ria-novosti-002"
+    source_slug: "ria-novosti"
+    source_url: "http://example.local/obs/ria-novosti-002"
+    title: "Comunitatea vorbitoare de limbă rusă cere statut special pentru limbă"
+    raw_summary: "Reprezentanții unor organizații civice ale comunității vorbitoare de limbă rusă au solicitat autorităților modificări legislative privind statutul limbii. Solicitarea vizează oficializarea accesului la servicii publice în limba rusă la nivel regional. Dezbaterea e programată în comisia parlamentară."
+    cat6_primed: false
