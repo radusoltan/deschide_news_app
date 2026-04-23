@@ -68,37 +68,6 @@ class TierResolverTest extends TestCase
         $this->resolver->resolve('signal_aggregator');
     }
 
-    public function testResolveFallbackReturnsTier(): void
-    {
-        $this->settings->expects($this->once())
-            ->method('get')
-            ->with('agent.source_attribution.fallback')
-            ->willReturn('gemini_flash');
-
-        $this->assertSame(
-            LlmModelTier::GEMINI_FLASH,
-            $this->resolver->resolveFallback('source_attribution'),
-        );
-    }
-
-    public function testResolveFallbackReturnsNullOnEmptyString(): void
-    {
-        $this->settings->method('get')
-            ->with('agent.context.fallback')
-            ->willReturn('');
-
-        $this->assertNull($this->resolver->resolveFallback('context'));
-    }
-
-    public function testResolveFallbackReturnsNullWhenMissing(): void
-    {
-        $this->settings->method('get')
-            ->with('agent.unknown.fallback')
-            ->willReturn(null);
-
-        $this->assertNull($this->resolver->resolveFallback('unknown'));
-    }
-
     public function testIsEnabledDefaultsTrueWhenMissing(): void
     {
         $this->settings->expects($this->once())

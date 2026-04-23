@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Guard;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentResponse;
 use App\Entity\Article;
-use App\Service\Ai\LlmRetryExecutor;
-use App\Service\Ai\Provider\GeminiCliService;
+use App\Enum\LlmModelTier;
 use App\Service\Editorial\Guard\DiacriticsValidator;
 use App\Service\Editorial\Guard\StyleGuard;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
@@ -24,8 +25,7 @@ final class StyleGuardVerdictMappingTest extends TestCase
 {
     private const INVOCATION_ID = '01JFXXXXXXXXXXXXXXXXXXXXXX';
 
-    private LlmRetryExecutor&MockObject $executor;
-    private GeminiCliService&MockObject $geminiCliService;
+    private AgentDispatcher&MockObject $dispatcher;
     private LlmInvocationLogger&MockObject $invocationLogger;
     private StyleGuard $guard;
 
@@ -33,8 +33,7 @@ final class StyleGuardVerdictMappingTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->executor = $this->createMock(LlmRetryExecutor::class);
-        $this->geminiCliService = $this->createMock(GeminiCliService::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
 
         $this->invocationLogger
@@ -45,8 +44,7 @@ final class StyleGuardVerdictMappingTest extends TestCase
 
         $this->guard = new StyleGuard(
             new DiacriticsValidator(),
-            $this->executor,
-            $this->geminiCliService,
+            $this->dispatcher,
             $this->invocationLogger,
             $this->createMock(LoggerInterface::class),
         );
@@ -112,16 +110,15 @@ final class StyleGuardVerdictMappingTest extends TestCase
     /** @param array<string, mixed> $payload */
     private function mockLlmResponse(array $payload): void
     {
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => json_encode($payload, JSON_THROW_ON_ERROR),
-            'agent_id' => 'style_guard',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-            'invocation_id' => self::INVOCATION_ID,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(new AgentResponse(
+            content: json_encode($payload, JSON_THROW_ON_ERROR),
+            agentId: 'style_guard',
+            tier: LlmModelTier::HAIKU,
+            model: 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: self::INVOCATION_ID,
+            metrics: null,
+        ));
     }
 
     private function makeArticle(string $title, string $lead, string $content): Article

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentRequest;
 use App\Dto\Editorial\SourceAttributionResult;
 use App\Entity\Editorial\SourceSignal;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use Psr\Log\LoggerInterface;
 
@@ -29,13 +30,22 @@ use Psr\Log\LoggerInterface;
  * agent enabled/disabled flag is NOT evaluated here — the caller (the
  * handler) checks {@see TierResolver::isEnabled()} and bypasses this
  * service when the agent is off.
+ *
+ * T57.P2b canary — migrated to {@see AgentDispatcher} (ADR-024 D2). Tier
+ * is still resolved here via {@see TierResolver} and passed explicit on
+ * the {@see AgentRequest} (ADR-024 Q2 — dispatcher is mechanical pipe).
+ * The dispatcher layers `editorial.emergency_halt` enforcement before the
+ * LLM call; on halt the thrown `EmergencyHaltException` is caught by the
+ * generic `\Throwable` clause below and fails-open like any other transport
+ * failure. Downstream stabilization can still run with no attribution
+ * extracted for the halted signal.
  */
 class SourceAttributionExtractor
 {
     public const AGENT_ID = 'source_attribution';
 
     public function __construct(
-        private readonly LlmRetryExecutor $executor,
+        private readonly AgentDispatcher $dispatcher,
         private readonly TierResolver $tierResolver,
         private readonly LoggerInterface $logger,
     ) {}
@@ -43,18 +53,18 @@ class SourceAttributionExtractor
     public function extract(SourceSignal $signal): SourceAttributionResult
     {
         $tier = $this->tierResolver->resolve(self::AGENT_ID);
-        $messages = [[
-            'role' => 'user',
-            'content' => $this->buildUserPrompt($signal),
-        ]];
+        $request = new AgentRequest(
+            agentId: self::AGENT_ID,
+            messages: [[
+                'role' => 'user',
+                'content' => $this->buildUserPrompt($signal),
+            ]],
+            tier: $tier,
+            systemPrompt: $this->getSystemPrompt(),
+        );
 
         try {
-            $response = $this->executor->executeWithRetry(
-                self::AGENT_ID,
-                $messages,
-                $tier,
-                $this->getSystemPrompt(),
-            );
+            $response = $this->dispatcher->dispatch($request);
         } catch (\Throwable $e) {
             $this->logger->warning('SourceAttributionExtractor: LLM call failed, fail-open', [
                 'source_signal_id' => $signal->getId(),
@@ -65,7 +75,7 @@ class SourceAttributionExtractor
             return SourceAttributionResult::empty();
         }
 
-        return $this->parseResponse($response['content'], $signal);
+        return $this->parseResponse($response->content, $signal);
     }
 
     /**

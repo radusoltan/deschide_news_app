@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Writer;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentRequest;
 use App\Dto\Editorial\VerificationVerdict;
 use App\Entity\Article;
 use App\Entity\Editorial\SourceSignal;
@@ -11,8 +13,6 @@ use App\Enum\ArticleStatus;
 use App\Enum\ArticleType;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmPromptAssembler;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -41,12 +41,17 @@ use Psr\Log\LoggerInterface;
  * {@see \App\Message\Editorial\IngestArticleMessage} which re-runs the AI
  * ingestion pipeline. For in-place revisions we only need translations to
  * catch up — ingestion is a one-shot post-creation step.
+ *
+ * LLM routing (post-ADR-024 D3 / T57.P8): Haiku-only via
+ * {@see AgentDispatcher}. On retry exhaust, {@see LlmUnavailableException}
+ * propagates from {@see self::invokeLlm()} to {@see self::write()} which
+ * emits `editorial_review_queue` and rethrows — no cross-provider fallback,
+ * no mutation of `$existing` before flush() so the DB row stays bit-exact.
  */
 class DevelopingStoryWriter
 {
     private const AGENT_ID = 'developing_story_writer';
     private const PRIMARY_TIER = LlmModelTier::HAIKU;
-    private const FALLBACK_MODEL = 'gemini-2.5-flash';
 
     private const SYSTEM_PROMPT = <<<'PROMPT'
 Ești un editor al redacției Deschide care actualizează o știre în curs (developing story). Primești articolul existent (titlu, lead, corp) și una sau mai multe informații noi verificate. Sarcina ta este să integrezi informațiile noi în articol, menținând coerența narativă.
@@ -83,8 +88,7 @@ Reply with the strict JSON object described in your system instructions (updated
 TEXT;
 
     public function __construct(
-        private readonly LlmRetryExecutor $llmRetryExecutor,
-        private readonly GeminiCliService $geminiCliService,
+        private readonly AgentDispatcher $dispatcher,
         private readonly EntityManagerInterface $em,
         private readonly LlmPromptAssembler $promptAssembler,
         private readonly LoggerInterface $logger,
@@ -119,7 +123,28 @@ TEXT;
         }
 
         $userPrompt = $this->buildUserPrompt($existing, $primarySignal, $supporting, $verdict);
-        $payload = $this->invokeLlm($userPrompt);
+
+        try {
+            $payload = $this->invokeLlm($userPrompt);
+        } catch (LlmUnavailableException $e) {
+            // ADR-024 D3 (T57.P8) — fail-closed on LLM exhaust. The halt fires
+            // BEFORE any mutation of $existing (lines below), so the in-memory
+            // state and DB row stay bit-exact. Rethrow surfaces the failure to
+            // the Messenger handler's \\Throwable terminal.
+            $this->logger->warning('editorial_review_queue', [
+                'agent_id' => self::AGENT_ID,
+                'entity_type' => 'article',
+                'entity_id' => $existing->getId(),
+                'entity_refs' => [
+                    'signal_id' => $primarySignal->getId(),
+                ],
+                'invocation_id' => $e->getInvocationId(),
+                'tier_attempted' => $e->tier->value,
+                'reason' => sprintf('%s_exhausted', $e->tier->value),
+            ]);
+
+            throw $e;
+        }
 
         $updatedContent = $this->extractString($payload, 'updated_content');
         $changesSummary = $this->extractString($payload, 'changes_summary');
@@ -227,32 +252,23 @@ TEXT;
     }
 
     /**
+     * Dispatches to Haiku via {@see AgentDispatcher} and parses the JSON body.
+     * On retry exhaust, {@see LlmUnavailableException} propagates up to
+     * {@see self::write()} which emits the `editorial_review_queue` log line
+     * and rethrows (ADR-024 D3 / T57.P8 — no cross-provider fallback).
+     *
      * @return array<string, mixed>
      */
     private function invokeLlm(string $userPrompt): array
     {
-        try {
-            $result = $this->llmRetryExecutor->executeWithRetry(
-                agentId: self::AGENT_ID,
-                messages: [['role' => 'user', 'content' => $userPrompt]],
-                tier: self::PRIMARY_TIER,
-                systemPrompt: self::SYSTEM_PROMPT,
-            );
+        $response = $this->dispatcher->dispatch(new AgentRequest(
+            agentId: self::AGENT_ID,
+            messages: [['role' => 'user', 'content' => $userPrompt]],
+            tier: self::PRIMARY_TIER,
+            systemPrompt: self::SYSTEM_PROMPT,
+        ));
 
-            return $this->decodeJson($result['content'], 'haiku');
-        } catch (LlmUnavailableException $e) {
-            $this->logger->warning('developing_story_writer_haiku_unavailable_trying_gemini', [
-                'attempts' => $e->attempts,
-            ]);
-        }
-
-        $geminiPrompt = self::SYSTEM_PROMPT . "\n\n" . $userPrompt;
-        $raw = $this->geminiCliService->execute($geminiPrompt, [
-            'model' => self::FALLBACK_MODEL,
-            'timeout' => 120,
-        ]);
-
-        return $this->decodeJson($raw, 'gemini_fallback');
+        return $this->decodeJson($response->content, 'haiku');
     }
 
     /**

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
+use App\Dto\Agent\AgentResponse;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Entity\Editorial\SourceSignal;
 use App\Entity\Editorial\VerifiedSource;
@@ -13,7 +17,6 @@ use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Repository\Editorial\SourceSignalRepository;
 use App\Service\Aggregator\ElasticsearchSimilarityService;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use App\Service\Editorial\Verification\ClaimOriginGraphBuilder;
 use App\Service\Editorial\Verification\SignalAggregator;
@@ -26,7 +29,7 @@ class SignalAggregatorTest extends TestCase
     private SourceSignalRepository&MockObject $signalRepo;
     private ElasticsearchSimilarityService&MockObject $similarity;
     private ClaimOriginGraphBuilder&MockObject $graphBuilder;
-    private LlmRetryExecutor&MockObject $executor;
+    private AgentDispatcher&MockObject $dispatcher;
     private TierResolver&MockObject $tierResolver;
     private AppSettingRepository&MockObject $settings;
     private SignalAggregator $aggregator;
@@ -36,7 +39,7 @@ class SignalAggregatorTest extends TestCase
         $this->signalRepo = $this->createMock(SourceSignalRepository::class);
         $this->similarity = $this->createMock(ElasticsearchSimilarityService::class);
         $this->graphBuilder = $this->createMock(ClaimOriginGraphBuilder::class);
-        $this->executor = $this->createMock(LlmRetryExecutor::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
 
@@ -58,7 +61,7 @@ class SignalAggregatorTest extends TestCase
             $this->signalRepo,
             $this->similarity,
             $this->graphBuilder,
-            $this->executor,
+            $this->dispatcher,
             $this->tierResolver,
             $this->settings,
             new NullLogger(),
@@ -78,7 +81,7 @@ class SignalAggregatorTest extends TestCase
         $this->similarity->method('findSimilar')->willReturn([]);
 
         $this->tierResolver->expects($this->never())->method('isEnabled');
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         $stubGraph = $this->makeStubGraph();
         $this->graphBuilder->expects($this->once())
@@ -106,17 +109,11 @@ class SignalAggregatorTest extends TestCase
 
         $this->tierResolver->method('isEnabled')->willReturn(true);
 
-        $this->executor->expects($this->once())
-            ->method('executeWithRetry')
-            ->willReturn([
-                'content' => '{"is_same_claim":true,"confidence":0.92,"reasoning":"ambele descriu același summit"}',
-                'agent_id' => 'signal_aggregator',
-                'tier' => 'haiku',
-                'model' => 'claude-haiku-4-5-20251001',
-                'attempts' => 1,
-                'fallback_detected' => false,
-                'metrics' => null,
-            ]);
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->willReturn($this->buildResponse(
+                '{"is_same_claim":true,"confidence":0.92,"reasoning":"ambele descriu același summit"}',
+            ));
 
         $this->graphBuilder->expects($this->once())
             ->method('build')
@@ -141,15 +138,9 @@ class SignalAggregatorTest extends TestCase
 
         $this->tierResolver->method('isEnabled')->willReturn(true);
 
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"is_same_claim":false,"confidence":0.20,"reasoning":"teme diferite"}',
-            'agent_id' => 'signal_aggregator',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            '{"is_same_claim":false,"confidence":0.20,"reasoning":"teme diferite"}',
+        ));
 
         // Gate rejection → builder NEVER called.
         $this->graphBuilder->expects($this->never())->method('build');
@@ -171,7 +162,7 @@ class SignalAggregatorTest extends TestCase
         ]);
         $this->tierResolver->method('isEnabled')->willReturn(true);
 
-        $this->executor->method('executeWithRetry')
+        $this->dispatcher->method('dispatch')
             ->willThrowException(new \RuntimeException('simulated LLM transport fail'));
 
         // Fail-open: graph still built from ES grouping.
@@ -196,7 +187,7 @@ class SignalAggregatorTest extends TestCase
         ]);
 
         $this->tierResolver->method('isEnabled')->willReturn(false);
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         $this->graphBuilder->expects($this->once())
             ->method('build')
@@ -223,7 +214,7 @@ class SignalAggregatorTest extends TestCase
 
         // 2 clusters, each a singleton → no LLM gate calls (single-signal bypass).
         $this->tierResolver->expects($this->never())->method('isEnabled');
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         $this->graphBuilder->expects($this->exactly(2))
             ->method('build')
@@ -246,20 +237,103 @@ class SignalAggregatorTest extends TestCase
         ]);
 
         $this->tierResolver->method('isEnabled')->willReturn(true);
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => 'Nu pot procesa această cerere.',
-            'agent_id' => 'signal_aggregator',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(
+            $this->buildResponse('Nu pot procesa această cerere.'),
+        );
 
         $this->graphBuilder->expects($this->never())->method('build');
 
         $result = $this->aggregator->aggregate('topic', [1, 2]);
         $this->assertSame([], $result);
+    }
+
+    /**
+     * T57.P2c.1 acceptance (d): editorial.emergency_halt raised by the
+     * dispatcher fails-open at the semantic gate, preserving ES grouping.
+     * This matches the design intent: halt should not CANCEL an in-flight
+     * cluster (that would re-drop work already done at the aggregator
+     * layer) but SHOULD skip the LLM gate. The cluster is still confirmed
+     * by ES overlap.
+     */
+    public function testEmergencyHaltFailsOpenAtSemanticGate(): void
+    {
+        $s1 = $this->makeSignal(1);
+        $s2 = $this->makeSignal(2);
+
+        $this->signalRepo->method('find')
+            ->willReturnMap([[1, null, $s1], [2, null, $s2]]);
+        $this->similarity->method('findSimilar')->willReturn([
+            ['score' => 0.9, 'articleId' => 10, 'title' => 'A'],
+            ['score' => 0.8, 'articleId' => 11, 'title' => 'B'],
+        ]);
+        $this->tierResolver->method('isEnabled')->willReturn(true);
+
+        $this->dispatcher->method('dispatch')
+            ->willThrowException(new EmergencyHaltException(SignalAggregator::AGENT_ID));
+
+        $this->graphBuilder->expects($this->once())
+            ->method('build')
+            ->willReturn($this->makeStubGraph());
+
+        $result = $this->aggregator->aggregate('topic', [1, 2]);
+        $this->assertCount(1, $result);
+    }
+
+    /**
+     * T57.P2c.1 acceptance (c): verify the AgentRequest carries
+     * agent_id=signal_aggregator, resolved HAIKU tier, system prompt,
+     * single user message, and null tierVariant (SignalAggregator has
+     * no variant — single tier key per ADR-020 D5 Tier B).
+     */
+    public function testSemanticGateBuildsAgentRequestWithResolvedTier(): void
+    {
+        $s1 = $this->makeSignal(1);
+        $s2 = $this->makeSignal(2);
+
+        $this->signalRepo->method('find')
+            ->willReturnMap([[1, null, $s1], [2, null, $s2]]);
+        $this->similarity->method('findSimilar')->willReturn([
+            ['score' => 0.9, 'articleId' => 10, 'title' => 'A'],
+            ['score' => 0.8, 'articleId' => 11, 'title' => 'B'],
+        ]);
+        $this->tierResolver->method('isEnabled')->willReturn(true);
+
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AgentRequest $req): bool {
+                $this->assertSame(SignalAggregator::AGENT_ID, $req->agentId);
+                $this->assertSame(LlmModelTier::HAIKU, $req->tier);
+                $this->assertNotNull($req->systemPrompt);
+                $this->assertStringContainsString('analist editorial', $req->systemPrompt);
+                $this->assertCount(1, $req->messages);
+                $this->assertSame('user', $req->messages[0]['role']);
+                $this->assertNull($req->tierVariant, 'SignalAggregator has no variant');
+
+                return true;
+            }))
+            ->willReturn($this->buildResponse(
+                '{"is_same_claim":true,"confidence":0.90,"reasoning":"ok"}',
+            ));
+
+        $this->graphBuilder->expects($this->once())
+            ->method('build')
+            ->willReturn($this->makeStubGraph());
+
+        $result = $this->aggregator->aggregate('topic', [1, 2]);
+        $this->assertCount(1, $result);
+    }
+
+    private function buildResponse(string $content): AgentResponse
+    {
+        return new AgentResponse(
+            content: $content,
+            agentId: SignalAggregator::AGENT_ID,
+            tier: LlmModelTier::HAIKU,
+            model: 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: '01JE0Q9ZXJQ8YHZR3S3M7E2P5H',
+            metrics: null,
+        );
     }
 
     private function makeSignal(int $id): SourceSignal

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Command\Editorial;
 
+use App\Entity\AppSetting;
 use App\Repository\AppSettingRepository;
+use App\Service\Editorial\AppSettingChangeAuditContext;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -36,6 +38,7 @@ final class AppSettingsSetCommand extends Command
 
     public function __construct(
         private readonly AppSettingRepository $settings,
+        private readonly AppSettingChangeAuditContext $auditContext,
     ) {
         parent::__construct();
     }
@@ -51,6 +54,16 @@ final class AppSettingsSetCommand extends Command
                 InputOption::VALUE_REQUIRED,
                 'Type hint for input validation: ' . implode('|', self::SUPPORTED_TYPES),
                 'string',
+            )
+            ->addOption(
+                'reason',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Operator reason for the change. MANDATORY for keys matching '
+                    . 'AppSetting::CRITICAL_KEYS (editorial.emergency_halt, '
+                    . 'editorial.pipeline.enabled, editorial.tier_overrides.*); '
+                    . 'optional on non-critical updates. Propagated to '
+                    . 'app_settings_audit_log.reason and Mercure broadcast.',
             );
     }
 
@@ -64,6 +77,8 @@ final class AppSettingsSetCommand extends Command
         $value = $input->getArgument('value');
         /** @var string $type */
         $type = $input->getOption('type');
+        /** @var string|null $reason */
+        $reason = $input->getOption('reason');
 
         if (!\in_array($type, self::SUPPORTED_TYPES, true)) {
             $io->error(sprintf(
@@ -75,13 +90,35 @@ final class AppSettingsSetCommand extends Command
             return Command::FAILURE;
         }
 
+        // Fail closed on a critical-key flip without a reason BEFORE coercion.
+        // The runbook contract is "you cannot flip the emergency halt without
+        // telling us why" — better to surface this early than let an operator
+        // debug a type error first and then be blocked on a missing flag.
+        if (AppSetting::isCriticalKey($key) && ($reason === null || trim($reason) === '')) {
+            $io->error(sprintf(
+                "Key '%s' is in AppSetting::CRITICAL_KEYS — --reason is mandatory. "
+                    . 'Re-run with --reason="<short incident/decision note>".',
+                $key,
+            ));
+
+            return Command::FAILURE;
+        }
+
         $normalized = $this->coerce($type, $value, $io);
         if ($normalized === null) {
             // Coercion already rendered the error.
             return Command::FAILURE;
         }
 
-        $this->settings->set($key, $normalized);
+        // Propagate the reason to the audit listener via the transient context,
+        // then clear unconditionally so a subsequent flush in the same process
+        // (e.g. a messenger worker) cannot reuse our reason.
+        $this->auditContext->setReason($reason);
+        try {
+            $this->settings->set($key, $normalized);
+        } finally {
+            $this->auditContext->clear();
+        }
 
         $io->success(sprintf("Set '%s' = '%s' (type: %s)", $key, $normalized, $type));
 

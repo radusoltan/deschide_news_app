@@ -246,6 +246,12 @@ services:
             $geminiCliPath: '%gemini_cli_path%'
             $homeDir: '%gemini_home_dir%'
 
+    # ADR-024 D2 dispatcher — T57.P7.C1 adds Gemini-transport branch; needs
+    # projectDir for GeminiCliService cwd option (agent-file resolution).
+    App\Agent\AgentDispatcher:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
     # Topic Detector Service (uses GeminiCliService)
     App\Service\TopicDetectorService:
         arguments:

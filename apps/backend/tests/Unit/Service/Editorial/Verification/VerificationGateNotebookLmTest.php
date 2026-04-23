@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Entity\Editorial\SourceSignal;
 use App\Entity\Editorial\VerifiedSource;
 use App\Entity\Source;
 use App\Enum\EditorialAlignment;
 use App\Repository\AppSettingRepository;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Verification\VerificationGate;
@@ -31,7 +31,7 @@ use Psr\Log\AbstractLogger;
  */
 class VerificationGateNotebookLmTest extends TestCase
 {
-    private LlmRetryExecutor&MockObject $executor;
+    private AgentDispatcher&MockObject $dispatcher;
     private TierResolver&MockObject $tierResolver;
     private AppSettingRepository&MockObject $settings;
     private LlmInvocationLogger&MockObject $invocationLogger;
@@ -40,14 +40,14 @@ class VerificationGateNotebookLmTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->executor = $this->createMock(LlmRetryExecutor::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
         $this->logger = new CapturingLogger();
 
         $this->gate = new VerificationGate(
-            $this->executor,
+            $this->dispatcher,
             $this->tierResolver,
             $this->settings,
             $this->invocationLogger,
@@ -62,7 +62,7 @@ class VerificationGateNotebookLmTest extends TestCase
             ->willReturn(false);
         $this->settings->method('get')->willReturnArgument(1);
 
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         $signal = $this->makeSignal(1, 'Nuclear strike reported');
         $graph = $this->makeGraph(1, ['wire_neutral'], ['1' => 1]);

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Writer;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentRequest;
 use App\Dto\Editorial\VerificationVerdict;
 use App\Entity\Article;
 use App\Entity\Editorial\SourceSignal;
@@ -13,9 +15,6 @@ use App\Enum\ArticleType;
 use App\Enum\Editorial\VerdictType;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
-use App\Service\Ai\Provider\GeminiCliService;
-use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Llm\LlmPromptAssembler;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -31,13 +30,13 @@ use Psr\Log\LoggerInterface;
  * {@see \App\Service\Editorial\PostApprovalDispatcher} for translation +
  * ingestion fan-out.
  *
- * LLM routing (audit hard rule 6):
- *  - Primary: Haiku via {@see LlmRetryExecutor} (agent id `flash_writer`).
- *  - Fallback: Gemini Flash via direct {@see GeminiCliService::execute()}.
- *    The retry executor is Anthropic-only in S55 (S56 extends it to Gemini),
- *    so Gemini rerouting happens at this service's own level.
- *  - Catastrophic LLM outage (both paths fail): the writer throws, the
- *    Messenger retry policy handles the redelivery. No silent dropping.
+ * LLM routing (post-ADR-024 D3 / T57.P8):
+ *  - Single path: Haiku via {@see AgentDispatcher} → {@see \App\Service\Ai\LlmRetryExecutor}
+ *    (agent id `flash_writer`). No cross-provider fallback — per ADR-024 D3
+ *    the downgrade-only policy has been retired. On retry exhaust,
+ *    {@see LlmUnavailableException} is logged as `editorial_review_queue` and
+ *    rethrown; the Messenger retry policy handles redelivery and no orphan
+ *    Article row is persisted (persist+flush live past the invoke call-site).
  *
  * Locale: the Article is created in RO regardless of the signal's original
  * language — translation to EN/RU is delegated to the async pipeline.
@@ -46,7 +45,6 @@ class FlashWriter
 {
     private const AGENT_ID = 'flash_writer';
     private const PRIMARY_TIER = LlmModelTier::HAIKU;
-    private const FALLBACK_MODEL = 'gemini-2.5-flash';
 
     private const SYSTEM_PROMPT = <<<'PROMPT'
 Ești un editor al redacției Deschide. Produci flash-uri de știri scurte (80-120 de cuvinte) în limba română, pe baza semnalelor verificate care îți sunt furnizate.
@@ -82,12 +80,10 @@ Reply with the strict JSON object described in your system instructions (title, 
 TEXT;
 
     public function __construct(
-        private readonly LlmRetryExecutor $llmRetryExecutor,
-        private readonly GeminiCliService $geminiCliService,
+        private readonly AgentDispatcher $dispatcher,
         private readonly SignalCategoryResolver $categoryResolver,
         private readonly AiAuthorProvider $aiAuthorProvider,
         private readonly EntityManagerInterface $em,
-        private readonly LlmInvocationLogger $llmInvocationLogger,
         private readonly LlmPromptAssembler $promptAssembler,
         private readonly LoggerInterface $logger,
     ) {}
@@ -102,7 +98,30 @@ TEXT;
         ?Topic $topic = null,
     ): Article {
         $userPrompt = $this->buildUserPrompt($primarySignal, $supporting, $verdict);
-        $payload = $this->invokeLlm($userPrompt);
+
+        try {
+            $payload = $this->invokeLlm($userPrompt);
+        } catch (LlmUnavailableException $e) {
+            // ADR-024 D3 (T57.P8) — fail-closed on LLM exhaust. Emit uniform
+            // editorial-review signal so ops can surface the article in an
+            // operator dashboard; persist()+flush() below are never reached,
+            // so no orphan Article row is created. Rethrow preserves the
+            // Messenger retry contract.
+            $this->logger->warning('editorial_review_queue', [
+                'agent_id' => self::AGENT_ID,
+                'entity_type' => 'article',
+                'entity_id' => null,
+                'entity_refs' => [
+                    'signal_id' => $primarySignal->getId(),
+                    'topic_id' => $topic?->getId(),
+                ],
+                'invocation_id' => $e->getInvocationId(),
+                'tier_attempted' => $e->tier->value,
+                'reason' => sprintf('%s_exhausted', $e->tier->value),
+            ]);
+
+            throw $e;
+        }
 
         $title = $this->extractString($payload, 'title');
         $lead = $this->extractString($payload, 'lead');
@@ -181,57 +200,23 @@ TEXT;
     }
 
     /**
-     * Invokes Haiku first, falls back to Gemini Flash on LlmUnavailableException.
-     * Both paths parse a JSON object response and record one row per call
-     * into `llm_agent_call_log` via {@see LlmInvocationLogger} (T56.09).
+     * Dispatches to Haiku via {@see AgentDispatcher} and parses the JSON body.
+     * On retry exhaust, {@see LlmUnavailableException} propagates up to
+     * {@see self::write()} which emits the `editorial_review_queue` log line
+     * and rethrows (ADR-024 D3 / T57.P8 — no cross-provider fallback).
      *
      * @return array<string, mixed>
      */
     private function invokeLlm(string $userPrompt): array
     {
-        // T57.03 — Claude-path baseline row is now owned by LlmRetryExecutor
-        // (W' coverage, ADR-023 D2). The Gemini fallback still self-logs
-        // because GeminiCliService bypasses the executor.
-        $fullPrompt = self::SYSTEM_PROMPT . "\n\n" . $userPrompt;
-        $promptHash = hash('sha256', $fullPrompt);
+        $response = $this->dispatcher->dispatch(new AgentRequest(
+            agentId: self::AGENT_ID,
+            messages: [['role' => 'user', 'content' => $userPrompt]],
+            tier: self::PRIMARY_TIER,
+            systemPrompt: self::SYSTEM_PROMPT,
+        ));
 
-        try {
-            $result = $this->llmRetryExecutor->executeWithRetry(
-                agentId: self::AGENT_ID,
-                messages: [['role' => 'user', 'content' => $userPrompt]],
-                tier: self::PRIMARY_TIER,
-                systemPrompt: self::SYSTEM_PROMPT,
-            );
-
-            return $this->decodeJson($result['content'], 'haiku');
-        } catch (LlmUnavailableException $e) {
-            $this->logger->warning('flash_writer_haiku_unavailable_trying_gemini', [
-                'attempts' => $e->attempts,
-            ]);
-        }
-
-        // Direct Gemini fallback (bypasses LlmRetryExecutor per audit hard rule 6).
-        $geminiStart = (int) (microtime(true) * 1000);
-        $raw = $this->geminiCliService->execute($fullPrompt, [
-            'model' => self::FALLBACK_MODEL,
-            'timeout' => 120,
-        ]);
-        $geminiWallMs = (int) (microtime(true) * 1000) - $geminiStart;
-
-        // Gemini CLI wrapper does not expose token/cost metrics — record the
-        // call with wall-time duration and zero-sentinels. Analytics treat
-        // input+output both = 0 as "metrics missing" rather than "free call".
-        $this->llmInvocationLogger->logInvocation(
-            agentName: self::AGENT_ID,
-            promptHash: $promptHash,
-            durationMs: $geminiWallMs,
-            inputTokens: 0,
-            outputTokens: 0,
-            model: self::FALLBACK_MODEL,
-            verdict: null,
-        );
-
-        return $this->decodeJson($raw, 'gemini_fallback');
+        return $this->decodeJson($response->content, 'haiku');
     }
 
     /**

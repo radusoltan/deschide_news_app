@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentRequest;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Dto\Editorial\VerificationVerdict;
 use App\Entity\Editorial\SourceSignal;
@@ -11,7 +13,6 @@ use App\Entity\Topic;
 use App\Enum\Editorial\VerdictType;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\NotebookLM\NotebookLmFactCheckServiceInterface;
@@ -129,7 +130,7 @@ class VerificationGate
     ];
 
     public function __construct(
-        private readonly LlmRetryExecutor $executor,
+        private readonly AgentDispatcher $dispatcher,
         private readonly TierResolver $tierResolver,
         private readonly AppSettingRepository $appSettings,
         private readonly LlmInvocationLogger $invocationLogger,
@@ -485,21 +486,26 @@ class VerificationGate
         VerdictType $ruleVerdict,
         string $ruleReasoning,
     ): VerificationVerdict {
-        $tier = $this->resolveTierForVerdict($ruleVerdict);
+        $variant = $this->tierVariantForVerdict($ruleVerdict);
+        $tier = $this->tierResolver->resolve(self::AGENT_ID, $variant);
 
-        $messages = [[
-            'role' => 'user',
-            'content' => $this->buildSanityPrompt($graph, $ruleVerdict, $ruleReasoning),
-        ]];
+        $request = new AgentRequest(
+            agentId: self::AGENT_ID,
+            messages: [[
+                'role' => 'user',
+                'content' => $this->buildSanityPrompt($graph, $ruleVerdict, $ruleReasoning),
+            ]],
+            tier: $tier,
+            systemPrompt: $this->getSanitySystemPrompt(),
+            tierVariant: $variant,
+        );
 
         try {
-            $response = $this->executor->executeWithRetry(
-                self::AGENT_ID,
-                $messages,
-                $tier,
-                $this->getSanitySystemPrompt(),
-            );
+            $response = $this->dispatcher->dispatch($request);
         } catch (\Throwable $e) {
+            // EmergencyHaltException (ADR-024 D2) surfaces here as Throwable
+            // and fails-open to the rule-based verdict with sanity-skipped
+            // flag — matches existing transport-failure behavior.
             $this->logger->warning('verification_llm_sanity_skipped', [
                 'topic_hash' => $graph->topicHash,
                 'rule_verdict' => $ruleVerdict->value,
@@ -514,8 +520,8 @@ class VerificationGate
             );
         }
 
-        $invocationId = $response['invocation_id'] ?? null;
-        $sanity = $this->parseSanityResponse($response['content']);
+        $invocationId = $response->invocationId;
+        $sanity = $this->parseSanityResponse($response->content);
         $sound = (bool) ($sanity['verdict_sound'] ?? true);
         $confidence = (float) ($sanity['confidence'] ?? 0.5);
         $alternative = \is_string($sanity['alternative_verdict'] ?? null)
@@ -584,13 +590,21 @@ class VerificationGate
         return $finalVerdict;
     }
 
-    private function resolveTierForVerdict(VerdictType $ruleVerdict): LlmModelTier
+    /**
+     * Resolve the AppSettings variant key for the current rule verdict.
+     *
+     * FLASH_WITH_ASSERTION_YELLOW (multi-chain same-alignment, conflict-prone)
+     * routes to `model_tier_conflict` which maps to Sonnet per ADR-020 D5.
+     * Every other rule verdict uses `model_tier_simple` → Haiku. The variant
+     * string is passed through `AgentRequest::tierVariant` so downstream
+     * observability can distinguish the two call shapes (T57.P2c.1,
+     * ADR-024 D2).
+     */
+    private function tierVariantForVerdict(VerdictType $ruleVerdict): string
     {
-        $variant = $ruleVerdict === VerdictType::FLASH_WITH_ASSERTION_YELLOW
+        return $ruleVerdict === VerdictType::FLASH_WITH_ASSERTION_YELLOW
             ? 'model_tier_conflict'
             : 'model_tier_simple';
-
-        return $this->tierResolver->resolve(self::AGENT_ID, $variant);
     }
 
     private function getSanitySystemPrompt(): string

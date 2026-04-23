@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Guard;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
 use App\Entity\Article;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use Psr\Log\LoggerInterface;
 
@@ -33,11 +34,11 @@ use Psr\Log\LoggerInterface;
  *                                    (writer handler in T55.9 archives Article
  *                                    + opens EditorialEscalationLog row)
  *
- *   - LLM unavailable:
- *       · fail-CLOSED for Category 6 (escalationCode='LEGAL_GUARD_UNAVAILABLE')
- *       · fail-OPEN for general (warning-only)
- *     Category 6 fail-closed is deliberate — we'd rather escalate a false
- *     positive to an editor than publish an unreviewed accusation.
+ *   - LLM retry exhaust (post-ADR-024 D3 / T57.P8): hard fail.
+ *     {@see LlmUnavailableException} is logged as `editorial_review_queue`
+ *     and rethrown past {@see self::validate()}; there is no cross-provider
+ *     fallback and no fail-open. Other unexpected throwables still flow
+ *     through the legacy fail-closed-on-Cat6 / fail-open-on-general branch.
  */
 class LegalGuard implements GuardInterface
 {
@@ -45,7 +46,6 @@ class LegalGuard implements GuardInterface
     // with peer agents (flash_writer, style_guard, etc.) — deferred per T57.03
     // discovery to avoid mechanical diff churn during P' instrumentation sprint.
     private const AGENT_ID_GENERAL = 'legal_guard';
-    private const FALLBACK_MODEL = 'gemini-2.5-flash';
     public const ESCALATION_CODE_CATEGORY_6 = 'CATEGORY_6_CRIMINAL_ACCUSATION';
     public const ESCALATION_CODE_UNAVAILABLE = 'LEGAL_GUARD_UNAVAILABLE';
 
@@ -73,8 +73,7 @@ PROMPT;
 
     public function __construct(
         private readonly LegalCategoryDetector $categoryDetector,
-        private readonly LlmRetryExecutor $llmRetryExecutor,
-        private readonly GeminiCliService $geminiCliService,
+        private readonly AgentDispatcher $dispatcher,
         private readonly AppSettingRepository $appSettingRepository,
         private readonly LlmInvocationLogger $invocationLogger,
         private readonly LoggerInterface $logger,
@@ -91,6 +90,34 @@ PROMPT;
 
         try {
             $llmResult = $this->invokeLlm($article, $tier, $isCategory6);
+        } catch (EmergencyHaltException $e) {
+            // ADR-024 D2 + T57.P2c.2 decision: halt is structurally different
+            // from LLM unavailable (deliberate operator decision vs transient
+            // infrastructure). Propagate up to the handler's defense-in-depth
+            // silent-ACK terminal instead of falling through to the Cat6
+            // fail-closed / general fail-open branches below. Without this
+            // explicit catch, the generic \\Throwable clause below would
+            // convert a halt into a CATEGORY_6 escalation for Cat6 articles
+            // — silently swallowing the operator's halt signal.
+            throw $e;
+        } catch (LlmUnavailableException $e) {
+            // ADR-024 D3 (T57.P8) — fail-closed on retry exhaust. Emit the
+            // uniform editorial-review signal with entity context (article id
+            // available at this layer, unlike the writers which are
+            // pre-creation). Rethrow past the \\Throwable branch so Cat6
+            // articles no longer get an auto ESCALATION_CODE_UNAVAILABLE
+            // row — the message handler's top-level terminal owns the outcome.
+            $this->logger->warning('editorial_review_queue', [
+                'agent_id' => self::AGENT_ID_GENERAL,
+                'entity_type' => 'article',
+                'entity_id' => $article->getId(),
+                'entity_refs' => [],
+                'invocation_id' => $e->getInvocationId(),
+                'tier_attempted' => $e->tier->value,
+                'reason' => sprintf('%s_exhausted', $e->tier->value),
+            ]);
+
+            throw $e;
         } catch (\Throwable $e) {
             $this->logger->warning('legal_guard_llm_unavailable', [
                 'article_id' => $article->getId(),
@@ -141,55 +168,25 @@ PROMPT;
             $article->getContent() ?? '(fără corp)',
         );
 
-        try {
-            $result = $this->llmRetryExecutor->executeWithRetry(
-                agentId: self::AGENT_ID_GENERAL,
-                messages: [['role' => 'user', 'content' => $userPrompt]],
-                tier: $tier,
-                systemPrompt: self::SYSTEM_PROMPT,
+        $response = $this->dispatcher->dispatch(new AgentRequest(
+            agentId: self::AGENT_ID_GENERAL,
+            messages: [['role' => 'user', 'content' => $userPrompt]],
+            tier: $tier,
+            systemPrompt: self::SYSTEM_PROMPT,
+        ));
+
+        $decoded = $this->decodeJson($response->content);
+
+        // T57.03 (ADR-023 D2) — P' coverage. Attach the parsed verdict
+        // to the executor-owned baseline row (T57.P2c.2: executor
+        // writes the W' baseline transitively via the dispatcher;
+        // invocation_id flows through AgentResponse DTO).
+        if ($response->invocationId !== null) {
+            $this->invocationLogger->attachVerdict(
+                $response->invocationId,
+                $this->mapVerdict($decoded, $isCategory6),
             );
-
-            $decoded = $this->decodeJson($result['content']);
-
-            // T57.03 (ADR-023 D2) — P' coverage. Attach the parsed verdict
-            // to the executor-owned baseline row.
-            $invocationId = $result['invocation_id'] ?? null;
-            if ($invocationId !== null) {
-                $this->invocationLogger->attachVerdict(
-                    $invocationId,
-                    $this->mapVerdict($decoded, $isCategory6),
-                );
-            }
-
-            return $decoded;
-        } catch (LlmUnavailableException $e) {
-            $this->logger->warning('legal_guard_primary_tier_unavailable_trying_gemini', [
-                'tier' => $tier->value,
-                'attempts' => $e->attempts,
-            ]);
         }
-
-        // T57.03 — Gemini bypasses the executor so the gate self-logs for
-        // cost parity with the Claude path. Verdict is written at insert
-        // time because we already have the decoded payload.
-        $geminiPrompt = self::SYSTEM_PROMPT . "\n\n" . $userPrompt;
-        $geminiStart = (int) (microtime(true) * 1000);
-        $raw = $this->geminiCliService->execute($geminiPrompt, [
-            'model' => self::FALLBACK_MODEL,
-            'timeout' => 120,
-        ]);
-        $geminiWallMs = (int) (microtime(true) * 1000) - $geminiStart;
-        $decoded = $this->decodeJson($raw);
-
-        $this->invocationLogger->logInvocation(
-            agentName: self::AGENT_ID_GENERAL,
-            promptHash: hash('xxh128', $geminiPrompt),
-            durationMs: $geminiWallMs,
-            inputTokens: 0,
-            outputTokens: 0,
-            model: self::FALLBACK_MODEL,
-            verdict: $this->mapVerdict($decoded, $isCategory6),
-        );
 
         return $decoded;
     }

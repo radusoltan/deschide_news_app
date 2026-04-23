@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Writer;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
+use App\Dto\Agent\AgentResponse;
 use App\Dto\Editorial\VerificationVerdict;
 use App\Entity\Article;
 use App\Entity\Editorial\SourceSignal;
@@ -14,8 +18,6 @@ use App\Enum\Editorial\VerdictType;
 use App\Enum\EditorialAlignment;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Llm\LlmPromptAssembler;
 use App\Service\Editorial\Writer\DevelopingStoryWriter;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,29 +26,25 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * Unit test for {@see DevelopingStoryWriter} (Sprint 55 T55.4).
- *
- * Verifies in-place revision mechanics, archived-article guard, wrong-type
- * guard, diacritics preservation, and targeted re-translation dispatch.
+ * Unit test for {@see DevelopingStoryWriter} (Sprint 55 T55.4;
+ * T57.P2c.4 AgentDispatcher migration; T57.P8 ADR-024 D3 downgrade-only
+ * policy retirement).
  */
 class DevelopingStoryWriterTest extends TestCase
 {
-    private LlmRetryExecutor&MockObject $llmRetryExecutor;
-    private GeminiCliService&MockObject $geminiCliService;
+    private AgentDispatcher&MockObject $dispatcher;
     private EntityManagerInterface&MockObject $em;
     private LoggerInterface&MockObject $logger;
     private DevelopingStoryWriter $writer;
 
     protected function setUp(): void
     {
-        $this->llmRetryExecutor = $this->createMock(LlmRetryExecutor::class);
-        $this->geminiCliService = $this->createMock(GeminiCliService::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->writer = new DevelopingStoryWriter(
-            $this->llmRetryExecutor,
-            $this->geminiCliService,
+            $this->dispatcher,
             $this->em,
             new LlmPromptAssembler(),
             $this->logger,
@@ -58,37 +56,27 @@ class DevelopingStoryWriterTest extends TestCase
         $existing = $this->existingStory(initialRev: 1);
         $primary = $this->mockSignal(200);
 
-        $this->llmRetryExecutor->expects($this->once())
-            ->method('executeWithRetry')
-            ->with(
-                'developing_story_writer',
-                $this->isArray(),
-                LlmModelTier::HAIKU,
-                $this->isString(),
-            )
-            ->willReturn([
-                'content' => $this->happyPathResponse(
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AgentRequest $req): bool {
+                $this->assertSame('developing_story_writer', $req->agentId);
+                $this->assertSame(LlmModelTier::HAIKU, $req->tier);
+                $this->assertIsString($req->systemPrompt);
+
+                return true;
+            }))
+            ->willReturn($this->buildAgentResponse(
+                $this->happyPathResponse(
                     updatedContent: 'Corp actualizat cu detalii noi despre Chișinău. Diacritice corecte: ș, ț.',
                     changesSummary: 'S-au adăugat detalii despre ședința guvernului.',
                 ),
-                'agent_id' => 'developing_story_writer',
-                'tier' => 'haiku',
-                'model' => 'claude-haiku-4-5-20251001',
-                'attempts' => 1,
-                'fallback_detected' => false,
-                'metrics' => null,
-            ]);
+            ));
 
-        $this->geminiCliService->expects($this->never())->method('execute');
         $this->em->expects($this->once())->method('flush');
 
         $verdict = new VerificationVerdict(VerdictType::FULL_FLASH, 'Cluster extins', confidence: 0.88);
 
         $result = $this->writer->write($existing, $primary, [], $verdict);
-
-        // Sprint 55 T55.9 refactor: writer no longer dispatches translations —
-        // WriteDevelopingStoryMessageHandler does that after the guard check.
-        // This test only verifies the writer's persist-only contract now.
 
         $this->assertSame($existing, $result);
         $this->assertSame(2, $existing->getRevisionCount());
@@ -96,7 +84,7 @@ class DevelopingStoryWriterTest extends TestCase
         $this->assertSame(0, preg_match('/[ŞşŢţ]/u', (string) $existing->getContent()));
 
         $history = $existing->getRevisionHistory() ?? [];
-        $this->assertCount(1, $history); // testFixture starts with empty revision_history
+        $this->assertCount(1, $history);
         $this->assertSame(2, $history[0]['rev']);
         $this->assertSame('S-au adăugat detalii despre ședința guvernului.', $history[0]['diff']);
         $this->assertSame(200, $history[0]['source_signal_id']);
@@ -106,15 +94,7 @@ class DevelopingStoryWriterTest extends TestCase
     {
         $existing = $this->existingStory(initialRev: 2);
 
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(),
-            'agent_id' => 'developing_story_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildAgentResponse($this->happyPathResponse()));
 
         $verdict = new VerificationVerdict(VerdictType::FULL_FLASH, 'ok', confidence: 0.9);
 
@@ -128,7 +108,7 @@ class DevelopingStoryWriterTest extends TestCase
         $existing = $this->existingStory(initialRev: 5);
         $existing->setStatus(ArticleStatus::ARCHIVED);
 
-        $this->llmRetryExecutor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
         $this->em->expects($this->never())->method('flush');
 
         $this->logger->expects($this->once())
@@ -143,15 +123,15 @@ class DevelopingStoryWriterTest extends TestCase
         );
 
         $this->assertNull($result);
-        $this->assertSame(5, $existing->getRevisionCount()); // unchanged
+        $this->assertSame(5, $existing->getRevisionCount());
     }
 
     public function testRejectsArticleWithWrongType(): void
     {
         $existing = $this->existingStory(initialRev: 3);
-        $existing->setArticleType(ArticleType::FLASH); // not DEVELOPING_STORY
+        $existing->setArticleType(ArticleType::FLASH);
 
-        $this->llmRetryExecutor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
         $this->em->expects($this->never())->method('flush');
 
         $this->logger->expects($this->once())
@@ -168,37 +148,58 @@ class DevelopingStoryWriterTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function testGeminiFallbackWhenHaikuExhausted(): void
+    /**
+     * T57.P8 (ADR-024 D3) — downgrade-only policy retired. On LLM exhaust
+     * the writer emits `editorial_review_queue` and rethrows; $existing stays
+     * bit-exact (halt fires before extractString), no flush.
+     */
+    public function testLlmUnavailablePropagatesWithEditorialReviewLog(): void
     {
         $existing = $this->existingStory(initialRev: 1);
+        $originalContent = $existing->getContent();
 
-        $this->llmRetryExecutor->method('executeWithRetry')->willThrowException(
+        $this->dispatcher->method('dispatch')->willThrowException(
             new LlmUnavailableException(
                 agentId: 'developing_story_writer',
                 tier: LlmModelTier::HAIKU,
-                fallbackTier: LlmModelTier::GEMINI_FLASH,
                 attempts: 4,
             ),
         );
 
-        $this->geminiCliService->expects($this->once())
-            ->method('execute')
-            ->willReturn($this->happyPathResponse());
+        $this->em->expects($this->never())->method('flush');
 
-        $this->em->expects($this->once())->method('flush');
-
+        $captured = null;
         $this->logger->expects($this->atLeastOnce())
             ->method('warning')
-            ->with('developing_story_writer_haiku_unavailable_trying_gemini', $this->isArray());
+            ->willReturnCallback(function (string $channel, array $payload) use (&$captured): void {
+                if ($channel === 'editorial_review_queue') {
+                    $captured = $payload;
+                }
+            });
 
-        $result = $this->writer->write(
-            $existing,
-            $this->mockSignal(1),
-            [],
-            new VerificationVerdict(VerdictType::FULL_FLASH, 'ok', confidence: 0.9),
-        );
+        $this->expectException(LlmUnavailableException::class);
 
-        $this->assertSame($existing, $result);
+        try {
+            $this->writer->write(
+                $existing,
+                $this->mockSignal(500),
+                [],
+                new VerificationVerdict(VerdictType::FULL_FLASH, 'ok', confidence: 0.9),
+            );
+        } finally {
+            $this->assertIsArray($captured, 'editorial_review_queue log line must be emitted');
+            $this->assertSame('developing_story_writer', $captured['agent_id']);
+            $this->assertSame('article', $captured['entity_type']);
+            $this->assertSame(42, $captured['entity_id']);
+            $this->assertSame(['signal_id' => 500], $captured['entity_refs']);
+            $this->assertNull($captured['invocation_id']);
+            $this->assertSame('haiku', $captured['tier_attempted']);
+            $this->assertSame('haiku_exhausted', $captured['reason']);
+
+            // Existing Article stays bit-exact.
+            $this->assertSame($originalContent, $existing->getContent());
+            $this->assertSame(1, $existing->getRevisionCount());
+        }
     }
 
     public function testUpdatedTitleOverwritesWhenProvided(): void
@@ -206,15 +207,9 @@ class DevelopingStoryWriterTest extends TestCase
         $existing = $this->existingStory(initialRev: 1);
         $existing->setTitle('Titlu vechi');
 
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(updatedTitle: 'Titlu nou actualizat'),
-            'agent_id' => 'developing_story_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildAgentResponse(
+            $this->happyPathResponse(updatedTitle: 'Titlu nou actualizat'),
+        ));
 
         $this->writer->write(
             $existing,
@@ -231,15 +226,9 @@ class DevelopingStoryWriterTest extends TestCase
         $existing = $this->existingStory(initialRev: 1);
         $existing->setTitle('Titlu neschimbat');
 
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(updatedTitle: null),
-            'agent_id' => 'developing_story_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildAgentResponse(
+            $this->happyPathResponse(updatedTitle: null),
+        ));
 
         $this->writer->write(
             $existing,
@@ -253,21 +242,14 @@ class DevelopingStoryWriterTest extends TestCase
 
     public function testRevisionHistoryCapEnforcedAt100Entries(): void
     {
-        // Seed article already at cap boundary: 99 existing entries, count=99.
         $existing = $this->existingStory(initialRev: 99);
         for ($i = 1; $i <= 99; $i++) {
             $existing->appendRevision(['rev' => $i, 'diff' => "seed-{$i}"]);
         }
 
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(changesSummary: 'Update 100'),
-            'agent_id' => 'developing_story_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildAgentResponse(
+            $this->happyPathResponse(changesSummary: 'Update 100'),
+        ));
 
         $this->writer->write(
             $existing,
@@ -282,19 +264,12 @@ class DevelopingStoryWriterTest extends TestCase
         $this->assertSame('Update 100', $history[99]['diff']);
 
         // Now push one more — oldest should be dropped.
-        $this->llmRetryExecutor = $this->createMock(LlmRetryExecutor::class);
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(changesSummary: 'Update 101'),
-            'agent_id' => 'developing_story_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildAgentResponse(
+            $this->happyPathResponse(changesSummary: 'Update 101'),
+        ));
         $writer = new DevelopingStoryWriter(
-            $this->llmRetryExecutor,
-            $this->geminiCliService,
+            $this->dispatcher,
             $this->em,
             new LlmPromptAssembler(),
             $this->logger,
@@ -317,17 +292,9 @@ class DevelopingStoryWriterTest extends TestCase
     public function testSupportingSignalsAccumulateSourceCount(): void
     {
         $existing = $this->existingStory(initialRev: 1);
-        $existing->setAiSourceCount(3); // initial flash had 3 sources
+        $existing->setAiSourceCount(3);
 
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(),
-            'agent_id' => 'developing_story_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildAgentResponse($this->happyPathResponse()));
 
         $primary = $this->mockSignal(10);
         $supporting = [$this->mockSignal(11), $this->mockSignal(12)];
@@ -344,19 +311,90 @@ class DevelopingStoryWriterTest extends TestCase
         $existing->setContentHash(str_repeat('0', 64));
 
         $newContent = 'Corp complet diferit care produce alt hash.';
-        $this->llmRetryExecutor->method('executeWithRetry')->willReturn([
-            'content' => $this->happyPathResponse(updatedContent: $newContent),
-            'agent_id' => 'developing_story_writer',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildAgentResponse(
+            $this->happyPathResponse(updatedContent: $newContent),
+        ));
 
         $this->writer->write($existing, $this->mockSignal(1), [], new VerificationVerdict(VerdictType::FULL_FLASH, 'ok', confidence: 0.9));
 
         $this->assertSame(hash('sha256', $newContent), $existing->getContentHash());
+    }
+
+    /**
+     * T57.P2c.4 acceptance (d'): CRITICAL — editorial.emergency_halt must NOT
+     * flush any $existing mutations mid-invocation.
+     */
+    public function testEmergencyHaltExceptionPropagatesWithoutFlushing(): void
+    {
+        $existing = $this->existingStory(initialRev: 5);
+        $existing->setTitle('Titlu protected');
+        $originalContent = $existing->getContent();
+
+        $this->dispatcher->method('dispatch')->willThrowException(
+            new EmergencyHaltException('developing_story_writer'),
+        );
+
+        $this->em->expects($this->never())->method('flush');
+
+        $this->expectException(EmergencyHaltException::class);
+
+        try {
+            $this->writer->write(
+                $existing,
+                $this->mockSignal(300),
+                [],
+                new VerificationVerdict(VerdictType::FULL_FLASH, 'ok', confidence: 0.9),
+            );
+        } finally {
+            $this->assertSame('Titlu protected', $existing->getTitle());
+            $this->assertSame($originalContent, $existing->getContent());
+            $this->assertSame(5, $existing->getRevisionCount());
+        }
+    }
+
+    /**
+     * T57.P2c.4 acceptance (c + AgentRequest shape): dispatcher receives
+     * an AgentRequest carrying agentId=developing_story_writer, hardcoded
+     * HAIKU tier (Pattern-B constant), the system prompt, and no tierVariant.
+     */
+    public function testDispatchReceivesAgentRequestWithHardcodedHaikuTier(): void
+    {
+        $existing = $this->existingStory(initialRev: 1);
+
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AgentRequest $req): bool {
+                $this->assertSame('developing_story_writer', $req->agentId);
+                $this->assertSame(LlmModelTier::HAIKU, $req->tier);
+                $this->assertNotNull($req->systemPrompt);
+                $this->assertStringContainsString('actualizează o știre în curs', $req->systemPrompt);
+                $this->assertCount(1, $req->messages);
+                $this->assertSame('user', $req->messages[0]['role']);
+                $this->assertNull($req->tierVariant, 'DevelopingStoryWriter has no variant');
+
+                return true;
+            }))
+            ->willReturn($this->buildAgentResponse($this->happyPathResponse()));
+
+        $this->writer->write(
+            $existing,
+            $this->mockSignal(1),
+            [],
+            new VerificationVerdict(VerdictType::FULL_FLASH, 'ok', confidence: 0.9),
+        );
+    }
+
+    private function buildAgentResponse(string $content): AgentResponse
+    {
+        return new AgentResponse(
+            content: $content,
+            agentId: 'developing_story_writer',
+            tier: LlmModelTier::HAIKU,
+            model: 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: '01JE0Q9ZXJQ8YHZR3S3M7E2P5H',
+            metrics: null,
+        );
     }
 
     private function existingStory(int $initialRev): Article

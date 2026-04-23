@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentRequest;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Dto\Editorial\EditorialContext;
 use App\Entity\Editorial\SourceSignal;
 use App\Service\Aggregator\ElasticsearchSimilarityService;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use Psr\Log\LoggerInterface;
 
@@ -50,7 +51,7 @@ class ContextAgent
 
     public function __construct(
         private readonly ElasticsearchSimilarityService $similarityService,
-        private readonly LlmRetryExecutor $executor,
+        private readonly AgentDispatcher $dispatcher,
         private readonly TierResolver $tierResolver,
         private readonly LoggerInterface $logger,
     ) {}
@@ -149,22 +150,24 @@ class ContextAgent
         array $related,
     ): ?string {
         $tier = $this->tierResolver->resolve(self::AGENT_ID);
-
-        $messages = [[
-            'role' => 'user',
-            'content' => $this->buildUserPrompt($primary, $related),
-        ]];
+        $request = new AgentRequest(
+            agentId: self::AGENT_ID,
+            messages: [[
+                'role' => 'user',
+                'content' => $this->buildUserPrompt($primary, $related),
+            ]],
+            tier: $tier,
+            systemPrompt: $this->getSystemPrompt(),
+        );
 
         try {
-            $response = $this->executor->executeWithRetry(
-                self::AGENT_ID,
-                $messages,
-                $tier,
-                $this->getSystemPrompt(),
-            );
+            $response = $this->dispatcher->dispatch($request);
         } catch (\Throwable $e) {
             // Tier B fail-open: no Gemini fallback, return null narrative.
-            // Writer layer will synthesize its own without this context.
+            // EmergencyHaltException (ADR-024 D2) surfaces as Throwable and
+            // resolves to null narrative — writer layer synthesizes its own
+            // without this context. ES hits remain populated in the DTO,
+            // so the caller still receives isNovelClaim=false.
             $this->logger->warning('ContextAgent: narrative synthesis failed, returning null', [
                 'topic_hash' => $graph->topicHash,
                 'tier' => $tier->value,
@@ -174,7 +177,7 @@ class ContextAgent
             return null;
         }
 
-        return $this->parseNarrativeResponse($response['content']);
+        return $this->parseNarrativeResponse($response->content);
     }
 
     private function getSystemPrompt(): string

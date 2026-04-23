@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Service\Topic;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
 use App\Dto\Topic\TopicDetectionResult;
 use App\Entity\PressRelease;
 use App\Entity\PressReleaseTopic;
 use App\Enum\TopicDetectionMethod;
 use App\Repository\TopicRepository;
 use App\Service\Ai\Provider\GeminiCliService;
+use App\Service\Ai\TierResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -17,10 +21,20 @@ use Psr\Log\LoggerInterface;
  * 2-layer topic detector for press releases.
  *
  * Layer 1: Keyword matching against Topic.keywords (deterministic, cheap)
- * Layer 2: Gemini CLI fallback when keyword confidence < threshold (async-capable)
+ * Layer 2: LLM fallback when keyword confidence < threshold (async-capable)
+ *
+ * T57.P6 — migrated to {@see AgentDispatcher} on `topic_classifier` agent id
+ * (Haiku tier per ADR-024 D1). Gemini CLI is retained as an inline fallback
+ * on dispatcher throw (retry exhausted / provider transport failure) until
+ * T57.P8 retires the downgrade-only policy. {@see EmergencyHaltException}
+ * is explicitly rethrown past the fallback so `editorial.emergency_halt`
+ * halts the LLM layer cleanly — the outer catch-all then converts it to
+ * the fail-open empty-array result (keyword-only behaviour).
  */
 final class PressReleaseTopicDetector
 {
+    public const AGENT_ID = 'topic_classifier';
+
     private const float GEMINI_TRIGGER_THRESHOLD = 0.7;
     private const int GEMINI_TIMEOUT = 60;
     private const int MAX_TOPICS_PER_PR = 5;
@@ -28,6 +42,8 @@ final class PressReleaseTopicDetector
     public function __construct(
         private readonly TopicRepository $topicRepository,
         private readonly EntityManagerInterface $em,
+        private readonly AgentDispatcher $dispatcher,
+        private readonly TierResolver $tierResolver,
         private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
     ) {
@@ -86,9 +102,9 @@ final class PressReleaseTopicDetector
         $topConfidence = $keywordResults !== [] ? max(array_column($keywordResults, 'confidence')) : 0.0;
 
         if ($useGeminiFallback && $topConfidence < self::GEMINI_TRIGGER_THRESHOLD) {
-            $geminiResults = $this->detectWithGemini($pressRelease);
-            if ($geminiResults !== []) {
-                return $this->mergeResults($keywordResults, $geminiResults);
+            $llmResults = $this->detectWithLlm($pressRelease);
+            if ($llmResults !== []) {
+                return $this->mergeResults($keywordResults, $llmResults);
             }
         }
 
@@ -135,22 +151,44 @@ final class PressReleaseTopicDetector
     }
 
     /**
-     * Layer 2: Gemini fallback for uncertain keyword matches.
+     * Layer 2: LLM fallback for uncertain keyword matches.
+     *
+     * Dispatcher-first (Anthropic via {@see AgentDispatcher}, tier resolved from
+     * `agent.topic_classifier.model_tier`), with inline Gemini CLI fallback on
+     * retry exhaustion / transport failure. {@see EmergencyHaltException} is
+     * rethrown and caught by the outer `\Throwable` clause so the overall
+     * failure contract (empty array → keyword-only result) is preserved.
      *
      * @return list<TopicDetectionResult>
      */
-    private function detectWithGemini(PressRelease $pressRelease): array
+    private function detectWithLlm(PressRelease $pressRelease): array
     {
         try {
             $tree = $this->topicRepository->getFullTree('ro');
             $topicList = $this->flattenTreeForPrompt($tree);
+            $prompt = $this->buildLlmPrompt($pressRelease, $topicList);
 
-            $prompt = $this->buildGeminiPrompt($pressRelease, $topicList);
-            $output = $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
+            try {
+                $tier = $this->tierResolver->resolve(self::AGENT_ID);
+                $response = $this->dispatcher->dispatch(new AgentRequest(
+                    agentId: self::AGENT_ID,
+                    messages: [['role' => 'user', 'content' => $prompt]],
+                    tier: $tier,
+                ));
+                $output = $response->content;
+            } catch (EmergencyHaltException) {
+                throw new \RuntimeException('emergency_halt');
+            } catch (\Throwable $e) {
+                $this->logger->warning('PressReleaseTopicDetector: dispatcher failed, falling back to Gemini', [
+                    'id' => $pressRelease->getId(),
+                    'error' => $e->getMessage(),
+                ]);
+                $output = $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
+            }
 
-            return $this->parseGeminiResponse($output);
+            return $this->parseLlmResponse($output);
         } catch (\Throwable $e) {
-            $this->logger->warning('Gemini topic detection failed for PR #{id}: {error}', [
+            $this->logger->warning('Topic detection failed for PR #{id}: {error}', [
                 'id' => $pressRelease->getId(),
                 'error' => $e->getMessage(),
             ]);
@@ -284,7 +322,7 @@ final class PressReleaseTopicDetector
         }
     }
 
-    private function buildGeminiPrompt(PressRelease $pressRelease, string $topicList): string
+    private function buildLlmPrompt(PressRelease $pressRelease, string $topicList): string
     {
         $title = $pressRelease->getTitle();
         $content = mb_substr(strip_tags($pressRelease->getContent()), 0, 2000);
@@ -314,14 +352,28 @@ PROMPT;
     }
 
     /**
+     * Parse the LLM response (dispatcher or Gemini fallback) into typed results.
+     *
+     * Inline `json_decode` — replaces the {@see GeminiCliService::extractJsonArray}
+     * helper coupled to the pre-T57.P6 Gemini-only path. Tolerates markdown code
+     * fences that some models still emit (defence-in-depth; Anthropic
+     * instructed to omit them but the parser should not be brittle).
+     *
      * @return list<TopicDetectionResult>
      */
-    private function parseGeminiResponse(string $output): array
+    private function parseLlmResponse(string $output): array
     {
-        try {
-            $data = $this->geminiCli->extractJsonArray($output);
-        } catch (\Throwable) {
-            $this->logger->warning('Failed to parse Gemini topic detection response');
+        $json = $output;
+        if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/', $json, $m)) {
+            $json = $m[1];
+        }
+        if (preg_match('/\[[\s\S]*\]/', $json, $m)) {
+            $json = $m[0];
+        }
+
+        $data = json_decode(trim($json), true);
+        if (!\is_array($data)) {
+            $this->logger->warning('Failed to parse topic detection LLM response');
 
             return [];
         }

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentRequest;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Entity\Editorial\SourceSignal;
 use App\Repository\AppSettingRepository;
 use App\Repository\Editorial\SourceSignalRepository;
 use App\Service\Aggregator\ElasticsearchSimilarityService;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use Psr\Log\LoggerInterface;
 
@@ -42,7 +43,7 @@ class SignalAggregator
         private readonly SourceSignalRepository $sourceSignalRepository,
         private readonly ElasticsearchSimilarityService $similarityService,
         private readonly ClaimOriginGraphBuilder $graphBuilder,
-        private readonly LlmRetryExecutor $executor,
+        private readonly AgentDispatcher $dispatcher,
         private readonly TierResolver $tierResolver,
         private readonly AppSettingRepository $appSettings,
         private readonly LoggerInterface $logger,
@@ -185,20 +186,24 @@ class SignalAggregator
         $threshold = (float) $this->appSettings->get('editorial.aggregator.llm_gate_confidence_threshold', '0.7');
 
         $tier = $this->tierResolver->resolve(self::AGENT_ID);
-        $messages = [[
-            'role' => 'user',
-            'content' => $this->buildSemanticGatePrompt($cluster),
-        ]];
+        $request = new AgentRequest(
+            agentId: self::AGENT_ID,
+            messages: [[
+                'role' => 'user',
+                'content' => $this->buildSemanticGatePrompt($cluster),
+            ]],
+            tier: $tier,
+            systemPrompt: $this->getSemanticGateSystemPrompt(),
+        );
 
         try {
-            $response = $this->executor->executeWithRetry(
-                self::AGENT_ID,
-                $messages,
-                $tier,
-                $this->getSemanticGateSystemPrompt(),
-            );
+            $response = $this->dispatcher->dispatch($request);
         } catch (\Throwable $e) {
             // Fail-open: keep ES grouping if the gate fails.
+            // EmergencyHaltException (ADR-024 D2) surfaces here as a Throwable
+            // and fails-open identically to transport errors — the cluster
+            // retains its ES grouping, which is the safe default behavior
+            // during halt.
             $this->logger->warning('SignalAggregator: semantic gate LLM failed, fail-open', [
                 'cluster_size' => \count($cluster),
                 'error' => $e->getMessage(),
@@ -207,7 +212,7 @@ class SignalAggregator
             return true;
         }
 
-        $decision = $this->parseSemanticGateResponse($response['content']);
+        $decision = $this->parseSemanticGateResponse($response->content);
 
         $this->logger->info('SignalAggregator: semantic gate decision', [
             'cluster_size' => \count($cluster),

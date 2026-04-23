@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
+use App\Dto\Agent\AgentResponse;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Entity\Editorial\SourceSignal;
 use App\Entity\Editorial\VerifiedSource;
@@ -12,7 +16,6 @@ use App\Enum\Editorial\VerdictType;
 use App\Enum\EditorialAlignment;
 use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Verification\VerificationGate;
@@ -22,7 +25,7 @@ use Psr\Log\NullLogger;
 
 class VerificationGateTest extends TestCase
 {
-    private LlmRetryExecutor&MockObject $executor;
+    private AgentDispatcher&MockObject $dispatcher;
     private TierResolver&MockObject $tierResolver;
     private AppSettingRepository&MockObject $settings;
     private LlmInvocationLogger&MockObject $invocationLogger;
@@ -30,7 +33,7 @@ class VerificationGateTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->executor = $this->createMock(LlmRetryExecutor::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
@@ -44,7 +47,7 @@ class VerificationGateTest extends TestCase
             });
 
         $this->gate = new VerificationGate(
-            $this->executor,
+            $this->dispatcher,
             $this->tierResolver,
             $this->settings,
             $this->invocationLogger,
@@ -122,7 +125,7 @@ class VerificationGateTest extends TestCase
         );
 
         // LLM must NOT be called when escalation keyword matches.
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         $signal = $this->makeSignal(
             1,
@@ -144,7 +147,7 @@ class VerificationGateTest extends TestCase
             tiers: ['1' => 1],
         );
 
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         $signal = $this->makeSignal(
             1,
@@ -170,7 +173,7 @@ class VerificationGateTest extends TestCase
             tiers: ['1' => 1],
         );
 
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         // No colon-quote pattern → editorial assertion, not attributed declaration.
         $signal = $this->makeSignal(
@@ -238,7 +241,7 @@ class VerificationGateTest extends TestCase
         $this->tierResolver->method('isEnabled')->willReturn(true);
         $this->tierResolver->method('resolve')->willReturn(LlmModelTier::HAIKU);
 
-        $this->executor->method('executeWithRetry')
+        $this->dispatcher->method('dispatch')
             ->willThrowException(new \RuntimeException('transport kaboom'));
 
         $verdict = $this->gate->rule($graph, [$this->makeSignal(1, 'Titlu normal')]);
@@ -258,15 +261,10 @@ class VerificationGateTest extends TestCase
         $this->tierResolver->method('isEnabled')->willReturn(true);
         $this->tierResolver->method('resolve')->willReturn(LlmModelTier::SONNET);
 
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"verdict_sound":false,"confidence":0.9,"reasoning":"ambele surse citează aceeași agenție","alternative_verdict":"reject"}',
-            'agent_id' => 'verification_gate',
-            'tier' => 'sonnet',
-            'model' => 'claude-sonnet-4-6',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            '{"verdict_sound":false,"confidence":0.9,"reasoning":"ambele surse citează aceeași agenție","alternative_verdict":"reject"}',
+            LlmModelTier::SONNET,
+        ));
 
         $verdict = $this->gate->rule($graph, [$this->makeSignal(1, 'Știre neutrală')]);
 
@@ -289,15 +287,9 @@ class VerificationGateTest extends TestCase
         $this->tierResolver->method('isEnabled')->willReturn(true);
         $this->tierResolver->method('resolve')->willReturn(LlmModelTier::HAIKU);
 
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"verdict_sound":false,"confidence":0.95,"reasoning":"actually high confidence","alternative_verdict":"full_flash"}',
-            'agent_id' => 'verification_gate',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            '{"verdict_sound":false,"confidence":0.95,"reasoning":"actually high confidence","alternative_verdict":"full_flash"}',
+        ));
 
         $verdict = $this->gate->rule($graph, [$this->makeSignal(1, 'Știre neclară')]);
 
@@ -322,15 +314,9 @@ class VerificationGateTest extends TestCase
         $this->tierResolver->method('isEnabled')->willReturn(true);
         $this->tierResolver->method('resolve')->willReturn(LlmModelTier::HAIKU);
 
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"verdict_sound":false,"confidence":0.9,"reasoning":"overlap actually","alternative_verdict":"flash_with_assertion_yellow"}',
-            'agent_id' => 'verification_gate',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            '{"verdict_sound":false,"confidence":0.9,"reasoning":"overlap actually","alternative_verdict":"flash_with_assertion_yellow"}',
+        ));
 
         $verdict = $this->gate->rule($graph, [$this->makeSignal(1, 'X')]);
 
@@ -349,15 +335,9 @@ class VerificationGateTest extends TestCase
         $this->tierResolver->method('isEnabled')->willReturn(true);
         $this->tierResolver->method('resolve')->willReturn(LlmModelTier::HAIKU);
 
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"verdict_sound":false,"confidence":0.5,"reasoning":"not sure","alternative_verdict":"reject"}',
-            'agent_id' => 'verification_gate',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            '{"verdict_sound":false,"confidence":0.5,"reasoning":"not sure","alternative_verdict":"reject"}',
+        ));
 
         $verdict = $this->gate->rule($graph, [$this->makeSignal(1, 'X')]);
 
@@ -380,15 +360,22 @@ class VerificationGateTest extends TestCase
             ->with(VerificationGate::AGENT_ID, 'model_tier_conflict')
             ->willReturn(LlmModelTier::SONNET);
 
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"verdict_sound":true,"confidence":0.85,"reasoning":"coerent"}',
-            'agent_id' => 'verification_gate',
-            'tier' => 'sonnet',
-            'model' => 'claude-sonnet-4-6',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AgentRequest $req): bool {
+                // T57.P2c.1 dual-variant assertion: YELLOW verdict path
+                // MUST populate tierVariant='model_tier_conflict' on the
+                // AgentRequest so downstream observability can distinguish
+                // conflict-prone calls from simple ones.
+                $this->assertSame('model_tier_conflict', $req->tierVariant);
+                $this->assertSame(LlmModelTier::SONNET, $req->tier);
+
+                return true;
+            }))
+            ->willReturn($this->buildResponse(
+                '{"verdict_sound":true,"confidence":0.85,"reasoning":"coerent"}',
+                LlmModelTier::SONNET,
+            ));
 
         $verdict = $this->gate->rule($graph, [$this->makeSignal(1, 'X')]);
 
@@ -409,15 +396,19 @@ class VerificationGateTest extends TestCase
             ->with(VerificationGate::AGENT_ID, 'model_tier_simple')
             ->willReturn(LlmModelTier::HAIKU);
 
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"verdict_sound":true,"confidence":0.9,"reasoning":"coerent"}',
-            'agent_id' => 'verification_gate',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AgentRequest $req): bool {
+                // T57.P2c.1 dual-variant assertion: non-YELLOW path
+                // MUST populate tierVariant='model_tier_simple'.
+                $this->assertSame('model_tier_simple', $req->tierVariant);
+                $this->assertSame(LlmModelTier::HAIKU, $req->tier);
+
+                return true;
+            }))
+            ->willReturn($this->buildResponse(
+                '{"verdict_sound":true,"confidence":0.9,"reasoning":"coerent"}',
+            ));
 
         $verdict = $this->gate->rule($graph, [$this->makeSignal(1, 'X')]);
 
@@ -427,7 +418,7 @@ class VerificationGateTest extends TestCase
     public function testWarKeywordEscalates(): void
     {
         $graph = $this->makeGraph(1, ['wire_neutral'], ['1' => 1]);
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
 
         $signal = $this->makeSignal(1, 'Nuclear strike on Kyiv reported');
 
@@ -485,6 +476,47 @@ class VerificationGateTest extends TestCase
         $this->tierResolver->method('isEnabled')
             ->with(VerificationGate::AGENT_ID)
             ->willReturn(false);
-        $this->executor->expects($this->never())->method('executeWithRetry');
+        $this->dispatcher->expects($this->never())->method('dispatch');
+    }
+
+    /**
+     * T57.P2c.1 acceptance (d): editorial.emergency_halt raised by dispatcher
+     * fails-open to rule-based verdict with llmSanitySkipped=true. Matches
+     * the existing transport-failure fail-open contract — halt does NOT
+     * override the rule-based verdict, which remains a safe default.
+     */
+    public function testEmergencyHaltFailsOpenToRuleVerdict(): void
+    {
+        $graph = $this->makeGraph(
+            chains: 1,
+            alignments: ['wire_neutral'],
+            tiers: ['1' => 1],
+        );
+
+        $this->tierResolver->method('isEnabled')->willReturn(true);
+        $this->tierResolver->method('resolve')->willReturn(LlmModelTier::HAIKU);
+
+        $this->dispatcher->method('dispatch')
+            ->willThrowException(new EmergencyHaltException(VerificationGate::AGENT_ID));
+
+        $verdict = $this->gate->rule($graph, [$this->makeSignal(1, 'Titlu normal')]);
+
+        $this->assertSame(VerdictType::FLASH_WITH_ATTRIBUTION, $verdict->type);
+        $this->assertTrue($verdict->llmSanitySkipped);
+    }
+
+    private function buildResponse(
+        string $content,
+        LlmModelTier $tier = LlmModelTier::HAIKU,
+    ): AgentResponse {
+        return new AgentResponse(
+            content: $content,
+            agentId: VerificationGate::AGENT_ID,
+            tier: $tier,
+            model: $tier === LlmModelTier::SONNET ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: '01JE0Q9ZXJQ8YHZR3S3M7E2P5H',
+            metrics: null,
+        );
     }
 }

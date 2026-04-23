@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Escalation;
 
+use App\Agent\AgentDispatcher;
+use App\Dto\Agent\AgentResponse;
 use App\Enum\Editorial\EscalationCategory;
+use App\Enum\LlmModelTier;
 use App\Repository\AppSettingRepository;
-use App\Service\Ai\LlmRetryExecutor;
-use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\Escalation\EscalationClassifier;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Llm\LlmPromptAssembler;
@@ -28,8 +29,7 @@ final class EscalationClassifierVerdictMappingTest extends TestCase
 {
     private const INVOCATION_ID = '01JFXXXXXXXXXXXXXXXXXXXXXX';
 
-    private LlmRetryExecutor&MockObject $executor;
-    private GeminiCliService&MockObject $geminiCliService;
+    private AgentDispatcher&MockObject $dispatcher;
     private AppSettingRepository&MockObject $settings;
     private LlmInvocationLogger&MockObject $invocationLogger;
     private EscalationClassifier $classifier;
@@ -38,8 +38,7 @@ final class EscalationClassifierVerdictMappingTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->executor = $this->createMock(LlmRetryExecutor::class);
-        $this->geminiCliService = $this->createMock(GeminiCliService::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
 
@@ -53,8 +52,7 @@ final class EscalationClassifierVerdictMappingTest extends TestCase
             });
 
         $this->classifier = new EscalationClassifier(
-            $this->executor,
-            $this->geminiCliService,
+            $this->dispatcher,
             $this->settings,
             new LlmPromptAssembler(),
             $this->invocationLogger,
@@ -142,15 +140,14 @@ final class EscalationClassifierVerdictMappingTest extends TestCase
     /** @param array<string, mixed> $payload */
     private function mockLlmResponse(array $payload): void
     {
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
-            'agent_id' => 'escalation_classifier',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-            'invocation_id' => self::INVOCATION_ID,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(new AgentResponse(
+            content: json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            agentId: 'escalation_classifier',
+            tier: LlmModelTier::HAIKU,
+            model: 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: self::INVOCATION_ID,
+            metrics: null,
+        ));
     }
 }

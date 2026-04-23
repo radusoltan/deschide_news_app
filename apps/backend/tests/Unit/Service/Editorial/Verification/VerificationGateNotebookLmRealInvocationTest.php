@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
 use App\Dto\Editorial\ClaimOriginGraph;
 use App\Dto\NotebookLM\FactCheckResult;
 use App\Entity\Editorial\SourceSignal;
@@ -13,7 +14,6 @@ use App\Entity\Topic;
 use App\Enum\Editorial\VerdictType;
 use App\Enum\EditorialAlignment;
 use App\Repository\AppSettingRepository;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use App\Service\Editorial\Llm\LlmInvocationLogger;
 use App\Service\Editorial\Verification\VerificationGate;
@@ -36,7 +36,7 @@ use Psr\Log\NullLogger;
  */
 class VerificationGateNotebookLmRealInvocationTest extends TestCase
 {
-    private LlmRetryExecutor&MockObject $executor;
+    private AgentDispatcher&MockObject $dispatcher;
     private TierResolver&MockObject $tierResolver;
     private AppSettingRepository&MockObject $settings;
     private LlmInvocationLogger&MockObject $invocationLogger;
@@ -45,7 +45,7 @@ class VerificationGateNotebookLmRealInvocationTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->executor = $this->createMock(LlmRetryExecutor::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
         $this->settings = $this->createMock(AppSettingRepository::class);
         $this->invocationLogger = $this->createMock(LlmInvocationLogger::class);
@@ -62,7 +62,7 @@ class VerificationGateNotebookLmRealInvocationTest extends TestCase
         $this->tierResolver->method('isEnabled')->willReturn(false);
 
         $this->gate = new VerificationGate(
-            $this->executor,
+            $this->dispatcher,
             $this->tierResolver,
             $this->settings,
             $this->invocationLogger,
@@ -207,7 +207,7 @@ class VerificationGateNotebookLmRealInvocationTest extends TestCase
         $factCheck->expects($this->never())->method('factCheckClaim');
 
         $gate = new VerificationGate(
-            $this->executor,
+            $this->dispatcher,
             $this->tierResolver,
             $settings,
             $this->invocationLogger,

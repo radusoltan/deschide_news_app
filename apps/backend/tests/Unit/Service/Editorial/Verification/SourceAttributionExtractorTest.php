@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial\Verification;
 
+use App\Agent\AgentDispatcher;
+use App\Agent\Exception\EmergencyHaltException;
+use App\Dto\Agent\AgentRequest;
+use App\Dto\Agent\AgentResponse;
 use App\Entity\Editorial\SourceSignal;
 use App\Entity\Editorial\VerifiedSource;
 use App\Enum\EditorialAlignment;
 use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\TierResolver;
 use App\Service\Editorial\Verification\SourceAttributionExtractor;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -18,20 +21,20 @@ use Psr\Log\NullLogger;
 
 class SourceAttributionExtractorTest extends TestCase
 {
-    private LlmRetryExecutor&MockObject $executor;
+    private AgentDispatcher&MockObject $dispatcher;
     private TierResolver&MockObject $tierResolver;
     private SourceAttributionExtractor $extractor;
 
     protected function setUp(): void
     {
-        $this->executor = $this->createMock(LlmRetryExecutor::class);
+        $this->dispatcher = $this->createMock(AgentDispatcher::class);
         $this->tierResolver = $this->createMock(TierResolver::class);
         $this->tierResolver->method('resolve')
             ->with(SourceAttributionExtractor::AGENT_ID)
             ->willReturn(LlmModelTier::HAIKU);
 
         $this->extractor = new SourceAttributionExtractor(
-            $this->executor,
+            $this->dispatcher,
             $this->tierResolver,
             new NullLogger(),
         );
@@ -39,17 +42,11 @@ class SourceAttributionExtractorTest extends TestCase
 
     public function testExtractParsesCleanJsonResponse(): void
     {
-        $this->executor->expects($this->once())
-            ->method('executeWithRetry')
-            ->willReturn([
-                'content' => '{"source_attribution":"potrivit Reuters","source_links_out":["https://www.reuters.com/article/xyz"]}',
-                'agent_id' => 'source_attribution',
-                'tier' => 'haiku',
-                'model' => 'claude-haiku-4-5-20251001',
-                'attempts' => 1,
-                'fallback_detected' => false,
-                'metrics' => null,
-            ]);
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->willReturn($this->buildResponse(
+                '{"source_attribution":"potrivit Reuters","source_links_out":["https://www.reuters.com/article/xyz"]}',
+            ));
 
         $result = $this->extractor->extract($this->buildSignal());
 
@@ -59,15 +56,9 @@ class SourceAttributionExtractorTest extends TestCase
 
     public function testExtractHandlesMarkdownFencedJson(): void
     {
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => "```json\n{\"source_attribution\":null,\"source_links_out\":[]}\n```",
-            'agent_id' => 'source_attribution',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(
+            $this->buildResponse("```json\n{\"source_attribution\":null,\"source_links_out\":[]}\n```"),
+        );
 
         $result = $this->extractor->extract($this->buildSignal());
 
@@ -78,15 +69,9 @@ class SourceAttributionExtractorTest extends TestCase
 
     public function testExtractPreservesRomanianDiacriticsCommaBelow(): void
     {
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"source_attribution":"potrivit ziarului Ziarul de Gardă, care citează surse parlamentare","source_links_out":[]}',
-            'agent_id' => 'source_attribution',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            '{"source_attribution":"potrivit ziarului Ziarul de Gardă, care citează surse parlamentare","source_links_out":[]}',
+        ));
 
         $result = $this->extractor->extract($this->buildSignal());
 
@@ -115,15 +100,9 @@ class SourceAttributionExtractorTest extends TestCase
 
     public function testExtractFailsOpenOnNonJsonResponse(): void
     {
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => 'Îmi pare rău, nu pot procesa această cerere.',
-            'agent_id' => 'source_attribution',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(
+            $this->buildResponse('Îmi pare rău, nu pot procesa această cerere.'),
+        );
 
         $result = $this->extractor->extract($this->buildSignal());
 
@@ -132,15 +111,9 @@ class SourceAttributionExtractorTest extends TestCase
 
     public function testExtractFailsOpenOnInvalidUrlsInLinksOut(): void
     {
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"source_attribution":"raportul Bellingcat","source_links_out":["not-a-url","https://example.com/real","","javascript:alert(1)"]}',
-            'agent_id' => 'source_attribution',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn($this->buildResponse(
+            '{"source_attribution":"raportul Bellingcat","source_links_out":["not-a-url","https://example.com/real","","javascript:alert(1)"]}',
+        ));
 
         $result = $this->extractor->extract($this->buildSignal());
 
@@ -155,11 +128,10 @@ class SourceAttributionExtractorTest extends TestCase
 
     public function testExtractFailsOpenOnLlmUnavailableException(): void
     {
-        $this->executor->method('executeWithRetry')
+        $this->dispatcher->method('dispatch')
             ->willThrowException(new LlmUnavailableException(
                 agentId: SourceAttributionExtractor::AGENT_ID,
                 tier: LlmModelTier::HAIKU,
-                fallbackTier: LlmModelTier::GEMINI_FLASH,
                 attempts: 4,
             ));
 
@@ -170,15 +142,9 @@ class SourceAttributionExtractorTest extends TestCase
 
     public function testExtractNormalizesEmptyStringAttributionToNull(): void
     {
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"source_attribution":"   ","source_links_out":[]}',
-            'agent_id' => 'source_attribution',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(
+            $this->buildResponse('{"source_attribution":"   ","source_links_out":[]}'),
+        );
 
         $result = $this->extractor->extract($this->buildSignal());
 
@@ -187,21 +153,80 @@ class SourceAttributionExtractorTest extends TestCase
 
     public function testExtractHandlesAttributionOnlyResult(): void
     {
-        $this->executor->method('executeWithRetry')->willReturn([
-            'content' => '{"source_attribution":"surse diplomatice","source_links_out":[]}',
-            'agent_id' => 'source_attribution',
-            'tier' => 'haiku',
-            'model' => 'claude-haiku-4-5-20251001',
-            'attempts' => 1,
-            'fallback_detected' => false,
-            'metrics' => null,
-        ]);
+        $this->dispatcher->method('dispatch')->willReturn(
+            $this->buildResponse('{"source_attribution":"surse diplomatice","source_links_out":[]}'),
+        );
 
         $result = $this->extractor->extract($this->buildSignal());
 
         $this->assertSame('surse diplomatice', $result->sourceAttribution);
         $this->assertSame([], $result->linksOut);
         $this->assertFalse($result->isEmpty());
+    }
+
+    /**
+     * T57.P2b acceptance (d): editorial.emergency_halt=true blocks
+     * SourceAttributionExtractor pre-LLM at the dispatcher layer. The
+     * fail-open contract propagates the halt exception through the
+     * extractor's `\Throwable` catch clause, resolving to an empty
+     * SourceAttributionResult. No attribution is extracted for this signal
+     * while the halt is active; downstream stabilization/aggregation
+     * continues with no attribution input.
+     */
+    public function testExtractFailsOpenOnEmergencyHaltException(): void
+    {
+        $this->dispatcher->method('dispatch')
+            ->willThrowException(new EmergencyHaltException(SourceAttributionExtractor::AGENT_ID));
+
+        $result = $this->extractor->extract($this->buildSignal());
+
+        $this->assertTrue($result->isEmpty());
+    }
+
+    /**
+     * T57.P2b acceptance (c): verify the AgentRequest built by the
+     * extractor carries the caller-resolved tier (HAIKU via TierResolver)
+     * and the correct agent identity + system prompt. Dispatcher receives
+     * the request verbatim — confirming the agent-to-dispatcher contract
+     * at the boundary. Also verifies AgentResponse.content is accessed as
+     * a property (not `$response['content']`), which would silently break
+     * after the array→DTO migration if a path were missed.
+     */
+    public function testExtractBuildsAgentRequestWithResolvedTierAndSystemPrompt(): void
+    {
+        $this->dispatcher->expects($this->once())
+            ->method('dispatch')
+            ->with($this->callback(function (AgentRequest $req): bool {
+                $this->assertSame(SourceAttributionExtractor::AGENT_ID, $req->agentId);
+                $this->assertSame(LlmModelTier::HAIKU, $req->tier);
+                $this->assertNotNull($req->systemPrompt);
+                $this->assertStringContainsString('analist editorial', $req->systemPrompt);
+                $this->assertCount(1, $req->messages);
+                $this->assertSame('user', $req->messages[0]['role']);
+                $this->assertNull($req->tierVariant, 'SourceAttributionExtractor has no variant');
+
+                return true;
+            }))
+            ->willReturn($this->buildResponse(
+                '{"source_attribution":"potrivit Reuters","source_links_out":[]}',
+            ));
+
+        $result = $this->extractor->extract($this->buildSignal());
+
+        $this->assertSame('potrivit Reuters', $result->sourceAttribution);
+    }
+
+    private function buildResponse(string $content): AgentResponse
+    {
+        return new AgentResponse(
+            content: $content,
+            agentId: SourceAttributionExtractor::AGENT_ID,
+            tier: LlmModelTier::HAIKU,
+            model: 'claude-haiku-4-5-20251001',
+            attempts: 1,
+            invocationId: '01JE0Q9ZXJQ8YHZR3S3M7E2P5H',
+            metrics: null,
+        );
     }
 
     private function buildSignal(): SourceSignal
