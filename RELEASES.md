@@ -12,6 +12,60 @@ between production releases, sprint RCs, and orphaned bugfix-branch tags.
 
 ## Production releases
 
+### v1.4.1 — 2026-04-24 (Hotfix)
+
+- **Status**: hotfix off `main` at `v1.4.0` (branch `hotfix/image-attach-locale-gate`)
+- **Motivation**: REPORT.md (2026-04-24) identified a P0 blocker in the admin
+  editorial flow — attaching images to articles failed with 400/500 for every
+  browser locale other than `ro` — plus a high-severity duplicate-article
+  creation bug on the new-article form.
+- **Fixes**:
+  - **Finding #1 — ArticleProvider locale gate bleeds into IriConverter**
+    (`fix(backend)`). The per-locale publishing gate at
+    `src/State/ArticleProvider.php` was applied to every single-item lookup,
+    including API Platform's IriConverter calls that resolve `/api/articles/{id}`
+    references inside write payloads (e.g. `POST /api/article_images`).
+    Admin requests with `Accept-Language: en` therefore received
+    `Symfony\Serializer\UnexpectedValueException: Item not found for ...`
+    and the write returned 400/500. The gate is now applied only to public
+    single-item GETs (operation is `Get`, operation class is `Article`, and
+    `$context['fetch_data']` is not set — the latter is always present when
+    `AbstractItemNormalizer` invokes IriConverter during denormalization).
+    See ADR-027 for the full rationale and options considered.
+  - **Finding #6 — admin Save duplicates articles on rapid clicks**
+    (`fix(frontend)`). `useArticleForm.handleSubmit` relied on React state
+    (`isSubmitting`) to debounce, but state updates are async and multiple
+    clicks could dispatch concurrent `createArticleAction` calls before the
+    Save button re-rendered as disabled (scenario A in REPORT.md created 7
+    duplicate articles from 7 clicks). A synchronous `submittingRef` now
+    gates `handleSubmit`, and a successful create redirects to the edit
+    page via `router.replace` so browser back cannot re-enter the form.
+  - **Finding #4 — nginx production template lacks `client_max_body_size`**
+    (`infra`). `apps/backend/nginx-cloudflare.conf` now sets
+    `client_max_body_size 15M;` (aligned with the Symfony `Image` validator's
+    10M limit plus headroom, and with the other nginx templates in
+    `scripts/nginx/` that already carry the directive).
+- **Tests**:
+  - `apps/backend/tests/Unit/State/ArticleProviderTest.php` — 4 new
+    gate-scope unit tests (green).
+  - `apps/backend/tests/Functional/Api/ArticleProviderLocaleTest.php` — 4 HTTP
+    scenarios mirroring the hotfix matrix (green).
+- **Deferred to S+1** (findings tracked but not fixed in this hotfix):
+  #2 (Image.path lifecycle), #3 (thumbnail_profiles empty), #5 (new-article
+  upload widget missing), #7 (TinyMCE images_upload_handler), #8 (inline-image
+  origin validation), #9 (refresh-token fallback UX), #10 (slug diacritics
+  transliteration), #11 (featured-image unsaved-changes prompt), #12 (file
+  data-URI in JSON response), #13 (Vich deprecated annotation).
+- **Production deployment prerequisite**: if the production nginx config is
+  not generated from `apps/backend/nginx-cloudflare.conf` (e.g. managed by
+  ansible or a parallel server-side config), the equivalent
+  `client_max_body_size 15M;` directive must be applied to the api vhost
+  before deploy.
+- **References**:
+  - ADR-027 in `docs/adr/ADR-027-article-provider-locale-gate-scope.md`
+  - Investigation artefacts at `/tmp/cc-img-investigation/`
+  - Hotfix artefacts at `/tmp/cc-img-investigation-hotfix/`
+
 ### v1.4.0 — _upcoming_ (Sprint 58-Recovery)
 
 - **Status**: in progress on `feature/sprint-58-recovery`
