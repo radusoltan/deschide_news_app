@@ -273,6 +273,99 @@ class ArticleProviderTest extends TestCase
     }
 
     // ======================
+    // Per-Locale Publishing Gate Scope Tests (ADR-027 / hotfix v1.4.1)
+    // ======================
+
+    #[Test]
+    public function itAppliesLocaleGateOnPublicGetWhenArticleNotPublishedInLocale(): void
+    {
+        // Scenario: Accept-Language: en, article published only in ro
+        // Public GET /api/articles/{id} => must return null (→ 404).
+        $request = $this->createRequestWithLocale('en');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $article = new Article();
+        $article->setTitle('RO-only article');
+        $article->setPublishedLocales(['ro']);
+
+        $this->setupSingleItemQuery();
+        $this->query->method('getOneOrNullResult')->willReturn($article);
+
+        $operation = (new Get())->withClass(Article::class);
+        $result = $this->provider->provide($operation, ['id' => 1]);
+
+        $this->assertNull($result, 'Public GET with non-published locale must return null');
+    }
+
+    #[Test]
+    public function itAllowsPublicGetWhenArticleIsPublishedInRequestedLocale(): void
+    {
+        // Scenario: Accept-Language: ro, article published in ro
+        // Public GET /api/articles/{id} => must return the article.
+        $request = $this->createRequestWithLocale('ro');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $article = new Article();
+        $article->setTitle('RO article');
+        $article->setPublishedLocales(['ro']);
+
+        $this->setupSingleItemQuery();
+        $this->query->method('getOneOrNullResult')->willReturn($article);
+
+        $operation = (new Get())->withClass(Article::class);
+        $result = $this->provider->provide($operation, ['id' => 1]);
+
+        $this->assertInstanceOf(Article::class, $result);
+    }
+
+    #[Test]
+    public function itBypassesLocaleGateForIriDenormalizationContext(): void
+    {
+        // Scenario: POST /api/article_images with "article": "/api/articles/{id}"
+        // and Accept-Language: en, where article is only published in ro.
+        // API Platform's AbstractItemNormalizer sets $context['fetch_data'] = true
+        // when it calls IriConverter::getResourceFromIri(), which in turn calls
+        // this provider. The gate MUST NOT apply in that case — otherwise the
+        // IriConverter throws ItemNotFoundException and the write fails.
+        $request = $this->createRequestWithLocale('en');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $article = new Article();
+        $article->setTitle('RO-only article');
+        $article->setPublishedLocales(['ro']);
+
+        $this->setupSingleItemQuery();
+        $this->query->method('getOneOrNullResult')->willReturn($article);
+
+        $operation = (new Get())->withClass(Article::class);
+        $result = $this->provider->provide($operation, ['id' => 1], ['fetch_data' => true]);
+
+        $this->assertInstanceOf(Article::class, $result, 'IRI lookup must bypass per-locale gate');
+    }
+
+    #[Test]
+    public function itBypassesLocaleGateForDraftArticleInIriDenormalization(): void
+    {
+        // Scenario: draft article (publishedLocales = []) referenced by IRI in
+        // a write payload. Admin must be able to attach images even before the
+        // article is published in any locale.
+        $request = $this->createRequestWithLocale('en');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $article = new Article();
+        $article->setTitle('Draft article');
+        $article->setPublishedLocales([]);
+
+        $this->setupSingleItemQuery();
+        $this->query->method('getOneOrNullResult')->willReturn($article);
+
+        $operation = (new Get())->withClass(Article::class);
+        $result = $this->provider->provide($operation, ['id' => 1], ['fetch_data' => true]);
+
+        $this->assertInstanceOf(Article::class, $result, 'Draft article must resolve via IRI in write path');
+    }
+
+    // ======================
     // Collection Retrieval Tests
     // ======================
 

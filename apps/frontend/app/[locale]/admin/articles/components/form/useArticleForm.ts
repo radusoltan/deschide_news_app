@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createArticleAction, updateArticleAction, type ArticleFormState } from '@/app/actions/articles';
 import type { AttachedImage } from '@/lib/types/image';
@@ -123,6 +123,10 @@ export function useArticleForm(
 ): UseArticleFormReturn {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Synchronous submit lock — React state updates are async, so a rapid click
+  // sequence can enter handleSubmit before the disabled={isSubmitting} button
+  // re-renders. The ref gate blocks re-entry immediately (hotfix v1.4.1, finding #6).
+  const submittingRef = useRef(false);
   const [saveAction, setSaveAction] = useState<'save' | 'saveAndClose' | null>(null);
   const [formErrors, setFormErrors] = useState<NonNullable<ArticleFormState['errors']>>({});
 
@@ -270,7 +274,17 @@ export function useArticleForm(
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Synchronous re-entry guard — prevents duplicate article creation from
+    // rapid clicks between request dispatch and button re-render (finding #6).
+    if (submittingRef.current) {
+      return;
+    }
+    submittingRef.current = true;
     setIsSubmitting(true);
+
+    // When true, keep the submit lock engaged past handleSubmit (navigation in flight).
+    let navigatingAway = false;
 
     try {
       const formDataObj = new FormData(e.currentTarget);
@@ -307,8 +321,6 @@ export function useArticleForm(
 
       if (result.errors && Object.keys(result.errors).length > 0) {
         setFormErrors(result.errors);
-        setIsSubmitting(false);
-        setSaveAction(null);
         return;
       }
 
@@ -316,37 +328,35 @@ export function useArticleForm(
 
       if (result.message) {
         if (saveAction === 'saveAndClose') {
-          setIsSubmitting(false);
-          setSaveAction(null);
+          navigatingAway = true;
           router.push(`/${locale}/admin/articles`);
           router.refresh();
-        } else if (saveAction === 'save') {
-          if (!article?.id && result.articleId) {
-            setIsSubmitting(false);
-            setSaveAction(null);
-            router.push(`/${locale}/admin/articles/${result.articleId}/edit`);
-            router.refresh();
-          } else {
-            router.refresh();
-            setIsSubmitting(false);
-            setSaveAction(null);
-          }
-        } else {
-          setIsSubmitting(false);
-          setSaveAction(null);
+          return;
         }
+        if (saveAction === 'save' && !article?.id && result.articleId) {
+          // New article: redirect to its edit page so repeat Save clicks
+          // cannot create duplicates (finding #6).
+          navigatingAway = true;
+          router.replace(`/${locale}/admin/articles/${result.articleId}/edit`);
+          router.refresh();
+          return;
+        }
+        // Edit of existing article, or generic save: refresh and re-enable.
+        router.refresh();
       } else {
         setFormErrors({ _form: ['An unexpected error occurred. Please try again.'] });
-        setIsSubmitting(false);
-        setSaveAction(null);
       }
     } catch (err) {
       console.error('Form submission error:', err);
       setFormErrors({
         _form: [err instanceof Error ? err.message : 'Failed to save article. Please try again.']
       });
-      setIsSubmitting(false);
-      setSaveAction(null);
+    } finally {
+      if (!navigatingAway) {
+        setIsSubmitting(false);
+        setSaveAction(null);
+        submittingRef.current = false;
+      }
     }
   };
 
