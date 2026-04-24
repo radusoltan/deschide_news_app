@@ -19,6 +19,7 @@ interface SitemapArticle {
   slug: string;
   updatedAt?: string;
   archivedAt?: string;
+  publishedLocales?: string[];
   category: { slug: string };
   translations?: Record<string, { slug?: string; categorySlug?: string }>;
 }
@@ -89,30 +90,31 @@ ${urlEntries}
 }
 
 /**
- * Generate URL entries for a single article across all locales
+ * Generate URL entries for a single article across its published locales only.
  */
 function generateArticleUrlEntries(article: SitemapArticle): string {
-  return SITEMAP_CONFIG.locales
+  const available = Array.isArray(article.publishedLocales) && article.publishedLocales.length > 0
+    ? SITEMAP_CONFIG.locales.filter((l) => article.publishedLocales!.includes(l))
+    : SITEMAP_CONFIG.locales;
+
+  const alternatePaths: Record<string, string> = {};
+  for (const locale of available) {
+    const t = article.translations?.[locale];
+    if (t?.slug) {
+      alternatePaths[locale] = `${t.categorySlug || article.category.slug}/${t.slug}`;
+    }
+  }
+
+  return available
     .map((locale) => {
       const translation = article.translations?.[locale];
-      const categorySlug = translation?.categorySlug || article.category.slug;
-      const articleSlug = translation?.slug || article.slug;
+      if (!translation?.slug) return '';
 
-      // Build the primary URL for this locale
-      const url = buildArticleUrl(locale, categorySlug, articleSlug);
-
-      // Use archivedAt if available, otherwise updatedAt
+      const url = buildArticleUrl(locale, translation.categorySlug || article.category.slug, translation.slug);
       const lastModDate = article.archivedAt || article.updatedAt;
       const lastmod = formatDateForSitemap(lastModDate);
 
-      // Generate alternate language links (hreflang)
-      const alternates = generateLanguageAlternates({
-        ro: `${article.translations.ro.categorySlug}/${article.translations.ro.slug}`,
-        en: `${article.translations.en.categorySlug}/${article.translations.en.slug}`,
-        ru: `${article.translations.ru.categorySlug}/${article.translations.ru.slug}`,
-      });
-
-      // Generate xhtml:link tags for each language alternate
+      const alternates = generateLanguageAlternates(alternatePaths);
       const alternateLinks = Object.entries(alternates.languages)
         .map(
           ([lang, href]) =>
@@ -128,6 +130,7 @@ function generateArticleUrlEntries(article: SitemapArticle): string {
 ${alternateLinks}
   </url>`;
     })
+    .filter((entry) => entry !== '')
     .join('\n');
 }
 
