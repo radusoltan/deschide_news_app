@@ -9,6 +9,7 @@
   "common.menu": "Menu",
   "common.viewAll": "View all",
   "common.close": "Close",
+  "languageSwitcher.notTranslated": "Article is not translated in this language",
   "languages.ro": "Romanian",
   "languages.en": "English",
   "languages.ru": "Russian",
