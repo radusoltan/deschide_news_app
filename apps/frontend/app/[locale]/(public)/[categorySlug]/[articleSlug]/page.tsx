@@ -31,6 +31,7 @@ import { generateArticleMetadata, generateArticleStructuredData } from '@/lib/se
 import { getFallbackContent, hasPendingTranslation, LocaleFallbackNotice } from '@/lib/i18n/locale-fallback';
 import StructuredData from '@/components/seo/StructuredData';
 import Breadcrumb, { buildArticleBreadcrumbs } from '@/components/navigation/Breadcrumb';
+import LocaleContextSetter from '@/app/components/LocaleContextSetter';
 
 // Valid locales for the application
 const VALID_LOCALES = ['ro', 'en', 'ru'] as const;
@@ -239,10 +240,21 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   // Build breadcrumbs
   const breadcrumbItems = buildArticleBreadcrumbs(article, locale);
 
+  const articleCategory =
+    typeof article.category === 'object' ? article.category : null;
+
   return (
     <>
       {/* Structured Data (JSON-LD) */}
       <StructuredData data={structuredData} />
+
+      {/* Feeds per-article metadata into the shared Header's LanguageSwitcher */}
+      <LocaleContextSetter
+        context="article"
+        publishedLocales={article.publishedLocales}
+        translatedSlugs={article.translatedSlugs}
+        categoryTranslatedSlugs={articleCategory?.translatedSlugs}
+      />
 
       <ArticleLayout
         sidebar={

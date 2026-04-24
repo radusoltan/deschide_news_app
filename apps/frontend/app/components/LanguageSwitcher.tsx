@@ -4,6 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useIntl } from 'react-intl';
 import type { Locale } from '@/lib/types';
+import {
+  applyLocalePrefix,
+  buildLocaleUrlForArticle,
+  buildLocaleUrlForCategory,
+  buildLocaleUrlGeneric,
+} from '@/lib/seo/locale-url';
+import {
+  useLocaleContext,
+  type LocaleSwitcherContext,
+} from '@/lib/contexts/LocaleContext';
 
 const LOCALE_OPTIONS: Array<{ code: Locale; label: string; lang: string }> = [
   { code: 'ro', label: 'Română', lang: 'ro' },
@@ -11,35 +21,58 @@ const LOCALE_OPTIONS: Array<{ code: Locale; label: string; lang: string }> = [
   { code: 'en', label: 'English', lang: 'en' },
 ];
 
-const UNAVAILABLE_TOOLTIP: Record<string, string> = {
-  ro: 'Traducerea nu este disponibilă',
-  en: 'Translation not available',
-  ru: 'Перевод недоступен',
+const UNAVAILABLE_TOOLTIP_FALLBACK: Record<Locale, string> = {
+  ro: 'Articolul nu este tradus în această limbă',
+  en: 'Article is not translated in this language',
+  ru: 'Статья не переведена на этот язык',
 };
 
-function buildLocaleHref(pathname: string, locale: Locale): string {
-  const normalizedPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
-  const segments = normalizedPath.split('/').filter(Boolean);
-  const currentLocale = segments[0];
-
-  if (currentLocale && ['ro', 'en', 'ru'].includes(currentLocale)) {
-    segments[0] = locale;
-  } else {
-    segments.unshift(locale);
-  }
-
-  return `/${segments.join('/')}`;
-}
-
-interface LanguageSwitcherProps {
+export interface LanguageSwitcherProps {
   /** When set, locales not in this list are shown as disabled */
   publishedLocales?: string[];
+  /** Article/category translated slugs for cross-locale redirect */
+  translatedSlugs?: Partial<Record<Locale, string>>;
+  /** Category translated slugs (only relevant when context === 'article') */
+  categoryTranslatedSlugs?: Partial<Record<Locale, string>>;
+  /** What kind of page the switcher is rendered on. Default 'generic'. */
+  context?: LocaleSwitcherContext;
 }
 
-export default function LanguageSwitcher({ publishedLocales }: LanguageSwitcherProps = {}) {
+export default function LanguageSwitcher(props: LanguageSwitcherProps = {}) {
   const pathname = usePathname() || '/';
   const intl = useIntl();
   const currentLocale = (intl.locale as Locale) || 'ro';
+  const ctx = useLocaleContext();
+
+  // Props take priority; fall back to React context populated by pages.
+  const publishedLocales = props.publishedLocales ?? ctx.publishedLocales;
+  const translatedSlugs = props.translatedSlugs ?? ctx.translatedSlugs;
+  const categoryTranslatedSlugs =
+    props.categoryTranslatedSlugs ?? ctx.categoryTranslatedSlugs;
+  const context: LocaleSwitcherContext = props.context ?? ctx.context ?? 'generic';
+
+  const computeHref = (target: Locale): string | null => {
+    if (context === 'article') {
+      return buildLocaleUrlForArticle(
+        target,
+        {
+          translatedSlugs,
+          category: categoryTranslatedSlugs
+            ? { translatedSlugs: categoryTranslatedSlugs }
+            : undefined,
+        },
+        currentLocale
+      );
+    }
+    if (context === 'category') {
+      return buildLocaleUrlForCategory(
+        target,
+        { translatedSlugs },
+        currentLocale
+      );
+    }
+    return buildLocaleUrlGeneric(target, pathname, currentLocale);
+  };
 
   return (
     <nav
@@ -48,16 +81,38 @@ export default function LanguageSwitcher({ publishedLocales }: LanguageSwitcherP
     >
       {LOCALE_OPTIONS.map((option, index) => {
         const isCurrent = option.code === currentLocale;
-        const isAvailable = !publishedLocales || publishedLocales.includes(option.code);
+
+        const publishedBlock =
+          publishedLocales !== undefined && !publishedLocales.includes(option.code);
+        const href = computeHref(option.code);
+        const missingHref = href === null;
+        const isDisabled = publishedBlock || missingHref;
+
+        const tooltip = intl.formatMessage({
+          id: 'languageSwitcher.notTranslated',
+          defaultMessage: UNAVAILABLE_TOOLTIP_FALLBACK[currentLocale] ?? UNAVAILABLE_TOOLTIP_FALLBACK.en,
+        });
 
         return (
           <span key={option.code} className="flex items-center">
-            {isAvailable ? (
+            {isDisabled ? (
+              <span
+                role="link"
+                aria-disabled="true"
+                title={tooltip}
+                lang={option.lang}
+                data-testid={`locale-switch-${option.code}-disabled`}
+                className="cursor-not-allowed rounded-sm px-1.5 py-1 opacity-40"
+              >
+                {option.label}
+              </span>
+            ) : (
               <Link
-                href={buildLocaleHref(pathname, option.code)}
+                href={href ?? applyLocalePrefix(option.code, '/')}
                 aria-current={isCurrent ? 'true' : undefined}
                 aria-label={`Switch to ${option.label}`}
                 lang={option.lang}
+                data-testid={`locale-switch-${option.code}`}
                 className={[
                   'rounded-sm px-1.5 py-1 transition-colors',
                   isCurrent
@@ -67,14 +122,6 @@ export default function LanguageSwitcher({ publishedLocales }: LanguageSwitcherP
               >
                 {option.label}
               </Link>
-            ) : (
-              <span
-                title={UNAVAILABLE_TOOLTIP[currentLocale] || UNAVAILABLE_TOOLTIP.en}
-                lang={option.lang}
-                className="cursor-not-allowed rounded-sm px-1.5 py-1 opacity-40"
-              >
-                {option.label}
-              </span>
             )}
             {index < LOCALE_OPTIONS.length - 1 && (
               <span

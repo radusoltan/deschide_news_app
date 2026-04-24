@@ -18,6 +18,7 @@ import { generateCategoryMetadata } from '@/lib/seo/meta-tags';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { getSectionColor, getCategorySlugFromArticle } from '@/components/cards/utils';
+import LocaleContextSetter from '@/app/components/LocaleContextSetter';
 import type { Locale } from '@/lib/types';
 import type { Article, Category } from '@/lib/types/article';
 import type { TrendingArticle } from '@/lib/api/statistics';
@@ -169,6 +170,11 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)]">
+      {/* Feeds per-category metadata into the shared Header's LanguageSwitcher */}
+      <LocaleContextSetter
+        context="category"
+        translatedSlugs={category.translatedSlugs}
+      />
       <main className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
         {isLangFallback && (
           <LocaleFallbackNotice
