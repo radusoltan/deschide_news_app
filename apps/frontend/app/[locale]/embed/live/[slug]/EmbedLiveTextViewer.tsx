@@ -81,27 +81,26 @@ export function EmbedLiveTextViewer({ liveText: initialLiveText, theme }: Props)
       switch (latestEvent.type) {
         case 'post.created':
           // Add new post to the top
-          // Type assertion needed since sport events aren't in MercureEvent union
-          setPosts((prev) => [(latestEvent as any).post, ...prev]);
+          setPosts((prev: any) => [latestEvent.post, ...prev]);
           break;
 
         case 'post.updated':
           // Update existing post
-          setPosts((prev) =>
-            prev.map((p) => (p.id === (latestEvent as any).post.id ? (latestEvent as any).post : p))
+          setPosts((prev: any) =>
+            prev.map((p: any) => (p.id === latestEvent.post.id ? { ...p, ...latestEvent.post } : p))
           );
           break;
 
         case 'post.deleted':
           // Remove deleted post
-          setPosts((prev) => prev.filter((p) => p.id !== (latestEvent as any).postId));
+          setPosts((prev) => prev.filter((p) => p.id !== latestEvent.postId));
           break;
 
         case 'status.changed':
           // Update LiveText status
           setLiveText((prev) => ({
             ...prev,
-            status: (latestEvent as any).status,
+            status: latestEvent.status,
           }));
           break;
 
@@ -112,10 +111,10 @@ export function EmbedLiveTextViewer({ liveText: initialLiveText, theme }: Props)
               ...prev,
               sportMatch: prev.sportMatch ? {
                 ...prev.sportMatch,
-                homeScore: (latestEvent as any).data.home_score,
-                awayScore: (latestEvent as any).data.away_score,
-                status: (latestEvent as any).data.status,
-                currentMinute: (latestEvent as any).data.current_minute,
+                homeScore: latestEvent.data.home_score,
+                awayScore: latestEvent.data.away_score,
+                status: latestEvent.data.status,
+                currentMinute: latestEvent.data.current_minute,
               } : undefined,
             }));
           }

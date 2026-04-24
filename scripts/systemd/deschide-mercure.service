@@ -34,8 +34,8 @@ StartLimitIntervalSec=60
 StartLimitBurst=5
 
 # Environment (override via /etc/default/deschide-mercure or drop-in)
-Environment=MERCURE_PUBLISHER_JWT_KEY=!ChangeThisMercureHubJWTSecretKey!
-Environment=MERCURE_SUBSCRIBER_JWT_KEY=!ChangeThisMercureHubJWTSecretKey!
+Environment=MERCURE_PUBLISHER_JWT_KEY=f81aa10cc4d2972c4e44bbe0fe114e9ca0da126468dbf9568a012bcd5bab74cd
+Environment=MERCURE_SUBSCRIBER_JWT_KEY=f81aa10cc4d2972c4e44bbe0fe114e9ca0da126468dbf9568a012bcd5bab74cd
 
 # Security hardening
 NoNewPrivileges=true

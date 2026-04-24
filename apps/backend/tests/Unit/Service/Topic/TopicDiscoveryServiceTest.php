@@ -18,6 +18,7 @@ use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\NullLogger;
 
 #[CoversClass(TopicDiscoveryService::class)]
@@ -39,8 +40,8 @@ class TopicDiscoveryServiceTest extends TestCase
         $service = new TopicDiscoveryService(
             $this->em,
             $this->topicRepo,
+            new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()),
             new NullLogger(),
-            'gemini',
         );
 
         $result = $service->discoverNewTopics(48);

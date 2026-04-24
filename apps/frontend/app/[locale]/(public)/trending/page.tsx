@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ArticleCard from '@/components/article/ArticleCard';
 import type { Locale } from '@/lib/types';
+import type { Article } from '@/lib/types/article';
 
 interface TrendingPageProps {
   params: Promise<{
@@ -151,7 +152,7 @@ export default async function TrendingPage({
         {/* Trending Articles Grid */}
         {articles.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {articles.map((article: any, index: number) => (
+            {articles.map((article: Article, index: number) => (
               <div key={article.id} className="relative">
                 {/* Trending Badge */}
                 {index < 3 && (
@@ -232,9 +233,11 @@ export async function generateMetadata({
     alternates: {
       canonical: `/${locale}/trending`,
       languages: {
-        ro: '/trending',
+        'ro-MD': '/ro/trending',
+        ro: '/ro/trending',
         en: '/en/trending',
         ru: '/ru/trending',
+        'x-default': '/ro/trending',
       },
     },
     openGraph: {

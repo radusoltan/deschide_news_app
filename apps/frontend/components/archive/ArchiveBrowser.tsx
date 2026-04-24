@@ -12,6 +12,7 @@ import YearFilter from './YearFilter';
 import CategoryFilter from './CategoryFilter';
 import ArchiveArticleCard from './ArchiveArticleCard';
 import type { Locale } from '@/lib/types';
+import type { Article } from '@/lib/types/article';
 
 interface YearData {
   year: number;
@@ -94,7 +95,7 @@ function ArchiveBrowserContent({ locale, initialStats }: ArchiveBrowserProps) {
   const t = translations[locale as keyof typeof translations] || translations.ro;
 
   // State
-  const [articles, setArticles] = useState<any[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [years, setYears] = useState<YearData[]>(initialStats?.byYear || []);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(true);

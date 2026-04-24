@@ -8,7 +8,7 @@ use App\Entity\Article;
 use App\Entity\Category;
 use App\Entity\Image;
 use App\EventListener\CacheInvalidationListener;
-use App\Service\PerformanceService;
+use App\Service\Cache\CacheService;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
 use Doctrine\ORM\Event\PreRemoveEventArgs;
@@ -18,12 +18,12 @@ use PHPUnit\Framework\TestCase;
 #[\PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations]
 class CacheInvalidationListenerTest extends TestCase
 {
-    private PerformanceService $performanceService;
+    private CacheService $performanceService;
     private CacheInvalidationListener $listener;
 
     protected function setUp(): void
     {
-        $this->performanceService = $this->createMock(PerformanceService::class);
+        $this->performanceService = $this->createMock(CacheService::class);
         $this->listener = new CacheInvalidationListener($this->performanceService);
     }
 

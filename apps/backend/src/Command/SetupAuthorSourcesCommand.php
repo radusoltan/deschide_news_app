@@ -33,6 +33,7 @@ class SetupAuthorSourcesCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Setting up Author Sources (Agencies & Press Offices)');
 
+        try {
         $sources = $this->getSourceDefinitions();
         $created = 0;
         $skipped = 0;
@@ -83,6 +84,11 @@ class SetupAuthorSourcesCommand extends Command
         ));
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

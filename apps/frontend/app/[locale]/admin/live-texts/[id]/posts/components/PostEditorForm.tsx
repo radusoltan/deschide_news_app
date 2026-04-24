@@ -118,7 +118,7 @@ export function PostEditorForm({
 
       const method = editingPost ? 'PUT' : 'POST';
 
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         contentHtml: content,
         content: strippedContent,
         isKeyPoint,

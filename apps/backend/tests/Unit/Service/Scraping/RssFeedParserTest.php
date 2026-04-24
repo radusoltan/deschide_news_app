@@ -121,6 +121,66 @@ XML;
         $this->assertSame('Valid', $items[0]->title);
     }
 
+    public function testParsesItemsWithSourceTag(): void
+    {
+        $rssXml = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Google News</title>
+    <item>
+      <title>Breaking news - Moldova 1</title>
+      <link>https://news.google.com/rss/articles/CBMi123</link>
+      <description>Short description</description>
+      <pubDate>Mon, 07 Apr 2026 10:00:00 GMT</pubDate>
+      <source url="https://moldova1.md">Moldova 1</source>
+    </item>
+    <item>
+      <title>Economy update - G4Media</title>
+      <link>https://news.google.com/rss/articles/CBMi456</link>
+      <description>Economy news</description>
+      <source url="https://www.g4media.ro">G4Media</source>
+    </item>
+  </channel>
+</rss>
+XML;
+
+        $mockClient = new MockHttpClient([new MockResponse($rssXml)]);
+        $parser = new RssFeedParser($mockClient, new NullLogger(), 'TestBot/1.0', 30);
+
+        $items = $parser->parse('https://news.google.com/rss/search?q=test', 'Google News', 'ro');
+
+        $this->assertCount(2, $items);
+
+        // sourceName comes from the parse() parameter, not the <source> tag
+        $this->assertSame('Google News', $items[0]->sourceName);
+        $this->assertSame('Google News', $items[1]->sourceName);
+    }
+
+    public function testSourceNameUsesParseParameter(): void
+    {
+        $rssXml = <<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <item>
+      <title>No source tag</title>
+      <link>https://test.md/article</link>
+    </item>
+  </channel>
+</rss>
+XML;
+
+        $mockClient = new MockHttpClient([new MockResponse($rssXml)]);
+        $parser = new RssFeedParser($mockClient, new NullLogger(), 'TestBot/1.0', 30);
+
+        $items = $parser->parse('https://test.md/rss', 'Test', 'ro');
+
+        $this->assertCount(1, $items);
+        // sourceName should be the value passed to parse()
+        $this->assertSame('Test', $items[0]->sourceName);
+    }
+
     public function testReturnsEmptyOnHttpError(): void
     {
         $mockClient = new MockHttpClient([new MockResponse('', ['http_code' => 500])]);

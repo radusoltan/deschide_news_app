@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Sample Editorial Source (UTF-8)</title>
+    <link>https://example.invalid</link>
+    <description>Fixture used by AbstractRssMonitor integration tests.</description>
+    <language>ro</language>
+    <item>
+      <title>Prima știre din fixture</title>
+      <link>https://example.invalid/articol-1?utm_source=rss&amp;utm_campaign=q4</link>
+      <description>Sumar pentru prima știre.</description>
+      <pubDate>Fri, 18 Apr 2026 09:00:00 +0300</pubDate>
+    </item>
+    <item>
+      <title>A doua știre — diacritice ș ț î â</title>
+      <link>https://example.invalid/articol-2</link>
+      <description>Sumar cu diacritice: Moldova.</description>
+      <pubDate>Fri, 18 Apr 2026 10:30:00 +0300</pubDate>
+    </item>
+    <item>
+      <title>A treia știre</title>
+      <link>https://example.invalid/articol-3</link>
+      <description>Al treilea sumar.</description>
+      <pubDate>Fri, 18 Apr 2026 11:45:00 +0300</pubDate>
+    </item>
+  </channel>
+</rss>

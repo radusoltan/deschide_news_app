@@ -467,18 +467,18 @@ if [ "$DRY_RUN" = false ]; then
         echo 'maxmemory 512mb' >> "$REDIS_CONF"
     fi
     # Set eviction policy
-    sed -i 's/^# maxmemory-policy .*/maxmemory-policy allkeys-lru/' "$REDIS_CONF"
-    if ! grep -q '^maxmemory-policy allkeys-lru' "$REDIS_CONF"; then
-        echo 'maxmemory-policy allkeys-lru' >> "$REDIS_CONF"
+    sed -i 's/^# maxmemory-policy .*/maxmemory-policy volatile-lru/' "$REDIS_CONF"
+    if ! grep -q '^maxmemory-policy volatile-lru' "$REDIS_CONF"; then
+        echo 'maxmemory-policy volatile-lru' >> "$REDIS_CONF"
     fi
     # Bind to localhost only
     sed -i 's/^bind .*/bind 127.0.0.1 ::1/' "$REDIS_CONF"
 
     systemctl enable redis-server
     systemctl restart redis-server
-    log_success "Redis configured (512 MB, allkeys-lru)"
+    log_success "Redis configured (512 MB, volatile-lru)"
 else
-    log_dry "Configure Redis: maxmemory 512mb, allkeys-lru"
+    log_dry "Configure Redis: maxmemory 512mb, volatile-lru"
 fi
 
 log_success "Redis installed and configured"
@@ -551,6 +551,10 @@ run_cmd apt-get install -y rabbitmq-server
 log_info "Enabling management plugin..."
 if [ "$DRY_RUN" = false ]; then
     rabbitmq-plugins enable rabbitmq_management
+    RABBITMQ_PASS=$(openssl rand -base64 24)
+    rabbitmqctl add_user deschide "$RABBITMQ_PASS" 2>/dev/null || rabbitmqctl change_password deschide "$RABBITMQ_PASS"
+    rabbitmqctl set_permissions -p / deschide ".*" ".*" ".*"
+    rabbitmqctl delete_user guest 2>/dev/null || true
     systemctl enable rabbitmq-server
     systemctl restart rabbitmq-server
     log_success "RabbitMQ management plugin enabled (http://localhost:15672)"
@@ -817,6 +821,7 @@ if [ "$DRY_RUN" = false ]; then
     BACKEND_ENV="$APP_DIR/apps/backend/.env.local"
     JWT_SECRET=$(openssl rand -hex 32)
     REVALIDATE_SECRET=$(openssl rand -hex 24)
+    RABBITMQ_PASS=$(openssl rand -base64 24)
 
     cat > "$BACKEND_ENV" <<ENVFILE
 ###> symfony/framework-bundle ###
@@ -835,7 +840,7 @@ JWT_PASSPHRASE=${JWT_SECRET}
 ###< lexik/jwt-authentication-bundle ###
 
 ###> symfony/messenger ###
-MESSENGER_TRANSPORT_DSN=amqp://guest:guest@localhost:5672/%2f/deschide_news_messages
+MESSENGER_TRANSPORT_DSN=amqp://deschide:${RABBITMQ_PASS}@localhost:5672/%2f/deschide_news_messages
 ###< symfony/messenger ###
 
 ###> redis ###
@@ -1079,7 +1084,7 @@ echo ""
 echo -e "  ${BOLD}Installed Services:${NC}"
 echo -e "    PHP:            ${PHP_VERSION}-fpm"
 echo -e "    PostgreSQL:     ${PG_VERSION}"
-echo -e "    Redis:          7.x (512 MB, allkeys-lru)"
+echo -e "    Redis:          7.x (512 MB, volatile-lru)"
 echo -e "    Elasticsearch:  9.x (2 GB heap, single-node)"
 echo -e "    RabbitMQ:       with management plugin"
 echo -e "    Node.js:        ${NODE_VERSION}.x + pnpm + PM2"

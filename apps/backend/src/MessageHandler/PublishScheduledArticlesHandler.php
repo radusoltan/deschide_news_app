@@ -56,7 +56,9 @@ final class PublishScheduledArticlesHandler
             try {
                 // Publish the article
                 $article->setStatus(ArticleStatus::PUBLISHED);
+                $article->setPublishedLocales(['ro']);
                 $article->setPublishedAt(new DateTimeImmutable('now', new DateTimeZone('Europe/Chisinau')));
+                $article->setPublishAt(null);
 
                 $this->entityManager->persist($article);
 

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Spinner } from 'flowbite-react';
 import AuthorsTable from './AuthorsTable';
 import { AuthorsPagination } from './components/AuthorsPagination';
-import { getAuthors } from '@/lib/dal';
+import { getAuthors, type Author } from '@/lib/dal';
 
 interface AuthorsPageProps {
   params: Promise<{
@@ -22,7 +22,7 @@ export default async function AuthorsPage({ params, searchParams }: AuthorsPageP
   const itemsPerPage = 30; // 30 authors per page
 
   // Fetch authors
-  let authorsData: any[] = [];
+  let authorsData: Author[] = [];
   let totalItems = 0;
   let error: string | null = null;
 

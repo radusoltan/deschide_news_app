@@ -8,26 +8,23 @@ use App\Entity\Author;
 use App\Repository\ArticleRepository;
 use App\Repository\AuthorRepository;
 use App\Repository\CategoryRepository;
+use App\Service\Editorial\ArticleFactoryService;
+use App\Service\RemoteImageDownloader;
 use App\Service\SourceAuthorResolver;
-use App\State\PressReleaseApproveProcessor;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Messenger\Envelope;
 
 /**
- * Unit tests for PressReleaseApproveProcessor.
+ * Unit tests for ArticleFactoryService (extracted from PressReleaseApproveProcessor).
  *
- * Tests extractDomain() and resolveAuthorFromSenderEmail() private methods
- * via reflection.
+ * Tests extractDomain() and resolveAuthorFromSenderEmail() methods.
  */
 class PressReleaseApproveProcessorTest extends TestCase
 {
-    private PressReleaseApproveProcessor $processor;
+    private ArticleFactoryService $articleFactory;
 
     private EntityManagerInterface $em;
 
@@ -37,42 +34,37 @@ class PressReleaseApproveProcessorTest extends TestCase
 
     private AuthorRepository $authorRepository;
 
-    private Security $security;
-
     protected function setUp(): void
     {
         $this->em = $this->createMock(EntityManagerInterface::class);
         $this->categoryRepository = $this->createMock(CategoryRepository::class);
         $this->articleRepository = $this->createMock(ArticleRepository::class);
         $this->authorRepository = $this->createMock(AuthorRepository::class);
-        $this->security = $this->createMock(Security::class);
 
         $sourceAuthorResolver = $this->createMock(SourceAuthorResolver::class);
-        $messageBus = $this->createMock(MessageBusInterface::class);
-        $messageBus->method('dispatch')->willReturnCallback(fn ($msg) => new Envelope($msg));
+        $imageDownloader = $this->createMock(RemoteImageDownloader::class);
 
-        $this->processor = new PressReleaseApproveProcessor(
+        $this->articleFactory = new ArticleFactoryService(
             $this->em,
             $this->categoryRepository,
             $this->articleRepository,
             $this->authorRepository,
             $sourceAuthorResolver,
-            $this->security,
-            $messageBus,
+            $imageDownloader,
             new NullLogger(),
             '/tmp/test',
         );
     }
 
     // ========================================
-    // extractDomain() Tests (via reflection)
+    // extractDomain() Tests
     // ========================================
 
     #[Test]
     #[DataProvider('extractDomainProvider')]
     public function extractDomainReturnsExpectedResult(string $email, ?string $expectedDomain): void
     {
-        $result = $this->invokeExtractDomain($email);
+        $result = $this->articleFactory->extractDomain($email);
 
         $this->assertSame($expectedDomain, $result);
     }
@@ -153,7 +145,7 @@ class PressReleaseApproveProcessorTest extends TestCase
             ->with('ipn.md')
             ->willReturn($author);
 
-        $result = $this->invokeResolveAuthorFromSenderEmail('newsfeed@ipn.md');
+        $result = $this->articleFactory->resolveAuthorFromSenderEmail('newsfeed@ipn.md');
 
         $this->assertSame($author, $result);
     }
@@ -171,7 +163,7 @@ class PressReleaseApproveProcessorTest extends TestCase
             ->with('gov.md')
             ->willReturn($author);
 
-        $result = $this->invokeResolveAuthorFromSenderEmail('Press Office <press@gov.md>');
+        $result = $this->articleFactory->resolveAuthorFromSenderEmail('Press Office <press@gov.md>');
 
         $this->assertSame($author, $result);
     }
@@ -185,7 +177,7 @@ class PressReleaseApproveProcessorTest extends TestCase
             ->with('unknown.com')
             ->willReturn(null);
 
-        $result = $this->invokeResolveAuthorFromSenderEmail('user@unknown.com');
+        $result = $this->articleFactory->resolveAuthorFromSenderEmail('user@unknown.com');
 
         $this->assertNull($result);
     }
@@ -197,7 +189,7 @@ class PressReleaseApproveProcessorTest extends TestCase
             ->expects($this->never())
             ->method('findByEmailDomain');
 
-        $result = $this->invokeResolveAuthorFromSenderEmail('invalid');
+        $result = $this->articleFactory->resolveAuthorFromSenderEmail('invalid');
 
         $this->assertNull($result);
     }
@@ -209,26 +201,8 @@ class PressReleaseApproveProcessorTest extends TestCase
             ->expects($this->never())
             ->method('findByEmailDomain');
 
-        $result = $this->invokeResolveAuthorFromSenderEmail('');
+        $result = $this->articleFactory->resolveAuthorFromSenderEmail('');
 
         $this->assertNull($result);
-    }
-
-    // ========================================
-    // Helper methods
-    // ========================================
-
-    private function invokeExtractDomain(string $email): ?string
-    {
-        $reflection = new \ReflectionMethod(PressReleaseApproveProcessor::class, 'extractDomain');
-
-        return $reflection->invoke($this->processor, $email);
-    }
-
-    private function invokeResolveAuthorFromSenderEmail(string $senderEmail): ?Author
-    {
-        $reflection = new \ReflectionMethod(PressReleaseApproveProcessor::class, 'resolveAuthorFromSenderEmail');
-
-        return $reflection->invoke($this->processor, $senderEmail);
     }
 }

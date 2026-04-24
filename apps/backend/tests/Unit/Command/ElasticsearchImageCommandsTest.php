@@ -6,7 +6,7 @@ namespace App\Tests\Unit\Command;
 
 use App\Command\ElasticsearchCreateImageIndexCommand;
 use App\Command\ElasticsearchManageAliasCommand;
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ElasticIndexManager;
 use App\Service\ImageElasticService;
 use Exception;
 use PHPUnit\Framework\TestCase;
@@ -83,14 +83,14 @@ class ElasticsearchImageCommandsTest extends TestCase
 
     public function testManageAliasCommandName(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticIndexManager::class);
         $command = new ElasticsearchManageAliasCommand($service);
         $this->assertSame('app:elasticsearch:manage-alias', $command->getName());
     }
 
     public function testManageAliasCommandHasOptions(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticIndexManager::class);
         $command = new ElasticsearchManageAliasCommand($service);
         $this->assertTrue($command->getDefinition()->hasOption('action'));
         $this->assertTrue($command->getDefinition()->hasOption('alias'));
@@ -98,7 +98,7 @@ class ElasticsearchImageCommandsTest extends TestCase
 
     public function testManageAliasWhenDisabled(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(false);
 
         $command = new ElasticsearchManageAliasCommand($service);
@@ -114,7 +114,7 @@ class ElasticsearchImageCommandsTest extends TestCase
 
     public function testManageAliasHandlesException(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('getAliases')->willThrowException(new Exception('Alias error'));
 

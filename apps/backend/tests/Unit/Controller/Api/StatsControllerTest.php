@@ -14,7 +14,8 @@ use App\Repository\ArticleRepository;
 use App\Repository\ArticleStatsDailyRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\SiteStatsDailyRepository;
-use App\Service\PerformanceService;
+use App\Service\Analytics\AnalyticsService;
+use App\Service\Cache\CacheService;
 use DateTime;
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\Query\Expr;
@@ -40,7 +41,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class StatsControllerTest extends TestCase
 {
-    private PerformanceService $performance;
+    private CacheService $cache;
+    private AnalyticsService $analytics;
     private ArticleStatsDailyRepository $articleStatsRepository;
     private SiteStatsDailyRepository $siteStatsRepository;
     private ArticleRepository $articleRepository;
@@ -49,14 +51,16 @@ class StatsControllerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->performance = $this->createStub(PerformanceService::class);
+        $this->cache = $this->createStub(CacheService::class);
+        $this->analytics = $this->createStub(AnalyticsService::class);
         $this->articleStatsRepository = $this->createStub(ArticleStatsDailyRepository::class);
         $this->siteStatsRepository = $this->createStub(SiteStatsDailyRepository::class);
         $this->articleRepository = $this->createStub(ArticleRepository::class);
         $this->categoryRepository = $this->createStub(CategoryRepository::class);
 
         $this->controller = new StatsController(
-            $this->performance,
+            $this->cache,
+            $this->analytics,
             $this->articleStatsRepository,
             $this->siteStatsRepository,
             $this->articleRepository,
@@ -175,7 +179,7 @@ class StatsControllerTest extends TestCase
             'current_views' => 100,
             'stats' => [],
         ];
-        $this->performance->method('getCached')->willReturn($cachedData);
+        $this->cache->method('getCached')->willReturn($cachedData);
 
         $request = Request::create('/api/admin/stats/article/42', 'GET', ['range' => '7days']);
         $response = $this->controller->articleStats(42, $request);
@@ -187,7 +191,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleStatsReturns404WhenArticleNotFound(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
         $this->articleRepository->method('find')->willReturn(null);
 
         $request = Request::create('/api/admin/stats/article/999', 'GET');
@@ -201,7 +205,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleStatsReturnsFormattedStatsForExistingArticle(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         $article = $this->createArticleStub(42, 'Test Article Title');
         $this->articleRepository->method('find')->willReturn($article);
@@ -211,7 +215,7 @@ class StatsControllerTest extends TestCase
             $this->createArticleStatsDailyStub('2026-03-19', 200, 130, 90, 0.65),
         ];
         $this->articleStatsRepository->method('findByArticleAndDateRange')->willReturn($stats);
-        $this->performance->method('getArticleViews')->willReturn(350);
+        $this->analytics->method('getArticleViews')->willReturn(350);
 
         $request = Request::create('/api/admin/stats/article/42', 'GET', ['range' => '7days']);
         $response = $this->controller->articleStats(42, $request);
@@ -234,12 +238,12 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleStatsUsesDefaultRangeWhenNotSpecified(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         $article = $this->createArticleStub(1);
         $this->articleRepository->method('find')->willReturn($article);
         $this->articleStatsRepository->method('findByArticleAndDateRange')->willReturn([]);
-        $this->performance->method('getArticleViews')->willReturn(0);
+        $this->analytics->method('getArticleViews')->willReturn(0);
 
         // No range parameter - should default to '7days'
         $request = Request::create('/api/admin/stats/article/1', 'GET');
@@ -254,12 +258,12 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleStatsReturnsEmptyStatsArrayWhenNoData(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         $article = $this->createArticleStub(10, 'No Stats Article');
         $this->articleRepository->method('find')->willReturn($article);
         $this->articleStatsRepository->method('findByArticleAndDateRange')->willReturn([]);
-        $this->performance->method('getArticleViews')->willReturn(0);
+        $this->analytics->method('getArticleViews')->willReturn(0);
 
         $request = Request::create('/api/admin/stats/article/10', 'GET', ['range' => '30days']);
         $response = $this->controller->articleStats(10, $request);
@@ -274,7 +278,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleStatsHandlesNullReadingTimeAndCompletionRate(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         $article = $this->createArticleStub(5);
         $this->articleRepository->method('find')->willReturn($article);
@@ -283,7 +287,7 @@ class StatsControllerTest extends TestCase
             $this->createArticleStatsDailyStub('2026-03-20', 50, 30, null, null),
         ];
         $this->articleStatsRepository->method('findByArticleAndDateRange')->willReturn($stats);
-        $this->performance->method('getArticleViews')->willReturn(50);
+        $this->analytics->method('getArticleViews')->willReturn(50);
 
         $request = Request::create('/api/admin/stats/article/5', 'GET');
         $response = $this->controller->articleStats(5, $request);
@@ -298,12 +302,12 @@ class StatsControllerTest extends TestCase
     #[DataProvider('dateRangeProvider')]
     public function articleStatsAcceptsVariousDateRanges(string $range): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         $article = $this->createArticleStub(1);
         $this->articleRepository->method('find')->willReturn($article);
         $this->articleStatsRepository->method('findByArticleAndDateRange')->willReturn([]);
-        $this->performance->method('getArticleViews')->willReturn(0);
+        $this->analytics->method('getArticleViews')->willReturn(0);
 
         $request = Request::create('/api/admin/stats/article/1', 'GET', ['range' => $range]);
         $response = $this->controller->articleStats(1, $request);
@@ -332,7 +336,7 @@ class StatsControllerTest extends TestCase
         $cachedData = [
             ['id' => 1, 'title' => 'Cached Trending', 'views_24h' => 500],
         ];
-        $this->performance->method('getCached')->willReturn($cachedData);
+        $this->cache->method('getCached')->willReturn($cachedData);
 
         $request = Request::create('/api/admin/stats/trending', 'GET');
         $response = $this->controller->trending($request);
@@ -344,8 +348,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function trendingReturnsEmptyArrayWhenNoTrendingArticles(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getTrendingArticles')->willReturn([]);
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getTrendingArticles')->willReturn([]);
 
         $request = Request::create('/api/admin/stats/trending', 'GET');
         $response = $this->controller->trending($request);
@@ -357,8 +361,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function trendingReturnsFormattedArticlesWithCategories(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getTrendingArticles')->willReturn([
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getTrendingArticles')->willReturn([
             ['article_id' => 10, 'views' => 500],
             ['article_id' => 20, 'views' => 300],
         ]);
@@ -398,8 +402,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function trendingPreservesRedisOrderingEvenWhenDbReturnsDifferentOrder(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getTrendingArticles')->willReturn([
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getTrendingArticles')->willReturn([
             ['article_id' => 20, 'views' => 800],
             ['article_id' => 10, 'views' => 300],
         ]);
@@ -425,8 +429,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function trendingSkipsArticlesNotFoundInDatabase(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getTrendingArticles')->willReturn([
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getTrendingArticles')->willReturn([
             ['article_id' => 10, 'views' => 500],
             ['article_id' => 999, 'views' => 300], // This ID not in DB
         ]);
@@ -447,8 +451,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function trendingUsesDefaultLocaleWhenNotProvided(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getTrendingArticles')->willReturn([
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getTrendingArticles')->willReturn([
             ['article_id' => 1, 'views' => 100],
         ]);
 
@@ -468,8 +472,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function trendingUsesCustomLimit(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getTrendingArticles')->willReturn([]);
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getTrendingArticles')->willReturn([]);
 
         $request = Request::create('/api/admin/stats/trending', 'GET', ['limit' => '5']);
         $response = $this->controller->trending($request);
@@ -481,8 +485,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function trendingHandlesArticleWithNullPublishedAt(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getTrendingArticles')->willReturn([
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getTrendingArticles')->willReturn([
             ['article_id' => 7, 'views' => 100],
         ]);
 
@@ -507,9 +511,9 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function trendingHandlesViewsMapMissingArticleId(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
         // Trending data has article_id but views might be missing from map if array_column fails
-        $this->performance->method('getTrendingArticles')->willReturn([
+        $this->analytics->method('getTrendingArticles')->willReturn([
             ['article_id' => 10, 'views' => 500],
         ]);
 
@@ -535,7 +539,7 @@ class StatsControllerTest extends TestCase
             'realtime' => ['unique_visitors_today' => 500],
             'stats' => [],
         ];
-        $this->performance->method('getCached')->willReturn($cachedData);
+        $this->cache->method('getCached')->willReturn($cachedData);
 
         $request = Request::create('/api/admin/stats/site', 'GET');
         $response = $this->controller->siteStats($request);
@@ -547,8 +551,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function siteStatsReturnsFormattedDataWithRealtimeInfo(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getUniqueVisitorCount')->willReturn(250);
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getUniqueVisitorCount')->willReturn(250);
 
         $stats = [
             $this->createSiteStatsDailyStub('2026-03-20', 1000, 800, 200, 35.5, 240),
@@ -576,8 +580,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function siteStatsReturnsEmptyStatsWithRealtimeData(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getUniqueVisitorCount')->willReturn(0);
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getUniqueVisitorCount')->willReturn(0);
         $this->siteStatsRepository->method('findByDateRange')->willReturn([]);
 
         $request = Request::create('/api/admin/stats/site', 'GET', ['range' => 'today']);
@@ -592,8 +596,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function siteStatsHandlesNullBounceRateAndSessionDuration(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getUniqueVisitorCount')->willReturn(10);
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getUniqueVisitorCount')->willReturn(10);
 
         $stats = [
             $this->createSiteStatsDailyStub('2026-03-20', 100, 80, 20, null, null),
@@ -611,8 +615,8 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function siteStatsUsesDefaultRange(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getUniqueVisitorCount')->willReturn(0);
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getUniqueVisitorCount')->willReturn(0);
         $this->siteStatsRepository->method('findByDateRange')->willReturn([]);
 
         // No range parameter
@@ -629,9 +633,9 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function realtimeReturnsCurrentStats(): void
     {
-        $this->performance->method('getActiveSessionCount')->willReturn(42);
-        $this->performance->method('getUniqueVisitorCount')->willReturn(350);
-        $this->performance->method('getTrendingArticles')->willReturn([
+        $this->analytics->method('getActiveSessionCount')->willReturn(42);
+        $this->analytics->method('getUniqueVisitorCount')->willReturn(350);
+        $this->analytics->method('getTrendingArticles')->willReturn([
             ['article_id' => 1, 'views' => 100],
             ['article_id' => 2, 'views' => 80],
             ['article_id' => 3, 'views' => 60],
@@ -652,9 +656,9 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function realtimeReturnsEmptyTrendingWhenNone(): void
     {
-        $this->performance->method('getActiveSessionCount')->willReturn(0);
-        $this->performance->method('getUniqueVisitorCount')->willReturn(0);
-        $this->performance->method('getTrendingArticles')->willReturn([]);
+        $this->analytics->method('getActiveSessionCount')->willReturn(0);
+        $this->analytics->method('getUniqueVisitorCount')->willReturn(0);
+        $this->analytics->method('getTrendingArticles')->willReturn([]);
 
         $response = $this->controller->realtime();
 
@@ -667,9 +671,9 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function realtimeTruncatesTrendingToFiveMax(): void
     {
-        $this->performance->method('getActiveSessionCount')->willReturn(10);
-        $this->performance->method('getUniqueVisitorCount')->willReturn(100);
-        $this->performance->method('getTrendingArticles')->willReturn([
+        $this->analytics->method('getActiveSessionCount')->willReturn(10);
+        $this->analytics->method('getUniqueVisitorCount')->willReturn(100);
+        $this->analytics->method('getTrendingArticles')->willReturn([
             ['article_id' => 1, 'views' => 100],
             ['article_id' => 2, 'views' => 90],
             ['article_id' => 3, 'views' => 80],
@@ -690,9 +694,9 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function realtimeTimestampIsRecentUnixTimestamp(): void
     {
-        $this->performance->method('getActiveSessionCount')->willReturn(0);
-        $this->performance->method('getUniqueVisitorCount')->willReturn(0);
-        $this->performance->method('getTrendingArticles')->willReturn([]);
+        $this->analytics->method('getActiveSessionCount')->willReturn(0);
+        $this->analytics->method('getUniqueVisitorCount')->willReturn(0);
+        $this->analytics->method('getTrendingArticles')->willReturn([]);
 
         $before = time();
         $response = $this->controller->realtime();
@@ -714,7 +718,7 @@ class StatsControllerTest extends TestCase
             'total' => 5,
             'distribution' => [['name' => 'Politica', 'value' => 100]],
         ];
-        $this->performance->method('getCached')->willReturn($cachedData);
+        $this->cache->method('getCached')->willReturn($cachedData);
 
         $request = Request::create('/api/admin/stats/categories', 'GET');
         $response = $this->controller->categoryStats($request);
@@ -726,7 +730,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function categoryStatsReturnsDistributionSortedByValue(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         // Article counts query returns counts per category
         $articleCountsQb = $this->createQueryBuilderStub([
@@ -767,7 +771,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function categoryStatsReturnsEmptyDistributionWhenNoArticles(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         // No article counts
         $qb = $this->createQueryBuilderStub([]);
@@ -786,7 +790,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function categoryStatsUsesDefaultLocale(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         $qb = $this->createQueryBuilderStub([]);
         $this->articleRepository->method('createQueryBuilder')->willReturn($qb);
@@ -802,7 +806,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function categoryStatsFiltersCategoriesNotInCountsMap(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         // Only category 1 has articles
         $articleCountsQb = $this->createQueryBuilderStub([
@@ -840,7 +844,7 @@ class StatsControllerTest extends TestCase
             'new' => 100,
             'submitted' => 100,
         ];
-        $this->performance->method('getCached')->willReturn($cachedData);
+        $this->cache->method('getCached')->willReturn($cachedData);
 
         $response = $this->controller->articleCounts();
 
@@ -851,7 +855,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleCountsReturnsCorrectCountsFromEnumInstances(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         // Doctrine may return enum instances
         $qb = $this->createQueryBuilderStub([
@@ -876,7 +880,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleCountsReturnsCorrectCountsFromStringValues(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         // Doctrine may return string values
         $qb = $this->createQueryBuilderStub([
@@ -898,7 +902,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleCountsReturnsZerosWhenNoArticles(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         $qb = $this->createQueryBuilderStub([]);
         $this->articleRepository->method('createQueryBuilder')->willReturn($qb);
@@ -915,7 +919,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleCountsHandlesMixedStatusTypes(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         // Mix of enum instances and string statuses
         $qb = $this->createQueryBuilderStub([
@@ -936,7 +940,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleCountsIgnoresUnknownStatuses(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         $qb = $this->createQueryBuilderStub([
             ['status' => 'published', 'count' => 100],
@@ -957,7 +961,7 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function articleCountsIncludesArchivedInTotalOnly(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
+        $this->cache->method('getCached')->willReturn(null);
 
         $qb = $this->createQueryBuilderStub([
             ['status' => ArticleStatus::PUBLISHED, 'count' => 500],
@@ -982,11 +986,11 @@ class StatsControllerTest extends TestCase
     #[Test]
     public function allEndpointsReturnJsonResponses(): void
     {
-        $this->performance->method('getCached')->willReturn(null);
-        $this->performance->method('getActiveSessionCount')->willReturn(0);
-        $this->performance->method('getUniqueVisitorCount')->willReturn(0);
-        $this->performance->method('getTrendingArticles')->willReturn([]);
-        $this->performance->method('getArticleViews')->willReturn(0);
+        $this->cache->method('getCached')->willReturn(null);
+        $this->analytics->method('getActiveSessionCount')->willReturn(0);
+        $this->analytics->method('getUniqueVisitorCount')->willReturn(0);
+        $this->analytics->method('getTrendingArticles')->willReturn([]);
+        $this->analytics->method('getArticleViews')->willReturn(0);
 
         $article = $this->createArticleStub(1);
         $this->articleRepository->method('find')->willReturn($article);

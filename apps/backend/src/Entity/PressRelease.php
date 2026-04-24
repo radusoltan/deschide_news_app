@@ -16,6 +16,9 @@ use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use App\Repository\PressReleaseRepository;
 use App\State\PressReleaseApproveProcessor;
+use App\State\PressReleaseRejectProcessor;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -27,7 +30,9 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Index(name: 'idx_press_release_received', columns: ['received_at'])]
 #[ORM\Index(name: 'idx_press_release_content_hash', columns: ['content_hash'])]
 #[ORM\Index(name: 'idx_press_release_source_type', columns: ['source_type'])]
+#[ORM\Index(name: 'idx_pr_status_created', columns: ['status', 'created_at'])]
 #[ORM\UniqueConstraint(name: 'uniq_content_hash_source_type', columns: ['content_hash', 'source_type'])]
+#[ORM\UniqueConstraint(name: 'uniq_pr_source_url', columns: ['source_url'])]
 #[UniqueEntity('sourceEmailId', message: 'This email has already been imported.')]
 #[ORM\HasLifecycleCallbacks]
 #[ApiFilter(SearchFilter::class, properties: ['status' => 'exact', 'categorySlug' => 'exact', 'senderAddress' => 'partial', 'sourceType' => 'exact'])]
@@ -49,6 +54,13 @@ use Symfony\Component\Serializer\Attribute\Groups;
             processor: PressReleaseApproveProcessor::class,
             description: 'Approve a press release and create an article from it',
         ),
+        new Post(
+            uriTemplate: '/press_releases/{id}/reject',
+            denormalizationContext: ['groups' => ['press:write']],
+            normalizationContext: ['groups' => ['press:read']],
+            processor: PressReleaseRejectProcessor::class,
+            description: 'Reject a pending press release',
+        ),
         new Delete(),
     ],
     order: ['receivedAt' => 'DESC'],
@@ -59,11 +71,11 @@ class PressRelease
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['press:read'])]
+    #[Groups(['press:read', 'cluster:detail'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['press:read', 'press:write'])]
+    #[Groups(['press:read', 'press:write', 'cluster:detail'])]
     private string $title;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -86,8 +98,8 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?string $senderName = null;
 
-    #[ORM\Column(length: 500, nullable: true)]
-    #[Groups(['press:read'])]
+    #[ORM\Column(length: 2048, nullable: true)]
+    #[Groups(['press:read', 'cluster:detail'])]
     private ?string $sourceUrl = null;
 
     #[ORM\Column(length: 50)]
@@ -99,7 +111,7 @@ class PressRelease
     private ?string $emailSubject = null;
 
     #[ORM\Column(enumType: PressReleaseStatus::class)]
-    #[Groups(['press:read', 'press:write'])]
+    #[Groups(['press:read', 'press:write', 'cluster:detail'])]
     private PressReleaseStatus $status = PressReleaseStatus::PENDING;
 
     #[ORM\Column(length: 64, nullable: true)]
@@ -114,8 +126,15 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?string $originalLanguage = 'ro';
 
-    #[ORM\Column(length: 100, nullable: true)]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['press:read'])]
+    private ?string $originalTitle = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $originalContent = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['press:read', 'cluster:detail'])]
     private ?string $sourceName = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -123,7 +142,7 @@ class PressRelease
     private ?string $rejectionReason = null;
 
     #[ORM\Column]
-    #[Groups(['press:read'])]
+    #[Groups(['press:read', 'cluster:detail'])]
     private \DateTimeImmutable $receivedAt;
 
     #[ORM\Column]
@@ -135,12 +154,12 @@ class PressRelease
     private ?\DateTimeImmutable $processedAt = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     #[Groups(['press:read'])]
     private ?User $processedBy = null;
 
     #[ORM\OneToOne(targetEntity: Article::class)]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     #[Groups(['press:read'])]
     private ?Article $article = null;
 
@@ -184,10 +203,52 @@ class PressRelease
     #[Groups(['press:read'])]
     private ?float $relevanceScore = null;
 
+    /** Image URL extracted from source (RSS feed, article page) */
+    #[ORM\Column(length: 2048, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $sourceImageUrl = null;
+
+    /** Publisher domain extracted from RSS <source> tag (e.g., "moldova1.md") */
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $sourcePublisherDomain = null;
+
+    /** Detected language of the content (ISO 639-1, e.g., "en", "ro", "fr") */
+    #[ORM\Column(length: 5, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?string $detectedLanguage = null;
+
+    /** AI confidence score from ArticleWriterService (0.0–1.0) */
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?float $aiConfidenceScore = null;
+
+    /** Number of unique sources used by AI to generate this PR */
+    #[ORM\Column(type: Types::INTEGER, nullable: true)]
+    #[Groups(['press:read'])]
+    private ?int $aiSourceCount = null;
+
+    /** When content was enriched via remote scraping */
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    #[Groups(['press:read'])]
+    private ?\DateTimeImmutable $enrichedAt = null;
+
+    /** Link to the Source entity for credibility, country, and category metadata */
+    #[ORM\ManyToOne(targetEntity: Source::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['press:read'])]
+    private ?Source $source = null;
+
+    /** @var Collection<int, PressReleaseTopic> */
+    #[ORM\OneToMany(targetEntity: PressReleaseTopic::class, mappedBy: 'pressRelease', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['press:detail'])]
+    private Collection $pressReleaseTopics;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->receivedAt = new \DateTimeImmutable();
+        $this->pressReleaseTopics = new ArrayCollection();
     }
 
     public function getId(): ?int { return $this->id; }
@@ -252,6 +313,12 @@ class PressRelease
     public function getOriginalLanguage(): ?string { return $this->originalLanguage; }
     public function setOriginalLanguage(?string $originalLanguage): static { $this->originalLanguage = $originalLanguage; return $this; }
 
+    public function getOriginalTitle(): ?string { return $this->originalTitle; }
+    public function setOriginalTitle(?string $originalTitle): static { $this->originalTitle = $originalTitle; return $this; }
+
+    public function getOriginalContent(): ?string { return $this->originalContent; }
+    public function setOriginalContent(?string $originalContent): static { $this->originalContent = $originalContent; return $this; }
+
     public function getSourceName(): ?string { return $this->sourceName; }
     public function setSourceName(?string $sourceName): static { $this->sourceName = $sourceName; return $this; }
 
@@ -277,4 +344,77 @@ class PressRelease
 
     public function getRelevanceScore(): ?float { return $this->relevanceScore; }
     public function setRelevanceScore(?float $relevanceScore): static { $this->relevanceScore = $relevanceScore; return $this; }
+
+    public function getSourceImageUrl(): ?string { return $this->sourceImageUrl; }
+    public function setSourceImageUrl(?string $sourceImageUrl): static
+    {
+        $this->sourceImageUrl = $sourceImageUrl !== null ? mb_substr($sourceImageUrl, 0, 2048) : null;
+
+        return $this;
+    }
+
+    public function getSourcePublisherDomain(): ?string { return $this->sourcePublisherDomain; }
+    public function setSourcePublisherDomain(?string $sourcePublisherDomain): static { $this->sourcePublisherDomain = $sourcePublisherDomain; return $this; }
+
+    public function getDetectedLanguage(): ?string { return $this->detectedLanguage; }
+    public function setDetectedLanguage(?string $detectedLanguage): static { $this->detectedLanguage = $detectedLanguage; return $this; }
+
+    public function getEnrichedAt(): ?\DateTimeImmutable { return $this->enrichedAt; }
+    public function setEnrichedAt(?\DateTimeImmutable $enrichedAt): static { $this->enrichedAt = $enrichedAt; return $this; }
+
+    public function getSource(): ?Source { return $this->source; }
+    public function setSource(?Source $source): static { $this->source = $source; return $this; }
+
+    /** @return Collection<int, PressReleaseTopic> */
+    public function getPressReleaseTopics(): Collection { return $this->pressReleaseTopics; }
+
+    public function addPressReleaseTopic(PressReleaseTopic $prt): static
+    {
+        if (!$this->pressReleaseTopics->contains($prt)) {
+            $this->pressReleaseTopics->add($prt);
+        }
+
+        return $this;
+    }
+
+    public function getAiConfidenceScore(): ?float { return $this->aiConfidenceScore; }
+    public function setAiConfidenceScore(?float $aiConfidenceScore): static { $this->aiConfidenceScore = $aiConfidenceScore; return $this; }
+
+    public function getAiSourceCount(): ?int { return $this->aiSourceCount; }
+    public function setAiSourceCount(?int $aiSourceCount): static { $this->aiSourceCount = $aiSourceCount; return $this; }
+
+    public function isAiGenerated(): bool
+    {
+        return $this->sourceName !== null && str_starts_with($this->sourceName, 'AI:');
+    }
+
+    /**
+     * Computed field: returns the publisher hostname.
+     * Priority: sourcePublisherDomain (from RSS <source> tag) > parsed sourceUrl hostname.
+     */
+    #[Groups(['press:read', 'cluster:detail'])]
+    public function getSourceHostname(): ?string
+    {
+        // Prefer explicit publisher domain (set from RSS <source> tag for aggregator articles)
+        if ($this->sourcePublisherDomain !== null) {
+            return $this->sourcePublisherDomain;
+        }
+
+        if ($this->sourceUrl === null) {
+            return null;
+        }
+
+        $host = parse_url($this->sourceUrl, \PHP_URL_HOST);
+
+        if ($host === null || $host === false) {
+            return null;
+        }
+
+        // Strip "www." prefix
+        if (str_starts_with($host, 'www.')) {
+            $host = substr($host, 4);
+        }
+
+        return $host;
+    }
 }

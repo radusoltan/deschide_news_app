@@ -10,10 +10,11 @@ import { FeatureCard, CompactCard, FeatureCardSkeleton, CompactCardSkeleton, get
 import { fetchArticlesByCategory } from '@/lib/api/articles';
 import { buildCategoryUrl } from '@/lib/utils/url-builder';
 import type { Locale } from '@/lib/types';
+import type { Article, Category } from '@/lib/types/article';
 import Link from 'next/link';
 
 interface CategoryHighlightsProps {
-  category: any;
+  category: Category;
   locale: string;
 }
 
@@ -31,7 +32,7 @@ const labels = {
 } as const;
 
 async function CategoryHighlightsContent({ category, locale }: CategoryHighlightsProps) {
-  let articles: any[] = [];
+  let articles: Article[] = [];
 
   try {
     const response = await fetchArticlesByCategory(category.id, locale, 5); // Get 5 articles per category
@@ -48,7 +49,7 @@ async function CategoryHighlightsContent({ category, locale }: CategoryHighlight
   // Get category slug for color mapping
   const categorySlug = category.slug || 'default';
   const sectionColor = getSectionColor(categorySlug);
-  const categoryTitle = category.title || category.name || 'Uncategorized';
+  const categoryTitle = category.title || 'Uncategorized';
   const categoryUrl = buildCategoryUrl(category, locale as Locale);
   const localeLabels = labels[locale as keyof typeof labels] || labels.ro;
 

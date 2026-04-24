@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
 
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ArticleSearchService;
+use App\Service\Elasticsearch\ElasticDocumentService;
+use App\Service\Elasticsearch\ElasticIndexManager;
 use Elastic\Elasticsearch\Client;
 use Generator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -13,9 +15,9 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
 /**
- * Unit tests for ElasticService.
+ * Unit tests for the split Elasticsearch services.
  *
- * Tests Elasticsearch integration, search functionality, and index management
+ * Tests ElasticIndexManager, ArticleSearchService, and ElasticDocumentService
  * according to Symfony and API Platform testing best practices.
  *
  * Note: Elasticsearch Client is final and cannot be mocked. These tests focus on
@@ -23,16 +25,14 @@ use ReflectionClass;
  */
 class ElasticServiceTest extends TestCase
 {
-    // No setUp needed - we create services directly in each test
-
     // ======================
-    // Service Initialization Tests
+    // ElasticIndexManager — Initialization Tests
     // ======================
 
     #[Test]
     public function itCreatesEnabledServiceWithValidHost(): void
     {
-        $service = new ElasticService('https://localhost:9200', 'user', 'pass');
+        $service = new ElasticIndexManager('https://localhost:9200', 'user', 'pass');
 
         $this->assertTrue($service->isEnabled());
     }
@@ -40,7 +40,7 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itCreatesDisabledServiceWithEmptyHost(): void
     {
-        $service = new ElasticService('');
+        $service = new ElasticIndexManager('');
 
         $this->assertFalse($service->isEnabled());
         $this->assertNull($service->getClient());
@@ -49,7 +49,7 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itCreatesDisabledServiceWithZeroHost(): void
     {
-        $service = new ElasticService('0');
+        $service = new ElasticIndexManager('0');
 
         $this->assertFalse($service->isEnabled());
         $this->assertNull($service->getClient());
@@ -58,21 +58,21 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itCreatesEnabledServiceWithoutCredentials(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ElasticIndexManager('https://localhost:9200');
 
         $this->assertTrue($service->isEnabled());
     }
 
     // ======================
-    // Index Name Tests (via Reflection)
+    // ElasticIndexManager — Index Name Tests
     // ======================
 
     #[Test]
     #[DataProvider('indexNameProvider')]
     public function itGeneratesCorrectIndexNames(string $locale, string $expectedIndex): void
     {
-        $service = new ElasticService('https://localhost:9200');
-        $indexName = $this->callPrivateMethod($service, 'getIndexName', [$locale]);
+        $service = new ElasticIndexManager('https://localhost:9200');
+        $indexName = $service->getIndexName($locale);
 
         $this->assertEquals($expectedIndex, $indexName);
     }
@@ -85,14 +85,14 @@ class ElasticServiceTest extends TestCase
     }
 
     // ======================
-    // Analyzer Configuration Tests (via Reflection)
+    // ElasticIndexManager — Analyzer Configuration Tests
     // ======================
 
     #[Test]
     #[DataProvider('analyzerProvider')]
     public function itReturnsCorrectAnalyzerForLocale(string $locale, string $expectedAnalyzerType): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ElasticIndexManager('https://localhost:9200');
         $analyzer = $this->callPrivateMethod($service, 'getAnalyzerForLocale', [$locale]);
 
         $this->assertArrayHasKey('analyzer', $analyzer);
@@ -110,7 +110,7 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itReturnsStandardAnalyzerForUnknownLocale(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ElasticIndexManager('https://localhost:9200');
         $analyzer = $this->callPrivateMethod($service, 'getAnalyzerForLocale', ['fr']);
 
         $this->assertEquals('standard', $analyzer['analyzer']['article_analyzer']['type']);
@@ -120,24 +120,37 @@ class ElasticServiceTest extends TestCase
     }
 
     // ======================
-    // Index Operations Tests
+    // ElasticIndexManager — Index Operations Tests (disabled)
     // ======================
 
     #[Test]
     public function itSkipsIndexCreationWhenDisabled(): void
     {
-        $service = new ElasticService('');
+        $service = new ElasticIndexManager('');
 
-        // Should not throw exception, just return early
         $service->createIndex('ro');
 
         $this->assertFalse($service->isEnabled());
     }
 
     #[Test]
+    public function itReturnsNullClusterHealthWhenDisabled(): void
+    {
+        $service = new ElasticIndexManager('');
+
+        $health = $service->getClusterHealth();
+
+        $this->assertNull($health);
+    }
+
+    // ======================
+    // ElasticDocumentService — Document Operations Tests (disabled)
+    // ======================
+
+    #[Test]
     public function itSkipsDocumentIndexingWhenDisabled(): void
     {
-        $service = new ElasticService('');
+        $service = new ElasticDocumentService('');
 
         $document = ['id' => 1, 'title' => 'Test'];
         $service->indexDocument($document, 'ro');
@@ -148,17 +161,21 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itSkipsDocumentDeletionWhenDisabled(): void
     {
-        $service = new ElasticService('');
+        $service = new ElasticDocumentService('');
 
         $service->deleteDocument(1);
 
         $this->assertFalse($service->isEnabled());
     }
 
+    // ======================
+    // ArticleSearchService — Search Tests (disabled)
+    // ======================
+
     #[Test]
     public function itReturnsEmptyResultsWhenSearchOnDisabledService(): void
     {
-        $service = new ElasticService('');
+        $service = new ArticleSearchService('');
 
         $results = $service->search('test query', 0, 20, [], [], 'ro');
 
@@ -172,7 +189,7 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itReturnsEmptySuggestionsWhenDisabled(): void
     {
-        $service = new ElasticService('');
+        $service = new ArticleSearchService('');
 
         $suggestions = $service->suggest('test', 10, 'ro');
 
@@ -180,45 +197,31 @@ class ElasticServiceTest extends TestCase
         $this->assertEmpty($suggestions);
     }
 
-    #[Test]
-    public function itReturnsNullClusterHealthWhenDisabled(): void
-    {
-        $service = new ElasticService('');
-
-        $health = $service->getClusterHealth();
-
-        $this->assertNull($health);
-    }
-
     // ======================
-    // Search Query Building Tests
+    // ArticleSearchService — Search Query Building Tests
     // ======================
 
     #[Test]
     public function itBuildsSearchWithMultiMatchQuery(): void
     {
-        // This test would require mocking the client's search method
-        // For unit testing, we verify the logic by testing the service behavior
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
 
-        // When enabled, search should be attempted (would call real ES in integration test)
         $this->assertTrue($service->isEnabled());
     }
 
     #[Test]
     public function itAppliesStatusFilterToSearch(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
         $filters = ['status' => 'published'];
 
-        // Verify service processes filters (actual ES call would be in integration test)
         $this->assertTrue($service->isEnabled());
     }
 
     #[Test]
     public function itAppliesCategoryFilterToSearch(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
         $filters = ['category_id' => 5];
 
         $this->assertTrue($service->isEnabled());
@@ -227,7 +230,7 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itAppliesFeaturedFilterToSearch(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
         $filters = ['is_featured' => true];
 
         $this->assertTrue($service->isEnabled());
@@ -236,7 +239,7 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itAppliesBadgeFilterToSearch(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
         $filters = ['badge' => 'breaking'];
 
         $this->assertTrue($service->isEnabled());
@@ -245,7 +248,7 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itAppliesMultipleFiltersToSearch(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
         $filters = [
             'status' => 'published',
             'category_id' => 5,
@@ -264,10 +267,8 @@ class ElasticServiceTest extends TestCase
     #[DataProvider('sortFieldProvider')]
     public function itMapsSortFieldsCorrectly(string $inputField, string $expectedEsField): void
     {
-        // Test sort field mapping logic
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
 
-        // Mapping is done internally, we verify service accepts sort params
         $sort = [$inputField => 'desc'];
 
         $this->assertTrue($service->isEnabled());
@@ -290,10 +291,9 @@ class ElasticServiceTest extends TestCase
     #[DataProvider('localeProvider')]
     public function itSupportsMultipleLocales(string $locale): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ElasticIndexManager('https://localhost:9200');
 
-        // Verify service can work with different locales
-        $indexName = $this->callPrivateMethod($service, 'getIndexName', [$locale]);
+        $indexName = $service->getIndexName($locale);
         $this->assertStringContainsString($locale, $indexName);
     }
 
@@ -311,21 +311,16 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itAcceptsPaginationParameters(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
 
-        // Verify service accepts from/size parameters
         $this->assertTrue($service->isEnabled());
-
-        // In real test with mock, we'd verify these are passed to ES client
-        // For unit test, we just verify the service is configured correctly
     }
 
     #[Test]
     public function itUsesDefaultPaginationWhenNotSpecified(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
 
-        // Default pagination: from=0, size=20
         $this->assertTrue($service->isEnabled());
     }
 
@@ -336,18 +331,16 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itAcceptsSuggestionPrefix(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
 
-        // Verify service accepts prefix parameter
         $this->assertTrue($service->isEnabled());
     }
 
     #[Test]
     public function itUsesDefaultSuggestionSize(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
 
-        // Default size: 10
         $this->assertTrue($service->isEnabled());
     }
 
@@ -358,9 +351,8 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itAppliesBoostToFeaturedArticles(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
 
-        // Service uses function_score with 1.5 weight for featured articles
         $this->assertTrue($service->isEnabled());
     }
 
@@ -371,9 +363,8 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itConfiguresHighlightingForSearchResults(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ArticleSearchService('https://localhost:9200');
 
-        // Service configures highlighting for title, lead, content
         $this->assertTrue($service->isEnabled());
     }
 
@@ -384,7 +375,7 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itReturnsClientWhenEnabled(): void
     {
-        $service = new ElasticService('https://localhost:9200');
+        $service = new ElasticIndexManager('https://localhost:9200');
 
         $client = $service->getClient();
 
@@ -395,7 +386,7 @@ class ElasticServiceTest extends TestCase
     #[Test]
     public function itReturnsNullClientWhenDisabled(): void
     {
-        $service = new ElasticService('');
+        $service = new ElasticIndexManager('');
 
         $client = $service->getClient();
 

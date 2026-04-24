@@ -9,7 +9,8 @@ use App\Repository\ArticleRepository;
 use App\Repository\ArticleStatsDailyRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\SiteStatsDailyRepository;
-use App\Service\PerformanceService;
+use App\Service\Analytics\AnalyticsService;
+use App\Service\Cache\CacheService;
 use DateTime;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,7 +22,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 class StatsController extends AbstractController
 {
     public function __construct(
-        private readonly PerformanceService $performance,
+        private readonly CacheService $cache,
+        private readonly AnalyticsService $analytics,
         private readonly ArticleStatsDailyRepository $articleStatsRepository,
         private readonly SiteStatsDailyRepository $siteStatsRepository,
         private readonly ArticleRepository $articleRepository,
@@ -38,7 +40,7 @@ class StatsController extends AbstractController
 
         // Check cache first
         $cacheKey = "api:stats:article:{$id}:{$dateRange}";
-        $cached = $this->performance->getCached($cacheKey);
+        $cached = $this->cache->getCached($cacheKey);
         if ($cached !== null) {
             return new JsonResponse($cached);
         }
@@ -52,7 +54,7 @@ class StatsController extends AbstractController
         $stats = $this->articleStatsRepository->findByArticleAndDateRange($id, $startDate, $endDate);
 
         // Get current views from Redis
-        $currentViews = $this->performance->getArticleViews($id);
+        $currentViews = $this->analytics->getArticleViews($id);
 
         $data = [
             'article_id' => $id,
@@ -68,7 +70,7 @@ class StatsController extends AbstractController
         ];
 
         // Cache for 60 seconds
-        $this->performance->setCached($cacheKey, $data, 60);
+        $this->cache->setCached($cacheKey, $data, 60);
 
         return new JsonResponse($data);
     }
@@ -82,16 +84,16 @@ class StatsController extends AbstractController
 
         // Check cache first
         $cacheKey = "api:stats:trending:{$limit}:{$locale}";
-        $cached = $this->performance->getCached($cacheKey);
+        $cached = $this->cache->getCached($cacheKey);
         if ($cached !== null) {
             return new JsonResponse($cached);
         }
 
         // Get trending from Redis
-        $trending = $this->performance->getTrendingArticles($limit);
+        $trending = $this->analytics->getTrendingArticles($limit);
 
         if (empty($trending)) {
-            $this->performance->setCached($cacheKey, [], 60);
+            $this->cache->setCached($cacheKey, [], 60);
 
             return new JsonResponse([]);
         }
@@ -150,7 +152,7 @@ class StatsController extends AbstractController
         }
 
         // Cache for 60 seconds
-        $this->performance->setCached($cacheKey, $articles, 60);
+        $this->cache->setCached($cacheKey, $articles, 60);
 
         return new JsonResponse($articles);
     }
@@ -164,7 +166,7 @@ class StatsController extends AbstractController
 
         // Check cache first
         $cacheKey = "api:stats:site:{$dateRange}";
-        $cached = $this->performance->getCached($cacheKey);
+        $cached = $this->cache->getCached($cacheKey);
         if ($cached !== null) {
             return new JsonResponse($cached);
         }
@@ -174,7 +176,7 @@ class StatsController extends AbstractController
 
         // Get today's real-time stats
         $today = date('Y-m-d');
-        $todayUniqueVisitors = $this->performance->getUniqueVisitorCount($today);
+        $todayUniqueVisitors = $this->analytics->getUniqueVisitorCount($today);
 
         $data = [
             'realtime' => [
@@ -191,7 +193,7 @@ class StatsController extends AbstractController
         ];
 
         // Cache for 60 seconds
-        $this->performance->setCached($cacheKey, $data, 60);
+        $this->cache->setCached($cacheKey, $data, 60);
 
         return new JsonResponse($data);
     }
@@ -204,9 +206,9 @@ class StatsController extends AbstractController
 
         $data = [
             'timestamp' => time(),
-            'active_sessions' => $this->performance->getActiveSessionCount(),
-            'unique_visitors_today' => $this->performance->getUniqueVisitorCount($today),
-            'trending_now' => \array_slice($this->performance->getTrendingArticles(5), 0, 5),
+            'active_sessions' => $this->analytics->getActiveSessionCount(),
+            'unique_visitors_today' => $this->analytics->getUniqueVisitorCount($today),
+            'trending_now' => \array_slice($this->analytics->getTrendingArticles(5), 0, 5),
         ];
 
         return new JsonResponse($data);
@@ -220,7 +222,7 @@ class StatsController extends AbstractController
 
         // Check cache first
         $cacheKey = "api:stats:categories:{$locale}";
-        $cached = $this->performance->getCached($cacheKey);
+        $cached = $this->cache->getCached($cacheKey);
         if ($cached !== null) {
             return new JsonResponse($cached);
         }
@@ -283,7 +285,7 @@ class StatsController extends AbstractController
         ];
 
         // Cache for 5 minutes
-        $this->performance->setCached($cacheKey, $data, 300);
+        $this->cache->setCached($cacheKey, $data, 300);
 
         return new JsonResponse($data);
     }
@@ -294,7 +296,7 @@ class StatsController extends AbstractController
     {
         // Check cache first
         $cacheKey = 'api:stats:article-counts';
-        $cached = $this->performance->getCached($cacheKey);
+        $cached = $this->cache->getCached($cacheKey);
         if ($cached !== null) {
             return new JsonResponse($cached);
         }
@@ -335,7 +337,7 @@ class StatsController extends AbstractController
         $data = $counts;
 
         // Cache for 60 seconds
-        $this->performance->setCached($cacheKey, $data, 60);
+        $this->cache->setCached($cacheKey, $data, 60);
 
         return new JsonResponse($data);
     }

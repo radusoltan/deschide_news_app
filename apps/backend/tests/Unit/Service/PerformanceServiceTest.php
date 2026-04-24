@@ -4,30 +4,38 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service;
 
-use App\Service\PerformanceService;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Analytics\AnalyticsService;
+use App\Service\Cache\CacheService;
 use Exception;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Predis\Client;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Unit tests for the split CacheService and AnalyticsService.
+ *
+ * Originally tested PerformanceService; now tests the two services it was split into (T38.4 SRP).
+ */
 class PerformanceServiceTest extends TestCase
 {
     private Client $redis;
-    private EntityManagerInterface $em;
     private LoggerInterface $logger;
-    private PerformanceService $service;
+    private CacheService $cacheService;
+    private AnalyticsService $analyticsService;
 
     protected function setUp(): void
     {
         $this->redis = $this->createMock(Client::class);
-        $this->em = $this->createStub(EntityManagerInterface::class);
         $this->logger = $this->createStub(LoggerInterface::class);
 
-        $this->service = new PerformanceService(
+        $this->cacheService = new CacheService(
             $this->redis,
-            $this->em,
+            $this->logger,
+        );
+
+        $this->analyticsService = new AnalyticsService(
+            $this->redis,
             $this->logger,
         );
     }
@@ -45,7 +53,7 @@ class PerformanceServiceTest extends TestCase
             ->with('get', ['deschide_news:cache:my-key'])
             ->willReturn($serialized);
 
-        $result = $this->service->getCached('my-key');
+        $result = $this->cacheService->getCached('my-key');
 
         $this->assertSame(['id' => 1, 'title' => 'Test'], $result);
     }
@@ -58,7 +66,7 @@ class PerformanceServiceTest extends TestCase
             ->with('get', ['deschide_news:cache:articles:list'])
             ->willReturn(null);
 
-        $result = $this->service->getCached('articles:list');
+        $result = $this->cacheService->getCached('articles:list');
 
         $this->assertNull($result);
     }
@@ -71,7 +79,7 @@ class PerformanceServiceTest extends TestCase
             ->with('get', ['deschide_news:cache:my-key'])
             ->willThrowException(new Exception('Redis unavailable'));
 
-        $result = $this->service->getCached('my-key');
+        $result = $this->cacheService->getCached('my-key');
 
         $this->assertNull($result);
     }
@@ -85,7 +93,7 @@ class PerformanceServiceTest extends TestCase
             ->with('get', ['deschide_news:cache:str-key'])
             ->willReturn($serialized);
 
-        $result = $this->service->getCached('str-key');
+        $result = $this->cacheService->getCached('str-key');
 
         $this->assertSame('simple string', $result);
     }
@@ -99,7 +107,7 @@ class PerformanceServiceTest extends TestCase
             ->with('get', ['deschide_news:cache:int-key'])
             ->willReturn($serialized);
 
-        $result = $this->service->getCached('int-key');
+        $result = $this->cacheService->getCached('int-key');
 
         $this->assertSame(42, $result);
     }
@@ -116,7 +124,7 @@ class PerformanceServiceTest extends TestCase
             ->with('setex', ['deschide_news:cache:my-key', 3600, serialize('value')])
             ->willReturn('OK');
 
-        $result = $this->service->setCached('my-key', 'value', 3600);
+        $result = $this->cacheService->setCached('my-key', 'value', 3600);
 
         $this->assertTrue($result);
     }
@@ -129,7 +137,7 @@ class PerformanceServiceTest extends TestCase
             ->with('setex', ['deschide_news:cache:my-key', 300, serialize(['data' => true])])
             ->willReturn(true);
 
-        $result = $this->service->setCached('my-key', ['data' => true], 300);
+        $result = $this->cacheService->setCached('my-key', ['data' => true], 300);
 
         $this->assertTrue($result);
     }
@@ -142,7 +150,7 @@ class PerformanceServiceTest extends TestCase
             ->with('setex', $this->anything())
             ->willThrowException(new Exception('Redis error'));
 
-        $result = $this->service->setCached('my-key', 'value', 3600);
+        $result = $this->cacheService->setCached('my-key', 'value', 3600);
 
         $this->assertFalse($result);
     }
@@ -155,7 +163,7 @@ class PerformanceServiceTest extends TestCase
             ->with('setex', $this->anything())
             ->willReturn(null);
 
-        $result = $this->service->setCached('my-key', 'value', 3600);
+        $result = $this->cacheService->setCached('my-key', 'value', 3600);
 
         $this->assertFalse($result);
     }
@@ -172,7 +180,7 @@ class PerformanceServiceTest extends TestCase
             ->with('del', [['deschide_news:cache:my-key']])
             ->willReturn(1);
 
-        $result = $this->service->deleteCached('my-key');
+        $result = $this->cacheService->deleteCached('my-key');
 
         $this->assertTrue($result);
     }
@@ -185,7 +193,7 @@ class PerformanceServiceTest extends TestCase
             ->with('del', [['deschide_news:cache:nonexistent']])
             ->willReturn(0);
 
-        $result = $this->service->deleteCached('nonexistent');
+        $result = $this->cacheService->deleteCached('nonexistent');
 
         $this->assertFalse($result);
     }
@@ -197,7 +205,7 @@ class PerformanceServiceTest extends TestCase
             ->method('__call')
             ->willThrowException(new Exception('Redis error'));
 
-        $result = $this->service->deleteCached('my-key');
+        $result = $this->cacheService->deleteCached('my-key');
 
         $this->assertFalse($result);
     }
@@ -225,7 +233,7 @@ class PerformanceServiceTest extends TestCase
                 return null;
             });
 
-        $result = $this->service->deleteCachedPattern('api:articles:1:*');
+        $result = $this->cacheService->deleteCachedPattern('api:articles:1:*');
 
         $this->assertSame(2, $result);
     }
@@ -238,7 +246,7 @@ class PerformanceServiceTest extends TestCase
             ->with('keys', ['deschide_news:cache:api:nonexistent:*'])
             ->willReturn([]);
 
-        $result = $this->service->deleteCachedPattern('api:nonexistent:*');
+        $result = $this->cacheService->deleteCachedPattern('api:nonexistent:*');
 
         $this->assertSame(0, $result);
     }
@@ -251,7 +259,7 @@ class PerformanceServiceTest extends TestCase
             ->with('keys', $this->anything())
             ->willThrowException(new Exception('Redis error'));
 
-        $result = $this->service->deleteCachedPattern('api:*');
+        $result = $this->cacheService->deleteCachedPattern('api:*');
 
         $this->assertSame(0, $result);
     }
@@ -264,21 +272,13 @@ class PerformanceServiceTest extends TestCase
     public function invalidateArticleDeletesCorrectPatterns(): void
     {
         $callIndex = 0;
-        $expectedCalls = [
-            // First: deleteCachedPattern("api:articles:42:*")
-            ['keys', 'deschide_news:cache:api:articles:42:*'],
-            // Second: deleteCachedPattern("api:articles:list:*")
-            ['keys', 'deschide_news:cache:api:articles:list:*'],
-            // Third: deleteCached("api:trending")
-            ['del', ['deschide_news:cache:api:trending']],
-        ];
 
         $this->redis->expects($this->atLeast(3))
             ->method('__call')
             ->willReturnCallback(function (string $method, array $args) use (&$callIndex) {
                 $callIndex++;
                 if ($method === 'keys') {
-                    return []; // No keys found
+                    return [];
                 }
                 if ($method === 'del') {
                     return 1;
@@ -286,7 +286,7 @@ class PerformanceServiceTest extends TestCase
                 return null;
             });
 
-        $this->service->invalidateArticle(42);
+        $this->cacheService->invalidateArticle(42);
     }
 
     // ====================================================================
@@ -311,7 +311,7 @@ class PerformanceServiceTest extends TestCase
                 return null;
             });
 
-        $this->service->invalidateCategory(5);
+        $this->cacheService->invalidateCategory(5);
 
         $this->assertContains('deschide_news:cache:api:categories:5:*', $keysCallPatterns);
         $this->assertContains('deschide_news:cache:api:categories:list:*', $keysCallPatterns);
@@ -343,7 +343,7 @@ class PerformanceServiceTest extends TestCase
                 return null;
             });
 
-        $this->service->incrementArticleViews(42);
+        $this->analyticsService->incrementArticleViews(42);
 
         $this->assertSame('incr', $calls[0][0]);
         $this->assertSame('deschide_news:stats:article:views:42', $calls[0][1][0]);
@@ -361,8 +361,7 @@ class PerformanceServiceTest extends TestCase
             ->method('__call')
             ->willThrowException(new Exception('Redis error'));
 
-        // Should not throw
-        $this->service->incrementArticleViews(42);
+        $this->analyticsService->incrementArticleViews(42);
 
         $this->assertTrue(true);
     }
@@ -380,7 +379,7 @@ class PerformanceServiceTest extends TestCase
                 if ($method === 'sadd') {
                     $this->assertStringContainsString('article:visitors:42:', $args[0]);
                     $this->assertSame(['visitor-123'], $args[1]);
-                    return 1; // New member added
+                    return 1;
                 }
                 if ($method === 'expire') {
                     return true;
@@ -388,7 +387,7 @@ class PerformanceServiceTest extends TestCase
                 return null;
             });
 
-        $result = $this->service->trackUniqueVisitor(42, 'visitor-123');
+        $result = $this->analyticsService->trackUniqueVisitor(42, 'visitor-123');
 
         $this->assertTrue($result);
     }
@@ -400,7 +399,7 @@ class PerformanceServiceTest extends TestCase
             ->method('__call')
             ->willReturnCallback(function (string $method) {
                 if ($method === 'sadd') {
-                    return 0; // Already exists
+                    return 0;
                 }
                 if ($method === 'expire') {
                     return true;
@@ -408,7 +407,7 @@ class PerformanceServiceTest extends TestCase
                 return null;
             });
 
-        $result = $this->service->trackUniqueVisitor(42, 'visitor-123');
+        $result = $this->analyticsService->trackUniqueVisitor(42, 'visitor-123');
 
         $this->assertFalse($result);
     }
@@ -420,7 +419,7 @@ class PerformanceServiceTest extends TestCase
             ->method('__call')
             ->willThrowException(new Exception('Redis error'));
 
-        $result = $this->service->trackUniqueVisitor(42, 'visitor-123');
+        $result = $this->analyticsService->trackUniqueVisitor(42, 'visitor-123');
 
         $this->assertFalse($result);
     }
@@ -449,7 +448,7 @@ class PerformanceServiceTest extends TestCase
                 return null;
             });
 
-        $this->service->trackSiteVisitor('visitor-abc');
+        $this->analyticsService->trackSiteVisitor('visitor-abc');
 
         $this->assertSame('pfadd', $calls[0][0]);
         $this->assertSame('expire', $calls[1][0]);
@@ -462,8 +461,7 @@ class PerformanceServiceTest extends TestCase
             ->method('__call')
             ->willThrowException(new Exception('Redis error'));
 
-        // Should not throw
-        $this->service->trackSiteVisitor('visitor-abc');
+        $this->analyticsService->trackSiteVisitor('visitor-abc');
 
         $this->assertTrue(true);
     }
@@ -480,7 +478,7 @@ class PerformanceServiceTest extends TestCase
             ->with('get', ['deschide_news:stats:article:views:42'])
             ->willReturn('150');
 
-        $result = $this->service->getArticleViews(42);
+        $result = $this->analyticsService->getArticleViews(42);
 
         $this->assertSame(150, $result);
     }
@@ -493,7 +491,7 @@ class PerformanceServiceTest extends TestCase
             ->with('get', ['deschide_news:stats:article:views:99'])
             ->willReturn(null);
 
-        $result = $this->service->getArticleViews(99);
+        $result = $this->analyticsService->getArticleViews(99);
 
         $this->assertSame(0, $result);
     }
@@ -506,7 +504,7 @@ class PerformanceServiceTest extends TestCase
             ->with('get', ['deschide_news:stats:article:views:99'])
             ->willReturn('0');
 
-        $result = $this->service->getArticleViews(99);
+        $result = $this->analyticsService->getArticleViews(99);
 
         $this->assertSame(0, $result);
     }
@@ -518,7 +516,7 @@ class PerformanceServiceTest extends TestCase
             ->method('__call')
             ->willThrowException(new Exception('Redis error'));
 
-        $result = $this->service->getArticleViews(42);
+        $result = $this->analyticsService->getArticleViews(42);
 
         $this->assertSame(0, $result);
     }
@@ -535,7 +533,7 @@ class PerformanceServiceTest extends TestCase
             ->with('pfcount', [['deschide_news:stats:site:visitors:2026-03-27']])
             ->willReturn(500);
 
-        $result = $this->service->getUniqueVisitorCount('2026-03-27');
+        $result = $this->analyticsService->getUniqueVisitorCount('2026-03-27');
 
         $this->assertSame(500, $result);
     }
@@ -547,7 +545,7 @@ class PerformanceServiceTest extends TestCase
             ->method('__call')
             ->willThrowException(new Exception('Redis error'));
 
-        $result = $this->service->getUniqueVisitorCount('2026-03-27');
+        $result = $this->analyticsService->getUniqueVisitorCount('2026-03-27');
 
         $this->assertSame(0, $result);
     }
@@ -568,7 +566,7 @@ class PerformanceServiceTest extends TestCase
                 'article:99' => '50',
             ]);
 
-        $result = $this->service->getTrendingArticles(10);
+        $result = $this->analyticsService->getTrendingArticles(10);
 
         $this->assertCount(3, $result);
         $this->assertSame(['article_id' => 42, 'views' => 150], $result[0]);
@@ -587,7 +585,7 @@ class PerformanceServiceTest extends TestCase
                 'article:7' => '50',
             ]);
 
-        $result = $this->service->getTrendingArticles(10);
+        $result = $this->analyticsService->getTrendingArticles(10);
 
         $this->assertCount(2, $result);
         $this->assertSame(42, $result[0]['article_id']);
@@ -601,7 +599,7 @@ class PerformanceServiceTest extends TestCase
             ->method('__call')
             ->willThrowException(new Exception('Redis error'));
 
-        $result = $this->service->getTrendingArticles(10);
+        $result = $this->analyticsService->getTrendingArticles(10);
 
         $this->assertSame([], $result);
     }
@@ -613,7 +611,7 @@ class PerformanceServiceTest extends TestCase
             ->method('__call')
             ->willReturn([]);
 
-        $result = $this->service->getTrendingArticles(10);
+        $result = $this->analyticsService->getTrendingArticles(10);
 
         $this->assertSame([], $result);
     }
@@ -626,7 +624,7 @@ class PerformanceServiceTest extends TestCase
             ->with('zrevrange', ['deschide_news:stats:trending:24h', 0, 4, ['WITHSCORES' => true]])
             ->willReturn([]);
 
-        $this->service->getTrendingArticles(5);
+        $this->analyticsService->getTrendingArticles(5);
     }
 
     #[Test]
@@ -637,7 +635,7 @@ class PerformanceServiceTest extends TestCase
             ->with('zrevrange', ['deschide_news:stats:trending:24h', 0, 9, ['WITHSCORES' => true]])
             ->willReturn([]);
 
-        $this->service->getTrendingArticles();
+        $this->analyticsService->getTrendingArticles();
     }
 
     // ====================================================================
@@ -652,7 +650,7 @@ class PerformanceServiceTest extends TestCase
             ->with('keys', ['deschide_news:stats:session:active:*'])
             ->willReturn(['key1', 'key2', 'key3']);
 
-        $result = $this->service->getActiveSessionCount();
+        $result = $this->analyticsService->getActiveSessionCount();
 
         $this->assertSame(3, $result);
     }
@@ -665,7 +663,7 @@ class PerformanceServiceTest extends TestCase
             ->with('keys', ['deschide_news:stats:session:active:*'])
             ->willReturn([]);
 
-        $result = $this->service->getActiveSessionCount();
+        $result = $this->analyticsService->getActiveSessionCount();
 
         $this->assertSame(0, $result);
     }
@@ -677,7 +675,7 @@ class PerformanceServiceTest extends TestCase
             ->method('__call')
             ->willThrowException(new Exception('Redis error'));
 
-        $result = $this->service->getActiveSessionCount();
+        $result = $this->analyticsService->getActiveSessionCount();
 
         $this->assertSame(0, $result);
     }
@@ -690,7 +688,7 @@ class PerformanceServiceTest extends TestCase
             ->with('keys', ['deschide_news:stats:session:active:*'])
             ->willReturn(false);
 
-        $result = $this->service->getActiveSessionCount();
+        $result = $this->analyticsService->getActiveSessionCount();
 
         $this->assertSame(0, $result);
     }

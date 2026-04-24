@@ -48,28 +48,39 @@ final class GenerateDossiersCommand extends Command
 
         $io->title('Dossier Generation');
 
+        /** @var array<string, Topic|null> $topicMap */
+        $topicMap = [];
+
         if ($specificTopic !== null) {
             $io->info("Processing specific topic: {$specificTopic}");
-            $topicNames = [$specificTopic];
+            $topicEntity = $this->em->getRepository(Topic::class)->findOneBy(['title' => $specificTopic]);
+            $topicMap[$specificTopic] = $topicEntity;
         } elseif ($input->getOption('all')) {
             $topics = $this->em->getRepository(Topic::class)->findAll();
-            $topicNames = array_map(fn (Topic $t) => $t->getName(), $topics);
-            $io->info(\count($topicNames) . ' topics found');
+            foreach ($topics as $t) {
+                $title = $t->getTitle();
+                if ($title === null) {
+                    continue;
+                }
+                $topicMap[$title] = $t;
+            }
+            $io->info(\count($topicMap) . ' topics found');
         } else {
             $io->error('Provide --topic=NAME or --all');
 
             return Command::FAILURE;
         }
 
-        if ($topicNames === []) {
+        if ($topicMap === []) {
             $io->note('No topics found');
 
             return Command::SUCCESS;
         }
 
+        try {
         $generated = 0;
 
-        foreach ($topicNames as $topicName) {
+        foreach ($topicMap as $topicName => $topicEntity) {
             $io->section("Generating dossier: {$topicName}");
 
             $articles = $this->dossierService->getRecentArticlesForTopic($topicName, $days);
@@ -93,7 +104,7 @@ final class GenerateDossiersCommand extends Command
                 continue;
             }
 
-            $gc = $this->dossierService->generateDossier($topicName, $articles);
+            $gc = $this->dossierService->generateDossier($topicName, $articles, $topicEntity);
 
             if ($gc !== null) {
                 $io->success("Dossier saved as GeneratedContent #{$gc->getId()}");
@@ -106,5 +117,10 @@ final class GenerateDossiersCommand extends Command
         $io->success("Done: {$generated} dossier(s) generated");
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Dossier generation failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

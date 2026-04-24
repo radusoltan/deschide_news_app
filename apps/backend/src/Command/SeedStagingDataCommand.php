@@ -50,6 +50,7 @@ class SeedStagingDataCommand extends Command
 
         $this->conn = $this->entityManager->getConnection();
 
+        try {
         $seedCategories = $input->getOption('categories');
         $seedAuthors = $input->getOption('authors');
         $seedTags = $input->getOption('tags');
@@ -82,6 +83,11 @@ class SeedStagingDataCommand extends Command
         $io->success('Staging data seeding completed!');
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

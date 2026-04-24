@@ -7,95 +7,143 @@ namespace App\DataFixtures;
 use App\Entity\Category;
 use App\Enum\CategoryStatus;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Bundle\FixturesBundle\FixtureGroupInterface;
 use Doctrine\Persistence\ObjectManager;
+use Gedmo\Translatable\Entity\Translation;
 
-class CategoryFixtures extends Fixture
+class CategoryFixtures extends Fixture implements FixtureGroupInterface
 {
+    /**
+     * 11 editorial categories — hardcoded (small, stable set).
+     * Slugs must match LegacyCategoryMapper::CATEGORY_SLUG_MAP values.
+     *
+     * @see \App\Service\Import\LegacyCategoryMapper
+     */
     private const CATEGORIES = [
         [
             'ro' => 'Politică',
             'en' => 'Politics',
             'ru' => 'Политика',
-            'onFrontPage' => true,
+            'slug' => 'politica',
+            'frontPagePosition' => 1,
+            'frontPageLayout' => 'featured',
+        ],
+        [
+            'ro' => 'Societate',
+            'en' => 'Society',
+            'ru' => 'Общество',
+            'slug' => 'societate',
+            'frontPagePosition' => 2,
+            'frontPageLayout' => 'grid_4_cols',
+        ],
+        [
+            'ro' => 'Externe',
+            'en' => 'International',
+            'ru' => 'Международные',
+            'slug' => 'externe',
+            'frontPagePosition' => 3,
+            'frontPageLayout' => 'featured',
         ],
         [
             'ro' => 'Economie',
             'en' => 'Economy',
             'ru' => 'Экономика',
-            'onFrontPage' => true,
+            'slug' => 'economie',
+            'frontPagePosition' => 4,
+            'frontPageLayout' => 'compact_list',
+        ],
+        [
+            'ro' => 'România',
+            'en' => 'Romania',
+            'ru' => 'Румыния',
+            'slug' => 'romania',
+            'frontPagePosition' => 5,
+            'frontPageLayout' => 'grid_3_cols',
         ],
         [
             'ro' => 'Cultură',
             'en' => 'Culture',
             'ru' => 'Культура',
-            'onFrontPage' => true,
+            'slug' => 'cultura',
+            'frontPagePosition' => 6,
+            'frontPageLayout' => 'grid_3_cols',
         ],
         [
             'ro' => 'Sport',
             'en' => 'Sports',
             'ru' => 'Спорт',
-            'onFrontPage' => true,
+            'slug' => 'sport',
+            'frontPagePosition' => 7,
+            'frontPageLayout' => 'compact_list',
         ],
         [
-            'ro' => 'Tehnologie',
-            'en' => 'Technology',
-            'ru' => 'Технология',
-            'onFrontPage' => true,
-        ],
-        [
-            'ro' => 'Sănătate',
-            'en' => 'Health',
-            'ru' => 'Здоровье',
-            'onFrontPage' => false,
-        ],
-        [
-            'ro' => 'Internațional',
-            'en' => 'International',
-            'ru' => 'Международные',
-            'onFrontPage' => false,
-        ],
-        [
-            'ro' => 'Editorial',
-            'en' => 'Editorial',
+            'ro' => 'Editoriale',
+            'en' => 'Editorials',
             'ru' => 'Редакция',
-            'onFrontPage' => false,
+            'slug' => 'editoriale',
+            'frontPagePosition' => 8,
+            'frontPageLayout' => 'featured',
+        ],
+        [
+            'ro' => 'Opinii',
+            'en' => 'Opinions',
+            'ru' => 'Мнения',
+            'slug' => 'opinii',
+            'frontPagePosition' => 9,
+            'frontPageLayout' => 'compact_list',
+        ],
+        [
+            'ro' => 'Advertorial',
+            'en' => 'Advertorial',
+            'ru' => 'Рекламный материал',
+            'slug' => 'advertorial',
+            'frontPagePosition' => 10,
+            'frontPageLayout' => 'featured',
+        ],
+        [
+            'ro' => 'Anti-Fake',
+            'en' => 'Anti-Fake',
+            'ru' => 'Антифейк',
+            'slug' => 'anti-fake',
+            'frontPagePosition' => 11,
+            'frontPageLayout' => 'featured',
         ],
     ];
 
+    public static function getGroups(): array
+    {
+        return ['dev', 'test', 'categories'];
+    }
+
     public function load(ObjectManager $manager): void
     {
-        foreach (self::CATEGORIES as $index => $categoryData) {
+        $translationRepo = $manager->getRepository(Translation::class);
+
+        foreach (self::CATEGORIES as $data) {
             $category = new Category();
 
-            // Set Romanian (default locale)
-            $category->setTitle($categoryData['ro']);
+            // Set Romanian (default locale) — stored directly in categories table
+            $category->setTranslatableLocale('ro');
+            $category->setTitle($data['ro']);
+            $category->setSlug($data['slug']);
             $category->setStatus(CategoryStatus::ACTIVE);
-            $category->setOnFrontPage($categoryData['onFrontPage']);
-            $category->setTranslatableLocale('ro');
+            $category->setOnFrontPage(true);
+            $category->setFrontPagePosition($data['frontPagePosition']);
+            $category->setFrontPageLayout($data['frontPageLayout']);
+            $category->setInMenu(true);
+            $category->setInFooterMenu(false);
 
             $manager->persist($category);
             $manager->flush();
 
-            // Set English translation
-            $category->setTitle($categoryData['en']);
-            $category->setTranslatableLocale('en');
-            $manager->persist($category);
+            // Use Translation repository to guarantee EN/RU translations are stored,
+            // even when the translated value matches the default locale (e.g. "Advertorial")
+            $translationRepo->translate($category, 'title', 'en', $data['en']);
+            $translationRepo->translate($category, 'title', 'ru', $data['ru']);
             $manager->flush();
 
-            // Set Russian translation
-            $category->setTitle($categoryData['ru']);
-            $category->setTranslatableLocale('ru');
-            $manager->persist($category);
-            $manager->flush();
-
-            // Reset to default locale
-            $manager->refresh($category);
-            $category->setTranslatableLocale('ro');
-
-            // Add reference for ArticleFixtures
-            $this->addReference('category_' . $index, $category);
+            // Reference for MenuItemFixtures and other dependents
+            $this->addReference("category-{$data['slug']}", $category);
         }
-
-        echo '✅ Created ' . \count(self::CATEGORIES) . " categories with translations (ro/en/ru)\n";
     }
 }

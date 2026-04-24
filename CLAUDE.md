@@ -2,6 +2,270 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+---
+
+# ⛔ HARD RULES — NEVER VIOLATE
+
+These rules apply to ALL agents, ALL tasks, ALL sprints. Violations waste time and break workflows.
+
+---
+
+## Rule 1: CLI Entry Point
+
+**ALWAYS** use `symfony console` — **NEVER** use `php bin/console`.
+
+```bash
+# ✅ CORRECT
+symfony console app:translate:articles 123 --force
+symfony console doctrine:schema:validate
+symfony console cache:clear --env=test
+symfony console messenger:consume ai_async --limit=10
+
+# ❌ WRONG — will be rejected
+php bin/console app:translate:articles 123 --force
+php bin/console cache:clear
+```
+
+The Symfony CLI binary manages environment variables, PHP version, and worker lifecycle.
+There are ZERO exceptions to this rule.
+
+---
+
+## Rule 2: Admin Credentials — Do Not Query the Database
+
+Development admin credentials are defined in environment config. **Do not** run SQL queries, create fixture users, or invent credentials.
+
+```bash
+# Read credentials from environment
+symfony console debug:dotenv | grep -E 'ADMIN_EMAIL|ADMIN_PASSWORD'
+
+# Authenticate via API
+curl -s -X POST http://127.0.0.1:8081/api/login_check \
+  -H "Content-Type: application/json" \
+  -d '{"email":"${ADMIN_EMAIL}","password":"${ADMIN_PASSWORD}"}' | jq .token
+
+# Use the token for subsequent requests
+curl -s http://127.0.0.1:8081/api/articles \
+  -H "Authorization: Bearer {token}"
+```
+
+If credentials are not in `.env.local`, check `.env.test` or ask Radu. Do NOT:
+- Query `app_users` table directly for passwords
+- Create new admin users via Doctrine fixtures
+- Hardcode credentials in test files or prompts
+
+---
+
+## Rule 3: Testing Strategy — Targeted Tests, Not Full Suite
+
+### During feature development (individual tasks):
+Run ONLY the tests relevant to your changes:
+
+```bash
+# Find tests related to the class you modified
+grep -rn "YourModifiedClass" tests/ --include="*.php" -l
+
+# Run only those tests
+./vendor/bin/phpunit tests/Unit/Service/YourServiceTest.php --testdox
+./vendor/bin/phpunit tests/Functional/Api/YourControllerTest.php --testdox
+
+# If you modified an entity, also run its repository test
+./vendor/bin/phpunit --filter="YourEntity" --testdox
+```
+
+For frontend:
+```bash
+cd apps/frontend
+npx jest --testPathPattern="YourComponent" --verbose
+```
+
+### During sprint finalization ONLY (QA task / merge prep):
+Run the FULL test suite to check for regressions:
+
+```bash
+# Backend — full suite
+cd apps/backend
+./vendor/bin/phpunit --testdox
+
+# Frontend — full suite
+cd apps/frontend
+npm test -- --watchAll=false
+```
+
+**Why:** The full backend suite (~4,300+ tests) takes significant time. Running it after every small change wastes cycles. Targeted tests catch issues immediately; full suite catches regressions at sprint boundary.
+
+---
+
+## Rule 4: Code Quality — Mandatory Checks Before Every Commit
+
+Every commit MUST pass these checks. Run them BEFORE `git commit`:
+
+### Backend (PHP):
+```bash
+cd apps/backend
+
+# 1. Container lint — catches DI wiring issues
+symfony console lint:container
+
+# 2. PHPStan — static analysis at current level
+vendor/bin/phpstan analyse src/ --no-progress --memory-limit=1G
+
+# 3. Schema validation — catches entity/DB drift
+symfony console doctrine:schema:validate
+```
+
+### Frontend (TypeScript/React):
+```bash
+cd apps/frontend
+
+# 1. ESLint — zero errors allowed
+npx eslint . --max-warnings=0
+
+# 2. TypeScript — no type errors
+npx tsc --noEmit
+```
+
+### What to do when checks fail:
+
+| Check | Failure means | Action |
+|-------|--------------|--------|
+| `lint:container` | Broken service wiring | Fix DI config before anything else |
+| `phpstan` | Type/logic error | Fix the error. Do NOT add to baseline without documenting why |
+| `schema:validate` | Entity doesn't match DB | Create a migration: `symfony console make:migration` |
+| `eslint` | Code style/logic issue | Fix it. Do NOT disable the rule |
+| `tsc --noEmit` | Type error in TS | Fix the type. Do NOT use `// @ts-ignore` |
+
+### PHPStan baseline policy:
+- Adding to baseline is acceptable ONLY for pre-existing issues outside your task scope
+- New code you write must pass cleanly
+- If ratcheting to a higher level, document in ADR and coordinate with sprint plan
+
+---
+
+## Rule 5: Project Conventions (Quick Reference)
+
+| Rule | Correct | Wrong |
+|------|---------|-------|
+| Romanian diacritics | ș (U+0219), ț (U+021B) | ş (cedilla), ţ (cedilla) |
+| Commit format | `feat(scope): description [TSK-XX]` | `update stuff` |
+| Git flow | `feature/sprint-XX` → `develop` (--no-ff) → `main` | Direct push to main |
+| Elasticsearch | Native `elasticsearch-php` via HTTPS | FOSElasticaBundle |
+| Admin UI | API Platform + Next.js | EasyAdmin |
+| Social/API clients | Symfony HttpClient | Third-party bundles |
+| Gemini CLI | One call per locale (avoids truncation) | All locales in one call |
+| Redis policy | `volatile-lru` | `allkeys-lru` (breaks tag invalidation) |
+| Next.js routing | `proxy.ts` (not `middleware.ts`) | middleware.ts |
+| Frontend dev server | `pnpm dev` | PM2 / `npm start` (PM2 is for production only) |
+
+---
+
+## Rule 6: Context First — Read Before You Act
+
+Before starting ANY task, you MUST gather context from Obsidian and Notion. These tools exist specifically so agents have full project awareness. Skipping this step leads to duplicate work, contradictory implementations, and broken assumptions.
+
+### Before every task:
+
+**Step 1 — Read the sprint and task from Notion:**
+```
+# Find the current sprint and your assigned task
+# Notion Sprints DB: f8922999-91ba-4384-8496-25a3606520b9
+# Notion Tasks DB: 2f696048-60ac-4af9-9db9-83600149977f
+
+- Read the sprint description to understand the overall goal
+- Read the specific task description, acceptance criteria, and any agent handoff notes
+- Check task dependencies (are there blocking/blocked tasks?)
+- Check what other tasks in the sprint are Done vs In Progress
+```
+
+**Step 2 — Read relevant Obsidian context:**
+
+| Starting work on... | Read first |
+|---------------------|------------|
+| Any task | `CLAUDE.md` (this file) + today's daily note `40_Agent_Workspace/Daily/YYYY-MM-DD.md` |
+| Backend feature | `20_Architecture/Data_Model.md` + `20_Architecture/API_Endpoints.md` |
+| Frontend feature | `context/DESIGN_QUICK_REFERENCE.md` (in repo) |
+| AI/LLM work | `20_Architecture/Decisions/ADR-008*` through `ADR-011*` |
+| Aggregator/source work | `30_Engineering_Context/Sources_and_Aggregators.md` |
+| Any architectural change | `20_Architecture/Decisions/` (scan for related ADRs) |
+| Clustering/editorial | `20_Architecture/Content_Pipeline.md` |
+| New sprint | Previous sprint's execution log: `50_Audit/sprint-NN-execution-log.md` |
+
+**Step 3 — Check for recent decisions and open loops:**
+```
+# Search Obsidian for recent context
+- Check 40_Agent_Workspace/Decision_Log/ for any relevant recent decisions
+- Check the last 2-3 daily notes for open loops or known issues
+```
+
+### Why this matters:
+- Infrastructure often already exists — reading context prevents re-implementing what's already built
+- ADRs document WHY decisions were made — ignoring them leads to contradictory implementations  
+- Sprint context shows what's already done and what's pending — avoids conflicts between parallel tasks
+- Daily notes capture workarounds and known issues that aren't in the code
+
+### Do NOT:
+- Start coding without reading the task description from Notion
+- Assume you know the current state — verify in Obsidian
+- Skip ADR review when the task touches architecture
+- Ignore daily notes — they contain critical context from recent sessions
+
+---
+
+## Rule 7: Post-Implementation Documentation — Mandatory After Every Task
+
+After completing any task (feature, bugfix, refactor), you MUST update external tracking before reporting "done".
+This is NOT optional. Undocumented work is invisible work.
+
+### Step 1: Update Notion task status
+```
+# Use Notion MCP to update the task:
+- Set Status → "Done"
+- Set Actual (hrs) → actual hours spent
+- Add a brief completion note in the task content
+```
+
+### Step 2: Update Notion sprint (if last task in sprint)
+```
+# When all sprint tasks are Done:
+- Set Sprint Status → "Review" (not "Done" — Radu reviews first)
+- Update sprint end date if different from planned
+```
+
+### Step 3: Update Obsidian vault
+After implementation, update relevant Obsidian notes:
+
+| What changed | Update where |
+|-------------|-------------|
+| New entity / API resource | `20_Architecture/Data_Model.md` and `20_Architecture/API_Endpoints.md` |
+| Architectural decision | Create new ADR in `20_Architecture/Decisions/ADR-NNN-title.md` |
+| New aggregator / source | `30_Engineering_Context/Sources_and_Aggregators.md` |
+| Stack version change | `30_Engineering_Context/Stack_Reference.md` |
+| New convention / pattern | `30_Engineering_Context/Coding_Conventions.md` |
+| Test count changed significantly | `CLAUDE.md` section 5 (Current State) |
+| Sprint completed | `50_Audit/sprint-NN-execution-log.md` |
+| Daily work | `40_Agent_Workspace/Daily/YYYY-MM-DD.md` |
+
+### Step 4: Update daily note
+Append to today's daily note (`40_Agent_Workspace/Daily/YYYY-MM-DD.md`):
+```markdown
+### Task [TSK-XX] — [Title]
+- **Status**: Done
+- **Commits**: `feat(scope): description`
+- **Files changed**: list key files
+- **Tests**: N new, N total green
+- **Notes**: anything notable (decisions, workarounds, open issues)
+```
+
+### What NOT to update:
+- `10_Notion_Mirror/` — these are synced FROM Notion, never edit manually
+- Documents outside your task scope (don't "improve" unrelated docs)
+
+---
+
+# END OF HARD RULES
+
+---
+
 ## 🏗️ Repository Structure: MONOREPO
 
 **IMPORTANT**: This is a monorepo containing both backend and frontend applications.
@@ -9,10 +273,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 **Deschide News App** - A multilanguage news platform with:
-- **Backend**: Symfony 7.3 (PHP 8.4) - RESTful API
-- **Frontend**: Next.js 16 (React 19.2 / TypeScript) - Web interface
+- **Backend**: Symfony 8.0 (PHP 8.5.3) - Headless API (API Platform)
+- **Frontend**: Next.js 16 (React 19 / TypeScript) - Web interface + Admin
 - **Languages**: Romanian (ro), English (en), Russian (ru)
 - **Architecture**: Monorepo with unified version control
+- **AI Pipeline**: Dual-LLM (Gemini CLI for bulk/context, Claude CLI for journalistic polish)
+- **Search**: Elasticsearch 9.3 (HTTPS, native client — NOT FOSElasticaBundle)
+- **Real-time**: Mercure Hub + SSE
+- **Message Queue**: RabbitMQ via Symfony Messenger (5+ async workers)
 
 ## Project Structure
 
@@ -20,7 +288,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 /var/www/deschide_news_app/    # ROOT MONOREPO
 ├── .git/                      # Unified git repository
 ├── apps/
-│   ├── backend/              # Symfony 7.3 API (PHP 8.4)
+│   ├── backend/              # Symfony 8.0 API (PHP 8.5)
 │   │   ├── config/           # Configuration files
 │   │   ├── public/           # Web root (index.php)
 │   │   ├── src/              # Application code
@@ -28,7 +296,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   │   ├── docs/             # Backend documentation
 │   │   ├── composer.json     # PHP dependencies
 │   │   └── README.md         # Backend README
-│   └── frontend/             # Next.js 16 (React 19.2, TypeScript)
+│   └── frontend/             # Next.js 16.2 (React 19.2, TypeScript)
 │       ├── app/              # App Router pages
 │       ├── components/       # React components
 │       ├── lib/              # Utilities
@@ -36,18 +304,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │       ├── package.json      # Node dependencies
 │       └── README.md         # Frontend README
 ├── context/                  # Design system documentation
-│   ├── design_principles_and_features.md  # Full design guide
-│   ├── DESIGN_QUICK_REFERENCE.md          # Quick reference
-│   └── reseach_result.md                  # Research data
 ├── docs/                     # Centralized documentation
-│   ├── GIT_MONOREPO_MIGRATION_PLAN.md  # Monorepo migration
-│   └── ...
 ├── sprints/                  # Sprint planning
-├── scripts/                  # Deployment scripts
-├── archive/                  # Historical backups
-│   └── monorepo_migration/   # Old directories
-├── .gitignore                # Root gitignore
-├── CLAUDE.md                 # This file
+├── scripts/                  # Deployment & utility scripts
+├── .claude/                  # Claude Code agents (25+)
+│   └── agents/               # Specialized agent definitions
+├── .gemini/                  # Gemini CLI configuration
+├── CLAUDE.md                 # This file (agent instructions)
+├── GEMINI.md                 # Gemini agent instructions
 └── README.md                 # Main project README
 ```
 
@@ -120,16 +384,25 @@ symfony console doctrine:database:create
 symfony console doctrine:fixtures:load
 ```
 
-**Message Queue (RabbitMQ):**
+**Message Queue (RabbitMQ + Symfony Messenger):**
 ```bash
-# Note: Messenger transports are currently commented out in config/packages/messenger.yaml
-# To enable async processing:
-# 1. Uncomment transport configuration in messenger.yaml
-# 2. Configure routing for your message classes
-# 3. Then run workers:
+# Active workers (managed via Supervisor):
+# - ai_async: AI generation, translation, background proposals
+# - messenger-translations: article translation pipeline
+# - social_media: social distribution (prepped)
+# - scheduler_default: PublishScheduledArticles (1 min)
+# - scheduler_tag_maintenance: tag cleanup (daily 03:00)
+# - scheduler_translation: translation batches (5/15 min)
+# - editorial: cluster verification (30 min)
 
-# Start workers (async processing)
-symfony console messenger:consume async -vv
+# Check worker status
+sudo supervisorctl status
+
+# Check message queue stats
+symfony console messenger:stats
+
+# Consume manually (for debugging)
+symfony console messenger:consume ai_async -vv --limit=10
 
 # Check failed messages
 symfony console messenger:failed:show
@@ -149,6 +422,25 @@ symfony console app:import:generate-thumbnails
 
 # DEPRECATED: use app:dev:reset instead (fixtures + RSS import)
 # symfony console app:sample-import
+```
+
+**AI & Clustering Commands:**
+```bash
+# Translate article to EN+RU
+symfony console app:translate:articles {ID} --force
+
+# Generate AI article from cluster
+symfony console app:generate-article
+
+# Cluster management
+symfony console app:cluster:cleanup --rebuild --since=14d
+symfony console app:cluster:cleanup --verify
+
+# Press release dedup
+symfony console app:press-release:dedup-urls
+
+# Run aggregators
+symfony console app:aggregator:run --dry-run --limit=3
 ```
 
 **Elasticsearch:**
@@ -204,14 +496,14 @@ symfony console app:dev:reset --skip-fixtures --skip-elasticsearch
 # Clear cache
 symfony console cache:clear
 
-# Run PHPStan (level 8)
-vendor/bin/phpstan analyse
+# Run PHPStan (see HARD RULES above for policy)
+vendor/bin/phpstan analyse src/ --no-progress --memory-limit=1G
 
-# Code style (PHP-CS-Fixer)
-vendor/bin/php-cs-fixer fix
+# Container lint
+symfony console lint:container
 
-# Architecture validation
-vendor/bin/deptrac analyse
+# Schema validation
+symfony console doctrine:schema:validate
 ```
 
 **Generate Code:**
@@ -249,13 +541,10 @@ curl -H "Accept-Language: ro" http://127.0.0.1:8081/api/articles
 ```bash
 cd /var/www/deschide_news_app/apps/frontend
 
-# Start dev server on port 3005
+# Start dev server on port 3005 (ALWAYS use this in development)
 pnpm dev
 
-# Or use PM2 (persistent)
-pm2 start ecosystem.config.js
-pm2 logs deschide_frontend
-pm2 stop deschide_frontend
+# NOTE: Do NOT use PM2 in development. PM2 is for production only.
 ```
 
 **Building:**
@@ -283,9 +572,10 @@ symfony serve -d --port=8081
 cd /var/www/deschide_news_app/apps/frontend
 pnpm dev
 
-# Terminal 3 - Start Workers (optional, for async tasks)
+# Terminal 3 - Workers are managed by Supervisor
 cd /var/www/deschide_news_app/apps/backend
-symfony console messenger:consume async -vv
+sudo supervisorctl status              # Check all workers
+sudo supervisorctl restart all         # Restart if needed
 ```
 
 **Verify Applications:**
@@ -302,7 +592,7 @@ ss -tulpn | grep -E ":(3005|8081)"
 
 ## Architecture Notes
 
-### Backend (Symfony 7.3)
+### Backend (Symfony 8.0)
 
 **Location**: `/var/www/deschide_news_app/apps/backend`
 
@@ -310,30 +600,33 @@ ss -tulpn | grep -E ":(3005|8081)"
 - **API Documentation**: `http://127.0.0.1:8081/api/docs.jsonld` (Hydra documentation)
 - **API Entrypoint**: `http://127.0.0.1:8081/api`
 - **Authentication**: JWT tokens (Lexik JWT + Gesdinet Refresh Token)
-- **Database**: PostgreSQL 17 via Doctrine ORM 3.5
+- **Database**: PostgreSQL 18.2 via Doctrine ORM 3.5
 - **Multilanguage**: Gedmo Translatable (strict mode with HINT_INNER_JOIN)
 - **Message Queue**: RabbitMQ via Symfony Messenger
-- **Cache**: Redis (DB 1, prefix: `deschide_news:*`)
-- **Search**: Elasticsearch (index: `deschide_articles`)
+- **Cache**: Redis 8.0 (DB 1, prefix: `deschide_news:*`, policy: `volatile-lru` — NEVER use `allkeys-lru`)
+- **Search**: Elasticsearch 9.3 (HTTPS, index: `deschide_articles_trilingual`) — native `elasticsearch-php`, NOT FOSElasticaBundle
 - **Real-time**: Mercure Hub (topics: `deschide_news/*`)
 
 **Directory Structure:**
-- `src/Entity/` - Doctrine entities (Article, Category, Author, Image, etc.)
+- `src/Entity/` - Doctrine entities (Article, Category, Author, Image, PressRelease, StoryCluster, BackgroundProposal, AppSettings, etc.)
 - `src/State/` - API Platform State Providers and Processors (locale-aware queries)
 - `src/Controller/` - API controllers (for custom endpoints)
-- `src/Service/` - Business logic (ImageService, ElasticService, etc.)
+- `src/Service/` - Business logic
+  - `Service/Ai/` - LLM integrations (GeminiCliService, ClaudeCliClient, AiProviderRegistry, LlmRetryExecutor)
+  - `Service/Aggregator/` - Content aggregators (RSS, scraping, Telegram, etc.)
+  - `Service/Clustering/` - Story clustering, semantic verification, importance scoring
+  - `Service/Content/` - Content cleaning, deduplication
+  - `Service/Editorial/` - Auto-publish gate, sensitive topic detection
 - `src/Repository/` - Custom queries with Gedmo hints
 - `src/Message/` - Message classes for async processing
 - `src/MessageHandler/` - Message handlers
-- `src/Command/` - Console commands (Import/, Test/, Elasticsearch, etc.)
-- `src/Dto/` - Data Transfer Objects
-- `src/Enum/` - PHP Enums (ArticleStatus, ArticleBadge, etc.)
+- `src/Command/` - Console commands (Import/, Elasticsearch/, AI generation, cluster management)
+- `src/Dto/` - Data Transfer Objects (ArticleDraft, etc.)
+- `src/Enum/` - PHP Enums (ArticleStatus, ArticleBadge, AggregatorSourceType, etc.)
 - `src/EventListener/` - Doctrine event listeners
 - `src/EventSubscriber/` - Symfony event subscribers
-- `src/Transformer/` - Data transformers
-- `src/Validator/` - Custom validators
-- `src/DataFixtures/` - Database fixtures for testing
 - `config/` - YAML configuration files
+- `config/packages/scraping_aggregators.yaml` - Scraper source configs
 
 **Key Patterns:**
 - **API Platform State Provider/Processor Pattern**: Custom `Provider` classes in `src/State/` handle data retrieval with locale-aware queries and eager loading. Custom `Processor` classes handle create/update/delete operations. Providers apply Gedmo `HINT_TRANSLATABLE_LOCALE` to all queries for proper translation handling (see `src/State/ArticleProvider.php:58-61`).
@@ -361,7 +654,10 @@ The API follows the Hydra/JSON-LD specification for hypermedia-driven APIs. All 
 | **Thumbnails** | `/api/thumbnails` | Generated thumbnail images |
 | **Thumbnail Profiles** | `/api/thumbnail_profiles` | Thumbnail generation profiles (10 variants) |
 | **Article Images** | `/api/article_images` | Association between articles and images |
-| **Test Articles** | `/api/test_articles` | Test endpoint for development |
+| **Press Releases** | `/api/press_releases` | Aggregated content awaiting editorial review |
+| **Story Clusters** | `/api/story_clusters` | AI-grouped related press releases |
+| **Background Proposals** | `/api/background_proposals` | AI-generated editorial context blocks |
+| **App Settings** | `/api/app_settings` | Runtime configuration (thresholds, feature flags) |
 
 **API Documentation URLs:**
 - **Hydra/JSON-LD Documentation**: `GET http://127.0.0.1:8081/api/docs.jsonld`
@@ -448,15 +744,15 @@ CORS_ALLOW_ORIGIN=^http://localhost:3005$|^http://deschide\.local$
 
 ### Frontend (Next.js 16)
 
-**Location**: `/var/www/deschide_news_app/deschide_frontend`
+**Location**: `/var/www/deschide_news_app/apps/frontend`
 
 - **Router**: App Router (`app/` directory)
-- **Bundler**: Turbopack (default in Next.js 16)
-- **Styling**: Tailwind CSS 4
-- **API Integration**: Fetch to Symfony backend
-- **Multilanguage**: To be configured (custom library)
+- **Bundler**: Turbopack
+- **Styling**: Tailwind CSS 4 + Flowbite React
+- **API Integration**: Fetch to Symfony backend (JWT auth)
+- **Multilanguage**: Custom i18n with locale routing
 - **Real-time**: Mercure SSE subscription
-- **State Management**: To be determined
+- **Rich Text**: TinyMCE (admin article editor)
 
 **Directory Structure:**
 - `app/` - App Router pages and layouts
@@ -861,7 +1157,7 @@ Follow **Conventional Commits** specification:
 git commit -m "feat(backend): add article reaction system"
 git commit -m "fix(frontend): resolve image loading issue in gallery"
 git commit -m "docs: update API documentation for categories"
-git commit -m "chore(backend): upgrade Symfony to 7.3.1"
+git commit -m "chore(backend): upgrade Symfony to 8.0.1"
 ```
 
 ### Pull Request Process
@@ -1020,52 +1316,46 @@ pnpm test:e2e:ui          # UI mode (visual debugging)
 
 ### Backend Testing
 
-- **PHPUnit**: ✅ **376 tests, 1,351 assertions - ALL PASSING**
+- **PHPUnit**: ✅ **~4,350+ tests - ALL PASSING** (as of Sprint 45)
 - **Test Suites**:
-  - Entity tests (Article, Author, Category, Image, Tag, User)
-  - API integration tests (CRUD operations, authentication)
-  - Service tests (Image processing, Elasticsearch, translations)
-  - State Provider tests (API Platform providers)
-- **Run Tests**:
+  - Entity tests, API integration tests, Service tests, State Provider tests
+  - Clustering tests (79 tests), AI pipeline tests, Aggregator tests
+  - Content cleaning, auto-publish gate, sensitive topic detection
+- **Run Tests** (see HARD RULES for targeted vs full suite policy):
   ```bash
   cd /var/www/deschide_news_app/apps/backend
-  XDEBUG_MODE=off vendor/bin/phpunit tests/ --no-coverage
+  # Targeted (during development):
+  ./vendor/bin/phpunit --filter="YourTestClass" --testdox
+  # Full suite (sprint finalization only):
+  XDEBUG_MODE=off ./vendor/bin/phpunit --no-coverage
   ```
-- **Test Commands**: Development test commands available in `src/Command/Test/`:
-  - `app:test:jwt-token` - Test JWT token generation
-  - `app:test:newscoop-connection` - Test Newscoop API connection
-  - `app:test:migration-logger` - Test migration logger functionality
-- **Static Analysis**: PHPStan not yet configured (planned for level 8)
-- **Code Style**: PHP-CS-Fixer not yet configured (planned)
-- **Architecture**: Deptrac not yet configured (planned for layer validation)
+- **Static Analysis**: PHPStan configured and enforced (see HARD RULES Rule 4)
+- **Container Lint**: `symfony console lint:container` — mandatory pre-commit
+- **Schema Validation**: `symfony console doctrine:schema:validate` — mandatory pre-commit
 
 ### Frontend Testing
 
-- **Jest**: ✅ **163 tests - ALL PASSING**
+- **Jest**: ✅ **~804+ tests - ALL PASSING** (as of Sprint 45)
 - **Test Suites**:
-  - Component tests (SafeHtml, ArticleBody, StructuredData)
-  - Integration tests (API integration, navigation)
+  - Component tests (SafeHtml, ArticleBody, StructuredData, AiBadge, ScoreBreakdown, etc.)
+  - Integration tests (API integration, navigation, cluster UI)
   - Utility tests (sanitization, validation)
 - **Run Tests**:
   ```bash
   cd /var/www/deschide_news_app/apps/frontend
-  pnpm test
-  ```
-- **Playwright**: ⚡ **1,176 E2E tests discovered and ready**
-- **Run E2E Tests**:
-  ```bash
-  cd /var/www/deschide_news_app/apps/frontend
-  pnpm test:e2e:ui    # UI mode
-  pnpm test:e2e       # Headless
+  # Targeted:
+  npx jest --testPathPattern="YourComponent" --verbose
+  # Full suite:
+  npm test -- --watchAll=false
   ```
 
 ### Test Status
 
-📊 **Latest Report**: `docs/reports/TEST_STATUS_REPORT.md` (2025-11-30)
-- Backend: 376 tests ✅
-- Frontend Jest: 163 tests ✅
-- Frontend Playwright: 1,176 tests discovered ⚡
-- **Total: 539 tests passing (100% success rate)**
+📊 **Current counts (Sprint 45, April 2026):**
+- Backend PHPUnit: ~4,350+ tests ✅
+- Frontend Jest: ~804+ tests ✅
+- **Total: ~5,150+ tests passing**
+- Zero regressions policy enforced at sprint boundaries
 
 ## Important Documentation
 
@@ -1163,47 +1453,46 @@ This skill provides:
 - Configuration files
 - Test files
 
-## Current Development Status
+## Current Development Status (Sprint 45, April 2026)
 
-✅ **Completed:**
-- Development environment configured
-- Backend installed (Symfony 7.3, PHP 8.4)
-- Frontend installed (Next.js 16, React 19.2)
-- Both applications running on dedicated ports (8081, 3005)
-- Port allocation documented (no conflicts)
-- Environment variables configured
+✅ **Core Platform — Complete:**
+- Symfony 8.0 headless API + Next.js 16 frontend + admin
+- PostgreSQL 18.2, Redis 8.0 (`volatile-lru`), Elasticsearch 9.3 (HTTPS)
+- JWT auth, Mercure real-time, multi-tier caching (APCu L1, Redis L2, Next.js ISR L3)
+- Gedmo Translatable trilingual (ro/en/ru) with strict mode
+- API Platform state providers/processors with eager loading
+- Image upload + async thumbnail generation (10 profiles)
+- Article locking, rate limiting, CSP headers
 
-✅ **Also Completed:**
-- StofDoctrineExtensionsBundle (Gedmo) configured
-- NelmioCors configuration updated
-- PostgreSQL database created and populated
-- Base entities created (User, Author, Category, Article, Image, Thumbnail, ThumbnailProfile, ArticleImage, ArticleLock, ImportantArticlesList, RefreshToken)
-- Migrations run successfully
-- API Platform state providers/processors implemented
-- Elasticsearch integration configured
-- Import system from Newscoop CMS implemented (13 commands available)
-- Image upload and thumbnail generation system
-- Article locking mechanism
-- JWT authentication configured
-- **Testing infrastructure (PHPUnit + Jest + Playwright)**
-- **All tests passing (539 tests, 100% success rate)**
-- **Multi-tier caching (APCu L1, Redis L2, Next.js ISR L3)**
-- **Rate limiting for API endpoints (general, login, write, image operations)**
-- **CSP headers configured for CDN integration**
+✅ **Content Pipeline — Complete:**
+- 82 aggregator sources (RSS, scraping, Google News/Alerts, NewsAPI, Bing, Telegram, Facebook, Guardian, ANSA, etc.)
+- 10 Moldova-specific scrapers (NewsMaker, TV8, Zugo, Moldova1, Noi.md, Stiri.md, Point.md, UNIMEDIA, Jurnal.md, ZDG.md)
+- `PressRelease` as universal gateway → editorial approval → `Article`
+- Content cleaning pipeline (6 source-specific cleaners, 70-88% noise removal)
+- URL deduplication at import + content hash dedup
 
-✅ **Import Status (from Newscoop CMS):**
-- **Authors:** 282/282 (100% complete)
-- **Categories:** 17/18 (94% complete, 28 available with translations)
-- **Images:** 1,788/155,332 (1.2% - WebP conversion, import paused)
-- **Articles:** 1,000/173,670 (0.6% - Romanian only)
-- **Translations:** 0/290,000 (0% - EN/RU not imported yet)
-- **Article-Image Links:** 0 (not imported yet)
-- **Infrastructure:** All 13 import commands functional and tested
+✅ **AI Pipeline — Complete:**
+- Dual-LLM: Gemini CLI (context crunch/bulk) + Claude CLI (journalistic polish)
+- `AiProviderInterface` + `AiProviderRegistry` for provider switching
+- Article translation (EN+RU via Gemini, one call per locale)
+- Topic detection + batch classification
+- Cluster summaries + semantic verification (30-min cron)
+- Background generation (3 blocks: Cronologic/Explicativ/Moldova)
+- AI article generation (`ArticleWriterService`, content-depth gate)
+- Auto-publish gate (confidence≥0.85, sources≥3, words≥300, non-sensitive)
+- `SensitiveTopicDetector` (politics/Transnistria/Gagauzia/persons)
 
-⬜ **Current Focus:**
-- Frontend development and API integration
-- Admin panel features
-- Full-scale import execution (remaining 172K articles + images + translations)
-- Code quality tools (PHPStan, PHP-CS-Fixer)
-- Nginx virtual hosts configuration (optional)
-- CI/CD pipeline setup
+✅ **Clustering & Editorial Intelligence — Complete:**
+- `StoryCluster` with importance scoring + `scoreBreakdown` JSON
+- `SemanticClusterVerifier` (Gemini/Claude gate, fail-open)
+- `RelatedArticlesFinder` (ES MLT on own articles)
+- Cluster snapshots + diff tracking
+- Remove-PR-from-cluster API + UI
+- ES tuning: stop words RO/EN/RU, title^3.0 boost, min_score 0.60
+
+⬜ **In Progress / Next:**
+- Sprint 45 executing (Editorial Context Intelligence)
+- Fix Sprint 40 QA bugs (background-proposals 404 + TinyMCE scroll trap)
+- Social Media Distribution (Facebook + Telegram) — architecture ready, implementation deferred
+- Production deployment to DigitalOcean FRA1 + Cloudflare CDN
+- Platform branding (top candidate: **Acta**, pending nic.md domain check)

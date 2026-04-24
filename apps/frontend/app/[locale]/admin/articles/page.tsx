@@ -1,4 +1,4 @@
-import { getArticles, getCategories } from '@/lib/dal';
+import { getArticles, getCategories, type Article, type Category } from '@/lib/dal';
 import { apiRequest } from '@/lib/api/client';
 import { getAccessToken } from '@/lib/dal';
 import { ArticlesTableClient } from './ArticlesTableClient';
@@ -13,25 +13,27 @@ interface ArticlesPageProps {
     page?: string;
     category?: string;
     status?: string;
+    unclassified?: string;
   }>;
 }
 
 export default async function ArticlesPage({ params, searchParams }: ArticlesPageProps) {
   const { locale } = await params;
-  const { page: pageParam, category: categoryParam, status: statusParam } = await searchParams;
+  const { page: pageParam, category: categoryParam, status: statusParam, unclassified: unclassifiedParam } = await searchParams;
 
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
   const itemsPerPage = 20; // 20 articles per page
   const categoryFilter = categoryParam ? parseInt(categoryParam, 10) : undefined;
   const statusFilter = statusParam || undefined;
+  const unclassifiedFilter = unclassifiedParam === '1' || unclassifiedParam === 'true';
 
   // Fetch articles from API
-  let articlesData: any[] = [];
+  let articlesData: Article[] = [];
   let totalItems = 0;
   let error: string | null = null;
 
   try {
-    const data = await getArticles({ locale, page: currentPage, itemsPerPage, category: categoryFilter, status: statusFilter });
+    const data = await getArticles({ locale, page: currentPage, itemsPerPage, category: categoryFilter, status: statusFilter, unclassified: unclassifiedFilter });
     articlesData = data.member;
     totalItems = data.totalItems || 0;
   } catch (err) {
@@ -41,7 +43,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
   }
 
   // Fetch categories for modal
-  let categories: any[] = [];
+  let categories: Category[] = [];
   try {
     const categoriesData = await getCategories({ locale, page: 1, itemsPerPage: 100 });
     categories = categoriesData.member || [];
@@ -51,11 +53,11 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
   }
 
   // Fetch article counts from stats API for accurate totals
-  let articleCounts: any = null;
+  let articleCounts: Record<string, number> | null = null;
   try {
     const token = await getAccessToken();
     if (token) {
-      articleCounts = await apiRequest<any>('/api/admin/stats/article-counts', {
+      articleCounts = await apiRequest<Record<string, number>>('/api/admin/stats/article-counts', {
         token,
         next: { revalidate: 60 },
       });
@@ -66,7 +68,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
 
   const publishedArticles = articleCounts?.published ?? articlesData.filter((a) => a.status === 'published').length;
   const newArticles = articleCounts?.new ?? articlesData.filter((a) => a.status === 'new').length;
-  const totalViews = articlesData.reduce((sum, a) => sum + (a.viewCount || 0), 0);
+  const totalViews = articlesData.reduce((sum, a) => sum + ((a as any).viewCount || 0), 0);
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -216,7 +218,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
       </div>
 
       {/* Articles Table */}
-      <ArticlesTableClient articles={articlesData} locale={locale} categories={categories} totalItems={totalItems} />
+      <ArticlesTableClient articles={articlesData as any} locale={locale} categories={categories} totalItems={totalItems} />
 
       {/* Pagination */}
       {totalPages > 1 && (

@@ -16,6 +16,7 @@ import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/ap
 import { fetchRelatedArticles } from '@/lib/api/articles';
 import { lookupArticle } from '@/lib/api/slug-lookup';
 import type { Locale } from '@/lib/types';
+import type { Article } from '@/lib/types/article';
 import {
   ArticleLayout,
   ArticleHeader,
@@ -27,6 +28,7 @@ import {
 import ArticleDisclaimer from '@/components/article/ArticleDisclaimer';
 import DRRMBanner from '@/components/banners/DRRMBanner';
 import { generateArticleMetadata, generateArticleStructuredData } from '@/lib/seo';
+import { getFallbackContent, hasPendingTranslation, LocaleFallbackNotice } from '@/lib/i18n/locale-fallback';
 import StructuredData from '@/components/seo/StructuredData';
 import Breadcrumb, { buildArticleBreadcrumbs } from '@/components/navigation/Breadcrumb';
 
@@ -49,6 +51,7 @@ interface ArticlePageProps {
     categorySlug: string;
     articleSlug: string;
   }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 /**
@@ -95,7 +98,7 @@ async function fetchArticleBySlug(
 
     // Verify that the category slug in URL matches article's actual category
     // This prevents wrong URLs like /wrong-category/article-slug
-    const articleCategorySlug = article.category?.slug;
+    const articleCategorySlug = typeof article.category === 'object' ? article.category?.slug : undefined;
     if (articleCategorySlug !== categorySlug) {
       console.error(`Category mismatch: expected ${categorySlug}, got ${articleCategorySlug}`);
       return null;
@@ -106,6 +109,29 @@ async function fetchArticleBySlug(
     console.error('Error fetching article:', error);
     return null;
   }
+}
+
+/**
+ * Fetch article with locale fallback.
+ * Requested locale enforces full categorySlug match (URL integrity).
+ * Fallback (RO) bypasses categorySlug match since the article's own category
+ * is canonical when we render RO content at the requested-locale URL.
+ */
+async function fetchArticleWithFallback(
+  categorySlug: string,
+  articleSlug: string,
+  requestedLocale: Locale
+) {
+  return getFallbackContent<Article>(requestedLocale, async (candidateLocale) => {
+    if (candidateLocale === requestedLocale) {
+      return await fetchArticleBySlug(categorySlug, articleSlug, candidateLocale);
+    }
+    // Fallback path: skip categorySlug match, rely on article's own category
+    if (!isValidArticleRequest(categorySlug, articleSlug)) {
+      return null;
+    }
+    return await lookupArticle(articleSlug, candidateLocale);
+  }, { isTranslationPending: hasPendingTranslation });
 }
 
 
@@ -127,8 +153,9 @@ export async function generateMetadata({
   }
 
   try {
-    // Fetch article data
-    const article = await fetchArticleBySlug(
+    // Fetch article with language fallback — enables correct metadata even
+    // when the requested locale has no translation (RO content served).
+    const { content: article, effectiveLocale } = await fetchArticleWithFallback(
       categorySlug,
       articleSlug,
       locale
@@ -150,7 +177,7 @@ export async function generateMetadata({
     const imageUrl = imageToUse ? buildImageUrl(imageToUse.path) : undefined;
 
     // Generate comprehensive metadata using SEO utilities
-    return generateArticleMetadata(article, locale, imageUrl);
+    return generateArticleMetadata(article, effectiveLocale, imageUrl);
   } catch (error) {
     console.error('Error generating metadata:', error);
     return {
@@ -168,16 +195,21 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     notFound();
   }
 
-  // Fetch article from API with category validation
-  const article = await fetchArticleBySlug(
-    categorySlug, // category slug
-    articleSlug, // article slug
+  // Fetch article with in-place locale fallback (renders RO content at
+  // requested-locale URL with a notice when translation is missing).
+  const articleFallback = await fetchArticleWithFallback(
+    categorySlug,
+    articleSlug,
     locale
   );
 
+  const article = articleFallback.content;
   if (!article) {
     notFound();
   }
+
+  const isLangFallback = articleFallback.isFallback;
+  const effectiveLocale = articleFallback.effectiveLocale;
 
   // Get featured image
   const featuredImage = getFeaturedImage(article.articleImages || []);
@@ -199,7 +231,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   // Fetch related articles by category
   const relatedArticles = await fetchRelatedArticles(
     article.id,
-    article.category.id,
+    typeof article.category === 'object' ? article.category.id : 0,
     locale,
     6
   );
@@ -224,6 +256,15 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {/* Breadcrumb Navigation */}
         <Breadcrumb items={breadcrumbItems} locale={locale} className="mb-6" />
 
+        {/* Language fallback banner */}
+        {isLangFallback && (
+          <LocaleFallbackNotice
+            requestedLocale={locale}
+            effectiveLocale={effectiveLocale}
+            translationPending={articleFallback.translationPending}
+          />
+        )}
+
         {/* Article Header */}
         <ArticleHeader article={article} locale={locale} />
 
@@ -231,11 +272,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         {imageToUse && (
           <ArticleImage
             image={{
-              path: imageToUse.path,
-              width: imageToUse.width,
-              height: imageToUse.height,
-              alt: featuredImage?.alt,
-              title: featuredImage?.title,
+              path: imageToUse.path ?? '',
+              width: imageToUse.width ?? 0,
+              height: imageToUse.height ?? 0,
+              alt: featuredImage?.alt ?? '',
             }}
             priority
             enableLightbox

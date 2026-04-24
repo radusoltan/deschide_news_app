@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Command\Editorial;
 
 use App\Command\Editorial\DevResetCommand;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
@@ -13,6 +14,17 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 
+/**
+ * Unit tests for DevResetCommand against the post-aa6824f pipeline.
+ *
+ * Strategy:
+ *  - Stub every sub-command DevResetCommand dispatches; record invocations.
+ *  - Mock the EntityManager + Connection so cullArticles short-circuits on
+ *    "no articles" and printCounts can fetch zeroed counts without erroring.
+ *  - Assert orchestration only (step labels in display, sub-commands invoked,
+ *    skip-flag semantics). DB-level cull logic and ES indexing are out of
+ *    scope for unit tests — they belong to integration/functional layers.
+ */
 class DevResetCommandTest extends TestCase
 {
     private EntityManagerInterface $em;
@@ -20,7 +32,12 @@ class DevResetCommandTest extends TestCase
     protected function setUp(): void
     {
         $this->em = $this->createMock(EntityManagerInterface::class);
-        $this->em->method('isOpen')->willReturn(true);
+
+        // cullArticles: SELECT COUNT(*) FROM articles → 0 triggers early return.
+        // printCounts: every fetchOne in the summary block also gets 0.
+        $connection = $this->createMock(Connection::class);
+        $connection->method('fetchOne')->willReturn(0);
+        $this->em->method('getConnection')->willReturn($connection);
     }
 
     public function testRefusesInProd(): void
@@ -32,8 +49,8 @@ class DevResetCommandTest extends TestCase
         $tester = new CommandTester($command);
         $tester->execute([]);
 
-        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
-        $this->assertStringContainsString('DOAR în dev/test', $tester->getDisplay());
+        self::assertSame(Command::FAILURE, $tester->getStatusCode());
+        self::assertStringContainsString('DOAR în dev/test', $tester->getDisplay());
     }
 
     public function testRefusesInStaging(): void
@@ -45,190 +62,189 @@ class DevResetCommandTest extends TestCase
         $tester = new CommandTester($command);
         $tester->execute([]);
 
-        $this->assertSame(Command::FAILURE, $tester->getStatusCode());
+        self::assertSame(Command::FAILURE, $tester->getStatusCode());
     }
 
     public function testAllowsDevEnvironment(): void
     {
         $command = new DevResetCommand('dev', $this->em);
-        $app = $this->createAppWithStubs($command);
+        $executed = [];
+        $this->registerStubs($command, $executed);
 
         $tester = new CommandTester($command);
-        $tester->execute(['--skip-fixtures' => true, '--skip-elasticsearch' => true, '--skip-import' => true], ['interactive' => false]);
+        $tester->execute(
+            ['--skip-csv' => true, '--skip-elasticsearch' => true, '--skip-topics' => true],
+            ['interactive' => false],
+        );
 
-        $display = $tester->getDisplay();
-        $this->assertStringNotContainsString('DOAR în dev/test', $display);
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+        self::assertStringNotContainsString('DOAR în dev/test', $tester->getDisplay());
     }
 
     public function testAllowsTestEnvironment(): void
     {
         $command = new DevResetCommand('test', $this->em);
-        $app = $this->createAppWithStubs($command);
+        $executed = [];
+        $this->registerStubs($command, $executed);
 
         $tester = new CommandTester($command);
-        $tester->execute(['--skip-fixtures' => true, '--skip-elasticsearch' => true, '--skip-import' => true], ['interactive' => false]);
+        $tester->execute(
+            ['--skip-csv' => true, '--skip-elasticsearch' => true, '--skip-topics' => true],
+            ['interactive' => false],
+        );
+
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+        self::assertStringNotContainsString('DOAR în dev/test', $tester->getDisplay());
+    }
+
+    public function testFullPipelineInvokesEverySubCommand(): void
+    {
+        $command = new DevResetCommand('dev', $this->em);
+        $executed = [];
+        $this->registerStubs($command, $executed);
+
+        $tester = new CommandTester($command);
+        // Provide a fake CSV path so findCsvPath() doesn't matter; the stub
+        // for app:import:csv-legacy-articles ignores the value.
+        $tester->execute(['--csv-path' => '/tmp/dummy.csv'], ['interactive' => false]);
+
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+
+        // All ten dispatched sub-commands must have run at least once.
+        self::assertContains('doctrine:schema:drop', $executed);
+        self::assertContains('doctrine:migrations:migrate', $executed);
+        self::assertContains('doctrine:fixtures:load', $executed);
+        self::assertContains('app:import:csv-legacy-articles', $executed);
+        self::assertContains('app:fixtures:generate-translations', $executed);
+        self::assertContains('app:fixtures:download-images', $executed);
+        self::assertContains('cache:pool:clear', $executed);
+        self::assertContains('app:elasticsearch:create-index', $executed);
+        self::assertContains('app:elasticsearch:index-articles', $executed);
+        self::assertContains('cache:clear', $executed);
+
+        // CSV import runs three phases (articles, translations, links).
+        self::assertSame(
+            3,
+            \count(array_filter($executed, static fn (string $name) => $name === 'app:import:csv-legacy-articles')),
+            'CSV import must run all three phases (articles, translations, links)',
+        );
 
         $display = $tester->getDisplay();
-        $this->assertStringNotContainsString('DOAR în dev/test', $display);
+        self::assertStringContainsString('Dev Reset — Full Fixtures Pipeline', $display);
+        self::assertStringContainsString('Drop database schema', $display);
+        self::assertStringContainsString('Run migrations', $display);
+        self::assertStringContainsString('Load fixtures', $display);
+        self::assertStringContainsString('CSV import: articles', $display);
+        self::assertStringContainsString('CSV import: translations', $display);
+        self::assertStringContainsString('CSV import: links', $display);
+        self::assertStringContainsString('Article selection (cull per caps)', $display);
+        self::assertStringContainsString('Raport final', $display);
     }
 
-    public function testExecutesAllSteps(): void
+    public function testSkipCsvOmitsImportSelectionAndDownstreamSteps(): void
     {
-        $executedCommands = [];
-
         $command = new DevResetCommand('dev', $this->em);
-        $app = $this->createAppWithTrackingStubs($command, $executedCommands);
+        $executed = [];
+        $this->registerStubs($command, $executed);
 
         $tester = new CommandTester($command);
-        $tester->execute([], ['interactive' => false]);
+        $tester->execute(['--skip-csv' => true], ['interactive' => false]);
 
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $display = $tester->getDisplay();
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
 
-        // Verify all steps reported
-        $this->assertStringContainsString('Drop database schema', $display);
-        $this->assertStringContainsString('Run migrations', $display);
-        $this->assertStringContainsString('Load fixtures', $display);
-        $this->assertStringContainsString('Import RSS', $display);
-        $this->assertStringContainsString('Clear cache pools', $display);
-        $this->assertStringContainsString('Reindex Elasticsearch', $display);
-        $this->assertStringContainsString('Raport final', $display);
-
-        // Verify sub-commands were called
-        $this->assertContains('doctrine:schema:drop', $executedCommands);
-        $this->assertContains('doctrine:migrations:migrate', $executedCommands);
-        $this->assertContains('doctrine:fixtures:load', $executedCommands);
-        $this->assertContains('app:import:rss-feed', $executedCommands);
-        $this->assertContains('cache:pool:clear', $executedCommands);
-        $this->assertContains('app:elasticsearch:index-articles', $executedCommands);
-    }
-
-    public function testSkipOptionsRespected(): void
-    {
-        $executedCommands = [];
-
-        $command = new DevResetCommand('dev', $this->em);
-        $app = $this->createAppWithTrackingStubs($command, $executedCommands);
-
-        $tester = new CommandTester($command);
-        $tester->execute([
-            '--skip-fixtures' => true,
-            '--skip-import' => true,
-            '--skip-elasticsearch' => true,
-        ], ['interactive' => false]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-
-        $this->assertNotContains('doctrine:fixtures:load', $executedCommands);
-        $this->assertNotContains('app:import:rss-feed', $executedCommands);
-        $this->assertNotContains('app:elasticsearch:index-articles', $executedCommands);
+        // CSV import skipped.
+        self::assertNotContains('app:import:csv-legacy-articles', $executed);
+        // Translations and image download both gate on !skipCsv → skipped transitively.
+        self::assertNotContains('app:fixtures:generate-translations', $executed);
+        self::assertNotContains('app:fixtures:download-images', $executed);
 
         $display = $tester->getDisplay();
-        $this->assertStringContainsString('SKIPPED', $display);
+        self::assertStringContainsString('SKIPPED', $display);
+        self::assertStringNotContainsString('Article selection (cull per caps)', $display);
     }
 
-    public function testSkipImportAloneWorks(): void
+    public function testSkipTopicsOmitsTopicsFromFixtureGroups(): void
     {
-        $executedCommands = [];
-
         $command = new DevResetCommand('dev', $this->em);
-        $app = $this->createAppWithTrackingStubs($command, $executedCommands);
+        $executed = [];
+        $this->registerStubs($command, $executed);
 
         $tester = new CommandTester($command);
-        $tester->execute([
-            '--skip-import' => true,
-        ], ['interactive' => false]);
+        $tester->execute(
+            ['--skip-topics' => true, '--skip-csv' => true, '--skip-elasticsearch' => true],
+            ['interactive' => false],
+        );
 
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-
-        // Fixtures should run, import should not
-        $this->assertContains('doctrine:fixtures:load', $executedCommands);
-        $this->assertNotContains('app:import:rss-feed', $executedCommands);
-    }
-
-    public function testImportSkippedWhenFixturesSkipped(): void
-    {
-        $executedCommands = [];
-
-        $command = new DevResetCommand('dev', $this->em);
-        $app = $this->createAppWithTrackingStubs($command, $executedCommands);
-
-        $tester = new CommandTester($command);
-        $tester->execute([
-            '--skip-fixtures' => true,
-        ], ['interactive' => false]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-
-        // Import should also be skipped when fixtures are skipped (no categories to map to)
-        $this->assertNotContains('doctrine:fixtures:load', $executedCommands);
-        $this->assertNotContains('app:import:rss-feed', $executedCommands);
-    }
-
-    public function testEnrichOptionDispatchesBatchIngest(): void
-    {
-        $executedCommands = [];
-
-        $command = new DevResetCommand('dev', $this->em);
-        $app = $this->createAppWithTrackingStubs($command, $executedCommands);
-
-        $tester = new CommandTester($command);
-        $tester->execute([
-            '--enrich' => true,
-        ], ['interactive' => false]);
-
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertContains('app:editorial:batch-ingest', $executedCommands);
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+        self::assertContains('doctrine:fixtures:load', $executed);
 
         $display = $tester->getDisplay();
-        $this->assertStringContainsString('Dispatch AI ingestion', $display);
+        // The fixtures step header lists groups in parens; with --skip-topics
+        // the suffix ", topics)" must not appear on that line.
+        self::assertStringContainsString('Load fixtures (categories, menu, user, live-pipeline, app-settings)', $display);
+        self::assertDoesNotMatchRegularExpression('/Load fixtures \([^)]*topics[^)]*\)/', $display);
     }
 
-    public function testEnrichSkippedByDefault(): void
+    public function testSkipElasticsearchOmitsEsCommands(): void
     {
-        $executedCommands = [];
-
         $command = new DevResetCommand('dev', $this->em);
-        $app = $this->createAppWithTrackingStubs($command, $executedCommands);
+        $executed = [];
+        $this->registerStubs($command, $executed);
 
         $tester = new CommandTester($command);
-        $tester->execute([], ['interactive' => false]);
+        $tester->execute(
+            ['--skip-elasticsearch' => true, '--skip-csv' => true],
+            ['interactive' => false],
+        );
 
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertNotContains('app:editorial:batch-ingest', $executedCommands);
-
-        $display = $tester->getDisplay();
-        $this->assertStringContainsString('SKIPPED', $display);
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+        self::assertNotContains('app:elasticsearch:create-index', $executed);
+        self::assertNotContains('app:elasticsearch:index-articles', $executed);
     }
 
-    public function testImportLimitOption(): void
+    public function testSkipTranslationsOmitsTranslationStep(): void
     {
-        $executedCommands = [];
-
         $command = new DevResetCommand('dev', $this->em);
-        $app = $this->createAppWithTrackingStubs($command, $executedCommands);
+        $executed = [];
+        $this->registerStubs($command, $executed);
 
         $tester = new CommandTester($command);
-        $tester->execute(['--import-limit' => '50'], ['interactive' => false]);
+        $tester->execute(
+            ['--skip-translations' => true, '--csv-path' => '/tmp/dummy.csv', '--skip-elasticsearch' => true],
+            ['interactive' => false],
+        );
 
-        $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertContains('app:import:rss-feed', $executedCommands);
-
-        $display = $tester->getDisplay();
-        $this->assertStringContainsString('Import RSS (50 articles)', $display);
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+        self::assertNotContains('app:fixtures:generate-translations', $executed);
+        // Image download still runs (independent flag, gated only on !skipImages && !skipCsv).
+        self::assertContains('app:fixtures:download-images', $executed);
     }
 
-    private function createAppWithStubs(DevResetCommand $command): Application
+    public function testSkipImagesOmitsImageDownloadStep(): void
     {
-        $executedCommands = [];
+        $command = new DevResetCommand('dev', $this->em);
+        $executed = [];
+        $this->registerStubs($command, $executed);
 
-        return $this->createAppWithTrackingStubs($command, $executedCommands);
+        $tester = new CommandTester($command);
+        $tester->execute(
+            ['--skip-images' => true, '--csv-path' => '/tmp/dummy.csv', '--skip-elasticsearch' => true],
+            ['interactive' => false],
+        );
+
+        self::assertSame(Command::SUCCESS, $tester->getStatusCode());
+        self::assertNotContains('app:fixtures:download-images', $executed);
+        // Translations still runs (independent flag, gated only on !skipTranslations && !skipCsv).
+        self::assertContains('app:fixtures:generate-translations', $executed);
     }
 
     /**
-     * @param list<string> $executedCommands
+     * Register stubs for every sub-command DevResetCommand dispatches.
+     * Each stub records its name into $executed when invoked.
+     *
+     * @param list<string> $executed
      */
-    private function createAppWithTrackingStubs(DevResetCommand $command, array &$executedCommands): Application
+    private function registerStubs(DevResetCommand $command, array &$executed): Application
     {
         $app = new Application();
         $app->addCommand($command);
@@ -237,14 +253,17 @@ class DevResetCommandTest extends TestCase
             'doctrine:schema:drop',
             'doctrine:migrations:migrate',
             'doctrine:fixtures:load',
-            'app:import:rss-feed',
+            'app:import:csv-legacy-articles',
+            'app:fixtures:generate-translations',
+            'app:fixtures:download-images',
             'cache:pool:clear',
+            'cache:clear',
+            'app:elasticsearch:create-index',
             'app:elasticsearch:index-articles',
-            'app:editorial:batch-ingest',
         ];
 
         foreach ($stubNames as $name) {
-            $stub = new class($name, $executedCommands) extends Command {
+            $stub = new class($name, $executed) extends Command {
                 /** @param list<string> $tracker */
                 public function __construct(string $name, private array &$tracker)
                 {

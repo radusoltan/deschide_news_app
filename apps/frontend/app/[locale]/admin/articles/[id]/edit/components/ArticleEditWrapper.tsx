@@ -7,11 +7,13 @@ import ArticleLockBanner from '@/components/admin/articles/ArticleLockBanner';
 import { useArticleLock } from '@/lib/hooks/useArticleLock';
 import { FiLock, FiAlertCircle } from 'react-icons/fi';
 
+import type { Article, Category, Author } from '@/lib/types/article';
+
 interface ArticleEditWrapperProps {
   locale: string;
-  article: any;
-  categories: any[];
-  authors: any[];
+  article: Article;
+  categories: Category[];
+  authors: Author[];
 }
 
 export default function ArticleEditWrapper({
@@ -129,11 +131,12 @@ export default function ArticleEditWrapper({
         </div>
       )}
 
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <ArticleForm
         locale={locale}
-        article={article}
-        categories={categories}
-        authors={authors}
+        article={article as any}
+        categories={categories as any}
+        authors={authors as any}
       />
     </div>
   );

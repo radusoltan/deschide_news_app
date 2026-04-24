@@ -10,6 +10,7 @@ import {
   RelatedTagsResponse,
   TagStatistics,
 } from '../types/tag';
+import type { Article } from '../types/article';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -338,7 +339,7 @@ export async function fetchArticlesByTag(
   locale?: string,
   itemsPerPage: number = 20,
   page: number = 1
-): Promise<any> {
+): Promise<{ 'hydra:member': Article[]; 'hydra:totalItems': number; member?: Article[] }> {
   const headers: HeadersInit = {
     'Content-Type': 'application/ld+json',
   };

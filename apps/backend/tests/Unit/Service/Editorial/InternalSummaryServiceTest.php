@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Service\Editorial;
 
 use App\Service\Editorial\InternalSummaryService;
+use App\Service\Ai\Provider\GeminiCliService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -14,8 +15,8 @@ class InternalSummaryServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        // Use a dummy path — tests don't actually call Gemini
-        $this->service = new InternalSummaryService('/usr/bin/gemini', new NullLogger());
+        // Use a dummy GeminiCliService — tests don't actually call Gemini
+        $this->service = new InternalSummaryService(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), new NullLogger());
     }
 
     public function testGenerateSummaryReturnsNullForEmptyBody(): void

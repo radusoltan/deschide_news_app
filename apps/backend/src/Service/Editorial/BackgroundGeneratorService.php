@@ -8,8 +8,9 @@ use App\Dto\Editorial\BackgroundResult;
 use App\Dto\Editorial\ContextData;
 use App\Entity\Article;
 use App\Service\Search\SearchService;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 final class BackgroundGeneratorService
 {
@@ -18,7 +19,7 @@ final class BackgroundGeneratorService
 
     public function __construct(
         private readonly SearchService $searchService,
-        private readonly string $geminiCliPath,
+        private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -93,9 +94,7 @@ final class BackgroundGeneratorService
         }
 
         // Strip markdown code blocks
-        $text = preg_replace('/^```(?:\w+)?\s*/m', '', $output);
-        $text = preg_replace('/\s*```\s*$/m', '', $text);
-        $text = trim($text);
+        $text = $this->geminiCli->stripFences($output);
 
         if (mb_strlen($text) < 50) {
             $this->logger->warning('BackgroundGenerator: output too short', [
@@ -162,23 +161,9 @@ PROMPT;
 
     private function callGemini(string $prompt): ?string
     {
-        $process = new Process([$this->geminiCliPath, '-p', $prompt]);
-        $process->setTimeout(self::GEMINI_TIMEOUT);
-
         try {
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                $this->logger->warning('BackgroundGenerator: Gemini failed', [
-                    'exitCode' => $process->getExitCode(),
-                    'error' => mb_substr($process->getErrorOutput(), 0, 200),
-                ]);
-
-                return null;
-            }
-
-            return trim($process->getOutput());
-        } catch (\Throwable $e) {
+            return $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
+        } catch (GeminiCliException $e) {
             $this->logger->error('BackgroundGenerator: Gemini exception', [
                 'error' => $e->getMessage(),
             ]);

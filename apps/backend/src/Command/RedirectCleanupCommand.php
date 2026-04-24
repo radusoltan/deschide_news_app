@@ -62,6 +62,7 @@ class RedirectCleanupCommand extends Command
             ]
         );
 
+        try {
         // Find candidates for deletion
         $io->section('Finding Redirects to Delete');
 
@@ -196,5 +197,10 @@ class RedirectCleanupCommand extends Command
         );
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Redirect cleanup failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

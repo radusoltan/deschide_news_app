@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { HiPencil, HiSearch, HiX, HiLockClosed, HiTrash, HiExclamation, HiCheckCircle, HiClock } from 'react-icons/hi';
 import Link from 'next/link';
 import { DeleteArticleButton } from './components/DeleteArticleButton';
+import { TopicCountBadge } from './components/TopicCountBadge';
 import { batchDeleteArticlesAction, batchUpdateStatusAction } from '@/app/actions/articles';
 
 interface Article {
@@ -12,11 +13,15 @@ interface Article {
   title: string;
   slug: string;
   status: string;
-  category?: any;
-  authors?: any[];
+  category?: { id: number; title: string; slug: string } | string;
+  authors?: { id: number; fullName: string; slug: string }[] | string[];
   publishedAt?: string;
   createdAt?: string;
   viewCount?: number;
+  aiGenerated?: boolean;
+  aiConfidenceScore?: number | null;
+  aiSourceCount?: number | null;
+  topics?: Array<string | { id?: number; title?: string; slug?: string }>;
 }
 
 interface Category {
@@ -48,6 +53,20 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function AiBadge({ confidence }: { confidence?: number | null }) {
+  if (confidence == null) return null;
+  const isHigh = confidence >= 0.85;
+  const color = isHigh
+    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+
+  return (
+    <span className={`ml-1.5 px-1.5 py-0.5 inline-flex items-center text-xs font-medium rounded ${color}`} title={`AI confidence: ${(confidence * 100).toFixed(0)}%`}>
+      AI
+    </span>
+  );
+}
+
 interface ArticleLock {
   articleId: number;
   lockedBy: {
@@ -66,6 +85,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>(currentSearchParams.get('status') || 'all');
   const [categoryFilter, setCategoryFilter] = useState<string>(currentSearchParams.get('category') || 'all');
+  const unclassifiedActive = currentSearchParams.get('unclassified') === '1';
   const [activeLocks, setActiveLocks] = useState<Map<number, ArticleLock>>(new Map());
 
   // Batch selection state
@@ -193,7 +213,18 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
     });
   }, [articles, searchResults, statusFilter, categoryFilter]);
 
-  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || categoryFilter !== 'all';
+  const toggleUnclassifiedFilter = useCallback(() => {
+    const params = new URLSearchParams(currentSearchParams.toString());
+    if (unclassifiedActive) {
+      params.delete('unclassified');
+    } else {
+      params.set('unclassified', '1');
+    }
+    params.delete('page');
+    router.push(`?${params.toString()}`);
+  }, [currentSearchParams, router, unclassifiedActive]);
+
+  const hasActiveFilters = searchQuery !== '' || statusFilter !== 'all' || categoryFilter !== 'all' || unclassifiedActive;
   const isUsingServerSearch = searchResults !== null;
 
   const clearFilters = () => {
@@ -391,6 +422,24 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
           </div>
         </div>
 
+        {/* Topic classification toggle chip */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleUnclassifiedFilter}
+            aria-pressed={unclassifiedActive}
+            data-testid="unclassified-filter-chip"
+            className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 ${
+              unclassifiedActive
+                ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Topics: Unclassified
+            {unclassifiedActive && <HiX className="w-3 h-3" />}
+          </button>
+        </div>
+
         {/* Filter Info */}
         {hasActiveFilters && (
           <div className="mt-3 flex items-center">
@@ -501,6 +550,9 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                   Views
                 </th>
                 <th scope="col" className="px-6 py-3">
+                  Topics
+                </th>
+                <th scope="col" className="px-6 py-3">
                   <span className="sr-only">Actions</span>
                 </th>
               </tr>
@@ -508,7 +560,7 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
             <tbody>
               {displayArticles.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center">
+                  <td colSpan={9} className="px-6 py-12 text-center">
                     <div className="text-secondary dark:text-gray-400">
                       <p className="text-lg mb-2">No articles found</p>
                       <p className="text-sm">
@@ -544,7 +596,12 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                       <td className="px-6 py-4 font-medium text-primary dark:text-primary-dark">
                         <div className="flex items-start gap-2">
                           <div className="flex-1">
-                            <div>{article.title}</div>
+                            <div className="flex items-center">
+                              <span>{article.title}</span>
+                              {article.aiGenerated && (
+                                <AiBadge confidence={article.aiConfidenceScore} />
+                              )}
+                            </div>
                             {isLocked && (
                               <div className="flex items-center gap-1.5 mt-1 text-xs text-yellow-700 dark:text-yellow-400">
                                 <HiLockClosed className="w-3.5 h-3.5 flex-shrink-0" />
@@ -566,15 +623,18 @@ export function ArticlesTableClient({ articles, locale, categories, totalItems }
                     </td>
                     <td className="px-6 py-4">
                       {Array.isArray(article.authors) && article.authors.length > 0
-                        ? article.authors.map((author: any) =>
+                        ? article.authors.map((author) =>
                             typeof author === 'object' && author !== null
-                              ? author.fullName || `${author.firstName || ''} ${author.lastName || ''}`.trim()
+                              ? author.fullName
                               : author
                           ).join(', ')
                         : '-'}
                     </td>
                     <td className="px-6 py-4">{formatDate(article.publishedAt)}</td>
                     <td className="px-6 py-4">{article.viewCount || 0}</td>
+                    <td className="px-6 py-4">
+                      <TopicCountBadge count={Array.isArray(article.topics) ? article.topics.length : 0} />
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <Link

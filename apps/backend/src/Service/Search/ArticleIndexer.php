@@ -82,6 +82,7 @@ final readonly class ArticleIndexer
             'body_ro' => strip_tags($article->getContent() ?? ''),
             'description_ro' => $article->getLead() ?? '',
             'status' => $article->getStatus()->value,
+            'published_locales' => $article->getPublishedLocales(),
             'content_hash' => $article->getContentHash(),
             'date_created' => $article->getCreatedAt()?->format('c'),
             'date_published' => $article->getPublishedAt()?->format('c'),
@@ -114,6 +115,19 @@ final readonly class ArticleIndexer
             $authorNames[] = $author->getFullName();
         }
         $doc['author'] = $authorNames;
+
+        // Topics
+        $topicIds = [];
+        $topicTitles = [];
+        $topicSlugs = [];
+        foreach ($article->getTopics() as $topic) {
+            $topicIds[] = $topic->getId();
+            $topicTitles[] = $topic->getTitle();
+            $topicSlugs[] = $topic->getSlug();
+        }
+        $doc['topic_ids'] = $topicIds;
+        $doc['topic_titles'] = $topicTitles;
+        $doc['topic_slugs'] = $topicSlugs;
 
         // Source name from sourceEmail field prefix
         $sourceEmail = $article->getSourceEmail();

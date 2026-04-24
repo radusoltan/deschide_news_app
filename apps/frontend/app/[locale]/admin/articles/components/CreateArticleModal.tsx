@@ -45,7 +45,7 @@ export default function CreateArticleModal({
 
     try {
       // Prepare minimal article data
-      const articleData: any = {
+      const articleData: Record<string, string> = {
         title: formData.title,
         status: 'new',
       };

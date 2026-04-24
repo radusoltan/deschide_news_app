@@ -39,6 +39,8 @@ export interface Author {
   email?: string;
   type?: string;
   status?: string;
+  title?: string;
+  bio?: string;
 }
 
 export interface Article {
@@ -61,13 +63,18 @@ export interface Article {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+  publishAt?: string | null; // Scheduled publication date
   archivedAt?: string | null; // When article was archived
   archiveReason?: string; // Reason for archival (e.g., 'outdated', 'inaccurate', 'manual')
   locale?: string;
   translatableLocale?: string | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
+  publishedLocales?: string[];
   translatedSlugs?: { ro?: string; en?: string; ru?: string };
+  aiGenerated?: boolean;
+  aiConfidenceScore?: number | null;
+  aiSourceCount?: number | null;
 }
 
 export interface ArticleListResponse {
@@ -84,7 +91,7 @@ export interface ArticleListResponse {
     previous?: string;
     next?: string;
   };
-  search?: any;
+  search?: Record<string, unknown>;
 }
 
 /**

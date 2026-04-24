@@ -40,6 +40,7 @@ final class RelevanceKeywordSeedCommand extends Command
 
         $io->title('Relevance Keyword Seeder');
 
+        try {
         $keywords = $this->getAllKeywords();
         $existingCount = $this->repository->count();
 
@@ -82,6 +83,11 @@ final class RelevanceKeywordSeedCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

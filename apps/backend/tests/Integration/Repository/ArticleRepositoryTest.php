@@ -6,7 +6,9 @@ namespace App\Tests\Integration\Repository;
 
 use App\Entity\Article;
 use App\Entity\Tag;
+use App\Entity\Topic;
 use App\Enum\ArticleStatus;
+use App\Enum\ArticleType;
 use App\Repository\ArticleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -220,5 +222,91 @@ class ArticleRepositoryTest extends KernelTestCase
         $count = $this->repository->countByTag(77777777);
 
         $this->assertSame(0, $count);
+    }
+
+    // =====================================================================
+    // findDevelopingStoryForTopic (Sprint 55 T55.2)
+    // =====================================================================
+
+    public function testFindDevelopingStoryForTopicReturnsMostRecentActiveStory(): void
+    {
+        $suffix = uniqid('dev-story-', true);
+        $topic = $this->createTopic($suffix);
+
+        $story = $this->createDevelopingStory('Story ' . $suffix, $suffix, $topic, new \DateTimeImmutable('-1 hour'));
+        $this->em->flush();
+
+        $result = $this->repository->findDevelopingStoryForTopic($topic, new \DateTimeImmutable('-24 hours'));
+
+        $this->assertNotNull($result);
+        $this->assertSame($story->getId(), $result->getId());
+    }
+
+    public function testFindDevelopingStoryForTopicReturnsNullWhenNoMatch(): void
+    {
+        $suffix = uniqid('dev-story-empty-', true);
+        $topic = $this->createTopic($suffix);
+        $this->em->flush();
+
+        $result = $this->repository->findDevelopingStoryForTopic($topic, new \DateTimeImmutable('-24 hours'));
+
+        $this->assertNull($result);
+    }
+
+    public function testFindDevelopingStoryForTopicExcludesArchived(): void
+    {
+        $suffix = uniqid('dev-story-arch-', true);
+        $topic = $this->createTopic($suffix);
+
+        $story = $this->createDevelopingStory('Archived ' . $suffix, $suffix, $topic, new \DateTimeImmutable('-1 hour'));
+        $story->setStatus(ArticleStatus::ARCHIVED);
+        $this->em->flush();
+
+        $result = $this->repository->findDevelopingStoryForTopic($topic, new \DateTimeImmutable('-24 hours'));
+
+        $this->assertNull($result);
+    }
+
+    public function testFindDevelopingStoryForTopicExcludesOutsideSinceWindow(): void
+    {
+        $suffix = uniqid('dev-story-old-', true);
+        $topic = $this->createTopic($suffix);
+
+        // Article is developing_story but updated_at is Gedmo-timestamped on flush;
+        // to simulate "stale" we call with a `since` in the future.
+        $this->createDevelopingStory('Stale ' . $suffix, $suffix, $topic, new \DateTimeImmutable('-1 hour'));
+        $this->em->flush();
+
+        $result = $this->repository->findDevelopingStoryForTopic($topic, new \DateTimeImmutable('+1 hour'));
+
+        $this->assertNull($result);
+    }
+
+    private function createTopic(string $suffix): Topic
+    {
+        $topic = new Topic();
+        $topic->setTitle('Topic ' . $suffix);
+        $topic->setSlug('topic-' . $suffix);
+        $this->em->persist($topic);
+
+        return $topic;
+    }
+
+    private function createDevelopingStory(
+        string $title,
+        string $suffix,
+        Topic $topic,
+        \DateTimeImmutable $publishedAt,
+    ): Article {
+        $article = new Article();
+        $article->setTitle($title);
+        $article->setSlug('article-' . $suffix);
+        $article->setStatus(ArticleStatus::PUBLISHED);
+        $article->setArticleType(ArticleType::DEVELOPING_STORY);
+        $article->setPublishedAt($publishedAt);
+        $article->addTopic($topic);
+        $this->em->persist($article);
+
+        return $article;
     }
 }

@@ -10,7 +10,7 @@ use App\Message\Editorial\ScrapeSourceMessage;
 use App\MessageHandler\Editorial\ScrapeSourceHandler;
 use App\Repository\ArticleRepository;
 use App\Service\Aggregator\TrendQueryGeneratorService;
-use App\Service\Scraping\ContentDeduplicator;
+use App\Service\Scraping\ScrapingDeduplicator;
 use App\Service\Scraping\HtmlToMarkdownConverter;
 use App\Service\Scraping\RelevanceFilterService;
 use App\Service\Scraping\RssFeedParser;
@@ -153,7 +153,7 @@ class ScrapeSourceHandlerFilterTest extends TestCase
 
         $markdownConverter = new HtmlToMarkdownConverter();
 
-        // ContentDeduplicator — uses mock repository
+        // ScrapingDeduplicator — uses mock repository
         $articleRepo = $this->createMock(ArticleRepository::class);
         if ($duplicateExists) {
             $mock = $this->createMock(\App\Entity\Article::class);
@@ -161,7 +161,7 @@ class ScrapeSourceHandlerFilterTest extends TestCase
         } else {
             $articleRepo->method('findOneBy')->willReturn(null);
         }
-        $deduplicator = new ContentDeduplicator($articleRepo);
+        $deduplicator = new ScrapingDeduplicator($articleRepo);
 
         // Real RelevanceFilterService with keywords
         $relevanceFilter = new RelevanceFilterService(

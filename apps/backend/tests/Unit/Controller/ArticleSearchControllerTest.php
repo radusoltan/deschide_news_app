@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Controller;
 
 use App\Controller\ArticleSearchController;
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ArticleSearchService;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,12 +17,12 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class ArticleSearchControllerTest extends TestCase
 {
-    private ElasticService $elasticService;
+    private ArticleSearchService $elasticService;
     private ArticleSearchController $controller;
 
     protected function setUp(): void
     {
-        $this->elasticService = $this->createStub(ElasticService::class);
+        $this->elasticService = $this->createStub(ArticleSearchService::class);
         $this->controller = new ArticleSearchController($this->elasticService);
 
         $container = $this->createStub(\Symfony\Component\DependencyInjection\ContainerInterface::class);

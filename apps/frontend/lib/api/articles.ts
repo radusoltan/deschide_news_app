@@ -2,7 +2,7 @@
  * Articles API Service
  */
 
-import { ArticleListResponse } from '../types/article';
+import { ArticleListResponse, Article } from '../types/article';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -110,13 +110,13 @@ export async function fetchRelatedArticles(
   categoryId: number,
   locale?: string,
   limit: number = 6
-): Promise<any[]> {
+): Promise<Article[]> {
   try {
     const result = await fetchArticlesByCategory(categoryId, locale, limit + 1);
 
     // Filter out the current article
     const relatedArticles = result.member.filter(
-      (article: any) => article.id !== articleId
+      (article) => article.id !== articleId
     );
 
     // Return only the requested limit

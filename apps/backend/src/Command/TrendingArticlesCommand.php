@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Repository\ArticleRepository;
-use App\Service\PerformanceService;
+use App\Service\Analytics\AnalyticsService;
+use App\Service\Cache\CacheService;
 use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,7 +22,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class TrendingArticlesCommand extends Command
 {
     public function __construct(
-        private readonly PerformanceService $performance,
+        private readonly AnalyticsService $analytics,
+        private readonly CacheService $cache,
         private readonly ArticleRepository $articleRepository
     ) {
         parent::__construct();
@@ -43,7 +45,7 @@ class TrendingArticlesCommand extends Command
         $io->title("Updating trending articles (last {$hours} hours)");
 
         // Get trending articles from Redis
-        $trending = $this->performance->getTrendingArticles($limit);
+        $trending = $this->analytics->getTrendingArticles($limit);
 
         if (empty($trending)) {
             $io->warning('No trending articles found');
@@ -82,7 +84,7 @@ class TrendingArticlesCommand extends Command
         $io->table(['ID', 'Title', 'Category', 'Views (24h)'], $articles);
 
         // Store in cache for quick retrieval
-        $this->performance->setCached('api:trending', $trending, 300); // 5 min
+        $this->cache->setCached('api:trending', $trending, 300); // 5 min
 
         $io->success('Trending articles updated successfully');
 

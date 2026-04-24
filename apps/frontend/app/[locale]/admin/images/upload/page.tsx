@@ -74,8 +74,9 @@ export default function UploadImagesPage() {
       });
 
       return imageData;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload error:', error);
+      const errMsg = error instanceof Error ? error.message : 'Upload failed';
 
       // Update to error
       setUploads((prev) => {
@@ -84,7 +85,7 @@ export default function UploadImagesPage() {
           filename: file.name,
           status: 'error',
           progress: 0,
-          error: error.message || 'Upload failed',
+          error: errMsg,
         });
         return newMap;
       });
@@ -143,8 +144,9 @@ export default function UploadImagesPage() {
 
       // Clear URL input
       setImageUrl('');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload from URL error:', error);
+      const errMsg = error instanceof Error ? error.message : 'Upload failed';
 
       // Update to error
       setUploads((prev) => {
@@ -153,7 +155,7 @@ export default function UploadImagesPage() {
           filename: imageUrl,
           status: 'error',
           progress: 0,
-          error: error.message || 'Upload failed',
+          error: errMsg,
         });
         return newMap;
       });

@@ -90,6 +90,7 @@ class SeedImagesCommand extends Command
             ['Uploads directory' => $this->uploadsDir],
         );
 
+        try {
         // Ensure uploads directory exists
         if (!is_dir($this->uploadsDir)) {
             mkdir($this->uploadsDir, 0755, true);
@@ -114,6 +115,11 @@ class SeedImagesCommand extends Command
         $io->success('STG-09 completed! Run "symfony console app:import:generate-thumbnails" to generate thumbnails.');
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

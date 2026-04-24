@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Service\Editorial;
 
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 final class InternalSummaryService
 {
@@ -15,7 +16,7 @@ final class InternalSummaryService
     private const MIN_SUMMARY_LINES = 2;
 
     public function __construct(
-        private readonly string $geminiCliPath,
+        private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -86,23 +87,9 @@ PROMPT;
 
     private function callGemini(string $prompt): ?string
     {
-        $process = new Process([$this->geminiCliPath, '-p', $prompt]);
-        $process->setTimeout(self::GEMINI_TIMEOUT);
-
         try {
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                $this->logger->warning('InternalSummaryService: Gemini failed', [
-                    'exitCode' => $process->getExitCode(),
-                    'error' => mb_substr($process->getErrorOutput(), 0, 200),
-                ]);
-
-                return null;
-            }
-
-            return trim($process->getOutput());
-        } catch (\Throwable $e) {
+            return $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
+        } catch (GeminiCliException $e) {
             $this->logger->error('InternalSummaryService: Gemini exception', [
                 'error' => $e->getMessage(),
             ]);
@@ -116,10 +103,6 @@ PROMPT;
      */
     private function parseSummary(string $raw): string
     {
-        // Strip markdown code block wrappers
-        $cleaned = preg_replace('/^```(?:\w+)?\s*/m', '', $raw);
-        $cleaned = preg_replace('/\s*```\s*$/m', '', $cleaned);
-
-        return trim($cleaned);
+        return $this->geminiCli->stripFences($raw);
     }
 }

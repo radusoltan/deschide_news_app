@@ -6,17 +6,19 @@ namespace App\Service\Editorial;
 
 use App\Entity\Article;
 use App\Entity\GeneratedContent;
+use App\Entity\Topic;
 use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 final class DossierGenerationService
 {
     private const GEMINI_TIMEOUT = 180;
 
     public function __construct(
-        private readonly string $geminiCliPath,
+        private readonly GeminiCliService $geminiCli,
         private readonly EntityManagerInterface $em,
         private readonly NotebookLMService $notebookLMService,
         private readonly LoggerInterface $logger,
@@ -27,7 +29,7 @@ final class DossierGenerationService
      *
      * @param list<Article> $recentArticles
      */
-    public function generateDossier(string $topicName, array $recentArticles): ?GeneratedContent
+    public function generateDossier(string $topicName, array $recentArticles, ?Topic $topic = null): ?GeneratedContent
     {
         // Build article summaries for the prompt
         $articleSummaries = $this->buildArticleSummaries($recentArticles);
@@ -43,8 +45,8 @@ final class DossierGenerationService
             return null;
         }
 
-        // Enrich with NotebookLM insights if available
-        $insights = $this->enrichWithNotebookLM($topicName, $recentArticles);
+        // Enrich with NotebookLM insights if available (requires Topic with notebookLmId)
+        $insights = $this->enrichWithNotebookLM($recentArticles, $topic);
 
         $fullContent = $dossierContent;
         if ($insights !== null) {
@@ -154,17 +156,17 @@ PROMPT;
     /**
      * @param list<Article> $articles
      */
-    private function enrichWithNotebookLM(string $topicName, array $articles): ?string
+    private function enrichWithNotebookLM(array $articles, ?Topic $topic): ?string
     {
+        if ($topic === null) {
+            return null;
+        }
+
         if (!$this->notebookLMService->isAvailable()) {
             return null;
         }
 
-        $notebooks = []; // Would need to be injected — use resolveNotebookId pattern
-        $notebookId = $this->notebookLMService->resolveNotebookId(
-            $this->slugify($topicName),
-            $notebooks,
-        );
+        $notebookId = $this->notebookLMService->resolveNotebookId($topic);
 
         if ($notebookId === null) {
             return null;
@@ -217,18 +219,9 @@ PROMPT;
 
     private function callGemini(string $prompt): ?string
     {
-        $process = new Process([$this->geminiCliPath, '-p', $prompt]);
-        $process->setTimeout(self::GEMINI_TIMEOUT);
-
         try {
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                return null;
-            }
-
-            return trim($process->getOutput());
-        } catch (\Throwable $e) {
+            return $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
+        } catch (GeminiCliException $e) {
             $this->logger->error('DossierGeneration: Gemini exception', [
                 'error' => $e->getMessage(),
             ]);
@@ -237,16 +230,4 @@ PROMPT;
         }
     }
 
-    private function slugify(string $text): string
-    {
-        $text = mb_strtolower($text);
-        $text = str_replace(
-            ['ă', 'â', 'î', 'ș', 'ț', 'ş', 'ţ', ' '],
-            ['a', 'a', 'i', 's', 't', 's', 't', '-'],
-            $text,
-        );
-        $text = preg_replace('/[^a-z0-9\-]/', '', $text);
-
-        return preg_replace('/-+/', '-', trim($text, '-'));
-    }
 }

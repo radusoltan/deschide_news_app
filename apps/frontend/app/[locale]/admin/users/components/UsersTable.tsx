@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Badge } from 'flowbite-react';
 import DeleteUserModal from './DeleteUserModal';
+import type { User } from '@/lib/dal';
 
 interface UsersTableProps {
-  users: any[];
+  users: User[];
   totalItems: number;
   locale: string;
 }

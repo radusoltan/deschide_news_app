@@ -792,9 +792,11 @@ export async function generateMetadata({ params }: GDPRPageProps): Promise<Metad
     alternates: {
       canonical: `/${locale}/gdpr`,
       languages: {
-        ro: '/gdpr',
+        'ro-MD': '/ro/gdpr',
+        ro: '/ro/gdpr',
         en: '/en/gdpr',
         ru: '/ru/gdpr',
+        'x-default': '/ro/gdpr',
       },
     },
     openGraph: {

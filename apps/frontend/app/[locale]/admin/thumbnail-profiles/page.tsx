@@ -29,7 +29,7 @@ export default async function ThumbnailProfilesPage({ params }: ThumbnailProfile
   try {
     const token = await getAccessToken();
     if (token) {
-      const data = await apiRequest<any>('/api/thumbnail_profiles', {
+      const data = await apiRequest<{ 'hydra:member'?: ThumbnailProfile[]; member?: ThumbnailProfile[] }>('/api/thumbnail_profiles', {
         token,
         next: { revalidate: 300 },
       });

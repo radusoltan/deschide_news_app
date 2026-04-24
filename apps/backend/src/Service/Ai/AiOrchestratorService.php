@@ -94,7 +94,16 @@ final class AiOrchestratorService
         );
 
         // Route to the appropriate handler and get a response
-        $responseText = $this->routeToAgent($agentType, $effectivePrompt, $conversation);
+        try {
+            $responseText = $this->routeToAgent($agentType, $effectivePrompt, $conversation);
+        } catch (\Throwable $e) {
+            $this->logger->error('AI agent call failed', [
+                'agent' => $agentType->value,
+                'conversation_id' => (string) $conversation->getId(),
+                'error' => $e->getMessage(),
+            ]);
+            $responseText = 'Eroare internă: ' . $e->getMessage();
+        }
 
         // Resolve the model used via the provider registry
         $provider = $this->providerRegistry->getProvider($agentType);

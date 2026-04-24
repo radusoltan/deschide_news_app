@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Service\Translation;
 
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 final readonly class GeminiStructuredTranslator
 {
@@ -13,8 +14,8 @@ final readonly class GeminiStructuredTranslator
     private const MAX_RETRIES = 1;
 
     public function __construct(
+        private GeminiCliService $geminiCli,
         private LoggerInterface $logger,
-        private string $geminiCliPath,
     ) {}
 
     /**
@@ -109,23 +110,9 @@ PROMPT;
 
     private function callGemini(string $prompt): ?string
     {
-        $process = new Process([$this->geminiCliPath, '-p', $prompt]);
-        $process->setTimeout(self::TIMEOUT);
-
         try {
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                $this->logger->warning('GeminiStructuredTranslator: process failed', [
-                    'exitCode' => $process->getExitCode(),
-                    'error' => mb_substr($process->getErrorOutput(), 0, 200),
-                ]);
-
-                return null;
-            }
-
-            return trim($process->getOutput());
-        } catch (\Throwable $e) {
+            return $this->geminiCli->execute($prompt, ['timeout' => self::TIMEOUT]);
+        } catch (GeminiCliException $e) {
             $this->logger->error('GeminiStructuredTranslator: exception', [
                 'error' => $e->getMessage(),
             ]);
@@ -142,11 +129,7 @@ PROMPT;
      */
     private function validateResponse(string $raw): ?array
     {
-        // Strip markdown code block wrappers if present
-        $cleaned = preg_replace('/^```(?:json)?\s*/m', '', $raw);
-        $cleaned = preg_replace('/\s*```\s*$/m', '', $cleaned);
-        $cleaned = trim($cleaned);
-
+        $cleaned = $this->geminiCli->stripFences($raw);
         $data = json_decode($cleaned, true);
 
         if (!\is_array($data)) {

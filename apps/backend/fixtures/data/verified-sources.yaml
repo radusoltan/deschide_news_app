@@ -1,0 +1,175 @@
+# =============================================================================
+# Sprint 53 T53.4b — VerifiedSource seed (ADR-020 D4 amendment 2026-04-18)
+# =============================================================================
+# 15 editorial-pipeline signal sources, FK-linked to Source registry via
+# `source_name` (canonical Source.name; exact match via findByName()).
+#
+# Loaded by: src/DataFixtures/Editorial/VerifiedSourceFixture.php
+# Group: editorial-sources
+# Mode: append + find-or-skip on VerifiedSource.slug (idempotent)
+#
+# Follow-up (Sprint 54+):
+#   - kremlin_aligned wave: TASS, RIA, kremlin.ru (requires new Source rows)
+#   - western_mainstream wave: BBC, FT, NYT, Bloomberg, Politico EU
+#   - eu_official wave: ec.europa.eu, consilium.europa.eu, europarl.europa.eu
+#   - ukrainian_independent: Kyiv Independent, Ukrainska Pravda
+#   - md_independent_pro_ru: curated individually
+#   - osint_curated: Bellingcat, ISW
+# =============================================================================
+
+verified_sources:
+  # === WIRE_NEUTRAL (global wires) ===
+  - slug: reuters
+    source_name: Reuters
+    tier: 1
+    editorial_alignment: wire_neutral
+    trust_score_baseline: '0.95'
+    enabled: true
+    editorial_notes: "Global wire service, primary source for international breaking news"
+
+  - slug: associated-press
+    source_name: Associated Press
+    tier: 1
+    editorial_alignment: wire_neutral
+    trust_score_baseline: '0.95'
+    enabled: true
+    editorial_notes: "Global wire, primary source for US and international"
+
+  - slug: afp-france24
+    source_name: AFP (via France24)
+    tier: 1
+    editorial_alignment: wire_neutral
+    trust_score_baseline: '0.95'
+    enabled: true
+    editorial_notes: "AFP content via France24 feed"
+
+  - slug: agerpres
+    source_name: Agerpres
+    tier: 1
+    editorial_alignment: wire_neutral
+    trust_score_baseline: '0.85'
+    enabled: true
+    editorial_notes: "Romanian state wire; reliable on RO/MD coverage"
+
+  # === UKRAINIAN_STATE ===
+  - slug: ukrinform
+    source_name: Ukrinform
+    tier: 1
+    editorial_alignment: ukrainian_state
+    trust_score_baseline: '0.80'
+    enabled: true
+    editorial_notes: "Ukrainian state wire; priority for war coverage"
+
+  # === INDEPENDENT_RU ===
+  - slug: meduza
+    source_name: Meduza
+    tier: 1
+    editorial_alignment: independent_ru
+    trust_score_baseline: '0.80'
+    enabled: true
+    editorial_notes: "Riga-based independent RU outlet, anti-Kremlin reliable"
+
+  - slug: novaya-gazeta-europe
+    source_name: Novaya Gazeta Europe
+    tier: 2
+    editorial_alignment: independent_ru
+    trust_score_baseline: '0.80'
+    enabled: true
+    editorial_notes: "Investigative RU independent"
+
+  # === KREMLIN_ALIGNED ===
+  - slug: interfax
+    source_name: Interfax
+    tier: 2
+    editorial_alignment: kremlin_aligned
+    trust_score_baseline: '0.70'
+    enabled: true
+    editorial_notes: "Kremlin-adjacent; use for 'what state position is' not 'what happened'"
+
+  # Sprint 54 T54.4 — kremlin_aligned wave for echo-chamber detection in
+  # VerificationGate (ADR-020 D3). These must be present in the claim-origin
+  # graph so the gate can distinguish "N sources in same alignment cluster"
+  # from "N independent chains".
+  - slug: tass
+    source_name: TASS
+    tier: 2
+    editorial_alignment: kremlin_aligned
+    trust_score_baseline: '0.30'
+    enabled: true
+    editorial_notes: "Russian state agency; use for 'what state position is', never standalone"
+
+  - slug: ria-novosti
+    source_name: RIA Novosti
+    tier: 2
+    editorial_alignment: kremlin_aligned
+    trust_score_baseline: '0.30'
+    enabled: true
+    editorial_notes: "Russian state-aligned agency; echo-chamber indicator"
+
+  - slug: kremlin-official
+    source_name: Kremlin.ru
+    tier: 1
+    editorial_alignment: kremlin_aligned
+    trust_score_baseline: '0.40'
+    enabled: true
+    editorial_notes: "Official Kremlin press feed; tier 1 as primary-source institutional, but aligned so trust floor stays low"
+
+  # === MD_INVESTIGATIVE ===
+  - slug: zdg
+    source_name: ZDG.md
+    tier: 1
+    editorial_alignment: md_investigative
+    trust_score_baseline: '0.90'
+    enabled: true
+    editorial_notes: "Ziarul de Gardă — highest-credibility MD outlet"
+
+  # === MD_INDEPENDENT_PRO_EU ===
+  - slug: newsmaker
+    source_name: NewsMaker.md
+    tier: 2
+    editorial_alignment: md_independent_pro_eu
+    trust_score_baseline: '0.85'
+    enabled: true
+    editorial_notes: "Bilingual MD independent"
+
+  - slug: tv8
+    source_name: TV8.md
+    tier: 2
+    editorial_alignment: md_independent_pro_eu
+    trust_score_baseline: '0.85'
+    enabled: true
+    editorial_notes: "Independent MD television"
+
+  # === MD_GOVERNMENT ===
+  - slug: moldpres
+    source_name: Moldpres
+    tier: 2
+    editorial_alignment: md_government
+    trust_score_baseline: '0.85'
+    enabled: true
+    editorial_notes: "MD state press agency — source for 'what government announces'"
+
+  # === RO_MAINSTREAM ===
+  - slug: digi24
+    source_name: Digi24
+    tier: 2
+    editorial_alignment: ro_mainstream
+    trust_score_baseline: '0.80'
+    enabled: true
+    editorial_notes: "Romanian mainstream, strong MD coverage"
+
+  - slug: hotnews
+    source_name: HotNews
+    tier: 2
+    editorial_alignment: ro_mainstream
+    trust_score_baseline: '0.80'
+    enabled: true
+    editorial_notes: "Romanian mainstream"
+
+  - slug: g4media
+    source_name: G4Media
+    tier: 2
+    editorial_alignment: ro_mainstream
+    trust_score_baseline: '0.85'
+    enabled: true
+    editorial_notes: "Romanian mainstream, investigative"

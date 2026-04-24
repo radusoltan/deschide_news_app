@@ -30,39 +30,45 @@ class InspectEmailCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $keyword = strtolower($input->getArgument('keyword'));
 
-        $allEmails = [];
-        for ($offset = 0; $offset < 200; $offset += 50) {
-            $batch = $this->zohoMail->listEmails(50, $offset);
-            if (empty($batch)) break;
-            $allEmails = array_merge($allEmails, $batch);
-        }
-
-        foreach ($allEmails as $e) {
-            if (!str_contains(strtolower($e['subject'] . ' ' . $e['fromAddress']), $keyword)) {
-                continue;
+        try {
+            $allEmails = [];
+            for ($offset = 0; $offset < 200; $offset += 50) {
+                $batch = $this->zohoMail->listEmails(50, $offset);
+                if (empty($batch)) break;
+                $allEmails = array_merge($allEmails, $batch);
             }
 
-            $io->section('Found: ' . $e['subject']);
-            $io->text('From: ' . $e['fromAddress']);
-            $io->text('MessageId: ' . $e['messageId']);
-            $io->text('HasAttachment: ' . ($e['hasAttachment'] ? 'YES' : 'no'));
+            foreach ($allEmails as $e) {
+                if (!str_contains(strtolower($e['subject'] . ' ' . $e['fromAddress']), $keyword)) {
+                    continue;
+                }
 
-            // Get content preview
-            $content = $this->zohoMail->getEmailContent($e['messageId'], $e['folderId']);
-            $text = strip_tags($content);
-            $io->text('Body length: ' . mb_strlen($text) . ' chars');
-            $io->text('Body preview: ' . mb_substr(trim($text), 0, 300));
+                $io->section('Found: ' . $e['subject']);
+                $io->text('From: ' . $e['fromAddress']);
+                $io->text('MessageId: ' . $e['messageId']);
+                $io->text('HasAttachment: ' . ($e['hasAttachment'] ? 'YES' : 'no'));
 
-            // Get attachments
-            if ($e['hasAttachment']) {
-                $attachments = $this->zohoMail->getAttachments($e['messageId'], $e['folderId']);
-                $io->text('Attachments: ' . count($attachments));
-                foreach ($attachments as $att) {
-                    $io->text(sprintf('  → %s (%d bytes)', $att['attachmentName'], $att['attachmentSize']));
+                // Get content preview
+                $content = $this->zohoMail->getEmailContent($e['messageId'], $e['folderId']);
+                $text = strip_tags($content);
+                $io->text('Body length: ' . mb_strlen($text) . ' chars');
+                $io->text('Body preview: ' . mb_substr(trim($text), 0, 300));
+
+                // Get attachments
+                if ($e['hasAttachment']) {
+                    $attachments = $this->zohoMail->getAttachments($e['messageId'], $e['folderId']);
+                    $io->text('Attachments: ' . count($attachments));
+                    foreach ($attachments as $att) {
+                        $io->text(sprintf('  → %s (%d bytes)', $att['attachmentName'], $att['attachmentSize']));
+                    }
                 }
             }
-        }
 
-        return Command::SUCCESS;
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Email inspection failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

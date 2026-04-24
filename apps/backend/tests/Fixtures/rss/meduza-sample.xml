@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Meduza — Latest</title>
+    <link>https://meduza.io</link>
+    <description>Riga-based independent RU outlet — UTF-8 cyrillic fixture for T53.6.</description>
+    <language>ru</language>
+    <item>
+      <title>Новое расследование о коррупции в регионах</title>
+      <link>https://meduza.io/feature/2026/04/18/corruption-investigation</link>
+      <description>Журналисты задокументировали схему вывода средств.</description>
+      <pubDate>Fri, 18 Apr 2026 06:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Аналитика: санкционное давление и ответ правительства</title>
+      <link>https://meduza.io/feature/2026/04/18/sanctions-analysis</link>
+      <description>Экономисты оценивают краткосрочные и долгосрочные последствия.</description>
+      <pubDate>Fri, 18 Apr 2026 05:30:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

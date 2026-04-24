@@ -89,7 +89,7 @@ Add/modify these lines (search for existing settings or add at the end):
 maxmemory 512mb
 
 # Eviction policy: remove least recently used keys when memory limit reached
-maxmemory-policy allkeys-lru
+maxmemory-policy volatile-lru
 
 # Number of samples for LRU algorithm (higher = more accurate, but slower)
 maxmemory-samples 5
@@ -111,7 +111,7 @@ redis-cli CONFIG GET maxmemory-policy
 
 **Apply changes without restart** (for immediate effect):
 ```bash
-redis-cli CONFIG SET maxmemory-policy allkeys-lru
+redis-cli CONFIG SET maxmemory-policy volatile-lru
 redis-cli CONFIG SET maxmemory-samples 5
 redis-cli CONFIG REWRITE
 ```
@@ -125,7 +125,7 @@ sudo systemctl restart redis-server
 ```bash
 redis-cli INFO memory | grep -E "maxmemory|maxmemory_policy"
 redis-cli CONFIG GET maxmemory-policy
-# Expected: allkeys-lru
+# Expected: volatile-lru
 ```
 
 **Expected Impact**: Prevent Redis crashes when memory full, automatic cache eviction

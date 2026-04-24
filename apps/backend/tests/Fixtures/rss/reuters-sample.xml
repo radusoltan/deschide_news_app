@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Reuters — Top News</title>
+    <link>https://www.reuters.com</link>
+    <description>Realistic Reuters-shaped fixture for T53.6 WireSourceMonitor tests.</description>
+    <language>en</language>
+    <item>
+      <title>EU signs new trade deal amid global tensions</title>
+      <link>https://www.reuters.com/world/eu-trade-deal-2026-04-18?utm_source=feed</link>
+      <description>The European Union concluded negotiations on a major trade agreement this week...</description>
+      <pubDate>Fri, 18 Apr 2026 09:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Global markets react to central bank statements</title>
+      <link>https://www.reuters.com/markets/central-banks-q2-2026</link>
+      <description>Equities rallied after remarks by monetary authorities signalled continued easing.</description>
+      <pubDate>Fri, 18 Apr 2026 08:30:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Climate summit closes with watered-down commitments</title>
+      <link>https://www.reuters.com/environment/climate-summit-2026</link>
+      <description>Final communique softened earlier language on fossil fuel phase-out.</description>
+      <pubDate>Fri, 18 Apr 2026 07:15:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

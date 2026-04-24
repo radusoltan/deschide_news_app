@@ -12,19 +12,23 @@ use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use App\Message\Editorial\ProcessScrapedArticleMessage;
 use App\MessageHandler\Editorial\ProcessScrapedArticleHandler;
+use App\Repository\PressReleaseRepository;
 use App\Service\CategoryDetectorService;
 use App\Service\ContentDeduplicator;
 use App\Service\ContentHasher;
 use App\Service\NotificationFilterService;
 use App\Service\NotificationService;
+use App\Service\Cleaning\SourceContentCleanerRegistry;
 use App\Service\ScrapedContentCleaner;
 use App\Service\Scraping\RelevanceFilterService;
 use App\Service\SourceAuthorResolver;
 use App\Service\TopicDetectorService;
+use App\Service\Translation\AggregatorTranslationService;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -32,6 +36,7 @@ class ProcessScrapedArticleHandlerTest extends TestCase
 {
     private EntityManagerInterface $em;
     private ContentDeduplicator $deduplicator;
+    private AggregatorTranslationService $translationService;
     private ProcessScrapedArticleHandler $handler;
 
     protected function setUp(): void
@@ -81,17 +86,25 @@ class ProcessScrapedArticleHandlerTest extends TestCase
             logger: new NullLogger(),
         );
 
+        $this->translationService = $this->createMock(AggregatorTranslationService::class);
+
+        $pressReleaseRepo = $this->createMock(PressReleaseRepository::class);
+
         $this->handler = new ProcessScrapedArticleHandler(
             $contentCleaner,
+            new SourceContentCleanerRegistry([]),
             $contentHasher,
             $this->deduplicator,
+            $pressReleaseRepo,
             $categoryDetector,
             $authorResolver,
             $notificationService,
             $topicDetector,
             $relevanceFilter,
+            $this->translationService,
             $this->em,
             new NullLogger(),
+            $this->createMock(MessageBusInterface::class),
         );
     }
 
@@ -153,6 +166,106 @@ class ProcessScrapedArticleHandlerTest extends TestCase
             sourceName: 'Gov.md',
             originalLanguage: 'ro',
             contentHash: 'dup_hash',
+        );
+
+        ($this->handler)($message);
+    }
+
+    #[Test]
+    public function translatesEnglishScrapedArticleAndPreservesOriginal(): void
+    {
+        $this->deduplicator->method('isDuplicate')->willReturn(
+            new DuplicateCheckResult(isDuplicate: false)
+        );
+
+        $this->translationService->expects($this->once())
+            ->method('translateToRomanian');
+
+        $this->em->expects($this->once())
+            ->method('persist')
+            ->with($this->callback(function ($entity) {
+                $this->assertInstanceOf(PressRelease::class, $entity);
+                // Original should be preserved before translation overwrites
+                $this->assertSame('EU announces new trade deal', $entity->getOriginalTitle());
+                $this->assertSame('<p>Clean content</p>', $entity->getOriginalContent());
+                $this->assertSame('en', $entity->getOriginalLanguage());
+
+                return true;
+            }));
+
+        $message = new ProcessScrapedArticleMessage(
+            title: 'EU announces new trade deal',
+            bodyMarkdown: '<p>Raw EU content</p>',
+            sourceUrl: 'https://reuters.com/article/123',
+            sourceName: 'Reuters',
+            originalLanguage: 'en',
+            contentHash: 'en_hash',
+        );
+
+        ($this->handler)($message);
+    }
+
+    #[Test]
+    public function doesNotTranslateRomanianScrapedArticle(): void
+    {
+        $this->deduplicator->method('isDuplicate')->willReturn(
+            new DuplicateCheckResult(isDuplicate: false)
+        );
+
+        $this->translationService->expects($this->never())
+            ->method('translateToRomanian');
+
+        $this->em->expects($this->once())
+            ->method('persist')
+            ->with($this->callback(function ($entity) {
+                $this->assertInstanceOf(PressRelease::class, $entity);
+                $this->assertNull($entity->getOriginalTitle());
+                $this->assertNull($entity->getOriginalContent());
+                $this->assertSame('ro', $entity->getOriginalLanguage());
+
+                return true;
+            }));
+
+        $message = new ProcessScrapedArticleMessage(
+            title: 'Articol moldovenesc',
+            bodyMarkdown: '<p>Conținut românesc</p>',
+            sourceUrl: 'https://moldpres.md/article/123',
+            sourceName: 'Moldpres',
+            originalLanguage: 'ro',
+            contentHash: 'ro_hash',
+        );
+
+        ($this->handler)($message);
+    }
+
+    #[Test]
+    public function translatesGermanScrapedArticleAndPreservesOriginal(): void
+    {
+        $this->deduplicator->method('isDuplicate')->willReturn(
+            new DuplicateCheckResult(isDuplicate: false)
+        );
+
+        $this->translationService->expects($this->once())
+            ->method('translateToRomanian');
+
+        $this->em->expects($this->once())
+            ->method('persist')
+            ->with($this->callback(function ($entity) {
+                $this->assertInstanceOf(PressRelease::class, $entity);
+                $this->assertSame('Deutschland beschließt neues Gesetz', $entity->getOriginalTitle());
+                $this->assertNotNull($entity->getOriginalContent());
+                $this->assertSame('de', $entity->getOriginalLanguage());
+
+                return true;
+            }));
+
+        $message = new ProcessScrapedArticleMessage(
+            title: 'Deutschland beschließt neues Gesetz',
+            bodyMarkdown: '<p>German content</p>',
+            sourceUrl: 'https://example.de/article/123',
+            sourceName: 'German Source',
+            originalLanguage: 'de',
+            contentHash: 'de_hash',
         );
 
         ($this->handler)($message);

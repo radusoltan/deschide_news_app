@@ -7,7 +7,7 @@ namespace App\MessageHandler\Editorial;
 use App\Message\Editorial\ProcessScrapedArticleMessage;
 use App\Message\Editorial\ScrapeSourceMessage;
 use App\Service\Aggregator\TrendQueryGeneratorService;
-use App\Service\Scraping\ContentDeduplicator;
+use App\Service\Scraping\ScrapingDeduplicator;
 use App\Service\Scraping\HtmlToMarkdownConverter;
 use App\Service\Scraping\RelevanceFilterService;
 use App\Service\Scraping\RssFeedParser;
@@ -30,7 +30,7 @@ final readonly class ScrapeSourceHandler
         private RssFeedParser $feedParser,
         private ScraperService $scraper,
         private HtmlToMarkdownConverter $markdownConverter,
-        private ContentDeduplicator $deduplicator,
+        private ScrapingDeduplicator $deduplicator,
         private RelevanceFilterService $relevanceFilter,
         private TrendQueryGeneratorService $trendQueryGenerator,
         private MessageBusInterface $messageBus,
@@ -224,6 +224,7 @@ final readonly class ScrapeSourceHandler
                         originalLanguage: $scraped->language,
                         contentHash: $contentHash,
                         publishedAt: $scraped->publishedAt,
+                        imageUrl: $scraped->imageUrl,
                     ));
 
                     $stats['accepted']++;

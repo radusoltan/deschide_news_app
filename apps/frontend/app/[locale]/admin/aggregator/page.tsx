@@ -1,51 +1,19 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
-
-// Types
-interface TrendingTopic {
-  topicId: number;
-  topicName: string;
-  score: number;
-  articleCount: number;
-  velocity: number;
-}
-
-interface AggregatorSourceStat {
-  source: string;
-  lastRun: string;
-  articlesFound: number;
-  duplicatesSkipped: number;
-  pendingReview: number;
-  status: string;
-}
-
-interface TopicProposal {
-  id: number;
-  title: string;
-  reviewStatus: string;
-  isActive: boolean;
-  createdAt: string;
-}
-
-// Fetch helpers
-async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const token = typeof window !== 'undefined'
-    ? document.cookie.split(';').find(c => c.trim().startsWith('auth_token='))?.split('=')[1]
-    : null;
-
-  return fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-    credentials: 'include',
-  });
-}
+import {
+  fetchTrendingTopics,
+  fetchAggregatorStats,
+  fetchTopicProposals,
+  fetchDedupStats,
+  approveTopicProposal,
+  rejectTopicProposal,
+  triggerAggregatorRun,
+  type TrendingTopic,
+  type AggregatorSourceStat,
+  type TopicProposal,
+  type DedupStats,
+} from '@/app/actions/aggregator';
 
 // Components
 function TrendingTopicsChart({ topics }: { topics: TrendingTopic[] }) {
@@ -210,30 +178,114 @@ function TopicProposalsList({
   );
 }
 
+function DedupStatsWidget({ stats }: { stats: DedupStats | null }) {
+  if (!stats) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+          Statistici Deduplicare
+        </h2>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
+          Nu sunt date de deduplicare disponibile.
+        </p>
+      </div>
+    );
+  }
+
+  const { totals, daily } = stats;
+  const maxDaily = Math.max(...daily.map(d => d.unique + d.duplicate), 1);
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+        Statistici Deduplicare (7 zile)
+      </h2>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">{totals.total}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
+        </div>
+        <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+          <div className="text-2xl font-bold text-green-700 dark:text-green-300">{totals.unique}</div>
+          <div className="text-xs text-green-600 dark:text-green-400">Unice</div>
+        </div>
+        <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 text-center">
+          <div className="text-2xl font-bold text-red-700 dark:text-red-300">{totals.duplicate}</div>
+          <div className="text-xs text-red-600 dark:text-red-400">Duplicate</div>
+        </div>
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 text-center">
+          <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">{totals.pendingReview}</div>
+          <div className="text-xs text-yellow-600 dark:text-yellow-400">De revizuit</div>
+        </div>
+      </div>
+
+      {/* Daily chart */}
+      {daily.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tendinta zilnica</h3>
+          {daily.map((d) => (
+            <div key={d.date} className="flex items-center gap-3">
+              <div className="w-20 text-xs text-gray-500 dark:text-gray-400">{d.date.slice(5)}</div>
+              <div className="flex-1 flex h-4 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
+                <div
+                  className="bg-green-500 h-4 transition-all duration-300"
+                  style={{ width: `${(d.unique / maxDaily) * 100}%` }}
+                  title={`${d.unique} unice`}
+                />
+                <div
+                  className="bg-red-400 h-4 transition-all duration-300"
+                  style={{ width: `${(d.duplicate / maxDaily) * 100}%` }}
+                  title={`${d.duplicate} duplicate`}
+                />
+              </div>
+              <div className="w-16 text-xs text-right text-gray-500 dark:text-gray-400">
+                {d.unique}u / {d.duplicate}d
+              </div>
+            </div>
+          ))}
+          <div className="flex gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-green-500 inline-block"></span> Unice</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-400 inline-block"></span> Duplicate</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Main Page
 export default function AggregatorDashboard() {
   const [trending, setTrending] = useState<TrendingTopic[]>([]);
   const [sources, setSources] = useState<AggregatorSourceStat[]>([]);
   const [proposals, setProposals] = useState<TopicProposal[]>([]);
+  const [dedupStats, setDedupStats] = useState<DedupStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [runDisabled, setRunDisabled] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [trendingRes, sourcesRes, proposalsRes] = await Promise.allSettled([
-        fetchWithAuth(`${API_BASE_URL}/api/topics/trending?days=7&limit=20`),
-        fetchWithAuth(`${API_BASE_URL}/api/aggregator/stats`),
-        fetchWithAuth(`${API_BASE_URL}/api/topics/proposals`),
+      const [trendingData, sourcesData, proposalsData, dedupData] = await Promise.allSettled([
+        fetchTrendingTopics(7, 20),
+        fetchAggregatorStats(),
+        fetchTopicProposals(),
+        fetchDedupStats(),
       ]);
 
-      if (trendingRes.status === 'fulfilled' && trendingRes.value.ok) {
-        setTrending(await trendingRes.value.json());
+      if (trendingData.status === 'fulfilled') {
+        setTrending(trendingData.value);
       }
-      if (sourcesRes.status === 'fulfilled' && sourcesRes.value.ok) {
-        setSources(await sourcesRes.value.json());
+      if (sourcesData.status === 'fulfilled') {
+        setSources(sourcesData.value);
       }
-      if (proposalsRes.status === 'fulfilled' && proposalsRes.value.ok) {
-        setProposals(await proposalsRes.value.json());
+      if (proposalsData.status === 'fulfilled') {
+        setProposals(proposalsData.value);
+      }
+      if (dedupData.status === 'fulfilled') {
+        setDedupStats(dedupData.value);
       }
     } catch (err) {
       console.error('Failed to load aggregator data:', err);
@@ -246,12 +298,30 @@ export default function AggregatorDashboard() {
     loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
+
+  const handleRunNow = async () => {
+    setRunDisabled(true);
+    const result = await triggerAggregatorRun();
+    if (result.success) {
+      setToast({ message: 'Agregare lansată cu succes!', type: 'success' });
+      // Re-enable after 5 minutes
+      setTimeout(() => setRunDisabled(false), 5 * 60 * 1000);
+    } else {
+      setToast({ message: result.error || 'Eroare la lansare', type: 'error' });
+      setRunDisabled(false);
+    }
+  };
+
   const handleApprove = async (id: number) => {
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/topics/${id}/approve`, {
-        method: 'POST',
-      });
-      if (res.ok) {
+      const result = await approveTopicProposal(id);
+      if (result.success) {
         setProposals((prev) => prev.filter((p) => p.id !== id));
       }
     } catch (err) {
@@ -261,10 +331,8 @@ export default function AggregatorDashboard() {
 
   const handleReject = async (id: number) => {
     try {
-      const res = await fetchWithAuth(`${API_BASE_URL}/api/topics/${id}/reject`, {
-        method: 'POST',
-      });
-      if (res.ok) {
+      const result = await rejectTopicProposal(id);
+      if (result.success) {
         setProposals((prev) => prev.filter((p) => p.id !== id));
       }
     } catch (err) {
@@ -286,16 +354,38 @@ export default function AggregatorDashboard() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Aggregator Dashboard
         </h1>
-        <button
-          onClick={loadData}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none"
-        >
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleRunNow}
+            disabled={runDisabled}
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
+          >
+            {runDisabled ? 'Agregare în curs...' : 'Lansează Agregare'}
+          </button>
+          <button
+            onClick={loadData}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
+
+      {toast && (
+        <div
+          className={`rounded-lg px-4 py-3 text-sm font-medium ${
+            toast.type === 'success'
+              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+              : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
 
       <TrendingTopicsChart topics={trending} />
       <AggregatorSourcesStatus sources={sources} />
+      <DedupStatsWidget stats={dedupStats} />
       <TopicProposalsList
         proposals={proposals}
         onApprove={handleApprove}

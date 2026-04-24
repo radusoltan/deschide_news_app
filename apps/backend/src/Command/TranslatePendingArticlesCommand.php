@@ -44,6 +44,7 @@ class TranslatePendingArticlesCommand extends Command
         $dryRun = $input->getOption('dry-run');
         $priorityFilter = $input->getOption('priority');
 
+        try {
         // Find pending articles (status=published, translationStatus=pending or null)
         $pendingArticles = $this->findPendingArticles($limit * 3); // Fetch extra for priority sorting
 
@@ -105,6 +106,11 @@ class TranslatePendingArticlesCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Translation dispatch failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

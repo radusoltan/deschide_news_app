@@ -14,5 +14,6 @@ final readonly class ProcessScrapedArticleMessage
         public string $originalLanguage,
         public string $contentHash,
         public ?\DateTimeImmutable $publishedAt = null,
+        public ?string $imageUrl = null,
     ) {}
 }

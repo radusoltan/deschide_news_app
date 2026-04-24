@@ -58,6 +58,7 @@ class RedirectStatsCommand extends Command
             $io->title('Redirect Statistics');
         }
 
+        try {
         // Get statistics
         $statistics = $this->redirectRepository->getStatistics();
 
@@ -172,6 +173,11 @@ class RedirectStatsCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Failed to collect redirect statistics: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function displayTable(SymfonyStyle $io, array $stats, bool $detailed): void

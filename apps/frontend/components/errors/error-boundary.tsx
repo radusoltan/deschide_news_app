@@ -6,6 +6,7 @@
 'use client';
 
 import { Component, type ReactNode } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import ArticleError from './article-error';
 import type { Locale } from '@/lib/types';
 
@@ -49,10 +50,12 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
       this.props.onError(error, errorInfo);
     }
 
-    // TODO: Log to error tracking service (e.g., Sentry) in production
-    // if (process.env.NODE_ENV === 'production') {
-    //   logErrorToService(error, errorInfo);
-    // }
+    // Report to Sentry in production
+    Sentry.captureException(error, {
+      contexts: {
+        react: { componentStack: errorInfo.componentStack },
+      },
+    });
   }
 
   handleReset = () => {

@@ -20,11 +20,12 @@ export async function GET(
     const image = await getImage(imageId);
 
     return NextResponse.json(image);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('GET /api/images/[id] error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch image' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to fetch image' },
+      { status: 500 }
     );
   }
 }
@@ -54,11 +55,12 @@ export async function PUT(
     });
 
     return NextResponse.json(updatedImage);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('PUT /api/images/[id] error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to update image' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to update image' },
+      { status: 500 }
     );
   }
 }
@@ -82,11 +84,12 @@ export async function DELETE(
     await deleteImage(imageId);
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('DELETE /api/images/[id] error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to delete image' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to delete image' },
+      { status: 500 }
     );
   }
 }

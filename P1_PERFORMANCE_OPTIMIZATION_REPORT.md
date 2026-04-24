@@ -53,7 +53,7 @@ opcache.jit_buffer_size=128M
 **Current Configuration**:
 ```
 maxmemory: 512MB (536870912 bytes)
-maxmemory-policy: allkeys-lru
+maxmemory-policy: volatile-lru
 maxmemory-samples: 5
 ```
 

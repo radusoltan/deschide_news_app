@@ -7,8 +7,9 @@ namespace App\Service\Aggregator;
 use App\Enum\DeduplicationResult;
 use App\Service\ContentDeduplicator;
 use App\Service\ContentHasher;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 class SemanticDeduplicatorService
 {
@@ -21,8 +22,8 @@ class SemanticDeduplicatorService
         private readonly ContentHasher $contentHasher,
         private readonly ContentDeduplicator $contentDeduplicator,
         private readonly ElasticsearchSimilarityService $esSimilarity,
+        private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
-        private readonly string $geminiCliPath,
     ) {}
 
     public function evaluate(string $title, string $content): DeduplicationResult
@@ -97,22 +98,8 @@ class SemanticDeduplicatorService
             $candidate['title'],
         );
 
-        $process = new Process([$this->geminiCliPath, '-p', $prompt]);
-        $process->setTimeout(self::GEMINI_TIMEOUT);
-
         try {
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                $this->logger->warning('SemanticDeduplicator: Gemini CLI failed', [
-                    'exitCode' => $process->getExitCode(),
-                    'stderr' => mb_substr($process->getErrorOutput(), 0, 200),
-                ]);
-
-                return DeduplicationResult::NEEDS_REVIEW;
-            }
-
-            $output = trim($process->getOutput());
+            $output = $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
             $json = $this->extractJson($output);
 
             if ($json === null) {
@@ -138,7 +125,7 @@ class SemanticDeduplicatorService
             }
 
             return DeduplicationResult::UNIQUE;
-        } catch (\Throwable $e) {
+        } catch (GeminiCliException|\Throwable $e) {
             $this->logger->error('SemanticDeduplicator: Gemini CLI exception', [
                 'error' => $e->getMessage(),
             ]);

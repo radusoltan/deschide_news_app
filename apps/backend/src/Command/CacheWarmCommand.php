@@ -6,7 +6,8 @@ namespace App\Command;
 
 use App\Repository\ArticleRepository;
 use App\Repository\CategoryRepository;
-use App\Service\PerformanceService;
+use App\Service\Analytics\AnalyticsService;
+use App\Service\Cache\CacheService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -22,7 +23,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class CacheWarmCommand extends Command
 {
     public function __construct(
-        private readonly PerformanceService $performance,
+        private readonly CacheService $cache,
+        private readonly AnalyticsService $analytics,
         private readonly ArticleRepository $articleRepository,
         private readonly CategoryRepository $categoryRepository,
         private readonly LoggerInterface $logger
@@ -45,8 +47,9 @@ class CacheWarmCommand extends Command
 
         $io->title('Warming cache for popular content');
 
+        try {
         // Get popular articles (by views from trending)
-        $trending = $this->performance->getTrendingArticles($popularCount);
+        $trending = $this->analytics->getTrendingArticles($popularCount);
         $articleIds = array_column($trending, 'article_id');
 
         if (empty($articleIds)) {
@@ -76,6 +79,15 @@ class CacheWarmCommand extends Command
         ]);
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $this->logger->error('Cache warm failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'command' => $this->getName(),
+            ]);
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function warmArticles(array $articleIds, array $locales, SymfonyStyle $io): void
@@ -98,7 +110,7 @@ class CacheWarmCommand extends Command
 
                 // Simple cache - just store the article entity
                 // In production, you'd fetch through the proper provider with translations
-                $this->performance->setCached($cacheKey, $article, 3600);
+                $this->cache->setCached($cacheKey, $article, 3600);
                 ++$warmed;
 
                 $progress->advance();
@@ -125,7 +137,7 @@ class CacheWarmCommand extends Command
                 $cacheKey = "api:categories:{$category->getId()}:{$locale}";
 
                 // Simple cache - just store the category entity
-                $this->performance->setCached($cacheKey, $category, 3600);
+                $this->cache->setCached($cacheKey, $category, 3600);
                 ++$warmed;
 
                 $progress->advance();

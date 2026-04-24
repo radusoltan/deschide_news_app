@@ -77,6 +77,7 @@ class SeedDemoDataCommand extends Command
             return Command::SUCCESS;
         }
 
+        try {
         // Get required entities
         $users = $this->entityManager->getRepository(User::class)->findAll();
         if (empty($users)) {
@@ -117,6 +118,11 @@ class SeedDemoDataCommand extends Command
         $io->success('Demo data seeding completed!');
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function seedTags(SymfonyStyle $io): void
@@ -258,6 +264,7 @@ class SeedDemoDataCommand extends Command
 
                     // All archive articles are published
                     $article->setStatus(ArticleStatus::PUBLISHED);
+                    $article->setPublishedLocales(['ro']);
 
                     // Random day in the month
                     $day = rand(1, 28);

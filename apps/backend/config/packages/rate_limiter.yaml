@@ -29,3 +29,47 @@ framework:
             policy: 'fixed_window'
             limit: 30
             interval: '1 hour'
+
+        # Topic detection rate limit (1/sec to avoid Gemini saturation)
+        topic_detection:
+            policy: 'fixed_window'
+            limit: 1
+            interval: '1 second'
+
+        # NotebookLM fact-check (20 req/min per user — Sprint 51a)
+        factcheck:
+            policy: 'fixed_window'
+            limit: 20
+            interval: '1 minute'
+
+        # Admin escalation endpoints — 100 req/h per user total (list/approve/reject/stats).
+        # Sprint 55 T55.12. Per-editor limiter so one editor's spam cannot block
+        # others — the factory resolves by user identifier at request time.
+        escalation:
+            policy: 'token_bucket'
+            limit: 100
+            rate: { interval: '1 hour', amount: 100 }
+
+        # Admin escalation extend-sla — tighter per-editor limit (5/h).
+        # Audit D8: editors should not repeatedly extend to bypass SLA;
+        # hard ceiling at 5 extensions per hour per editor.
+        escalation_extend:
+            policy: 'token_bucket'
+            limit: 5
+            rate: { interval: '1 hour', amount: 5 }
+
+        # Global editorial writer throttle (Sprint 56 T56.06 / ADR-022 D2).
+        # Caps Flash + DevelopingStory writer dispatches across the pipeline
+        # at this many per hour, closing the B-H5 false-safety claim (the
+        # editorial.throttle.articles_per_hour AppSetting has been seeded
+        # since S55 but had zero enforcement until now).
+        #
+        # Runtime limit is read from AppSetting `editorial.throttle.articles_per_hour`
+        # by {@see \App\Service\Editorial\WriterThrottle}; the YAML value
+        # below is the fallback if the setting is missing/invalid, and it
+        # also anchors the factory autowiring so `debug:container
+        # limiter.editorial_writer` surfaces the throttle for observability.
+        editorial_writer:
+            policy: 'sliding_window'
+            limit: 10
+            interval: '1 hour'

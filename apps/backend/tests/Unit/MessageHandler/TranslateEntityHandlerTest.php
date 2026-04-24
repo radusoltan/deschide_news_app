@@ -15,6 +15,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\NullLogger;
 
 #[CoversClass(TranslateEntityHandler::class)]
@@ -35,8 +36,8 @@ class TranslateEntityHandlerTest extends TestCase
             $this->categoryRepo,
             $this->authorRepo,
             $this->em,
+            new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()),
             new NullLogger(),
-            '/usr/bin/gemini',
             '/tmp',
         );
     }

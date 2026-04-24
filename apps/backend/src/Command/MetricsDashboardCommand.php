@@ -41,6 +41,7 @@ final class MetricsDashboardCommand extends Command
         $to = new \DateTimeImmutable('now');
         $from = $to->modify("-{$days} days");
 
+        try {
         $metrics = $this->metricsService->collectMetrics($from, $to);
 
         if ($jsonOutput) {
@@ -110,5 +111,10 @@ final class MetricsDashboardCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

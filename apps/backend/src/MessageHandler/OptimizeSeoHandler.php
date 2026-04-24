@@ -8,10 +8,10 @@ use App\Message\OptimizeSeoMessage;
 use App\Repository\ArticleRepository;
 use App\Service\SeoPromptBuilder;
 use App\Service\SeoResultProcessor;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
-use Symfony\Component\Process\Exception\ProcessTimedOutException;
-use Symfony\Component\Process\Process;
 
 #[AsMessageHandler]
 final readonly class OptimizeSeoHandler
@@ -22,8 +22,8 @@ final readonly class OptimizeSeoHandler
         private ArticleRepository $articleRepository,
         private SeoPromptBuilder $promptBuilder,
         private SeoResultProcessor $resultProcessor,
+        private GeminiCliService $geminiCli,
         private LoggerInterface $logger,
-        private string $geminiCliPath,
         private string $projectDir,
     ) {
     }
@@ -125,10 +125,10 @@ final readonly class OptimizeSeoHandler
             ]);
 
             return $result;
-        } catch (ProcessTimedOutException) {
-            $this->logger->error('OptimizeSeoHandler: Gemini timeout', [
+        } catch (GeminiCliException $e) {
+            $this->logger->error('OptimizeSeoHandler: Gemini ' . ($e->isTimeout() ? 'timeout' : 'failed'), [
                 'articleId' => $message->articleId,
-                'timeout' => self::TIMEOUT,
+                'error' => $e->getMessage(),
             ]);
 
             return null;
@@ -144,31 +144,18 @@ final readonly class OptimizeSeoHandler
 
     private function runGemini(string $prompt): string
     {
-        $process = new Process(
-            command: [
-                $this->geminiCliPath,
-                '-p', 'Analyze the article and generate SEO metadata in JSON format as instructed.',
-                '-o', 'json',
+        $output = $this->geminiCli->execute(
+            'Analyze the article and generate SEO metadata in JSON format as instructed.',
+            [
+                'stdin' => $prompt,
+                'jsonOutput' => true,
+                'timeout' => self::TIMEOUT,
+                'cwd' => $this->projectDir,
             ],
-            cwd: $this->projectDir,
-            env: ['HOME' => '/home/radu', 'PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin'],
-            timeout: self::TIMEOUT,
         );
 
-        $process->setInput($prompt);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException(
-                'Gemini CLI failed (exit ' . $process->getExitCode() . '): '
-                . $process->getErrorOutput()
-            );
-        }
-
-        $output = trim($process->getOutput());
-
-        if (empty($output)) {
-            throw new \RuntimeException('Gemini CLI returned empty output');
+        if ($output === '') {
+            throw new GeminiCliException('Gemini CLI returned empty output');
         }
 
         return $output;

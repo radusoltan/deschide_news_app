@@ -12,9 +12,16 @@ parameters:
     # Notification cleanup
     app.notification_retention_days: 90
 
+    # Frontend revalidation URL (env-configurable, avoids hardcoded localhost)
+    frontend_revalidate_url_default: 'http://localhost:3005/api/revalidate-articles'
+
     # Gemini CLI path for translation workflow
     gemini_cli_path: '%env(default:gemini_cli_default:GEMINI_CLI_PATH)%'
     gemini_cli_default: '/usr/bin/gemini'
+
+    # Home directory for Gemini CLI subprocess
+    gemini_home_dir: '%env(default:gemini_home_dir_default:GEMINI_HOME_DIR)%'
+    gemini_home_dir_default: '/home/radu'
 
     # Claude CLI path for AI Newsroom Assistant (Sprint 20)
     claude_cli_path: '%env(default:claude_cli_default:CLAUDE_CLI_PATH)%'
@@ -34,6 +41,8 @@ services:
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
         bind:
             $environment: '%kernel.environment%'
+            # ADR-023 D9 — env-driven ES index prefix; only binds to ctors declaring this param.
+            $elasticsearchIndexPrefix: '%env(ELASTICSEARCH_INDEX_PREFIX)%'
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -63,8 +72,22 @@ services:
     #     calls:
     #         - [setTransliterator, [['App\Service\RomanianSlugger', 'slugifyStatic']]]
 
-    # Elasticsearch Service
-    App\Service\ElasticService:
+    # Elasticsearch Services (split from ElasticService — T38.4 SRP)
+    App\Service\Elasticsearch\ElasticIndexManager:
+        arguments:
+            $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
+            $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
+            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
+
+    App\Service\Elasticsearch\ArticleSearchService:
+        arguments:
+            $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
+            $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
+            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
+            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
+
+    App\Service\Elasticsearch\ElasticDocumentService:
         arguments:
             $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
@@ -95,11 +118,16 @@ services:
                 prefix: 'deschide_session:'
                 ttl: 86400
 
-    # Performance Service (Cache + Statistics)
-    App\Service\PerformanceService:
+    # Cache Service (split from PerformanceService — T38.4 SRP)
+    App\Service\Cache\CacheService:
         arguments:
             $redis: '@Predis\Client'
-            $em: '@doctrine.orm.entity_manager'
+            $logger: '@logger'
+
+    # Analytics Service (split from PerformanceService — T38.4 SRP)
+    App\Service\Analytics\AnalyticsService:
+        arguments:
+            $redis: '@Predis\Client'
             $logger: '@logger'
 
     # Cached Article Provider (Decorator)
@@ -107,7 +135,7 @@ services:
         decorates: App\State\ArticleProvider
         arguments:
             $decorated: '@.inner'
-            $performance: '@App\Service\PerformanceService'
+            $performance: '@App\Service\Cache\CacheService'
             $requestStack: '@request_stack'
             $logger: '@logger'
 
@@ -116,7 +144,7 @@ services:
         decorates: App\State\CategoryProvider
         arguments:
             $decorated: '@.inner'
-            $performance: '@App\Service\PerformanceService'
+            $performance: '@App\Service\Cache\CacheService'
             $requestStack: '@request_stack'
             $logger: '@logger'
 
@@ -196,11 +224,6 @@ services:
         tags:
             - { name: kernel.event_subscriber }
 
-    # Article Processor with dual cache invalidation (PerformanceService + Doctrine Result Cache)
-    App\State\ArticleProcessor:
-        arguments:
-            $doctrineResultCachePool: '@doctrine.result_cache_pool'
-
     # Test Cache Headers Subscriber (test environment only)
     App\EventSubscriber\TestCacheHeadersSubscriber:
         arguments:
@@ -217,34 +240,46 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
-    # Topic Detector Service (Gemini CLI subprocess)
+    # Centralized Gemini CLI Service (replaces 18 duplicated Process calls)
+    App\Service\Ai\Provider\GeminiCliService:
+        arguments:
+            $geminiCliPath: '%gemini_cli_path%'
+            $homeDir: '%gemini_home_dir%'
+
+    # ADR-024 D2 dispatcher — T57.P7.C1 adds Gemini-transport branch; needs
+    # projectDir for GeminiCliService cwd option (agent-file resolution).
+    App\Agent\AgentDispatcher:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    # Topic Detector Service (uses GeminiCliService)
     App\Service\TopicDetectorService:
         arguments:
-            $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
-    # Translation Handler (Gemini CLI subprocess)
+    # Batch Topic Classifier (uses GeminiCliService — Sprint 34)
+    App\Service\Topic\BatchTopicClassifier:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+
+    # Translation Handler (uses GeminiCliService)
     App\MessageHandler\TranslateArticleHandler:
         arguments:
-            $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
-    # Entity Translation Handler (Gemini CLI subprocess — categories, authors)
+    # Entity Translation Handler (uses GeminiCliService — categories, authors)
     App\MessageHandler\TranslateEntityHandler:
         arguments:
-            $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
-    # SEO Optimization Handler (Gemini CLI subprocess)
+    # SEO Optimization Handler (uses GeminiCliService)
     App\MessageHandler\OptimizeSeoHandler:
         arguments:
-            $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
-    # SEO Backfill Command (Gemini CLI batch subprocess)
+    # SEO Backfill Command (uses GeminiCliService batch)
     App\Command\SeoBackfillCommand:
         arguments:
-            $geminiCliPath: '%gemini_cli_path%'
             $projectDir: '%kernel.project_dir%'
 
     # Elasticsearch Trilingual Index Manager (Sprint 16)
@@ -255,10 +290,8 @@ services:
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
             $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
 
-    # Gemini Structured Translator (Sprint 16)
-    App\Service\Translation\GeminiStructuredTranslator:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
+    # Gemini Structured Translator (uses GeminiCliService — Sprint 16)
+    App\Service\Translation\GeminiStructuredTranslator: ~
 
     # Scraping Services (Sprint 16)
     App\Service\Scraping\RssFeedParser:
@@ -278,28 +311,17 @@ services:
             $enabled: '%notebooklm.enabled%'
             $cliPath: '%notebooklm.cli_path%'
 
-    # Article Ingestion Service (Sprint 17 — entity extraction)
-    App\Service\Editorial\ArticleIngestionService:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
-            $notebooks: '%notebooklm.notebooks%'
+    # Article Ingestion Service (uses GeminiCliService — Sprint 17)
+    App\Service\Editorial\ArticleIngestionService: ~
 
-    # Dossier Generation Service (Sprint 17 — automated dossiers)
-    App\Service\Editorial\DossierGenerationService:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
+    # Dossier Generation Service (uses GeminiCliService — Sprint 17)
+    App\Service\Editorial\DossierGenerationService: ~
 
-    # Weekly Summary Service (Sprint 17 — sinteză săptămânală)
-    App\Service\Editorial\WeeklySummaryService:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
-            $weeklyNotebookId: '%notebooklm.weekly_notebook_id%'
+    # Weekly Summary Service (uses GeminiCliService — Sprint 17)
+    App\Service\Editorial\WeeklySummaryService: ~
 
-    # Daily Briefing Service (Sprint 17 — briefing zilnic)
-    App\Service\Editorial\DailyBriefingService:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
-            $briefingNotebookId: '%notebooklm.briefing_notebook_id%'
+    # Daily Briefing Service (uses GeminiCliService — Sprint 17)
+    App\Service\Editorial\DailyBriefingService: ~
 
     # AI Newsroom: Anthropic API Client (for production with API key)
     App\Service\Ai\AnthropicApiClient:
@@ -320,18 +342,14 @@ services:
         tags: ['ai.provider']
 
     App\Service\Ai\Provider\GeminiCliProvider:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
         tags: ['ai.provider']
 
     App\Service\Ai\Provider\AiProviderRegistry:
         arguments:
             $providers: !tagged_iterator ai.provider
 
-    # Internal Summary Service (Sprint 20 — TL;DR agent)
-    App\Service\Editorial\InternalSummaryService:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
+    # Internal Summary Service (uses GeminiCliService — Sprint 20)
+    App\Service\Editorial\InternalSummaryService: ~
 
     # Dev Reset Command (full dev environment reset)
     App\Command\Editorial\DevResetCommand:
@@ -339,15 +357,11 @@ services:
             $appEnv: '%kernel.environment%'
             $em: '@doctrine.orm.entity_manager'
 
-    # Background Generator Service (Sprint 20 — context istoric automat)
-    App\Service\Editorial\BackgroundGeneratorService:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
+    # Background Generator Service (uses GeminiCliService — Sprint 20)
+    App\Service\Editorial\BackgroundGeneratorService: ~
 
-    # Translation Evaluator Service (Sprint 18 — Evaluator-Optimizer loop)
-    App\Service\Translation\TranslationEvaluatorService:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
+    # Translation Evaluator Service (uses GeminiCliService — Sprint 18)
+    App\Service\Translation\TranslationEvaluatorService: ~
 
     # YouTube Sync Service (Video Emissions)
     App\Service\YouTubeSyncService:
@@ -365,9 +379,7 @@ services:
             $zohoAccountsUrl: '%env(ZOHO_ACCOUNTS_URL)%'
 
     # Aggregator Services (Sprint 24)
-    App\Service\Translation\AggregatorTranslationService:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
+    App\Service\Translation\AggregatorTranslationService: ~
 
     App\Service\Aggregator\AggregatorRateLimiter:
         arguments:
@@ -380,9 +392,7 @@ services:
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
             $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
 
-    App\Service\Aggregator\SemanticDeduplicatorService:
-        arguments:
-            $geminiCliPath: '%gemini_cli_path%'
+    App\Service\Aggregator\SemanticDeduplicatorService: ~
 
     App\Service\Aggregator\GoogleNewsRssAggregator:
         arguments:
@@ -390,6 +400,27 @@ services:
             $locales: '%aggregator.google_news_rss.locales%'
             $userAgents: '%aggregator.google_news_rss.user_agents%'
             $enabled: '%aggregator.google_news_rss.enabled%'
+
+    # Source Content Cleaner Registry (Sprint 43 — per-source noise removal)
+    App\Service\Cleaning\SourceContentCleanerRegistry:
+        arguments:
+            $cleaners: !tagged_iterator app.source_content_cleaner
+
+    # Editorial guard pipeline (Sprint 55 T55.6). Iterates all
+    # services tagged `app.editorial_guard` (auto-tagged via
+    # App\Service\Editorial\Guard\GuardInterface attribute).
+    App\Service\Editorial\Guard\GuardPipeline:
+        arguments:
+            $guards: !tagged_iterator app.editorial_guard
+
+    App\Service\Editorial\Guard\GuardPipelineInterface:
+        alias: App\Service\Editorial\Guard\GuardPipeline
+
+    # Sprint 55 T55.16 LLM cost summary CLI was pinned to %kernel.logs_dir%
+    # for its grep-based MVP. T56.09 switched the command to DB-backed
+    # aggregation against LlmAgentCallLogRepository, so the explicit
+    # $logDir arg is no longer required — autowiring handles the repository
+    # injection directly.
 
 # Test environment specific configuration
 when@test:

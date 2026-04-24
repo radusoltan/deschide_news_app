@@ -7,6 +7,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ArticleCard from '@/components/ArticleCard';
+import type { Article } from '@/lib/types/article';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
@@ -67,7 +68,7 @@ async function fetchTopicArticles(
   topicId: number,
   locale: string,
   page: number
-): Promise<{ articles: any[]; total: number }> {
+): Promise<{ articles: Article[]; total: number }> {
   try {
     const res = await fetch(
       `${API_BASE_URL}/api/topics/${topicId}/articles?page=${page}&itemsPerPage=20`,
@@ -111,9 +112,11 @@ export async function generateMetadata({ params }: TopicPageProps): Promise<Meta
     alternates: {
       canonical: `${SITE_URL}/${locale}/topics/${slug}`,
       languages: {
+        'ro-MD': `${SITE_URL}/ro/topics/${slugRo}`,
         ro: `${SITE_URL}/ro/topics/${slugRo}`,
         en: `${SITE_URL}/en/topics/${slugEn}`,
         ru: `${SITE_URL}/ru/topics/${slugRu}`,
+        'x-default': `${SITE_URL}/ro/topics/${slugRo}`,
       },
     },
   };
@@ -189,7 +192,7 @@ export default async function TopicDetailPage({ params, searchParams }: TopicPag
       {/* Articles grid */}
       {articles.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.map((article: any) => (
+          {articles.map((article: Article) => (
             <ArticleCard key={article.id} article={article} locale={locale} />
           ))}
         </div>

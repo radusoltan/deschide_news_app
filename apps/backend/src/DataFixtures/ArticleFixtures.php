@@ -17,9 +17,12 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
 {
     private const ARTICLE_COUNT = 80;
 
-    private const CATEGORY_COUNT = 8;
+    private const CATEGORY_SLUGS = [
+        'politica', 'societate', 'externe', 'economie', 'romania',
+        'cultura', 'sport', 'editoriale', 'opinii', 'advertorial', 'anti-fake',
+    ];
 
-    private const AUTHOR_COUNT = 12;
+    private const AUTHOR_COUNT = 19;
 
     public function getDependencies(): array
     {
@@ -41,8 +44,8 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
             $article = new Article();
 
             // Assign category (uniform distribution)
-            $categoryIndex = ($i - 1) % self::CATEGORY_COUNT;
-            $category = $this->getReference('category_' . $categoryIndex, \App\Entity\Category::class);
+            $categorySlug = self::CATEGORY_SLUGS[($i - 1) % \count(self::CATEGORY_SLUGS)];
+            $category = $this->getReference('category-' . $categorySlug, \App\Entity\Category::class);
             $article->setCategory($category);
 
             // Assign 1-3 authors
@@ -83,12 +86,22 @@ class ArticleFixtures extends Fixture implements DependentFixtureInterface
             $viewCount = rand(1, 100) <= 70 ? rand(50, 500) : rand(500, 10000);
             $article->setViewCount($viewCount);
 
-            // Published date for PUBLISHED articles (last 30 days)
+            // Published date and publishedLocales for PUBLISHED articles (last 30 days)
             if ($status === ArticleStatus::PUBLISHED) {
                 $daysAgo = $this->getRandomDaysAgo();
                 $publishedAt = new DateTimeImmutable("-$daysAgo days");
                 $article->setPublishedAt($publishedAt);
                 $publishedArticles[] = $i;
+
+                // Per-locale publishing: 60% RO only, 25% RO+EN+RU, 15% RO+EN
+                $localeRand = rand(1, 100);
+                if ($localeRand <= 60) {
+                    $article->setPublishedLocales(['ro']);
+                } elseif ($localeRand <= 85) {
+                    $article->setPublishedLocales(['ro', 'en', 'ru']);
+                } else {
+                    $article->setPublishedLocales(['ro', 'en']);
+                }
             }
 
             // Publish at for SUBMITTED/NEW (30% have future dates)

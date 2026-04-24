@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getLiveTextById } from '@/lib/api';
 import { PostsEditorClient } from './components/PostsEditorClient';
+import type { LiveText } from '@/lib/types/livetext';
 
 interface LiveTextPostsPageProps {
   params: Promise<{
@@ -13,7 +14,7 @@ export default async function LiveTextPostsPage({ params }: LiveTextPostsPagePro
   const { locale, id } = await params;
 
   // Fetch LiveText data
-  let liveText: any = null;
+  let liveText: LiveText | null = null;
   try {
     liveText = await getLiveTextById(parseInt(id, 10), { locale, cache: 'no-store' });
   } catch (err) {

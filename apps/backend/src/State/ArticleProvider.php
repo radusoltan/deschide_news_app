@@ -83,6 +83,10 @@ final class ArticleProvider implements ProviderInterface
             $result = $query->getOneOrNullResult();
 
             if ($result instanceof Article) {
+                // Per-locale publishing: return 404 if article not published in requested locale
+                if (!$result->isPublishedInLocale($locale)) {
+                    return null;
+                }
                 $this->populateTranslatedSlugs([$result]);
             }
 
@@ -103,7 +107,9 @@ final class ArticleProvider implements ProviderInterface
             ->leftJoin('ai.image', 'img')
             ->addSelect('img')
             ->andWhere('a.status != :archived_status')
-            ->setParameter('archived_status', 'archived');
+            ->setParameter('archived_status', 'archived')
+            ->andWhere('ARRAY_CONTAINS(a.publishedLocales, :currentLocale) = true')
+            ->setParameter('currentLocale', $locale);
 
         // Apply filters from query parameters
         if ($request) {
@@ -166,6 +172,22 @@ final class ArticleProvider implements ProviderInterface
                 if (\in_array($authorType, $validAuthorTypes, true)) {
                     $queryBuilder->andWhere('au.type = :authorType')
                         ->setParameter('authorType', $authorType);
+                }
+            }
+
+            // Filter: unclassified (?unclassified=1) — articles with no article_topics rows.
+            // Declared on Article via ArticleUnclassifiedFilter for OpenAPI /
+            // IriTemplate discoverability; the actual predicate lives here because
+            // this provider builds its own query and bypasses API Platform filter
+            // chain (same pattern as category/status/isFeatured above).
+            if ($request->query->has('unclassified')) {
+                $raw = $request->query->get('unclassified');
+                $truthy = \in_array(strtolower((string) $raw), ['1', 'true', 'yes'], true);
+                if ($truthy) {
+                    $queryBuilder->andWhere(
+                        'NOT EXISTS (SELECT 1 FROM App\\Entity\\Article a_sub '
+                        . 'JOIN a_sub.topics t_sub WHERE a_sub.id = a.id)'
+                    );
                 }
             }
 

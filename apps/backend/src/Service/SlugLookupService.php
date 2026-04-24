@@ -33,7 +33,7 @@ class SlugLookupService
     private const SUPPORTED_LOCALES = ['ro', 'en', 'ru'];
 
     public function __construct(
-        private ElasticService $elasticService,
+        private \App\Service\Elasticsearch\ArticleSearchService $elasticService,
         private ArticleRepository $articleRepository,
         private CategoryRepository $categoryRepository,
         private UrlRedirectRepository $urlRedirectRepository,

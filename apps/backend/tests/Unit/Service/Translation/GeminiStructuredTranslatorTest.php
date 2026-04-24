@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Translation;
 
+use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Translation\GeminiStructuredTranslator;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -12,7 +13,7 @@ class GeminiStructuredTranslatorTest extends TestCase
 {
     public function testValidateResponseParsesValidJson(): void
     {
-        $translator = new GeminiStructuredTranslator(new NullLogger(), '/usr/bin/false');
+        $translator = new GeminiStructuredTranslator(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), new NullLogger());
 
         $reflection = new \ReflectionMethod($translator, 'validateResponse');
 
@@ -39,7 +40,7 @@ class GeminiStructuredTranslatorTest extends TestCase
 
     public function testValidateResponseStripsMarkdownCodeBlocks(): void
     {
-        $translator = new GeminiStructuredTranslator(new NullLogger(), '/usr/bin/false');
+        $translator = new GeminiStructuredTranslator(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), new NullLogger());
 
         $reflection = new \ReflectionMethod($translator, 'validateResponse');
 
@@ -58,7 +59,7 @@ class GeminiStructuredTranslatorTest extends TestCase
 
     public function testValidateResponseRejectsInvalidJson(): void
     {
-        $translator = new GeminiStructuredTranslator(new NullLogger(), '/usr/bin/false');
+        $translator = new GeminiStructuredTranslator(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), new NullLogger());
 
         $reflection = new \ReflectionMethod($translator, 'validateResponse');
 
@@ -69,7 +70,7 @@ class GeminiStructuredTranslatorTest extends TestCase
 
     public function testValidateResponseRejectsMissingRequiredFields(): void
     {
-        $translator = new GeminiStructuredTranslator(new NullLogger(), '/usr/bin/false');
+        $translator = new GeminiStructuredTranslator(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), new NullLogger());
 
         $reflection = new \ReflectionMethod($translator, 'validateResponse');
 
@@ -85,7 +86,7 @@ class GeminiStructuredTranslatorTest extends TestCase
 
     public function testValidateResponseDefaultsOptionalArrayFields(): void
     {
-        $translator = new GeminiStructuredTranslator(new NullLogger(), '/usr/bin/false');
+        $translator = new GeminiStructuredTranslator(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), new NullLogger());
 
         $reflection = new \ReflectionMethod($translator, 'validateResponse');
 
@@ -108,7 +109,7 @@ class GeminiStructuredTranslatorTest extends TestCase
 
     public function testValidateResponseTruncatesSeoDescription(): void
     {
-        $translator = new GeminiStructuredTranslator(new NullLogger(), '/usr/bin/false');
+        $translator = new GeminiStructuredTranslator(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), new NullLogger());
 
         $reflection = new \ReflectionMethod($translator, 'validateResponse');
 
@@ -128,7 +129,7 @@ class GeminiStructuredTranslatorTest extends TestCase
 
     public function testBuildPromptContainsRequiredElements(): void
     {
-        $translator = new GeminiStructuredTranslator(new NullLogger(), '/usr/bin/false');
+        $translator = new GeminiStructuredTranslator(new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()), new NullLogger());
 
         $reflection = new \ReflectionMethod($translator, 'buildPrompt');
 

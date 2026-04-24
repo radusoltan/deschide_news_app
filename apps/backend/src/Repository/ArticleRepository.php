@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\Article;
+use App\Entity\Topic;
+use App\Enum\ArticleStatus;
+use App\Enum\ArticleType;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -145,5 +148,35 @@ class ArticleRepository extends ServiceEntityRepository
             ->setParameter('tagId', $tagId)
             ->getQuery()
             ->getSingleScalarResult();
+    }
+
+    /**
+     * Find the most recent active developing-story article for a Topic (Sprint 55 T55.2, ADR-020 D9).
+     *
+     * An article is considered "active developing" when it:
+     *  - is of type {@see ArticleType::DEVELOPING_STORY},
+     *  - has at least one entry linking it to the given Topic,
+     *  - is not in {@see ArticleStatus::ARCHIVED},
+     *  - was updated on or after `$since` (controls the developing-story freshness window).
+     *
+     * Returns null when no such article exists — the caller (DevelopingStoryWriter
+     * dispatcher) then falls back to FlashWriter to create a new article.
+     */
+    public function findDevelopingStoryForTopic(Topic $topic, \DateTimeImmutable $since): ?Article
+    {
+        return $this->createQueryBuilder('a')
+            ->innerJoin('a.topics', 't')
+            ->andWhere('t = :topic')
+            ->andWhere('a.articleType = :type')
+            ->andWhere('a.status != :archived')
+            ->andWhere('a.updatedAt >= :since')
+            ->setParameter('topic', $topic)
+            ->setParameter('type', ArticleType::DEVELOPING_STORY->value)
+            ->setParameter('archived', ArticleStatus::ARCHIVED->value)
+            ->setParameter('since', $since)
+            ->orderBy('a.updatedAt', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

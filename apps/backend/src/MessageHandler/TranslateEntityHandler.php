@@ -12,9 +12,10 @@ use App\Repository\AuthorRepository;
 use App\Repository\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
-use Symfony\Component\Process\Process;
 
 #[AsMessageHandler]
 final readonly class TranslateEntityHandler
@@ -26,8 +27,8 @@ final readonly class TranslateEntityHandler
         private CategoryRepository $categoryRepository,
         private AuthorRepository $authorRepository,
         private EntityManagerInterface $em,
+        private GeminiCliService $geminiCli,
         private LoggerInterface $logger,
-        private string $geminiCliPath,
         private string $projectDir,
     ) {
     }
@@ -299,32 +300,18 @@ final readonly class TranslateEntityHandler
         // Combine system prompt + entity JSON via stdin
         $stdinContent = $systemPrompt . "\n\n---\n\nEntity JSON to translate:\n" . $promptJson;
 
-        // Gemini CLI: use -p with short instruction, full content via stdin
-        $process = new Process(
-            command: [
-                $this->geminiCliPath,
-                '-p', 'Translate the entity metadata from the input below. Return JSON with translations key containing ' . $locale . '.',
-                '-o', 'json',
+        $output = $this->geminiCli->execute(
+            'Translate the entity metadata from the input below. Return JSON with translations key containing ' . $locale . '.',
+            [
+                'stdin' => $stdinContent,
+                'jsonOutput' => true,
+                'timeout' => self::TIMEOUT,
+                'cwd' => $this->projectDir,
             ],
-            cwd: $this->projectDir,
-            env: ['HOME' => '/home/radu', 'PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin'],
-            timeout: self::TIMEOUT,
         );
 
-        $process->setInput($stdinContent);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException(
-                'Gemini CLI failed (exit ' . $process->getExitCode() . '): '
-                . $process->getErrorOutput()
-            );
-        }
-
-        $output = trim($process->getOutput());
-
-        if (empty($output)) {
-            throw new \RuntimeException('Gemini CLI returned empty output');
+        if ($output === '') {
+            throw new GeminiCliException('Gemini CLI returned empty output');
         }
 
         return $output;
@@ -337,51 +324,14 @@ final readonly class TranslateEntityHandler
      */
     private function parseGeminiOutput(string $rawOutput): array
     {
-        $cleaned = trim($rawOutput);
-
-        // Strip control characters
-        $map = [];
-        for ($i = 0; $i <= 0x1F; ++$i) {
-            $map[\chr($i)] = ' ';
-        }
-        $map[\chr(0x7F)] = ' ';
-        $cleaned = strtr($cleaned, $map);
-
-        $decoded = json_decode($cleaned, true, 512, \JSON_THROW_ON_ERROR);
-
-        if (!\is_array($decoded)) {
-            throw new \RuntimeException('Entity translation JSON did not decode to an array');
+        try {
+            $parsed = $this->geminiCli->parseJson($rawOutput);
+        } catch (GeminiCliException $e) {
+            throw new \RuntimeException('Invalid entity translation response: ' . $e->getMessage());
         }
 
-        // Handle Gemini envelope { session_id, response, stats }
-        if (isset($decoded['response']) && \is_string($decoded['response'])) {
-            $responseStr = $decoded['response'];
-
-            // Strip markdown JSON wrappers
-            $responseStr = preg_replace('/^```(?:json)?\s*/m', '', $responseStr);
-            $responseStr = preg_replace('/\s*```\s*$/m', '', $responseStr ?? $decoded['response']);
-            $responseStr = trim($responseStr ?? $decoded['response']);
-
-            // Extract JSON from possible preamble
-            $jsonStart = strpos($responseStr, '{');
-            $jsonEnd = strrpos($responseStr, '}');
-            if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd > $jsonStart) {
-                $responseStr = substr($responseStr, $jsonStart, $jsonEnd - $jsonStart + 1);
-            }
-
-            // Strip control characters
-            $responseStr = strtr($responseStr, $map);
-
-            $inner = json_decode($responseStr, true, 512, \JSON_THROW_ON_ERROR);
-
-            if (\is_array($inner)) {
-                return $inner;
-            }
-        }
-
-        // Direct JSON with translations key
-        if (isset($decoded['translations'])) {
-            return $decoded;
+        if (isset($parsed['translations'])) {
+            return $parsed;
         }
 
         throw new \RuntimeException('Invalid entity translation response: missing "translations" key');

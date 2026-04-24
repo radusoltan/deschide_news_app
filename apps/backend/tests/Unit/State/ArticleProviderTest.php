@@ -352,12 +352,12 @@ class ArticleProviderTest extends TestCase
         $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
         $this->queryBuilder
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('andWhere')
             ->willReturnSelf();
 
         $this->queryBuilder
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('setParameter')
             ->willReturnSelf();
 
@@ -375,7 +375,7 @@ class ArticleProviderTest extends TestCase
         $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
         $this->queryBuilder
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('andWhere')
             ->willReturnSelf();
 
@@ -393,7 +393,7 @@ class ArticleProviderTest extends TestCase
         $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
         $this->queryBuilder
-            ->expects($this->exactly(2))
+            ->expects($this->exactly(3))
             ->method('andWhere')
             ->willReturnSelf();
 

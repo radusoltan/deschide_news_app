@@ -1,0 +1,524 @@
+# Python scraper source configuration
+# SSOT for both Python CLI and Symfony scheduling
+# Pattern mirrors apps/backend/config/packages/scraping.yaml
+#
+# Validated: 2026-04-15 (Sprint 46)
+
+sources:
+  # ============================================================
+  # GOV.MD PLATFORM RSS — standard /ro/rss.xml pattern
+  # ============================================================
+
+  gov_md:
+    name: "Guvernul Republicii Moldova"
+    url: "https://gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 30
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  # cancelaria.gov.md — DISABLED: malformed XML (invalid token line 110)
+  # cancelaria:
+  #   name: "Cancelaria de Stat"
+  #   url: "https://cancelaria.gov.md/ro/rss.xml"
+  #   type: "gov-rss"
+  #   frequency: 60
+  #   language: "ro"
+  #   credibility: 0.80
+  #   enabled: false
+
+  # presedinte.md — DISABLED: SSL certificate verification failure
+  # presedinte:
+  #   name: "Președinția Republicii Moldova"
+  #   url: "https://presedinte.md/rom/rss"
+  #   type: "gov-rss"
+  #   frequency: 60
+  #   language: "ro"
+  #   credibility: 0.90
+  #   enabled: false
+
+  # mfa.gov.md — DISABLED: SSL certificate verification failure
+  # mfa:
+  #   name: "Ministerul Afacerilor Externe și Integrării Europene"
+  #   url: "https://mfa.gov.md/ro/rss.xml"
+  #   type: "gov-rss"
+  #   frequency: 120
+  #   language: "ro"
+  #   credibility: 0.85
+  #   enabled: false
+
+  mai:
+    name: "Ministerul Afacerilor Interne"
+    url: "https://mai.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 60
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  mf:
+    name: "Ministerul Finanțelor"
+    url: "https://mf.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  justice:
+    name: "Ministerul Justiției"
+    url: "https://justice.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  # ms.gov.md — DISABLED: 404 Not Found (no RSS feed)
+  # ms:
+  #   name: "Ministerul Sănătății"
+  #   url: "https://ms.gov.md/ro/rss.xml"
+  #   type: "gov-rss"
+  #   frequency: 120
+  #   language: "ro"
+  #   credibility: 0.85
+  #   enabled: false
+
+  mec:
+    name: "Ministerul Economiei"
+    url: "https://mec.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  mecc:
+    name: "Ministerul Educației și Cercetării"
+    url: "https://mecc.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: true
+
+  madrm:
+    name: "Ministerul Agriculturii și Industriei Alimentare"
+    url: "https://madrm.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: true
+
+  maia:
+    name: "Ministerul Mediului"
+    url: "https://maia.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: true
+
+  # midr.gov.md — DISABLED: 403 Forbidden
+  # midr:
+  #   name: "Ministerul Infrastructurii și Dezvoltării Regionale"
+  #   url: "https://midr.gov.md/ro/rss.xml"
+  #   type: "gov-rss"
+  #   frequency: 120
+  #   language: "ro"
+  #   credibility: 0.80
+  #   enabled: false
+
+  # ============================================================
+  # GOV.MD AGENCIES — validated RSS feeds
+  # ============================================================
+
+  politia:
+    name: "Inspectoratul General al Poliției"
+    url: "https://politia.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 60
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  igsu:
+    name: "Inspectoratul General pentru Situații de Urgență"
+    url: "https://igsu.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 60
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  bnm:
+    name: "Banca Națională a Moldovei"
+    url: "https://www.bnm.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.90
+    enabled: true
+
+  cna:
+    name: "Centrul Național Anticorupție"
+    url: "https://cna.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  sis:
+    name: "Serviciul de Informații și Securitate"
+    url: "https://sis.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  agepi:
+    name: "Agenția de Stat pentru Proprietatea Intelectuală"
+    url: "https://agepi.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 240
+    language: "ro"
+    credibility: 0.75
+    enabled: true
+
+  # cec.md — DISABLED: 404 (redirects to a.cec.md, no RSS)
+  # customs.gov.md — DISABLED: 404 Not Found
+  # anre.md — DISABLED: 404 Not Found
+
+  # ============================================================
+  # NEW MINISTRIES — Sprint 46 expansion (2026-04-15)
+  # ============================================================
+
+  mc:
+    name: "Ministerul Culturii"
+    url: "https://mc.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  energie:
+    name: "Ministerul Energiei"
+    url: "https://energie.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  mediu:
+    name: "Ministerul Mediului"
+    url: "https://mediu.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  # army.md — DISABLED: Server unreachable (timeout on RSS and DOM)
+  army:
+    name: "Ministerul Apărării"
+    url: "https://www.army.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: false
+
+  # social.gov.md — DISABLED: 404 on RSS, no usable DOM content
+  social:
+    name: "Ministerul Muncii și Protecției Sociale"
+    url: "https://social.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: false
+
+  # ============================================================
+  # NEW AGENCIES — RSS feeds (Sprint 46 expansion)
+  # ============================================================
+
+  # Subordinated to MAI
+  carabinier:
+    name: "Inspectoratul General al Carabinierilor"
+    url: "https://carabinier.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 60
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  # Subordinated to MS & MMPS
+  cnas:
+    name: "Casa Națională de Asigurări Sociale"
+    url: "https://cnas.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  anofm:
+    name: "Agenția Națională pentru Ocuparea Forței de Muncă"
+    url: "https://anofm.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: true
+
+  ism:
+    name: "Inspectoratul de Stat al Muncii"
+    url: "https://ism.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: true
+
+  # Subordinated to MAIA & Mediu
+  am:
+    name: "Agenția de Mediu"
+    url: "https://am.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: true
+
+  # Subordinated to MIDR & MDED
+  caa:
+    name: "Autoritatea Aeronautică Civilă"
+    url: "https://www.caa.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.75
+    enabled: true
+
+  # Subordinated to Guvern/Cancelarie
+  asp:
+    name: "Agenția Servicii Publice"
+    url: "https://asp.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: true
+
+  # ============================================================
+  # NEW AGENCIES — DISABLED (no working RSS or DOM)
+  # ============================================================
+
+  # constcourt.md — DISABLED: 404 on RSS, no usable DOM content
+  constcourt:
+    name: "Curtea Constituțională"
+    url: "https://www.constcourt.md"
+    type: "dom-scraper"
+    frequency: 120
+    language: "ro"
+    credibility: 0.90
+    enabled: false
+
+  # consiliuaudiovizual.md — DISABLED: blocked by robots.txt
+  audiovizual:
+    name: "Consiliul Audiovizualului"
+    url: "https://consiliuaudiovizual.md"
+    type: "dom-scraper"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: false
+
+  # sfs.md — DISABLED: malformed RSS XML (invalid token line 37)
+  sfs:
+    name: "Serviciul Fiscal de Stat"
+    url: "https://sfs.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: false
+
+  # border.gov.md — DISABLED: 404 on RSS, DOM returns nav/banner garbage
+  igpf:
+    name: "Inspectoratul General al Poliției de Frontieră"
+    url: "https://border.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 30
+    language: "ro"
+    credibility: 0.85
+    enabled: false
+
+  # igm.gov.md — DISABLED: 404 on RSS, no usable DOM content
+  igm:
+    name: "Inspectoratul General pentru Migrație"
+    url: "https://igm.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: false
+
+  # cnam.md — DISABLED: 404 on RSS, no usable DOM content
+  cnam:
+    name: "Compania Națională de Asigurări în Medicină"
+    url: "https://cnam.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: false
+
+  # ansa.gov.md — DISABLED: 404 on RSS, no usable DOM content
+  ansa:
+    name: "Agenția Națională pentru Siguranța Alimentelor"
+    url: "https://ansa.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: false
+
+  # aipa.gov.md — DISABLED: 404 on RSS, no usable DOM content
+  aipa:
+    name: "Agenția de Intervenție și Plăți pentru Agricultură"
+    url: "https://aipa.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: false
+
+  # ipm.gov.md — DISABLED: 404 on RSS, no usable DOM content
+  ipm:
+    name: "Inspectoratul pentru Protecția Mediului"
+    url: "https://ipm.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: false
+
+  # moldsilva.gov.md — DISABLED: 404 on RSS, no usable DOM content
+  moldsilva:
+    name: "Agenția Moldsilva"
+    url: "https://moldsilva.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.75
+    enabled: false
+
+  # anta.gov.md — DISABLED: 404 on RSS, no usable DOM content
+  anta:
+    name: "Agenția Națională Transport Auto"
+    url: "https://anta.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.75
+    enabled: false
+
+  # asd.md — DISABLED: 404 on RSS, no usable DOM content
+  asd:
+    name: "Administrația de Stat a Drumurilor"
+    url: "https://asd.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.75
+    enabled: false
+
+  # oda.md — DISABLED: 404 on RSS, no usable DOM content
+  oda:
+    name: "Organizația pentru Dezvoltarea Antreprenoriatului"
+    url: "https://oda.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.75
+    enabled: false
+
+  # app.gov.md — DISABLED: server unreachable (connection refused)
+  app:
+    name: "Agenția Proprietății Publice"
+    url: "https://app.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.75
+    enabled: false
+
+  # arfc.gov.md — DISABLED: redirects to agcc.gov.md, 404 on RSS
+  arfc:
+    name: "Agenția Relații Funciare și Cadastru"
+    url: "https://arfc.gov.md/ro/rss.xml"
+    type: "gov-rss"
+    frequency: 120
+    language: "ro"
+    credibility: 0.75
+    enabled: false
+
+  # ============================================================
+  # DOM SCRAPING SOURCES
+  # ============================================================
+
+  meteo_md:
+    name: "Serviciul Hidrometeorologic de Stat"
+    url: "http://www.meteo.md/"
+    type: "dom-scraper"
+    frequency: 15
+    language: "ro"
+    credibility: 0.90
+    enabled: true
+
+  mded:
+    name: "Ministerul Dezvoltării Economice și Digitalizării"
+    url: "https://mded.gov.md"
+    type: "dom-scraper"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  ansp:
+    name: "Agenția Națională pentru Sănătate Publică"
+    url: "https://ansp.md"
+    type: "dom-scraper"
+    frequency: 120
+    language: "ro"
+    credibility: 0.80
+    enabled: true
+
+  bns:
+    name: "Biroul Național de Statistică"
+    url: "https://statistica.gov.md"
+    type: "dom-scraper"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true
+
+  # ============================================================
+  # PDF EXTRACTION SOURCES
+  # ============================================================
+
+  procuratura:
+    name: "Procuratura Generală"
+    url: "https://procuratura.md/stiri-si-mass-media/comunicate-de-presa"
+    type: "pdf-extractor"
+    frequency: 120
+    language: "ro"
+    credibility: 0.85
+    enabled: true

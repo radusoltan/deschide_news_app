@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Service\NotebookLM;
 
+use App\Entity\Topic;
+use App\Repository\AppSettingRepository;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
 
-final class NotebookLMService
+class NotebookLMService
 {
     private const DEFAULT_TIMEOUT = 120;
     private const AUDIO_TIMEOUT = 300;
@@ -16,14 +18,23 @@ final class NotebookLMService
         private readonly bool $enabled,
         private readonly string $cliPath,
         private readonly LoggerInterface $logger,
+        private readonly ?AppSettingRepository $settings = null,
     ) {}
 
     /**
      * Check if NotebookLM CLI is available and authenticated.
+     *
+     * Gated by BOTH the env var (%notebooklm.enabled%) AND the AppSettings
+     * runtime flag (`notebooklm.enabled`). When AppSettings is not wired
+     * (unit tests), only the env var applies.
      */
     public function isAvailable(): bool
     {
         if (!$this->enabled) {
+            return false;
+        }
+
+        if ($this->settings !== null && !$this->settings->getBool('notebooklm.enabled', false)) {
             return false;
         }
 
@@ -291,36 +302,55 @@ final class NotebookLMService
     }
 
     /**
-     * Get the notebook ID for a given category/topic.
-     *
-     * @param array<string, string> $notebooks Mapping of topic -> notebookId
+     * Get the notebook ID for a given topic.
+     * Topic entity owns its notebookLmId directly (Sprint 51a — Topic-as-SSOT).
      */
-    public function resolveNotebookId(string $category, array $notebooks): ?string
+    public function resolveNotebookId(Topic $topic): ?string
     {
-        // Direct match
-        if (isset($notebooks[$category]) && $notebooks[$category] !== '') {
-            return $notebooks[$category];
+        return $topic->getNotebookLmId();
+    }
+
+    /**
+     * Ensure a NotebookLM notebook exists for a topic, creating one if needed.
+     * Caller is responsible for flushing the EntityManager.
+     */
+    public function ensureNotebookForTopic(Topic $topic): ?string
+    {
+        $existing = $topic->getNotebookLmId();
+        if ($existing !== null) {
+            return $existing;
         }
 
-        // Fuzzy mapping
-        $mappings = [
-            'politica' => 'politica',
-            'politică' => 'politica',
-            'economie' => 'economie',
-            'integrare' => 'integrare_ue',
-            'integrare-ue' => 'integrare_ue',
-            'justiție' => 'justitie',
-            'justitie' => 'justitie',
-            'transnistria' => 'transnistria',
-            'energie' => 'energie',
-        ];
-
-        $key = $mappings[mb_strtolower($category)] ?? null;
-        if ($key !== null && isset($notebooks[$key]) && $notebooks[$key] !== '') {
-            return $notebooks[$key];
+        if (!$this->isAvailable()) {
+            return null;
         }
 
-        return null;
+        $title = sprintf('Deschide — %s', $topic->getTitle());
+        $process = $this->run(['notebook', 'create', '--title', $title]);
+
+        if ($process === null || !$process->isSuccessful()) {
+            $this->logger->warning('NotebookLM: failed to create notebook for topic', [
+                'topicId' => $topic->getId(),
+                'topicTitle' => $topic->getTitle(),
+                'error' => $process?->getErrorOutput(),
+            ]);
+
+            return null;
+        }
+
+        $notebookId = $this->cleanOutput($process->getOutput());
+        if ($notebookId === '') {
+            return null;
+        }
+
+        $topic->setNotebookLmId($notebookId);
+
+        $this->logger->info('NotebookLM: notebook created for topic', [
+            'topicId' => $topic->getId(),
+            'notebookId' => $notebookId,
+        ]);
+
+        return $notebookId;
     }
 
     /**

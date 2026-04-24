@@ -90,6 +90,7 @@ class SlugControllerTest extends TestCase
         $article = $this->createStub(Article::class);
         $category = $this->createStub(Category::class);
         $article->method('getCategory')->willReturn($category);
+        $article->method('isPublishedInLocale')->willReturn(true);
 
         $qb = $this->createQueryBuilderChainReturning($article);
         $this->articleRepository->method('createQueryBuilder')->willReturn($qb);
@@ -130,6 +131,7 @@ class SlugControllerTest extends TestCase
     {
         $article = $this->createStub(Article::class);
         $article->method('getCategory')->willReturn(null);
+        $article->method('isPublishedInLocale')->willReturn(true);
 
         $qb = $this->createQueryBuilderChainReturning($article);
         $this->articleRepository->method('createQueryBuilder')->willReturn($qb);
@@ -148,6 +150,7 @@ class SlugControllerTest extends TestCase
     {
         $article = $this->createStub(Article::class);
         $article->method('getCategory')->willReturn(null);
+        $article->method('isPublishedInLocale')->willReturn(true);
 
         $qb = $this->createQueryBuilderChainReturning($article);
         $this->articleRepository->method('createQueryBuilder')->willReturn($qb);
@@ -228,6 +231,7 @@ class SlugControllerTest extends TestCase
         $category = $this->createStub(Category::class);
         $article = $this->createStub(Article::class);
         $article->method('getCategory')->willReturn($category);
+        $article->method('isPublishedInLocale')->willReturn(true);
 
         $qb = $this->createQueryBuilderChainReturning($article);
         $this->articleRepository->method('createQueryBuilder')->willReturn($qb);
@@ -246,6 +250,7 @@ class SlugControllerTest extends TestCase
     {
         $article = $this->createStub(Article::class);
         $article->method('getCategory')->willReturn(null);
+        $article->method('isPublishedInLocale')->willReturn(true);
 
         $qb = $this->createQueryBuilderChainReturning($article);
         $this->articleRepository->method('createQueryBuilder')->willReturn($qb);
@@ -264,6 +269,7 @@ class SlugControllerTest extends TestCase
     {
         $article = $this->createStub(Article::class);
         $article->method('getCategory')->willReturn(null);
+        $article->method('isPublishedInLocale')->willReturn(true);
 
         $qb = $this->createQueryBuilderChainReturning($article);
         $this->articleRepository->method('createQueryBuilder')->willReturn($qb);
@@ -674,6 +680,7 @@ class SlugControllerTest extends TestCase
     {
         $article = $this->createStub(Article::class);
         $article->method('getCategory')->willReturn(null);
+        $article->method('isPublishedInLocale')->willReturn(true);
 
         $qb = $this->createQueryBuilderChainReturning($article);
         $this->articleRepository->method('createQueryBuilder')->willReturn($qb);
@@ -699,6 +706,7 @@ class SlugControllerTest extends TestCase
     {
         $article = $this->createStub(Article::class);
         $article->method('getCategory')->willReturn(null);
+        $article->method('isPublishedInLocale')->willReturn(true);
 
         $qb = $this->createQueryBuilderChainReturning($article);
         $this->articleRepository->method('createQueryBuilder')->willReturn($qb);

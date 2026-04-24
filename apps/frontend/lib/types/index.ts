@@ -17,3 +17,4 @@ export * from './article';
 export * from './image';
 export * from './menu';
 export * from './tag';
+export * from './topic';

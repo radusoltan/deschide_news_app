@@ -208,7 +208,7 @@ export function usePostShareTracking(postId: number) {
  */
 export function useAbTestVariant(testId: number | null) {
   const [variant, setVariant] = useState<string | null>(null);
-  const [config, setConfig] = useState<Record<string, any> | null>(null);
+  const [config, setConfig] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

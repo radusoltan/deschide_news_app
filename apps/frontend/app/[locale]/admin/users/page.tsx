@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import UsersTable from './components/UsersTable';
-import { getUsers } from '@/lib/dal';
+import { getUsers, type User } from '@/lib/dal';
 
 interface UsersPageProps {
   params: Promise<{
@@ -18,7 +18,7 @@ export default async function UsersPage({ params, searchParams }: UsersPageProps
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
   const itemsPerPage = 20;
 
-  let usersData: any[] = [];
+  let usersData: User[] = [];
   let totalItems = 0;
   let error: string | null = null;
 

@@ -5,16 +5,17 @@ declare(strict_types=1);
 namespace App\Service\Translation;
 
 use App\Entity\PressRelease;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 class AggregatorTranslationService
 {
     private const GEMINI_TIMEOUT = 60;
 
     public function __construct(
+        private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
-        private readonly string $geminiCliPath,
     ) {}
 
     /**
@@ -75,25 +76,11 @@ class AggregatorTranslationService
 
     private function callGemini(string $prompt): ?string
     {
-        $process = new Process([$this->geminiCliPath, '-p', $prompt]);
-        $process->setTimeout(self::GEMINI_TIMEOUT);
-
         try {
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                $this->logger->warning('AggregatorTranslationService: Gemini CLI failed', [
-                    'exitCode' => $process->getExitCode(),
-                    'stderr' => mb_substr($process->getErrorOutput(), 0, 200),
-                ]);
-
-                return null;
-            }
-
-            $output = trim($process->getOutput());
+            $output = $this->geminiCli->execute($prompt, ['timeout' => self::GEMINI_TIMEOUT]);
 
             return $output !== '' ? $output : null;
-        } catch (\Throwable $e) {
+        } catch (GeminiCliException $e) {
             $this->logger->error('AggregatorTranslationService: exception', [
                 'error' => $e->getMessage(),
             ]);

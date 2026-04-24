@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getLiveTexts } from '@/lib/api';
 import { LiveTextsTableClient } from './LiveTextsTableClient';
+import type { LiveText } from '@/lib/types/livetext';
 
 interface LiveTextsPageProps {
   params: Promise<{
@@ -25,9 +26,9 @@ export default async function LiveTextsPage({ params, searchParams }: LiveTextsP
   let error: string | null = null;
 
   try {
-    const filters: any = {
-      page: currentPage,
-      itemsPerPage,
+    const filters: Record<string, string> = {
+      page: String(currentPage),
+      itemsPerPage: String(itemsPerPage),
       orderBy: 'createdAt' as const,
       orderDirection: 'DESC' as const,
     };

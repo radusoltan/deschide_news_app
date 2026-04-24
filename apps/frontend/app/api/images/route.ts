@@ -17,11 +17,12 @@ export async function GET(request: NextRequest) {
     const data = await getImages({ page, itemsPerPage, search });
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('GET /api/images error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch images' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to fetch images' },
+      { status: 500 }
     );
   }
 }
@@ -37,11 +38,12 @@ export async function POST(request: NextRequest) {
     const image = await uploadImage(formData);
 
     return NextResponse.json(image, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('POST /api/images error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to upload image' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to upload image' },
+      { status: 500 }
     );
   }
 }

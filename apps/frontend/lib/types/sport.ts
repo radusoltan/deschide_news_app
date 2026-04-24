@@ -91,7 +91,7 @@ export interface MatchStatistics {
     home: number;
     away: number;
   };
-  [key: string]: any;
+  [key: string]: { home: number; away: number } | undefined;
 }
 
 export interface SportMatch {
@@ -134,7 +134,7 @@ export interface MatchEvent {
   formattedMinute: string;
   scoreAfterEvent?: string;
   description?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -187,7 +187,7 @@ export interface AddEventRequest {
   playerName?: string;
   secondPlayerName?: string;
   description?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface UpdateMinuteRequest {

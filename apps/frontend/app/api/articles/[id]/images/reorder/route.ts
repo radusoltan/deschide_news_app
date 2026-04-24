@@ -27,11 +27,12 @@ export async function PUT(
     await reorderArticleImages(updates);
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('PUT /api/articles/[id]/images/reorder error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to reorder images' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to reorder images' },
+      { status: 500 }
     );
   }
 }

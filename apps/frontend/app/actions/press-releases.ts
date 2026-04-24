@@ -25,7 +25,9 @@ export interface PressReleaseItem {
   sourceType: 'email' | 'scrape' | 'manual' | 'aggregator';
   sourceName: string | null;
   originalLanguage: string | null;
+  originalTitle: string | null;
   rejectionReason: string | null;
+  sourceHostname: string | null;
 }
 
 export interface PressReleaseListResult {
@@ -167,6 +169,45 @@ export async function fetchPressReleaseCounts(): Promise<SourceTypeCounts> {
     return await res.json();
   } catch {
     return { email: 0, scrape: 0, manual: 0, aggregator: 0, total: 0 };
+  }
+}
+
+export interface FetchContentResult {
+  success: boolean;
+  contentLength?: number;
+  wordCount?: number;
+  lead?: string | null;
+  error?: string;
+}
+
+export async function fetchPressReleaseContent(id: number): Promise<FetchContentResult> {
+  const token = await getAccessToken();
+  if (!token) return { success: false, error: 'Nu ești autentificat' };
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/press-releases/${id}/fetch-content`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { success: false, error: err.error || `HTTP ${res.status}` };
+    }
+
+    const data = await res.json();
+    return {
+      success: true,
+      contentLength: data.contentLength,
+      wordCount: data.wordCount,
+      lead: data.lead,
+    };
+  } catch (err) {
+    return { success: false, error: String(err) };
   }
 }
 

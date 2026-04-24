@@ -85,9 +85,11 @@ export async function generateMetadata({
     alternates: {
       canonical: `/${locale}/archive`,
       languages: {
+        'ro-MD': '/ro/archive',
         ro: '/ro/archive',
         en: '/en/archive',
         ru: '/ru/archive',
+        'x-default': '/ro/archive',
       },
     },
     openGraph: {

@@ -155,13 +155,15 @@ describe('Reserved Slugs', () => {
 
   describe('Backend compatibility', () => {
     it('should match backend reserved slugs count', () => {
-      // Backend has 18 reserved slugs in ReservedSlug.php
+      // Backend has 19 reserved slugs in ReservedSlug.php
+      // Frontend includes 's' for short links and all system routes
       expect(RESERVED_SLUGS).toHaveLength(18);
     });
 
     it('should include all backend reserved slugs', () => {
       // These must match the backend validation
       const backendSlugs = [
+        's',
         'all',
         'search',
         'trending',

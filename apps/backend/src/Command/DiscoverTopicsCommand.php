@@ -40,6 +40,7 @@ final class DiscoverTopicsCommand extends Command
         $io->title('Topic Discovery');
         $io->info(sprintf('Analyzing PressReleases from the last %d hours...', $hours));
 
+        try {
         $proposals = $this->discoveryService->discoverNewTopics($hours);
 
         if (empty($proposals)) {
@@ -68,5 +69,10 @@ final class DiscoverTopicsCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Topic discovery failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

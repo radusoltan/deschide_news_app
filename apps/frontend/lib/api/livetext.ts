@@ -7,7 +7,9 @@ import type {
   LiveTextAnalytics,
   LiveTextViewerCount,
   TrackViewRequest,
-  TrackViewResponse
+  TrackViewResponse,
+  LiveTextPost,
+  LiveTextTemplate
 } from '@/lib/types/livetext';
 
 /**
@@ -108,7 +110,7 @@ function transformLiveTextResponse(data: LiveTextApiResponse): LiveText {
     locale: data.locale,
     author: data.author,
     category: data.category,
-    template: (data as any).template || null,
+    template: (data as LiveTextApiResponse & { template?: LiveText['template'] }).template || null,
     sportMatch: data.sportMatch || null,
     collaborators: data.collaborators,
     posts: data.posts,
@@ -268,7 +270,7 @@ export async function getActiveLiveTexts(
 export async function getLiveTextKeyPoints(
   liveTextId: number,
   options: FetchOptions = {}
-): Promise<any[]> {
+): Promise<LiveTextPost[]> {
   const url = `${API_BASE}/live_texts/${liveTextId}/key_points`;
 
   const response = await fetch(url, {
@@ -303,7 +305,7 @@ export function getMercureTopicUrl(liveTextId: number): string {
  */
 export async function getLiveTextTemplates(
   options: FetchOptions = {}
-): Promise<any[]> {
+): Promise<LiveTextTemplate[]> {
   const url = `${API_BASE}/live_text_templates`;
 
   const response = await fetch(url, {

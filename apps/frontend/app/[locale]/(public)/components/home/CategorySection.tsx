@@ -25,7 +25,7 @@ import {
   getFirstSentence,
   formatRelativeTime,
 } from '@/components/cards/utils';
-import type { Article } from '@/lib/types/article';
+import type { Article, Category } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 
 /* ================================================================== */
@@ -39,7 +39,7 @@ export type CategorySectionLayout =
   | 'featured-grid';
 
 export interface CategorySectionProps {
-  category: any;
+  category: Category;
   locale: string;
   layout: CategorySectionLayout;
 }
@@ -417,7 +417,7 @@ async function CategorySectionContent({
 
   const categorySlug = category.slug || 'default';
   const sectionColor = getSectionColor(categorySlug);
-  const categoryTitle = category.title || category.name || 'Uncategorized';
+  const categoryTitle = category.title || 'Uncategorized';
   const categoryUrl = buildCategoryUrl(category, locale as Locale);
   const localeLabels = labels[locale as keyof typeof labels] || labels.ro;
 

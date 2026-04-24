@@ -53,21 +53,28 @@ final class GenerateSummariesCommand extends Command
 
     private function processSingleArticle(int $articleId, bool $dryRun, SymfonyStyle $io): int
     {
-        $article = $this->em->getRepository(Article::class)->find($articleId);
+        try {
+            $article = $this->em->getRepository(Article::class)->find($articleId);
 
-        if ($article === null) {
-            $io->error("Articolul cu ID {$articleId} nu a fost găsit.");
+            if ($article === null) {
+                $io->error("Articolul cu ID {$articleId} nu a fost găsit.");
+
+                return Command::FAILURE;
+            }
+
+            $result = $this->generateForArticle($article, $dryRun, $io);
+
+            return $result ? Command::SUCCESS : Command::FAILURE;
+        } catch (\Throwable $e) {
+            $io->error('Summary generation failed: ' . $e->getMessage());
 
             return Command::FAILURE;
         }
-
-        $result = $this->generateForArticle($article, $dryRun, $io);
-
-        return $result ? Command::SUCCESS : Command::FAILURE;
     }
 
     private function processBatch(InputInterface $input, bool $dryRun, SymfonyStyle $io): int
     {
+        try {
         $batch = (int) $input->getOption('batch');
         $since = $input->getOption('since');
 
@@ -121,6 +128,11 @@ final class GenerateSummariesCommand extends Command
         $io->success("Completat: {$generated} generate, {$skipped} sărite.");
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Batch summary generation failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function generateForArticle(Article $article, bool $dryRun, SymfonyStyle $io, bool $silent = false): bool

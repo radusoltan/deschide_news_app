@@ -30,16 +30,22 @@ final class CleanupNotificationsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $cutoff = new \DateTimeImmutable(\sprintf('-%d days', $this->retentionDays));
-        $deleted = $this->repository->deleteOlderThan($cutoff);
+        try {
+            $cutoff = new \DateTimeImmutable(\sprintf('-%d days', $this->retentionDays));
+            $deleted = $this->repository->deleteOlderThan($cutoff);
 
-        $io->success(\sprintf(
-            'Deleted %d notification(s) older than %d days (before %s).',
-            $deleted,
-            $this->retentionDays,
-            $cutoff->format('Y-m-d'),
-        ));
+            $io->success(\sprintf(
+                'Deleted %d notification(s) older than %d days (before %s).',
+                $deleted,
+                $this->retentionDays,
+                $cutoff->format('Y-m-d'),
+            ));
 
-        return Command::SUCCESS;
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

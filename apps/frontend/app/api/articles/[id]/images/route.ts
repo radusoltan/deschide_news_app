@@ -31,9 +31,9 @@ export async function GET(
       // Hydra collection response with hydra: prefix
       articleImages = data['hydra:member'];
       console.log('Using Hydra format with prefix, count:', articleImages.length);
-    } else if (data && (data as any).member) {
+    } else if (data && (data as unknown as { member?: ArticleImage[] }).member) {
       // API Platform collection response without hydra: prefix
-      articleImages = (data as any).member;
+      articleImages = (data as unknown as { member: ArticleImage[] }).member;
       console.log('Using API Platform format without prefix, count:', articleImages.length);
     }
 
@@ -72,11 +72,12 @@ export async function GET(
     );
 
     return NextResponse.json(attachedImages);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('GET /api/articles/[id]/images error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch article images' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to fetch article images' },
+      { status: 500 }
     );
   }
 }
@@ -112,11 +113,12 @@ export async function POST(
     });
 
     return NextResponse.json(articleImage, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('POST /api/articles/[id]/images error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to attach image' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to attach image' },
+      { status: 500 }
     );
   }
 }

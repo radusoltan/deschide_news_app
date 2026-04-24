@@ -64,7 +64,7 @@ curl -H "Accept-Language: ru" http://127.0.0.1:8081/api/categories/1
 **Optimizations Applied**:
 - ✅ OPcache JIT enabled (tracing mode, 128M buffer)
 - ✅ PHP-FPM workers increased (max_children: 30 → 50)
-- ✅ Redis memory configured (512MB, allkeys-lru)
+- ✅ Redis memory configured (512MB, volatile-lru)
 - ✅ Existing eager loading patterns already in place
 
 **Benchmark Results**:
@@ -85,7 +85,7 @@ Improvement: 93% faster
 **Issue**: No memory limits configured (risk of OOM)
 **Fix**: 
 - maxmemory: 512MB
-- maxmemory-policy: allkeys-lru
+- maxmemory-policy: volatile-lru
 - Configuration persisted to disk
 
 **Verification**:
@@ -94,7 +94,7 @@ redis-cli CONFIG GET maxmemory
 # 536870912 (512MB)
 
 redis-cli CONFIG GET maxmemory-policy
-# allkeys-lru
+# volatile-lru
 ```
 
 **Status**: ✅ RESOLVED
@@ -147,7 +147,7 @@ php_admin_value[opcache.jit_buffer_size] = 128M
 **Runtime Configuration** (persisted):
 ```bash
 redis-cli CONFIG SET maxmemory 512mb
-redis-cli CONFIG SET maxmemory-policy allkeys-lru
+redis-cli CONFIG SET maxmemory-policy volatile-lru
 redis-cli CONFIG REWRITE
 ```
 

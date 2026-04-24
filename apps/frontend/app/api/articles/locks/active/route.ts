@@ -31,10 +31,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('GET /api/articles/locks/active error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch active locks' },
+      { error: errMsg || 'Failed to fetch active locks' },
       { status: 500 }
     );
   }

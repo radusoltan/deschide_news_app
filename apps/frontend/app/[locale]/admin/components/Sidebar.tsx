@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { featureFlags } from '@/lib/config/feature-flags';
 
 export default function Sidebar() {
   const params = useParams();
@@ -117,23 +118,24 @@ export default function Sidebar() {
                   </Link>
                 </li>
 
-                {/* AI Assistant */}
-                <li>
-                  <Link
-                    href={`/${locale}/admin/ai-assistant`}
-                    className={linkClass(`/${locale}/admin/ai-assistant`)}
-                  >
-                    <svg
-                      className={iconClass(`/${locale}/admin/ai-assistant`)}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      xmlns="http://www.w3.org/2000/svg"
+                {featureFlags.aiChatEnabled && (
+                  <li>
+                    <Link
+                      href={`/${locale}/admin/ai-assistant`}
+                      className={linkClass(`/${locale}/admin/ai-assistant`)}
                     >
-                      <path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" />
-                    </svg>
-                    <span className="ml-3">AI Assistant</span>
-                  </Link>
-                </li>
+                      <svg
+                        className={iconClass(`/${locale}/admin/ai-assistant`)}
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z" />
+                      </svg>
+                      <span className="ml-3">AI Assistant</span>
+                    </Link>
+                  </li>
+                )}
 
                 {/* Press Queue */}
                 <li>
@@ -151,6 +153,60 @@ export default function Sidebar() {
                       <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                     </svg>
                     <span className="ml-3">Press Queue</span>
+                  </Link>
+                </li>
+
+                {/* Escalări editoriale (Sprint 55 T55.13) */}
+                <li>
+                  <Link
+                    href={`/${locale}/admin/escalations`}
+                    className={linkClass(`/${locale}/admin/escalations`)}
+                  >
+                    <svg
+                      className={iconClass(`/${locale}/admin/escalations`)}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.518 11.59c.75 1.335-.213 2.98-1.742 2.98H3.48c-1.53 0-2.492-1.645-1.743-2.98L8.257 3.1zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span className="ml-3">Escalări</span>
+                  </Link>
+                </li>
+
+                {/* Aggregator Dashboard */}
+                <li>
+                  <Link
+                    href={`/${locale}/admin/aggregator`}
+                    className={linkClass(`/${locale}/admin/aggregator`)}
+                  >
+                    <svg
+                      className={iconClass(`/${locale}/admin/aggregator`)}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    <span className="ml-3">Tablou Agregator</span>
+                  </Link>
+                </li>
+
+                {/* Briefings */}
+                <li>
+                  <Link
+                    href={`/${locale}/admin/briefings`}
+                    className={linkClass(`/${locale}/admin/briefings`)}
+                  >
+                    <svg
+                      className={iconClass(`/${locale}/admin/briefings`)}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                    </svg>
+                    <span className="ml-3">Briefings</span>
                   </Link>
                 </li>
 

@@ -52,7 +52,7 @@ class LiveTextMatchEvent
      * Associated Sport Match.
      */
     #[ORM\ManyToOne(inversedBy: 'events', targetEntity: LiveTextSportMatch::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Groups(['match_event:read', 'match_event:write'])]
     private ?LiveTextSportMatch $sportMatch = null;
 

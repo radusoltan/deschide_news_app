@@ -7,7 +7,7 @@
 import { Suspense } from 'react';
 import { FeatureCard, FeatureCardSkeleton, getSectionColor } from '@/components/cards';
 import { fetchImportantArticles } from '@/lib/api/important-articles';
-import type { ImportantArticle } from '@/lib/types/article';
+import type { Article, ImportantArticle } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 import { buildLocalizedUrl } from '@/lib/utils/url-builder';
 import Link from 'next/link';
@@ -33,7 +33,7 @@ const labels = {
 } as const;
 
 async function EditorsPicksContent({ locale }: EditorsPicksProps) {
-  let editorsPicks: any[] = [];
+  let editorsPicks: Article[] = [];
 
   try {
     const response = await fetchImportantArticles(locale);

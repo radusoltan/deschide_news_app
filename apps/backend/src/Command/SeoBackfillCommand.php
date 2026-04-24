@@ -9,6 +9,8 @@ use App\Repository\ArticleRepository;
 use App\Service\SeoBatchPromptBuilder;
 use App\Service\SeoResultProcessor;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -17,8 +19,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Process\Exception\ProcessTimedOutException;
-use Symfony\Component\Process\Process;
 
 #[AsCommand(
     name: 'app:seo:backfill',
@@ -33,8 +33,8 @@ final class SeoBackfillCommand extends Command
         private readonly SeoBatchPromptBuilder $batchPromptBuilder,
         private readonly SeoResultProcessor $resultProcessor,
         private readonly EntityManagerInterface $em,
+        private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
-        private readonly string $geminiCliPath,
         private readonly string $projectDir,
     ) {
         parent::__construct();
@@ -164,9 +164,9 @@ final class SeoBackfillCommand extends Command
 
                 // Clear EntityManager to prevent memory bloat
                 $this->em->clear();
-            } catch (ProcessTimedOutException) {
+            } catch (GeminiCliException $e) {
                 $stats['batchErrors']++;
-                $this->logger->error('SeoBackfill: batch timeout', [
+                $this->logger->error('SeoBackfill: batch ' . ($e->isTimeout() ? 'timeout' : 'error'), [
                     'batch' => $batchNum,
                     'articleIds' => array_map(fn (Article $a) => $a->getId(), $batch),
                 ]);
@@ -304,31 +304,18 @@ final class SeoBackfillCommand extends Command
 
     private function runGemini(string $prompt): string
     {
-        $process = new Process(
-            command: [
-                $this->geminiCliPath,
-                '-p', 'Analyze articles and generate SEO metadata for each. Return JSON array.',
-                '-o', 'json',
+        $output = $this->geminiCli->execute(
+            'Analyze articles and generate SEO metadata for each. Return JSON array.',
+            [
+                'stdin' => $prompt,
+                'jsonOutput' => true,
+                'timeout' => self::GEMINI_TIMEOUT,
+                'cwd' => $this->projectDir,
             ],
-            cwd: $this->projectDir,
-            env: ['HOME' => '/home/radu', 'PATH' => getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin'],
-            timeout: self::GEMINI_TIMEOUT,
         );
 
-        $process->setInput($prompt);
-        $process->run();
-
-        if (!$process->isSuccessful()) {
-            throw new \RuntimeException(
-                'Gemini CLI failed (exit ' . $process->getExitCode() . '): '
-                . $process->getErrorOutput()
-            );
-        }
-
-        $output = trim($process->getOutput());
-
-        if (empty($output)) {
-            throw new \RuntimeException('Gemini CLI returned empty output');
+        if ($output === '') {
+            throw new GeminiCliException('Gemini CLI returned empty output');
         }
 
         return $output;
@@ -341,50 +328,9 @@ final class SeoBackfillCommand extends Command
      */
     private function parseBatchResponse(string $rawOutput): array
     {
-        $cleaned = trim($rawOutput);
+        $parsed = $this->geminiCli->parseJson($rawOutput);
 
-        // Strip control characters
-        $map = [];
-        for ($i = 0; $i <= 0x1F; ++$i) {
-            $map[\chr($i)] = ' ';
-        }
-        $map[\chr(0x7F)] = ' ';
-        $cleaned = strtr($cleaned, $map);
-
-        $decoded = json_decode($cleaned, true, 512, \JSON_THROW_ON_ERROR);
-
-        if (!\is_array($decoded)) {
-            throw new \RuntimeException('Gemini batch response did not decode to an array');
-        }
-
-        // Handle Gemini CLI envelope: { session_id, response, stats }
-        if (isset($decoded['response']) && \is_string($decoded['response'])) {
-            $responseStr = $decoded['response'];
-
-            // Strip markdown fences
-            $responseStr = preg_replace('/^```(?:json)?\s*/m', '', $responseStr);
-            $responseStr = preg_replace('/\s*```\s*$/m', '', $responseStr ?? $decoded['response']);
-            $responseStr = trim($responseStr ?? $decoded['response']);
-
-            // Extract JSON array: find first '[' to last ']'
-            $jsonStart = strpos($responseStr, '[');
-            $jsonEnd = strrpos($responseStr, ']');
-            if ($jsonStart !== false && $jsonEnd !== false && $jsonEnd > $jsonStart) {
-                $responseStr = substr($responseStr, $jsonStart, $jsonEnd - $jsonStart + 1);
-            }
-
-            $responseStr = strtr($responseStr, $map);
-
-            $inner = json_decode($responseStr, true, 512, \JSON_THROW_ON_ERROR);
-
-            if (\is_array($inner)) {
-                // Could be an indexed array of items
-                return $this->normalizeResponse($inner);
-            }
-        }
-
-        // Direct JSON array (no envelope)
-        return $this->normalizeResponse($decoded);
+        return $this->normalizeResponse($parsed);
     }
 
     /**

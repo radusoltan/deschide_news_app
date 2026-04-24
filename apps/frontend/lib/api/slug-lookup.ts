@@ -4,6 +4,7 @@
  */
 
 import type { Locale } from '../types';
+import type { Article, Category, Author } from '../types/article';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -17,7 +18,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 export async function lookupArticle(
   slug: string,
   locale: Locale
-): Promise<any | null> {
+): Promise<Article | null> {
   try {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -60,7 +61,7 @@ export async function lookupArticle(
 export async function lookupCategory(
   slug: string,
   locale: Locale
-): Promise<any | null> {
+): Promise<Category | null> {
   try {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -98,7 +99,7 @@ export async function lookupCategory(
  */
 interface AuthorLookupResult {
   found: boolean;
-  entity: any | null;
+  entity: Author | null;
 }
 
 /**

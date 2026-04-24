@@ -6,7 +6,7 @@ namespace App\EventListener;
 
 use App\Entity\Article;
 use App\Entity\Category;
-use App\Service\PerformanceService;
+use App\Service\Cache\CacheService;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\PostPersistEventArgs;
 use Doctrine\ORM\Event\PostUpdateEventArgs;
@@ -19,7 +19,7 @@ use Doctrine\ORM\Events;
 class CacheInvalidationListener
 {
     public function __construct(
-        private readonly PerformanceService $performance
+        private readonly CacheService $performance
     ) {
     }
 

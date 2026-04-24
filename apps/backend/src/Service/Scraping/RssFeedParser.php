@@ -44,9 +44,13 @@ final readonly class RssFeedParser
     }
 
     /**
+     * Parse a pre-fetched RSS/Atom XML string. Exposed so callers that need to
+     * preprocess the raw bytes (e.g. decode Windows-1251 before handing to
+     * SimpleXML) can reuse the existing parsing pipeline without duplicating it.
+     *
      * @return list<FeedItem>
      */
-    private function parseXml(string $xml, string $sourceName, string $language, int $limit): array
+    public function parseXml(string $xml, string $sourceName, string $language, int $limit): array
     {
         $previous = libxml_use_internal_errors(true);
 
@@ -120,6 +124,7 @@ final readonly class RssFeedParser
             language: $language,
             description: trim((string) ($item->description ?? '')) ?: null,
             publishedAt: $publishedAt,
+            imageUrl: $this->extractImageUrl($item),
         );
     }
 
@@ -162,6 +167,53 @@ final readonly class RssFeedParser
             language: $language,
             description: $description ?: null,
             publishedAt: $publishedAt,
+            imageUrl: $this->extractImageUrl($entry),
         );
+    }
+
+    /**
+     * Extract image URL from an RSS/Atom item with priority:
+     * 1. <enclosure type="image/*">
+     * 2. <media:content> or <media:thumbnail>
+     * 3. First <img src> in <description> HTML
+     */
+    private function extractImageUrl(\SimpleXMLElement $item): ?string
+    {
+        // Priority 1: <enclosure type="image/*">
+        if (isset($item->enclosure)) {
+            $type = (string) $item->enclosure['type'];
+            $url = (string) $item->enclosure['url'];
+            if ($url !== '' && str_starts_with($type, 'image/')) {
+                return $url;
+            }
+        }
+
+        // Priority 2: <media:content> or <media:thumbnail>
+        $namespaces = $item->getNamespaces(true);
+        if (isset($namespaces['media'])) {
+            $media = $item->children($namespaces['media']);
+            if (isset($media->content)) {
+                $attrs = $media->content->attributes();
+                $url = (string) ($attrs['url'] ?? '');
+                if ($url !== '') {
+                    return $url;
+                }
+            }
+            if (isset($media->thumbnail)) {
+                $attrs = $media->thumbnail->attributes();
+                $url = (string) ($attrs['url'] ?? '');
+                if ($url !== '') {
+                    return $url;
+                }
+            }
+        }
+
+        // Priority 3: First <img src> in <description> HTML (e.g., Gov.md)
+        $description = (string) ($item->description ?? '');
+        if ($description !== '' && preg_match('/<img[^>]+src=["\']([^"\']+)["\']/', $description, $matches)) {
+            return html_entity_decode($matches[1]);
+        }
+
+        return null;
     }
 }

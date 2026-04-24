@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getLiveTextBySlug, getLiveTextKeyPoints } from '@/lib/api/livetext';
 import { LiveTextViewer } from './components/LiveTextViewer';
+import type { LiveText, LiveTextPost } from '@/lib/types/livetext';
 
 interface LiveTextPageProps {
   params: Promise<{
@@ -13,7 +14,7 @@ export default async function LiveTextPage({ params }: LiveTextPageProps) {
   const { locale, slug } = await params;
 
   // Fetch LiveText data
-  let liveText: any = null;
+  let liveText: LiveText | null = null;
   try {
     liveText = await getLiveTextBySlug(slug, { locale, cache: 'no-store' });
   } catch (err) {
@@ -26,7 +27,7 @@ export default async function LiveTextPage({ params }: LiveTextPageProps) {
   }
 
   // Fetch key points
-  let keyPoints: any[] = [];
+  let keyPoints: LiveTextPost[] = [];
   try {
     keyPoints = await getLiveTextKeyPoints(liveText.id, { locale, cache: 'no-store' });
   } catch (err) {

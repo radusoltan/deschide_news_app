@@ -109,15 +109,14 @@ class LiveTextPost
 
     // Relationships
     #[ORM\ManyToOne(targetEntity: LiveText::class, inversedBy: 'posts')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Assert\NotNull(message: 'Live text must be specified.')]
     #[Groups(['livetext_post:read', 'livetext_post:write'])]
     #[MaxDepth(1)]
     private ?LiveText $liveText = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: false)]
-    #[Assert\NotNull(message: 'Author must be specified.')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     #[Groups(['livetext_post:read', 'livetext_post:write', 'livetext:read', 'livetext:detail'])]
     #[MaxDepth(1)]
     private ?User $author = null;

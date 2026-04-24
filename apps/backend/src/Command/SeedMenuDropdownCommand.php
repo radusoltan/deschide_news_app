@@ -32,6 +32,7 @@ final class SeedMenuDropdownCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Seed "Știri" Dropdown in Main Menu');
 
+        try {
         $menuItemRepo = $this->em->getRepository(MenuItem::class);
 
         // Check if a dropdown already exists in main menu
@@ -165,5 +166,10 @@ final class SeedMenuDropdownCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

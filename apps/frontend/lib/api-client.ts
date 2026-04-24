@@ -1,4 +1,8 @@
 /**
+ * @deprecated For new code, use `@/lib/api/api-client` instead.
+ * This file is kept for auth utilities (loginUser, refreshToken,
+ * isTokenExpired, getUserFromToken) which are still imported by dal.ts.
+ *
  * API Client for Backend Communication
  * Handles all HTTP requests to Symfony backend API
  */

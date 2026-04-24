@@ -11,7 +11,7 @@ use App\Entity\Category;
 use App\Entity\Tag;
 use App\Enum\ArticleBadge;
 use App\Enum\ArticleStatus;
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ElasticDocumentService;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -69,7 +69,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWhenEsIsDisabledReturnsSuccessEarly(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(false);
         $em = $this->createStub(EntityManagerInterface::class);
 
@@ -82,7 +82,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWhenEsIsDisabledDoesNotQueryDatabase(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(false);
 
         $em = $this->createMock(EntityManagerInterface::class);
@@ -98,7 +98,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWithDefaultLocalesIndexesAllThree(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('bulkIndexDocuments')->willReturn(['indexed' => 0, 'errors' => 0]);
 
@@ -119,7 +119,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWithLocaleRoOnlyIndexesRo(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('bulkIndexDocuments')->willReturn(['indexed' => 0, 'errors' => 0]);
 
@@ -135,7 +135,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWithLocaleEnOnlyIndexesEn(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('bulkIndexDocuments')->willReturn(['indexed' => 0, 'errors' => 0]);
 
@@ -152,7 +152,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWhenExceptionThrownReturnsFailure(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
 
         $query = $this->createStub(Query::class);
@@ -177,7 +177,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWithBulkIndexExceptionReturnsFailure(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('bulkIndexDocuments')
             ->willThrowException(new Exception('Bulk index failed'));
@@ -195,7 +195,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWithArticlesCallsBulkIndex(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
         $service->expects($this->atLeastOnce())
             ->method('bulkIndexDocuments')
@@ -212,7 +212,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWithArticlesShowsCorrectTotalIndexed(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('bulkIndexDocuments')
             ->willReturn(['indexed' => 1, 'errors' => 0]);
@@ -230,7 +230,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWithStatusFilterDoesNotFail(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
 
         $em = $this->buildEmWithEmptyArticles();
@@ -248,7 +248,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWithIncludeArchivedDoesNotFail(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
 
         $em = $this->buildEmWithEmptyArticles();
@@ -266,7 +266,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteWithCustomBatchSizeDoesNotFail(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
 
         $em = $this->buildEmWithEmptyArticles();
@@ -284,7 +284,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     public function testExecuteReportsErrorsFromBulkIndex(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('bulkIndexDocuments')
             ->willReturn(['indexed' => 0, 'errors' => 2]);
@@ -313,7 +313,7 @@ class ElasticsearchIndexArticlesCommandTest extends TestCase
 
     private function buildCommand(): ElasticsearchIndexArticlesCommand
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $em = $this->createStub(EntityManagerInterface::class);
 
         return new ElasticsearchIndexArticlesCommand($service, $em);

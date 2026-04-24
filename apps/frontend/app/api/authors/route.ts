@@ -9,11 +9,12 @@ export async function GET() {
   try {
     const authors = await getAuthors();
     return NextResponse.json(authors);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('GET /api/authors error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch authors' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to fetch authors' },
+      { status: 500 }
     );
   }
 }

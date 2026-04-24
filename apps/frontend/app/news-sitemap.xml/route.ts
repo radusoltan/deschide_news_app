@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchRecentArticlesForNewsSitemap } from '@/lib/api/sitemap-data';
-import { buildArticleUrl, isRecentArticle } from '@/lib/seo/sitemap-utils';
+import { buildArticleUrl, generateLanguageAlternates, isRecentArticle } from '@/lib/seo/sitemap-utils';
 import { SITEMAP_CONFIG, Locale } from '@/lib/seo/sitemap-config';
 
 export async function GET(request: NextRequest) {
@@ -45,12 +45,24 @@ ${recentArticles
         const url = buildArticleUrl(locale, categorySlug, articleSlug);
         const publishedAt = new Date(article.publishedAt).toISOString();
         const language = news.languageMap[locale];
+        const alternates = generateLanguageAlternates({
+          ro: `${article.translations?.ro?.categorySlug || article.category.slug}/${article.translations?.ro?.slug || article.slug}`,
+          en: `${article.translations?.en?.categorySlug || article.category.slug}/${article.translations?.en?.slug || article.slug}`,
+          ru: `${article.translations?.ru?.categorySlug || article.category.slug}/${article.translations?.ru?.slug || article.slug}`,
+        });
+        const alternateLinks = Object.entries(alternates.languages)
+          .map(
+            ([lang, href]) =>
+              `    <xhtml:link rel="alternate" hreflang="${escapeXml(lang)}" href="${escapeXml(href)}" />`
+          )
+          .join('\n');
 
         // Extract keywords from category (basic implementation)
         const keywords = categorySlug.replace(/-/g, ', ');
 
         return `  <url>
     <loc>${escapeXml(url)}</loc>
+${alternateLinks}
     <news:news>
       <news:publication>
         <news:name>${escapeXml(news.publicationName)}</news:name>

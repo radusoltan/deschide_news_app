@@ -70,7 +70,7 @@ php_admin_value[opcache.jit_buffer_size] = 128M
 ### 2. Redis
 ```bash
 redis-cli CONFIG SET maxmemory 512mb
-redis-cli CONFIG SET maxmemory-policy allkeys-lru
+redis-cli CONFIG SET maxmemory-policy volatile-lru
 redis-cli CONFIG REWRITE
 ```
 

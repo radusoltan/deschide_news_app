@@ -6,7 +6,7 @@ namespace App\Command;
 
 use App\Entity\Article;
 use App\Enum\ArticleStatus;
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ElasticDocumentService;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -25,7 +25,7 @@ class ElasticsearchIndexArticlesCommand extends Command
     private array $supportedLocales = ['ro', 'en', 'ru'];
 
     public function __construct(
-        private readonly ElasticService $elasticService,
+        private readonly ElasticDocumentService $elasticService,
         private readonly EntityManagerInterface $entityManager
     ) {
         parent::__construct();
@@ -66,7 +66,8 @@ class ElasticsearchIndexArticlesCommand extends Command
                     ->leftJoin('a.category', 'category')
                     ->leftJoin('a.relatedArticles', 'related')
                     ->leftJoin('a.tags', 'tags')
-                    ->addSelect('authors', 'category', 'related', 'tags');
+                    ->leftJoin('a.topics', 'topics')
+                    ->addSelect('authors', 'category', 'related', 'tags', 'topics');
 
                 if ($status) {
                     $qb->where('a.status = :status')
@@ -126,15 +127,24 @@ class ElasticsearchIndexArticlesCommand extends Command
                         $tagNames[] = $tag->getName();
                     }
 
-                    // Build suggest input: title + category name + tag names + keywords
+                    // Build topics arrays
+                    $topicIds = [];
+                    $topicTitles = [];
+                    $topicSlugs = [];
+                    foreach ($article->getTopics() as $topic) {
+                        $topicIds[] = $topic->getId();
+                        $topicTitles[] = $topic->getTitle();
+                        $topicSlugs[] = $topic->getSlug();
+                    }
+
+                    // Build suggest input: title + category name + tag names + topic titles + keywords
                     $suggestInput = [$article->getTitle()];
 
                     if ($article->getCategory()) {
                         $suggestInput[] = $article->getCategory()->getTitle();
                     }
 
-                    // Add tag names to suggest input
-                    $suggestInput = array_merge($suggestInput, $tagNames);
+                    $suggestInput = array_merge($suggestInput, $tagNames, $topicTitles);
 
                     // Extract first few words from lead/content as additional keywords
                     $text = $article->getLead() ?? $article->getContent() ?? '';
@@ -170,9 +180,13 @@ class ElasticsearchIndexArticlesCommand extends Command
                         'badge' => $article->getBadge()?->value,
                         'is_featured' => $article->isFeatured(),
                         'status' => $article->getStatus()->value,
+                        'published_locales' => $article->getPublishedLocales(),
                         'related_ids' => $relatedIds,
                         'tags' => $tags,
                         'tag_names' => implode(' ', $tagNames),
+                        'topic_ids' => $topicIds,
+                        'topic_titles' => $topicTitles,
+                        'topic_slugs' => $topicSlugs,
                     ];
 
                     $batch[] = $document;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Command;
 
 use App\Command\ElasticsearchManageAliasCommand;
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ElasticIndexManager;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -15,7 +15,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 {
     public function testListActionReturnsSuccessWithNoAliases(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('getAliases')->willReturn([]);
 
@@ -32,7 +32,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testListActionWithAliases(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('getAliases')->willReturn([
             'deschide_articles_ro' => [
@@ -55,7 +55,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testCreateActionMissingAlias(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
 
         $command = new ElasticsearchManageAliasCommand($service);
@@ -71,7 +71,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testCreateActionMissingIndex(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
 
         $command = new ElasticsearchManageAliasCommand($service);
@@ -87,7 +87,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testCreateActionSuccess(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->expects($this->once())->method('createAlias')->with('my_alias', 'my_index');
 
@@ -104,7 +104,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testSwapActionMissingOptions(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
 
         $command = new ElasticsearchManageAliasCommand($service);
@@ -120,7 +120,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testReindexActionMissingSource(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
 
         $command = new ElasticsearchManageAliasCommand($service);
@@ -136,7 +136,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testReindexActionMissingDest(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
 
         $command = new ElasticsearchManageAliasCommand($service);
@@ -152,7 +152,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testDefaultActionShowsUsage(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
 
         $command = new ElasticsearchManageAliasCommand($service);
@@ -170,7 +170,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testSwapActionCancelledByUser(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
 
         $command = new ElasticsearchManageAliasCommand($service);
@@ -193,7 +193,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testReindexActionCancelledByUser(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
 
         $command = new ElasticsearchManageAliasCommand($service);
@@ -214,7 +214,7 @@ class ElasticsearchManageAliasExtendedTest extends TestCase
 
     public function testReindexActionSucceeds(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('reindex')->willReturn([
             'total' => 100,

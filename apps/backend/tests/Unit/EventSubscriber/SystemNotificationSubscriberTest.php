@@ -44,7 +44,7 @@ class SystemNotificationSubscriberTest extends TestCase
             'test-jwt-token',
         );
 
-        $this->subscriber = new SystemNotificationSubscriber($this->notificationService);
+        $this->subscriber = new SystemNotificationSubscriber($this->notificationService, new NullLogger());
     }
 
     private function buildUser(int $id, string $username): \App\Entity\User

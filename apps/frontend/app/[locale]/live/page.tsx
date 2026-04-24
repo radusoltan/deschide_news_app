@@ -354,9 +354,11 @@ export async function generateMetadata({
     alternates: {
       canonical: `/${locale}/live`,
       languages: {
-        ro: '/live',
+        'ro-MD': '/ro/live',
+        ro: '/ro/live',
         en: '/en/live',
         ru: '/ru/live',
+        'x-default': '/ro/live',
       },
     },
     openGraph: {

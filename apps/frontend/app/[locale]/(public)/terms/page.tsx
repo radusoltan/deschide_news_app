@@ -523,9 +523,11 @@ export async function generateMetadata({ params }: TermsPageProps): Promise<Meta
     alternates: {
       canonical: `/${locale}/terms`,
       languages: {
-        ro: '/terms',
+        'ro-MD': '/ro/terms',
+        ro: '/ro/terms',
         en: '/en/terms',
         ru: '/ru/terms',
+        'x-default': '/ro/terms',
       },
     },
     openGraph: {

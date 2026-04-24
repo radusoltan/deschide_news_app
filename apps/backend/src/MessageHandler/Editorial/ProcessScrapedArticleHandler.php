@@ -11,37 +11,64 @@ use App\Enum\PressReleaseStatus;
 use App\Enum\SourceType;
 use App\Message\Editorial\ProcessScrapedArticleMessage;
 use App\Service\CategoryDetectorService;
+use App\Service\Cleaning\SourceContentCleanerRegistry;
+use App\Repository\PressReleaseRepository;
 use App\Service\ContentDeduplicator;
 use App\Service\ContentHasher;
 use App\Service\NotificationService;
 use App\Service\ScrapedContentCleaner;
 use App\Service\Scraping\RelevanceFilterService;
 use App\Service\SourceAuthorResolver;
+use App\Message\Topic\DetectTopicsForPressReleaseMessage;
 use App\Service\TopicDetectorService;
+use App\Service\Translation\AggregatorTranslationService;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 #[AsMessageHandler]
 final readonly class ProcessScrapedArticleHandler
 {
     public function __construct(
         private ScrapedContentCleaner $contentCleaner,
+        private SourceContentCleanerRegistry $sourceCleanerRegistry,
         private ContentHasher $contentHasher,
         private ContentDeduplicator $deduplicator,
+        private PressReleaseRepository $pressReleaseRepository,
         private CategoryDetectorService $categoryDetector,
         private SourceAuthorResolver $authorResolver,
         private NotificationService $notificationService,
         private TopicDetectorService $topicDetector,
         private RelevanceFilterService $relevanceFilter,
+        private AggregatorTranslationService $translationService,
         private EntityManagerInterface $em,
         private LoggerInterface $logger,
+        private MessageBusInterface $messageBus,
     ) {}
 
     public function __invoke(ProcessScrapedArticleMessage $message): void
     {
-        // 1. Clean HTML content
+        // 0. Source URL dedup — skip if already imported from this URL
+        if ($message->sourceUrl !== null) {
+            $existing = $this->pressReleaseRepository->findBySourceUrl($message->sourceUrl);
+            if ($existing !== null) {
+                $this->logger->debug('ProcessScrapedArticleHandler: duplicate source_url, skipping', [
+                    'sourceUrl' => $message->sourceUrl,
+                    'existingId' => $existing->getId(),
+                ]);
+
+                return;
+            }
+        }
+
+        // 1. Clean HTML content (generic sanitization)
         $cleanHtml = $this->contentCleaner->clean($message->bodyMarkdown);
+
+        // 1b. Apply per-source noise removal (Newsmaker, Agerpres, etc.)
+        $sourceName = 'scrape:' . $this->toSourceSlug($message->sourceName);
+        $cleanHtml = $this->sourceCleanerRegistry->clean($sourceName, $cleanHtml);
 
         // 2. Hash for deduplication
         $hash = $this->contentHasher->hash($cleanHtml);
@@ -64,9 +91,6 @@ final readonly class ProcessScrapedArticleHandler
         // 5. Detect category
         $categorySlug = $this->categoryDetector->detectSlug($message->title . ' ' . $lead);
 
-        // 6. Build source name slug
-        $sourceName = 'scrape:' . $this->toSourceSlug($message->sourceName);
-
         // 7. Create PressRelease (NOT Article)
         $pr = new PressRelease();
         $pr->setTitle(mb_substr($message->title, 0, 255));
@@ -79,6 +103,7 @@ final readonly class ProcessScrapedArticleHandler
         $pr->setContentHash($hash);
         $pr->setOriginalLanguage($message->originalLanguage);
         $pr->setCategorySlug($categorySlug);
+        $pr->setSourceImageUrl($message->imageUrl);
 
         if ($message->publishedAt !== null) {
             $pr->setReceivedAt($message->publishedAt);
@@ -108,9 +133,31 @@ final readonly class ProcessScrapedArticleHandler
             $pr->setSuggestedTopics(null);
         }
 
-        // 8. Persist
-        $this->em->persist($pr);
-        $this->em->flush();
+        // 8. Translate non-Romanian content, preserving originals
+        if ($pr->getOriginalLanguage() !== null && $pr->getOriginalLanguage() !== 'ro') {
+            $pr->setOriginalTitle($pr->getTitle());
+            $pr->setOriginalContent($pr->getContent());
+            $this->translationService->translateToRomanian($pr);
+        }
+
+        // 9. Persist (with race-condition safety net for concurrent duplicate URLs)
+        try {
+            $this->em->persist($pr);
+            $this->em->flush();
+        } catch (UniqueConstraintViolationException $e) {
+            $this->logger->info('ProcessScrapedArticleHandler: duplicate detected on flush, skipping', [
+                'sourceUrl' => $message->sourceUrl,
+                'error' => $e->getMessage(),
+            ]);
+            $this->em->clear();
+
+            return;
+        }
+
+        // 9b. Dispatch async topic detection (ADR-015)
+        if ($pr->getId() !== null) {
+            $this->messageBus->dispatch(new DetectTopicsForPressReleaseMessage($pr->getId()));
+        }
 
         $this->logger->info('ProcessScrapedArticleHandler: PressRelease created (pending review)', [
             'pressReleaseId' => $pr->getId(),
@@ -119,7 +166,7 @@ final readonly class ProcessScrapedArticleHandler
             'sourceType' => 'scrape',
         ]);
 
-        // 9. Notify editors
+        // 10. Notify editors
         try {
             $this->notificationService->notify(
                 type: NotificationType::PRESS_QUEUE_NEW,

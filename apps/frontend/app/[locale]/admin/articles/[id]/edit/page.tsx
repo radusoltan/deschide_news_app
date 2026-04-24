@@ -2,9 +2,12 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import moment from 'moment';
 import ArticleEditWrapper from './components/ArticleEditWrapper';
+import FactCheckPanel from './components/FactCheckPanel';
 import TranslationTabs from './components/TranslationTabs';
 import { getArticle, getCategories } from '@/lib/dal';
 import { getAuthors } from '@/lib/api/authors';
+import type { Article, Category } from '@/lib/types/article';
+import type { Tag } from '@/lib/types/tag';
 
 interface EditArticlePageProps {
   params: Promise<{
@@ -31,17 +34,17 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
   }
 
   // Fetch categories for the select dropdown
-  let categories: any[] = [];
+  let categories: Category[] = [];
   try {
     const data = await getCategories({ locale, itemsPerPage: 100 });
-    categories = data.member.filter((cat: any) => cat.status === 'active');
+    categories = data.member.filter((cat: Category) => cat.status === 'active');
   } catch (error) {
     console.error('Failed to fetch categories:', error);
     categories = [];
   }
 
   // Fetch authors for the article form
-  let authors: any[] = [];
+  let authors: Awaited<ReturnType<typeof getAuthors>> = [];
   try {
     authors = await getAuthors();
   } catch (error) {
@@ -75,7 +78,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
   }
 
   // Extract tags from article (already full Tag objects from eager loading)
-  let articleTags: any[] = [];
+  let articleTags: Tag[] = [];
   if (article.tags && Array.isArray(article.tags)) {
     articleTags = article.tags
       .map((tag: any) => {
@@ -84,7 +87,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
         }
         return null;
       })
-      .filter((t: any) => t !== null);
+      .filter((t): t is Tag => t !== null);
   }
 
   // Extract related article IDs
@@ -102,11 +105,11 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
     }).filter((id: number | null) => id !== null);
   }
 
-  // Convert publishedAt from ISO to datetime-local format (YYYY-MM-DDTHH:mm)
+  // Convert publishAt (scheduled date) from ISO to datetime-local format (YYYY-MM-DDTHH:mm)
   let publishAtLocal = '';
-  if (article.publishedAt) {
+  if (article.publishAt) {
     // Use moment to convert to local timezone and format for datetime-local input
-    publishAtLocal = moment(article.publishedAt).format('YYYY-MM-DDTHH:mm');
+    publishAtLocal = moment(article.publishAt).format('YYYY-MM-DDTHH:mm');
   }
 
   return (
@@ -131,6 +134,24 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
           Update article details
         </p>
       </div>
+
+      {/* AI Generation Banner */}
+      {article.aiGenerated && (
+        <div className="mb-4 p-4 rounded-lg border bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl" role="img" aria-label="AI generated">&#x1F916;</span>
+            <div>
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Articol generat AI
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                {article.aiSourceCount != null && `${article.aiSourceCount} surse`}
+                {article.aiConfidenceScore != null && ` \u2022 confidence: ${(article.aiConfidenceScore * 100).toFixed(0)}%`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Translation Language Tabs */}
       <TranslationTabs
@@ -158,11 +179,14 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
             isFeatured: article.isFeatured || false,
             metaTitle: article.metaTitle || null,
             metaDescription: article.metaDescription || null,
-          }}
+          } as any}
           categories={categories}
-          authors={authors}
+          authors={authors as any}
         />
       </div>
+
+      {/* Fact-Check Panel (NotebookLM — Sprint 51a) */}
+      <FactCheckPanel articleId={articleId} />
     </div>
   );
 }

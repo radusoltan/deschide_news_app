@@ -1,19 +1,19 @@
 # CLAUDE.md - Deschide News Backend
 
-**Backend API** pentru platforma de știri Deschide News - Symfony 7.3 (PHP 8.4)
+**Backend API** pentru platforma de știri Deschide News - Symfony 8.0 (PHP 8.5)
 
 ---
 
 ## 📋 Project Overview
 
 **Deschide News Backend** este un RESTful API construit cu:
-- **Framework**: Symfony 7.3
-- **PHP Version**: 8.4
+- **Framework**: Symfony 8.0
+- **PHP Version**: 8.5
 - **API Platform**: 3.x (JSON-LD/Hydra)
-- **Database**: PostgreSQL 17
+- **Database**: PostgreSQL 18
 - **ORM**: Doctrine ORM 3.5
 - **Authentication**: JWT (Lexik JWT + Gesdinet Refresh Token)
-- **Search**: Elasticsearch 8.x
+- **Search**: Elasticsearch 9.x
 - **Cache**: Redis (DB 1)
 - **Message Queue**: RabbitMQ via Symfony Messenger
 - **Real-time**: Mercure Hub
@@ -99,7 +99,7 @@ nano .env.local
 #### Database
 ```bash
 # Main PostgreSQL database
-DATABASE_URL="postgresql://deschide_admin:YOUR_PASSWORD@127.0.0.1:5432/deschide?serverVersion=16&charset=utf8"
+DATABASE_URL="postgresql://deschide_admin:YOUR_PASSWORD@127.0.0.1:5432/deschide?serverVersion=18&charset=utf8"
 
 # Newscoop MySQL database (for data import)
 NEWSCOOP_DATABASE_URL="mysql://root:YOUR_PASSWORD@127.0.0.1:3306/newscoop?serverVersion=10.5&charset=utf8mb4"
@@ -577,5 +577,5 @@ symfony console doctrine:migrations:execute --down "DoctrineMigrations\VersionXX
 
 **Last Updated**: 4 Noiembrie 2025
 **Status**: ✅ Production-ready (after Sprint 1 optimization)
-**PHP Version**: 8.4
-**Symfony Version**: 7.3
+**PHP Version**: 8.5
+**Symfony Version**: 8.0

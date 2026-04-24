@@ -52,6 +52,7 @@ final class OptimizeSeoCommand extends Command
 
         $io->title(\sprintf('SEO Optimization for Article #%d', $articleId));
 
+        try {
         $message = new OptimizeSeoMessage(
             articleId: $articleId,
             generateMeta: !$noMeta,
@@ -107,5 +108,10 @@ final class OptimizeSeoCommand extends Command
         $io->success('SEO optimization completed.');
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('SEO optimization failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

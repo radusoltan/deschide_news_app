@@ -65,6 +65,7 @@ final class IngestArticleCommand extends Command
             return Command::SUCCESS;
         }
 
+        try {
         // Synchronous execution
         $io->section('Step 1: Entity extraction');
         $entities = $this->ingestionService->extractEntities($article);
@@ -101,5 +102,10 @@ final class IngestArticleCommand extends Command
         $io->success("Ingestion complete: {$entities->totalCount()} entities extracted");
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Article ingestion failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

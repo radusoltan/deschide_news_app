@@ -85,12 +85,13 @@ export async function login(
     return {
       message: 'Login successful',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Login error:', error);
+    const errMsg = error instanceof Error ? error.message : 'Failed to login. Please try again.';
 
     return {
       errors: {
-        _form: [error.message || 'Failed to login. Please try again.'],
+        _form: [errMsg],
       },
       username: formData.get('username') as string,
     };
@@ -144,9 +145,17 @@ export async function refreshAccessToken(): Promise<boolean> {
     await updateSession(newTokens);
 
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Token refresh failed:', error);
-    await deleteSession();
+
+    // Only delete session if the refresh token is truly rejected (401/403)
+    // For network or transient errors, preserve the session so the user
+    // can retry without being forced to re-login
+    const status = (error as { status?: number; code?: number })?.status ?? (error as { code?: number })?.code;
+    if (status === 401 || status === 403) {
+      await deleteSession();
+    }
+
     return false;
   }
 }

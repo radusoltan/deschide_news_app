@@ -14,6 +14,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use App\Enum\TopicStatus;
 use App\Repository\TopicRepository;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -34,6 +35,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_topic_lft_rgt', columns: ['lft', 'rgt'])]
 #[ORM\Index(name: 'idx_topic_parent', columns: ['parent_id'])]
 #[ORM\Index(name: 'idx_topic_root', columns: ['root_id'])]
+#[ORM\Index(name: 'idx_topic_status', columns: ['status'])]
 #[ApiResource(
     operations: [
         new Get(
@@ -77,8 +79,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiFilter(SearchFilter::class, properties: [
     'title' => 'partial',
     'slug' => 'exact',
+    'status' => 'exact',
 ])]
-#[ApiFilter(BooleanFilter::class, properties: ['isActive'])]
+#[ApiFilter(BooleanFilter::class, properties: ['isActive', 'isSensitive', 'isStoryLeaf'])]
 #[ApiFilter(OrderFilter::class, properties: ['title', 'lft', 'position'])]
 class Topic implements Translatable
 {
@@ -149,10 +152,69 @@ class Topic implements Translatable
     #[Groups(['topic:read', 'topic:write'])]
     private string $reviewStatus = 'approved';
 
+    /** Weight for importance scoring in StoryCluster calculations */
+    #[ORM\Column(type: Types::FLOAT, options: ['default' => 0.5])]
+    #[Groups(['topic:read', 'topic:write'])]
+    private float $weight = 0.5;
+
+    /** Blocks auto-publish gate when true (e.g. conflict zones, elections) */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    #[Groups(['topic:read', 'topic:write'])]
+    private bool $isSensitive = false;
+
+    /** Lifecycle state: ACTIVE (in use), ARCHIVED (historical), PROPOSED (pending review) */
+    #[ORM\Column(type: Types::STRING, length: 20, enumType: TopicStatus::class, options: ['default' => 'active'])]
+    #[Groups(['topic:read', 'topic:write'])]
+    private TopicStatus $status = TopicStatus::ACTIVE;
+
+    /** Distinguishes stable taxonomy nodes from dynamic story-specific leaves */
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    #[Groups(['topic:read', 'topic:write'])]
+    private bool $isStoryLeaf = false;
+
+    /** When this topic became editorially active (for story leaves with temporal bounds) */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['topic:read', 'topic:write'])]
+    private ?DateTimeImmutable $lifecycleStartedAt = null;
+
+    /** When this topic was editorially concluded (for story leaves with temporal bounds) */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['topic:read', 'topic:write'])]
+    private ?DateTimeImmutable $lifecycleEndedAt = null;
+
+    /**
+     * Keywords for Elasticsearch matching (title + content + summary).
+     * Populated from YAML fixture; used by topic detection pipeline.
+     *
+     * @var list<string>|null
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    #[Groups(['topic:read', 'topic:write'])]
+    private ?array $keywords = null;
+
     /** @var Collection<int, Article> */
     #[ORM\ManyToMany(targetEntity: Article::class, inversedBy: 'topics')]
     #[ORM\JoinTable(name: 'article_topics')]
     private Collection $articles;
+
+    /** @var Collection<int, PressReleaseTopic> */
+    #[ORM\OneToMany(targetEntity: PressReleaseTopic::class, mappedBy: 'topic', cascade: ['remove'], orphanRemoval: true)]
+    private Collection $pressReleaseTopics;
+
+    /** NotebookLM notebook ID for this topic (provisioned by ensureNotebookForTopic) */
+    #[ORM\Column(type: Types::STRING, length: 100, nullable: true)]
+    #[Groups(['topic:read', 'topic:write'])]
+    private ?string $notebookLmId = null;
+
+    /** When sources were last synced to the NotebookLM notebook */
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    #[Groups(['topic:read'])]
+    private ?DateTimeImmutable $notebookLastSyncedAt = null;
+
+    /** Number of sources currently in the NotebookLM notebook */
+    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
+    #[Groups(['topic:read'])]
+    private int $notebookSourceCount = 0;
 
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
@@ -179,6 +241,7 @@ class Topic implements Translatable
     {
         $this->children = new ArrayCollection();
         $this->articles = new ArrayCollection();
+        $this->pressReleaseTopics = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -336,6 +399,12 @@ class Topic implements Translatable
         return $this;
     }
 
+    /** @return Collection<int, PressReleaseTopic> */
+    public function getPressReleaseTopics(): Collection
+    {
+        return $this->pressReleaseTopics;
+    }
+
     public function getCreatedAt(): ?DateTimeImmutable
     {
         return $this->createdAt;
@@ -354,6 +423,142 @@ class Topic implements Translatable
     public function setReviewStatus(string $reviewStatus): self
     {
         $this->reviewStatus = $reviewStatus;
+
+        return $this;
+    }
+
+    public function getWeight(): float
+    {
+        return $this->weight;
+    }
+
+    public function setWeight(float $weight): self
+    {
+        $this->weight = $weight;
+
+        return $this;
+    }
+
+    public function isSensitive(): bool
+    {
+        return $this->isSensitive;
+    }
+
+    public function getIsSensitive(): bool
+    {
+        return $this->isSensitive;
+    }
+
+    public function setIsSensitive(bool $isSensitive): self
+    {
+        $this->isSensitive = $isSensitive;
+
+        return $this;
+    }
+
+    public function getStatus(): TopicStatus
+    {
+        return $this->status;
+    }
+
+    public function setStatus(TopicStatus $status): self
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function isStoryLeaf(): bool
+    {
+        return $this->isStoryLeaf;
+    }
+
+    public function getIsStoryLeaf(): bool
+    {
+        return $this->isStoryLeaf;
+    }
+
+    public function setIsStoryLeaf(bool $isStoryLeaf): self
+    {
+        $this->isStoryLeaf = $isStoryLeaf;
+
+        return $this;
+    }
+
+    public function getLifecycleStartedAt(): ?DateTimeImmutable
+    {
+        return $this->lifecycleStartedAt;
+    }
+
+    public function setLifecycleStartedAt(?DateTimeImmutable $lifecycleStartedAt): self
+    {
+        $this->lifecycleStartedAt = $lifecycleStartedAt;
+
+        return $this;
+    }
+
+    public function getLifecycleEndedAt(): ?DateTimeImmutable
+    {
+        return $this->lifecycleEndedAt;
+    }
+
+    public function setLifecycleEndedAt(?DateTimeImmutable $lifecycleEndedAt): self
+    {
+        $this->lifecycleEndedAt = $lifecycleEndedAt;
+
+        return $this;
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    public function getKeywords(): ?array
+    {
+        return $this->keywords;
+    }
+
+    /**
+     * @param list<string>|null $keywords
+     */
+    public function setKeywords(?array $keywords): self
+    {
+        $this->keywords = $keywords;
+
+        return $this;
+    }
+
+    public function getNotebookLmId(): ?string
+    {
+        return $this->notebookLmId;
+    }
+
+    public function setNotebookLmId(?string $notebookLmId): self
+    {
+        $this->notebookLmId = $notebookLmId;
+
+        return $this;
+    }
+
+    public function getNotebookLastSyncedAt(): ?DateTimeImmutable
+    {
+        return $this->notebookLastSyncedAt;
+    }
+
+    public function setNotebookLastSyncedAt(?DateTimeImmutable $notebookLastSyncedAt): self
+    {
+        $this->notebookLastSyncedAt = $notebookLastSyncedAt;
+
+        return $this;
+    }
+
+    public function getNotebookSourceCount(): int
+    {
+        return $this->notebookSourceCount;
+    }
+
+    public function setNotebookSourceCount(int $notebookSourceCount): self
+    {
+        $this->notebookSourceCount = $notebookSourceCount;
 
         return $this;
     }

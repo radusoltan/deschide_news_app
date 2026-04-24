@@ -61,6 +61,7 @@ class TranslateArticlesCommand extends Command
 
         $io->title(sprintf('Translating %d articles → %s', \count($articleIds), implode(', ', $locales)));
 
+        try {
         foreach ($articleIds as $articleId) {
             $article = $this->articleRepository->find($articleId);
             if (!$article) {
@@ -88,6 +89,11 @@ class TranslateArticlesCommand extends Command
         $io->success(sprintf('Done. %d translation jobs dispatched.', \count($articleIds)));
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Translation dispatch failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     /**

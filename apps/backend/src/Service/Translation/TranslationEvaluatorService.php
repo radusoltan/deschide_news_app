@@ -9,8 +9,9 @@ use App\Dto\Translation\TranslationOptimizationResult;
 use App\Entity\Article;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
+use App\Service\Ai\Provider\GeminiCliException;
+use App\Service\Ai\Provider\GeminiCliService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
 
 final class TranslationEvaluatorService
 {
@@ -20,8 +21,8 @@ final class TranslationEvaluatorService
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly GeminiStructuredTranslator $translator,
+        private readonly GeminiCliService $geminiCli,
         private readonly LoggerInterface $logger,
-        private readonly string $geminiCliPath,
     ) {}
 
     /**
@@ -248,23 +249,9 @@ PROMPT;
 
     private function callGemini(string $prompt): ?string
     {
-        $process = new Process([$this->geminiCliPath, '-p', $prompt]);
-        $process->setTimeout(self::TIMEOUT);
-
         try {
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                $this->logger->warning('TranslationEvaluator: Gemini process failed', [
-                    'exitCode' => $process->getExitCode(),
-                    'error' => mb_substr($process->getErrorOutput(), 0, 200),
-                ]);
-
-                return null;
-            }
-
-            return trim($process->getOutput());
-        } catch (\Throwable $e) {
+            return $this->geminiCli->execute($prompt, ['timeout' => self::TIMEOUT]);
+        } catch (GeminiCliException $e) {
             $this->logger->error('TranslationEvaluator: exception calling Gemini', [
                 'error' => $e->getMessage(),
             ]);

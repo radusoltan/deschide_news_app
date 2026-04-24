@@ -148,6 +148,7 @@ class ImportArticlesWithRelationsCommand extends Command
 
                 // Set status
                 $article->setStatus(ArticleStatus::PUBLISHED);
+                $article->setPublishedLocales(['ro']);
 
                 // Set badge
                 $badge = null;

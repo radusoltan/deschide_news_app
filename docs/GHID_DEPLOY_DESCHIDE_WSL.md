@@ -508,7 +508,7 @@ appendonly no
 
 # Memory Management
 maxmemory 2gb                           # Ajustează în funcție de RAM
-maxmemory-policy allkeys-lru            # LRU eviction pentru cache
+maxmemory-policy volatile-lru            # LRU eviction pentru cache
 maxmemory-samples 5
 
 # Lazy Freeing (pentru performanță)

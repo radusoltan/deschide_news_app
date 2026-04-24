@@ -51,51 +51,57 @@ final class ElasticsearchReindexCommand extends Command
         $force = $input->getOption('force');
         $batchSize = (int) $input->getOption('batch-size');
 
-        // Create/recreate index
-        $io->section('Creating trilingual index...');
-        $this->indexManager->createIndex(deleteIfExists: $force);
-        $io->writeln('Index: <info>' . $this->indexManager->getIndexName() . '</info>');
+        try {
+            // Create/recreate index
+            $io->section('Creating trilingual index...');
+            $this->indexManager->createIndex(deleteIfExists: $force);
+            $io->writeln('Index: <info>' . $this->indexManager->getIndexName() . '</info>');
 
-        // Count articles
-        $repo = $this->em->getRepository(Article::class);
-        $total = $repo->count(['status' => ArticleStatus::PUBLISHED]);
-        $io->writeln("Articles to index: <info>{$total}</info>");
+            // Count articles
+            $repo = $this->em->getRepository(Article::class);
+            $total = $repo->count(['status' => ArticleStatus::PUBLISHED]);
+            $io->writeln("Articles to index: <info>{$total}</info>");
 
-        if ($total === 0) {
-            $io->success('No published articles to index.');
+            if ($total === 0) {
+                $io->success('No published articles to index.');
 
-            return Command::SUCCESS;
-        }
-
-        // Index in batches
-        $io->section('Indexing articles...');
-        $io->progressStart($total);
-
-        $offset = 0;
-        $indexed = 0;
-
-        while ($offset < $total) {
-            $articles = $repo->findBy(
-                ['status' => ArticleStatus::PUBLISHED],
-                ['id' => 'ASC'],
-                $batchSize,
-                $offset,
-            );
-
-            foreach ($articles as $article) {
-                $this->indexer->index($article);
-                $indexed++;
-                $io->progressAdvance();
+                return Command::SUCCESS;
             }
 
-            // Clear entity manager to free memory
-            $this->em->clear();
-            $offset += $batchSize;
+            // Index in batches
+            $io->section('Indexing articles...');
+            $io->progressStart($total);
+
+            $offset = 0;
+            $indexed = 0;
+
+            while ($offset < $total) {
+                $articles = $repo->findBy(
+                    ['status' => ArticleStatus::PUBLISHED],
+                    ['id' => 'ASC'],
+                    $batchSize,
+                    $offset,
+                );
+
+                foreach ($articles as $article) {
+                    $this->indexer->index($article);
+                    $indexed++;
+                    $io->progressAdvance();
+                }
+
+                // Clear entity manager to free memory
+                $this->em->clear();
+                $offset += $batchSize;
+            }
+
+            $io->progressFinish();
+            $io->success("Reindexed {$indexed} articles into trilingual index.");
+
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Elasticsearch reindex failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
         }
-
-        $io->progressFinish();
-        $io->success("Reindexed {$indexed} articles into trilingual index.");
-
-        return Command::SUCCESS;
     }
 }

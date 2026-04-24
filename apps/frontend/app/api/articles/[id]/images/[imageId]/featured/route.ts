@@ -21,11 +21,12 @@ export async function PUT(
     await setFeaturedImage(articleId, articleImageId);
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('PUT /api/articles/[id]/images/[imageId]/featured error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to set featured image' },
-      { status: error.status || 500 }
+      { error: errMsg || 'Failed to set featured image' },
+      { status: 500 }
     );
   }
 }

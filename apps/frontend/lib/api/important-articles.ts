@@ -4,6 +4,7 @@
  */
 
 import { ImportantArticlesListResponse } from '../types/article';
+import type { ArticleImage, Image, Thumbnail } from '../types/image';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -47,7 +48,7 @@ export async function fetchImportantArticles(
  * @param articleImages - Array of ArticleImage objects
  * @returns Image object or null
  */
-export function getFeaturedImage(articleImages: any[]) {
+export function getFeaturedImage(articleImages: ArticleImage[]) {
   if (!articleImages || articleImages.length === 0) {
     return null;
   }
@@ -73,7 +74,8 @@ export function getFeaturedImage(articleImages: any[]) {
  * @param path - Image path from API (e.g., "images/image_xxx.png")
  * @returns Full CDN URL
  */
-export function buildImageUrl(path: string): string {
+export function buildImageUrl(path: string | null | undefined): string {
+  if (!path) return '';
   const CDN_URL = process.env.NEXT_PUBLIC_CDN_URL ?? '';
   return `${CDN_URL}/uploads/${path}`;
 }
@@ -85,13 +87,13 @@ export function buildImageUrl(path: string): string {
  * @param profileName - Profile name to search for (e.g., "article_wide")
  * @returns Thumbnail object or null if not found
  */
-export function getThumbnailByProfile(image: any, profileName: string) {
+export function getThumbnailByProfile(image: (Image & { thumbnails?: Thumbnail[] }) | null, profileName: string) {
   if (!image || !image.thumbnails || !Array.isArray(image.thumbnails)) {
     return null;
   }
 
   return image.thumbnails.find(
-    (thumb: any) =>
+    (thumb) =>
       typeof thumb.profile === 'object' && thumb.profile?.name === profileName
   );
 }

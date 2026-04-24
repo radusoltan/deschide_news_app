@@ -137,15 +137,19 @@ async function authenticatedFetch(
   if (response.status === 401) {
     console.log('[DAL] Got 401, attempting token refresh...');
 
-    // Try to refresh and retry once
-    const newToken = await getFreshAccessToken();
-    if (newToken && newToken !== accessToken) {
-      // Retry with new token
-      requestHeaders['Authorization'] = `Bearer ${newToken}`;
-      return fetch(`${API_BASE_URL}${endpoint}`, {
-        ...fetchOptions,
-        headers: requestHeaders,
-      });
+    // Bypass the cache() wrapper — call refreshSessionToken directly
+    // to get a truly fresh token and update the session cookie
+    try {
+      const refreshResult = await refreshSessionToken();
+      if (refreshResult.success) {
+        requestHeaders['Authorization'] = `Bearer ${refreshResult.accessToken}`;
+        return fetch(`${API_BASE_URL}${endpoint}`, {
+          ...fetchOptions,
+          headers: requestHeaders,
+        });
+      }
+    } catch (refreshError) {
+      console.error('[DAL] Token refresh on 401 failed:', refreshError);
     }
   }
 
@@ -192,6 +196,7 @@ export interface Article {
   badge?: string | null;
   isFeatured?: boolean;
   publishedAt?: string;
+  publishAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
   category?: string | object;
@@ -201,6 +206,11 @@ export interface Article {
   relatedArticles?: Array<string | object>; // Array of related article IRIs or objects
   metaTitle?: string | null;
   metaDescription?: string | null;
+  publishedLocales?: string[];
+  aiGenerated?: boolean;
+  aiConfidenceScore?: number | null;
+  aiSourceCount?: number | null;
+  topics?: Array<string | { id?: number; title?: string; slug?: string }>;
 }
 
 export interface ArticlesCollection {
@@ -217,6 +227,7 @@ export interface GetArticlesParams {
   locale?: string;
   category?: number;
   status?: string;
+  unclassified?: boolean;
 }
 
 /**
@@ -226,13 +237,14 @@ export interface GetArticlesParams {
 export async function getArticles(
   params: GetArticlesParams = {}
 ): Promise<ArticlesCollection> {
-  const { page = 1, itemsPerPage = 30, locale = 'ro', category, status } = params;
+  const { page = 1, itemsPerPage = 30, locale = 'ro', category, status, unclassified } = params;
 
   const queryParams = new URLSearchParams();
   queryParams.set('page', page.toString());
   queryParams.set('itemsPerPage', itemsPerPage.toString());
   if (category) queryParams.set('category', category.toString());
   if (status) queryParams.set('status', status);
+  if (unclassified) queryParams.set('unclassified', '1');
 
   const response = await authenticatedFetch(
     `/api/articles?${queryParams.toString()}`,
@@ -404,7 +416,7 @@ export interface Category {
   frontPageLayout?: string | null;
   inMenu?: boolean;
   inFooterMenu?: boolean;
-  parent?: any;
+  parent?: string | null; // IRI to parent category
   createdAt?: string;
   updatedAt?: string;
 }

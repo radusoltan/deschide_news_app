@@ -40,6 +40,7 @@ class TestSlugGenerationCommand extends Command
 
         $io->section('Creating test categories with Romanian titles');
 
+        try {
         $results = [];
         foreach ($testCases as $title => $expectedSlug) {
             // Create a test category (don't persist, just test slug generation)
@@ -81,5 +82,10 @@ class TestSlugGenerationCommand extends Command
         $io->error('Some slug generation tests failed! Check the results above.');
 
         return Command::FAILURE;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

@@ -6,7 +6,8 @@ namespace App\Tests\Unit\Command;
 
 use App\Command\ElasticsearchCreateIndexCommand;
 use App\Command\ElasticsearchIndexArticlesCommand;
-use App\Service\ElasticService;
+use App\Service\Elasticsearch\ElasticDocumentService;
+use App\Service\Elasticsearch\ElasticIndexManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use PHPUnit\Framework\TestCase;
@@ -20,21 +21,21 @@ class ElasticsearchCommandsTest extends TestCase
 
     public function testCreateIndexCommandName(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticIndexManager::class);
         $command = new ElasticsearchCreateIndexCommand($service);
         $this->assertSame('app:elasticsearch:create-index', $command->getName());
     }
 
     public function testCreateIndexCommandHasLocaleOption(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticIndexManager::class);
         $command = new ElasticsearchCreateIndexCommand($service);
         $this->assertTrue($command->getDefinition()->hasOption('locale'));
     }
 
     public function testCreateIndexWhenElasticsearchDisabled(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(false);
 
         $command = new ElasticsearchCreateIndexCommand($service);
@@ -50,7 +51,7 @@ class ElasticsearchCommandsTest extends TestCase
 
     public function testCreateIndexForAllLocales(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->expects($this->once())->method('createAllIndices');
         $service->method('getClusterHealth')->willReturn(null);
@@ -68,7 +69,7 @@ class ElasticsearchCommandsTest extends TestCase
 
     public function testCreateIndexForSpecificLocale(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->expects($this->once())->method('createIndex')->with('ro');
         $service->method('getClusterHealth')->willReturn(null);
@@ -86,7 +87,7 @@ class ElasticsearchCommandsTest extends TestCase
 
     public function testCreateIndexHandlesException(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticIndexManager::class);
         $service->method('isEnabled')->willReturn(true);
         $service->method('createAllIndices')->willThrowException(new Exception('ES error'));
 
@@ -105,7 +106,7 @@ class ElasticsearchCommandsTest extends TestCase
 
     public function testIndexArticlesCommandName(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $em = $this->createStub(EntityManagerInterface::class);
         $command = new ElasticsearchIndexArticlesCommand($service, $em);
         $this->assertSame('app:elasticsearch:index-articles', $command->getName());
@@ -113,7 +114,7 @@ class ElasticsearchCommandsTest extends TestCase
 
     public function testIndexArticlesCommandHasOptions(): void
     {
-        $service = $this->createStub(ElasticService::class);
+        $service = $this->createStub(ElasticDocumentService::class);
         $em = $this->createStub(EntityManagerInterface::class);
         $command = new ElasticsearchIndexArticlesCommand($service, $em);
         $this->assertTrue($command->getDefinition()->hasOption('locale'));
@@ -124,7 +125,7 @@ class ElasticsearchCommandsTest extends TestCase
 
     public function testIndexArticlesWhenElasticsearchDisabled(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(false);
         $em = $this->createStub(EntityManagerInterface::class);
 
@@ -141,7 +142,7 @@ class ElasticsearchCommandsTest extends TestCase
 
     public function testIndexArticlesHandlesException(): void
     {
-        $service = $this->createMock(ElasticService::class);
+        $service = $this->createMock(ElasticDocumentService::class);
         $service->method('isEnabled')->willReturn(true);
 
         $query = $this->createMock(\Doctrine\ORM\Query::class);

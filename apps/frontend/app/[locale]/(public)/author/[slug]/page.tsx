@@ -2,7 +2,13 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ArticleCard from '@/components/article/ArticleCard';
 import { lookupAuthor } from '@/lib/api/slug-lookup';
+import { getFallbackContent, isSupportedLocale, LocaleFallbackNotice } from '@/lib/i18n/locale-fallback';
+import { buildCanonicalUrl, buildHreflangAlternates } from '@/lib/seo/locale-url';
 import type { Locale } from '@/lib/types';
+import type { Article } from '@/lib/types/article';
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
 interface AuthorPageProps {
   params: Promise<{
@@ -12,6 +18,51 @@ interface AuthorPageProps {
   searchParams: Promise<{
     page?: string;
   }>;
+}
+
+interface AuthorArticlesResult {
+  articles: Article[];
+  totalItems: number;
+  totalPages: number;
+}
+
+async function fetchAuthorArticles(
+  authorId: number,
+  locale: Locale,
+  currentPage: number,
+  itemsPerPage: number
+): Promise<AuthorArticlesResult | null> {
+  // API Platform collection filter: `authors` expects array notation
+  // (`authors[]=ID`), not scalar (`authors=ID` returns HTTP 400).
+  const queryParams = new URLSearchParams({
+    status: 'published',
+    page: currentPage.toString(),
+    itemsPerPage: itemsPerPage.toString(),
+    'order[publishedAt]': 'DESC',
+  });
+  queryParams.append('authors[]', authorId.toString());
+
+  const response = await fetch(`${API_URL}/api/articles?${queryParams.toString()}`, {
+    headers: {
+      Accept: 'application/ld+json',
+      'Accept-Language': locale,
+    },
+    next: { revalidate: 600 },
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+  const articles = data.member || data['hydra:member'] || [];
+  const totalItems = data.totalItems || data['hydra:totalItems'] || 0;
+
+  return {
+    articles,
+    totalItems,
+    totalPages: Math.ceil(totalItems / itemsPerPage),
+  };
 }
 
 /**
@@ -32,75 +83,68 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
   }
 
   const author = authorResult.entity;
-
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? '';
+  const requestedLocale = isSupportedLocale(locale) ? locale : 'ro';
   const currentPage = parseInt(page, 10);
   const itemsPerPage = 24;
 
-  try {
-    // Fetch author's articles
-    const queryParams = new URLSearchParams({
-      status: 'published',
-      'authors': author.id.toString(),
-      page: currentPage.toString(),
-      itemsPerPage: itemsPerPage.toString(),
-      'order[publishedAt]': 'DESC',
-    });
+  const articlesFallback = await getFallbackContent(
+    requestedLocale,
+    (candidateLocale) => fetchAuthorArticles(author.id, candidateLocale, currentPage, itemsPerPage),
+    { isMissing: (content) => content.totalItems === 0 }
+  );
 
-    const response = await fetch(`${apiUrl}/api/articles?${queryParams.toString()}`, {
-      headers: {
-        'Accept': 'application/ld+json',
-        'Accept-Language': locale,
-      },
-      next: { revalidate: 600 }, // Revalidate every 10 minutes
-    });
+  if (!articlesFallback.content) {
+    notFound();
+  }
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch articles: ${response.status}`);
-    }
+  const { articles, totalItems, totalPages } = articlesFallback.content;
+  const effectiveLocale = articlesFallback.effectiveLocale;
 
-    const data = await response.json();
-    const articles = data.member || data['hydra:member'] || [];
-    const totalItems = data.totalItems || data['hydra:totalItems'] || 0;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const texts = {
+    ro: {
+      articles: 'Articole',
+      allArticles: 'Toate articolele de',
+      articleCount: 'articole publicate',
+      bio: 'Biografie',
+      email: 'Email',
+      noArticles: 'Acest autor nu are articole publicate încă.',
+      previous: 'Anterior',
+      next: 'Următor',
+    },
+    en: {
+      articles: 'Articles',
+      allArticles: 'All articles by',
+      articleCount: 'published articles',
+      bio: 'Biography',
+      email: 'Email',
+      noArticles: 'This author has no published articles yet.',
+      previous: 'Previous',
+      next: 'Next',
+    },
+    ru: {
+      articles: 'Статьи',
+      allArticles: 'Все статьи автора',
+      articleCount: 'опубликованных статей',
+      bio: 'Биография',
+      email: 'Email',
+      noArticles: 'У этого автора пока нет опубликованных статей.',
+      previous: 'Предыдущий',
+      next: 'Следующий',
+    },
+  };
 
-    const texts = {
-      ro: {
-        articles: 'Articole',
-        allArticles: 'Toate articolele de',
-        articleCount: 'articole publicate',
-        bio: 'Biografie',
-        email: 'Email',
-        noArticles: 'Acest autor nu are articole publicate încă.',
-        previous: 'Anterior',
-        next: 'Următor',
-      },
-      en: {
-        articles: 'Articles',
-        allArticles: 'All articles by',
-        articleCount: 'published articles',
-        bio: 'Biography',
-        email: 'Email',
-        noArticles: 'This author has no published articles yet.',
-        previous: 'Previous',
-        next: 'Next',
-      },
-      ru: {
-        articles: 'Статьи',
-        allArticles: 'Все статьи автора',
-        articleCount: 'опубликованных статей',
-        bio: 'Биография',
-        email: 'Email',
-        noArticles: 'У этого автора пока нет опубликованных статей.',
-        previous: 'Предыдущий',
-        next: 'Следующий',
-      },
-    };
+  const t = texts[effectiveLocale];
 
-    const t = texts[locale as keyof typeof texts] || texts.ro;
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {articlesFallback.isFallback && (
+        <LocaleFallbackNotice
+          requestedLocale={requestedLocale}
+          effectiveLocale={effectiveLocale}
+          translationPending={articlesFallback.translationPending}
+        />
+      )}
 
-    return (
-      <div className="container mx-auto px-4 py-8">
         {/* Author Header */}
         <div className="bg-surface dark:bg-surface-dark rounded-lg shadow-lg p-8 mb-8">
           <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -176,8 +220,8 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
             <>
               {/* Articles Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-                {articles.map((article: any) => (
-                  <ArticleCard key={article.id} article={article} locale={locale as Locale} />
+                {articles.map((article: Article) => (
+                  <ArticleCard key={article.id} article={article} locale={effectiveLocale} />
                 ))}
               </div>
 
@@ -187,7 +231,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                   {/* Previous Button */}
                   {currentPage > 1 && (
                     <a
-                      href={`/${locale}/author/${slug}?page=${currentPage - 1}`}
+                      href={`/${effectiveLocale}/author/${slug}?page=${currentPage - 1}`}
                       className="px-4 py-2 bg-gray-200 text-primary rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600"
                     >
                       {t.previous}
@@ -211,7 +255,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                       return (
                         <a
                           key={pageNum}
-                          href={`/${locale}/author/${slug}?page=${pageNum}`}
+                          href={`/${effectiveLocale}/author/${slug}?page=${pageNum}`}
                           className={`px-4 py-2 rounded ${
                             currentPage === pageNum
                               ? 'bg-brand-tomato-500 text-white'
@@ -227,7 +271,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
                   {/* Next Button */}
                   {currentPage < totalPages && (
                     <a
-                      href={`/${locale}/author/${slug}?page=${currentPage + 1}`}
+                      href={`/${effectiveLocale}/author/${slug}?page=${currentPage + 1}`}
                       className="px-4 py-2 bg-gray-200 text-primary rounded hover:bg-gray-300 dark:bg-gray-700 dark:text-primary-dark dark:hover:bg-gray-600"
                     >
                       {t.next}
@@ -242,12 +286,8 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
             </div>
           )}
         </div>
-      </div>
-    );
-  } catch (error) {
-    console.error('Error fetching author articles:', error);
-    notFound();
-  }
+    </div>
+  );
 }
 
 /**
@@ -255,6 +295,7 @@ export default async function AuthorPage({ params, searchParams }: AuthorPagePro
  */
 export async function generateMetadata({ params }: AuthorPageProps): Promise<Metadata> {
   const { locale, slug } = await params;
+  const validLocale = isSupportedLocale(locale) ? locale : 'ro';
 
   const authorResult = await lookupAuthor(slug);
 
@@ -279,24 +320,21 @@ export async function generateMetadata({ params }: AuthorPageProps): Promise<Met
     ru: `Читайте все статьи, написанные ${fullName} на Deschide News.`,
   };
 
-  const title = titles[locale as keyof typeof titles] || titles.ro;
-  const description = descriptions[locale as keyof typeof descriptions] || descriptions.ro;
+  const title = titles[validLocale];
+  const description = descriptions[validLocale];
+  const authorPath = `author/${slug}`;
 
   return {
     title,
     description,
     alternates: {
-      canonical: `/${locale}/author/${slug}`,
-      languages: {
-        ro: `/author/${slug}`,
-        en: `/en/author/${slug}`,
-        ru: `/ru/author/${slug}`,
-      },
+      canonical: buildCanonicalUrl(SITE_URL, validLocale, authorPath),
+      languages: buildHreflangAlternates(SITE_URL, authorPath),
     },
     openGraph: {
       title,
       description,
-      locale: locale === 'ro' ? 'ro_RO' : locale === 'en' ? 'en_US' : 'ru_RU',
+      locale: validLocale === 'ro' ? 'ro_RO' : validLocale === 'en' ? 'en_US' : 'ru_RU',
       type: 'profile',
     },
   };

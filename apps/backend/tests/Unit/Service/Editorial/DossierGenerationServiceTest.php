@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\Editorial;
 
+use App\Service\Ai\Provider\GeminiCliService;
 use App\Service\Editorial\DossierGenerationService;
 use App\Service\NotebookLM\NotebookLMService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -18,7 +19,7 @@ class DossierGenerationServiceTest extends TestCase
         $nlm = new NotebookLMService(enabled: false, cliPath: '/nonexistent', logger: new NullLogger());
 
         $service = new DossierGenerationService(
-            geminiCliPath: '/nonexistent/gemini',
+            geminiCli: new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()),
             em: $em,
             notebookLMService: $nlm,
             logger: new NullLogger(),
@@ -37,7 +38,7 @@ class DossierGenerationServiceTest extends TestCase
         $nlm = new NotebookLMService(enabled: false, cliPath: '/nonexistent', logger: new NullLogger());
 
         $service = new DossierGenerationService(
-            geminiCliPath: '/usr/bin/gemini',
+            geminiCli: new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()),
             em: $em,
             notebookLMService: $nlm,
             logger: new NullLogger(),
@@ -52,7 +53,7 @@ class DossierGenerationServiceTest extends TestCase
         $nlm = new NotebookLMService(enabled: false, cliPath: '/nonexistent', logger: new NullLogger());
 
         $service = new DossierGenerationService(
-            geminiCliPath: '/usr/bin/gemini',
+            geminiCli: new GeminiCliService('/usr/bin/false', '/tmp', new NullLogger()),
             em: $em,
             notebookLMService: $nlm,
             logger: new NullLogger(),

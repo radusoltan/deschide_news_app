@@ -47,6 +47,7 @@ class RedirectHealthCommand extends Command
             $io->title('Redirect System Health Check');
         }
 
+        try {
         // Initialize health report
         $healthReport = [
             'timestamp' => date('Y-m-d H:i:s'),
@@ -253,6 +254,11 @@ class RedirectHealthCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Health check failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function displayHealthReport(SymfonyStyle $io, array $report): void

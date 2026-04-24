@@ -34,10 +34,11 @@ export async function POST(
     }
 
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
     console.error('POST /api/articles/[id]/lock/heartbeat error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to refresh lock' },
+      { error: errMsg || 'Failed to refresh lock' },
       { status: 500 }
     );
   }

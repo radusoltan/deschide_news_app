@@ -4,7 +4,7 @@ import { Spinner } from 'flowbite-react';
 import CategoriesTable from './CategoriesTable';
 import { CategoriesPagination } from './components/CategoriesPagination';
 import FrontPageOrder from './components/FrontPageOrder';
-import { getCategories } from '@/lib/dal';
+import { getCategories, type Category } from '@/lib/dal';
 
 interface CategoriesPageProps {
   params: Promise<{
@@ -23,7 +23,7 @@ export default async function CategoriesPage({ params, searchParams }: Categorie
   const itemsPerPage = 50; // 50 categories per page (matches API default)
 
   // Fetch categories
-  let categoriesData: any[] = [];
+  let categoriesData: Category[] = [];
   let totalItems = 0;
   let error: string | null = null;
 
@@ -89,12 +89,12 @@ export default async function CategoriesPage({ params, searchParams }: Categorie
       {/* Front Page Order Section */}
       {(() => {
         const frontPageCategories = categoriesData
-          .filter((cat: any) => cat.onFrontPage && cat.slug !== 'opinii')
-          .map((cat: any) => ({
+          .filter((cat: Category) => cat.onFrontPage && cat.slug !== 'opinii')
+          .map((cat: Category) => ({
             id: cat.id,
             title: cat.title,
             slug: cat.slug,
-            frontPagePosition: cat.frontPagePosition ?? 0,
+            frontPagePosition: (cat as any).frontPagePosition ?? 0,
           }));
 
         if (frontPageCategories.length === 0) return null;

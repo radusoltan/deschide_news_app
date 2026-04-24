@@ -9,7 +9,7 @@ use App\Entity\SiteStatsDaily;
 use App\Repository\ArticleRepository;
 use App\Repository\PageViewRepository;
 use App\Repository\SessionRepository;
-use App\Service\PerformanceService;
+use App\Service\Analytics\AnalyticsService;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Predis\Client;
@@ -28,7 +28,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class AggregateStatsCommand extends Command
 {
     public function __construct(
-        private readonly PerformanceService $performance,
+        private readonly AnalyticsService $performance,
         private readonly PageViewRepository $pageViewRepository,
         private readonly SessionRepository $sessionRepository,
         private readonly ArticleRepository $articleRepository,
@@ -70,15 +70,25 @@ class AggregateStatsCommand extends Command
             $io->warning('DRY RUN MODE - No data will be persisted');
         }
 
-        // Aggregate article stats
-        $this->aggregateArticleStats($date, $io, $dryRun);
+        try {
+            // Aggregate article stats
+            $this->aggregateArticleStats($date, $io, $dryRun);
 
-        // Aggregate site stats
-        $this->aggregateSiteStats($date, $io, $dryRun);
+            // Aggregate site stats
+            $this->aggregateSiteStats($date, $io, $dryRun);
 
-        $io->success('Stats aggregation completed successfully');
+            $io->success('Stats aggregation completed successfully');
 
-        return Command::SUCCESS;
+            return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $this->logger->error('Stats aggregation failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'command' => $this->getName(),
+            ]);
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 
     private function aggregateArticleStats(DateTime $date, SymfonyStyle $io, bool $dryRun): void

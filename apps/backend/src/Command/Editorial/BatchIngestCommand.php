@@ -54,6 +54,7 @@ final class BatchIngestCommand extends Command
             $io->warning('DRY-RUN: nimic nu se dispatch-ează.');
         }
 
+        try {
         $qb = $this->em->getRepository(Article::class)->createQueryBuilder('a')
             ->where('a.content IS NOT NULL')
             ->andWhere('a.status = :status')
@@ -120,5 +121,10 @@ final class BatchIngestCommand extends Command
         }
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error('Batch ingest failed: ' . $e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

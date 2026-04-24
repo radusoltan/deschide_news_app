@@ -239,11 +239,11 @@ export interface LiveTextApiResponse {
   startTime: string | null;
   endTime: string | null;
   locale: string;
-  author: any;
-  category: any;
-  sportMatch?: any;
-  collaborators: any[];
-  posts: any[];
+  author: LiveTextAuthor;
+  category: LiveTextCategory | null;
+  sportMatch?: LiveTextSportMatch | null;
+  collaborators: LiveTextCollaborator[];
+  posts: LiveTextPost[];
   createdAt: string;
   updatedAt: string;
 }

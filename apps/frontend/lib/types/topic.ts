@@ -26,6 +26,8 @@ export interface Topic {
   };
 }
 
+export type TopicStatus = 'active' | 'archived' | 'proposed';
+
 export interface TopicTreeNode {
   id: number;
   title: string;
@@ -34,6 +36,9 @@ export interface TopicTreeNode {
   lvl: number;
   position: number;
   isActive: boolean;
+  status: TopicStatus;
+  isSensitive: boolean;
+  isStoryLeaf: boolean;
   children: TopicTreeNode[];
 }
 

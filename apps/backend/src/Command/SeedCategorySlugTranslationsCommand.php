@@ -40,6 +40,7 @@ final class SeedCategorySlugTranslationsCommand extends Command
 
         $io->title('Seed Category Slug Translations');
 
+        try {
         $translationRepo = $this->em->getRepository(Translation::class);
         $categories = $this->em->getRepository(Category::class)->findAll();
 
@@ -96,5 +97,10 @@ final class SeedCategorySlugTranslationsCommand extends Command
         $io->success(\sprintf('%s %d slug translations.', $dryRun ? 'Would create' : 'Created', $created));
 
         return Command::SUCCESS;
+        } catch (\Throwable $e) {
+            $io->error($e->getMessage());
+
+            return Command::FAILURE;
+        }
     }
 }

@@ -1,7 +1,7 @@
 {
     "type": "project",
     "license": "proprietary",
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
         "php": ">=8.2",
@@ -18,6 +18,7 @@
         "dragonmantank/cron-expression": "^3.6",
         "elasticsearch/elasticsearch": "^9.2",
         "facebook/graph-sdk": "^5.1.4",
+        "fivefilters/readability.php": "^3.3",
         "gesdinet/jwt-refresh-token-bundle": "^2.0",
         "intervention/image": "^3.11.6",
         "league/commonmark": "^2.8",

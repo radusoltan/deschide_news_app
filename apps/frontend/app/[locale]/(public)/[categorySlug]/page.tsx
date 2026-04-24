@@ -13,12 +13,14 @@ import { fetchCategories } from '@/lib/api/categories';
 import { fetchArticlesByCategory } from '@/lib/api/articles';
 import { getTrendingArticles } from '@/lib/api/statistics';
 import { isReservedSlug } from '@/lib/constants/reserved-slugs';
+import { getFallbackContent, hasPendingTranslation, isSupportedLocale, LocaleFallbackNotice } from '@/lib/i18n/locale-fallback';
 import { generateCategoryMetadata } from '@/lib/seo/meta-tags';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { getSectionColor, getCategorySlugFromArticle } from '@/components/cards/utils';
 import type { Locale } from '@/lib/types';
 import type { Article, Category } from '@/lib/types/article';
+import type { TrendingArticle } from '@/lib/api/statistics';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 120;
@@ -79,13 +81,15 @@ const TRENDING_PLACEHOLDER: Record<string, Array<{ id: number; title: string; ca
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { locale, categorySlug } = await params;
-  const validLocale = (['ro', 'en', 'ru'].includes(locale) ? locale : 'ro') as Locale;
+  const validLocale = isSupportedLocale(locale) ? locale : 'ro';
   if (isReservedSlug(categorySlug)) return { title: 'Page Not Found' };
   try {
-    const categoriesResponse = await fetchCategories(validLocale);
-    const category = (categoriesResponse.member || []).find((cat: Category) => cat.slug === categorySlug);
+    const { content: category, effectiveLocale } = await getFallbackContent(validLocale, async (candidateLocale) => {
+      const categoriesResponse = await fetchCategories(candidateLocale);
+      return (categoriesResponse.member || []).find((cat: Category) => cat.slug === categorySlug) || null;
+    }, { isTranslationPending: hasPendingTranslation });
     if (!category) return { title: 'Category Not Found' };
-    return generateCategoryMetadata(category.title, category.slug, validLocale, category.description);
+    return generateCategoryMetadata(category.title, category.slug, effectiveLocale, category.description);
   } catch {
     return { title: 'Category | Deschide News' };
   }
@@ -107,47 +111,73 @@ function getCatTitle(category: Category | string): string {
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { locale, categorySlug } = await params;
   const { page: pageParam } = await searchParams;
+  const requestedLocale = isSupportedLocale(locale) ? locale : 'ro';
 
   if (isReservedSlug(categorySlug)) notFound();
 
   // Fetch category
-  let category: Category | null = null;
-  try {
-    const categoriesResponse = await fetchCategories(locale);
-    category = (categoriesResponse.member || []).find((cat: Category) => cat.slug === categorySlug) || null;
-  } catch { /* */ }
+  const categoryFallback = await getFallbackContent(requestedLocale, async (candidateLocale) => {
+    const categoriesResponse = await fetchCategories(candidateLocale);
+    return (categoriesResponse.member || []).find((cat: Category) => cat.slug === categorySlug) || null;
+  }, { isTranslationPending: hasPendingTranslation });
+
+  let category = categoryFallback.content;
   if (!category) notFound();
+  let effectiveLocale = categoryFallback.effectiveLocale;
+  let isLangFallback = categoryFallback.isFallback;
 
   const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
   const itemsPerPage = 10;
 
-  // Fetch articles + trending in parallel
   let articles: Article[] = [];
   let totalItems = 0;
-  let trendingArticles: any[] = [];
+  let trendingArticles: TrendingArticle[] = [];
 
-  const [articlesResult, trendingResult] = await Promise.allSettled([
-    fetchArticlesByCategory(category.id, locale, itemsPerPage),
-    getTrendingArticles(5, locale),
-  ]);
+  try {
+    const articlesResult = await fetchArticlesByCategory(category.id, effectiveLocale, itemsPerPage);
+    articles = articlesResult.member || [];
+    totalItems = articlesResult.totalItems || 0;
+  } catch { /* fallback below */ }
 
-  if (articlesResult.status === 'fulfilled') {
-    articles = articlesResult.value.member || [];
-    totalItems = articlesResult.value.totalItems || 0;
+  if (!isLangFallback && requestedLocale !== 'ro' && totalItems === 0) {
+    try {
+      const roArticlesResult = await fetchArticlesByCategory(category.id, 'ro', itemsPerPage);
+      const roTotalItems = roArticlesResult.totalItems || 0;
+
+      if (roTotalItems > 0) {
+        articles = roArticlesResult.member || [];
+        totalItems = roTotalItems;
+        effectiveLocale = 'ro';
+        isLangFallback = true;
+
+        const roCategoriesResponse = await fetchCategories('ro');
+        category = (roCategoriesResponse.member || []).find((cat: Category) => cat.slug === categorySlug) || category;
+      }
+    } catch { /* keep requested-locale empty state */ }
   }
-  if (trendingResult.status === 'fulfilled') {
-    trendingArticles = trendingResult.value || [];
-  }
+
+  try {
+    const trendingResult = await getTrendingArticles(5, effectiveLocale);
+    trendingArticles = trendingResult || [];
+  } catch { /* */ }
 
   const heroArticle = articles[0];
   const gridArticles = articles.slice(1);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const l = labels[locale as keyof typeof labels] || labels.ro;
-  const sectionColor = getSectionColor(categorySlug);
+  const l = labels[effectiveLocale];
+  const sectionColor = getSectionColor(category.slug);
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)]">
       <main className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
+        {isLangFallback && (
+          <LocaleFallbackNotice
+            requestedLocale={requestedLocale}
+            effectiveLocale={effectiveLocale}
+            translationPending={categoryFallback.translationPending}
+          />
+        )}
+
         {/* Layout: sidebar LEFT (1/3) + main RIGHT (2/3) — matching homepage */}
         <div className="flex flex-col-reverse lg:flex-row gap-8">
 
@@ -155,9 +185,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           <aside className="w-full lg:w-1/3 lg:pr-8 lg:pt-14">
             <div className="sticky top-24 space-y-8">
               {trendingArticles.length > 0 && (
-                <MostPopularWidget articles={trendingArticles} locale={locale} label={l.mostRead} />
+                <MostPopularWidget articles={trendingArticles} locale={effectiveLocale} label={l.mostRead} />
               )}
-              <InTrendWidget locale={locale} label={l.inTrend} />
+              <InTrendWidget locale={effectiveLocale} label={l.inTrend} />
               <AdPlaceholder label={l.ad} />
             </div>
           </aside>
@@ -179,14 +209,14 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
                 {/* Hero article — full-width overlay */}
                 {heroArticle && (
-                  <HeroCard article={heroArticle} locale={locale as Locale} />
+                  <HeroCard article={heroArticle} locale={effectiveLocale} />
                 )}
 
                 {/* Articles grid — 3 columns */}
                 {gridArticles.length > 0 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-3">
                     {gridArticles.map((article) => (
-                      <GridArticleCard key={article.id} article={article} locale={locale as Locale} />
+                      <GridArticleCard key={article.id} article={article} locale={effectiveLocale} />
                     ))}
                   </div>
                 )}
@@ -196,7 +226,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    locale={locale}
+                    locale={effectiveLocale}
                     categorySlug={category.slug}
                     labels={{ prev: l.prev, next: l.next }}
                   />

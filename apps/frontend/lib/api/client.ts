@@ -1,4 +1,8 @@
 /**
+ * @deprecated Use `@/lib/api/api-client` instead.
+ * This client is superseded by the unified API client which consolidates
+ * retry, timeout, and token refresh from all three legacy transports.
+ *
  * Enhanced API Client for Backend Communication
  * Provides base functionality with error handling, retry logic, and timeout support
  */
@@ -180,6 +184,31 @@ export async function apiRequest<T>(
 
         // Handle non-OK responses
         if (!response.ok) {
+          // On 401, try to get a fresh token and retry once
+          if (response.status === 401 && token && attempt === 1) {
+            try {
+              const tokenResponse = await fetch('/api/auth/token', { cache: 'no-store' });
+              if (tokenResponse.ok) {
+                const { token: newToken } = await tokenResponse.json();
+                if (newToken && newToken !== token) {
+                  headers['Authorization'] = `Bearer ${newToken}`;
+                  const retryResponse = await fetch(url, {
+                    ...fetchOptions,
+                    headers,
+                    signal: controller.signal,
+                  });
+                  if (retryResponse.ok) {
+                    const data = await retryResponse.json();
+                    logResponse(method, url, retryResponse.status, data);
+                    return data;
+                  }
+                }
+              }
+            } catch (refreshErr) {
+              logError(method, url, refreshErr);
+            }
+          }
+
           const errorData: ApiErrorResponse = await response
             .json()
             .catch(() => ({
