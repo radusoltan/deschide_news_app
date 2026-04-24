@@ -19,7 +19,15 @@ export interface ArticleTranslation {
 }
 
 /**
- * Article data for sitemap
+ * Article data for sitemap.
+ *
+ * `translations` is sparse: a locale key is present only if the article
+ * has a real translated slug for that locale. Consumers must treat a
+ * missing key as "do not emit a hreflang alternate for this locale".
+ *
+ * `publishedLocales` mirrors the backend flag — if a locale is not in
+ * this list, the article has no public URL in that locale and must not
+ * appear in any sitemap entry (primary URL or alternate).
  */
 export interface SitemapArticle {
   id: number;
@@ -27,14 +35,11 @@ export interface SitemapArticle {
   publishedAt: string;
   updatedAt: string;
   isFeatured: boolean;
+  publishedLocales: Locale[];
   category: {
     slug: string;
   };
-  translations: {
-    ro: ArticleTranslation;
-    en: ArticleTranslation;
-    ru: ArticleTranslation;
-  };
+  translations: Partial<Record<Locale, ArticleTranslation>>;
   // For image sitemap
   articleImages?: Array<{
     image: {
@@ -92,43 +97,85 @@ export async function fetchAllArticlesForSitemap(): Promise<SitemapArticle[]> {
     const data = await response.json();
     const articles = data['member'] ?? data['hydra:member'] ?? [];
 
-    // For each article, we need to fetch translations
-    // In production, you might want to optimize this with a dedicated endpoint
-    return articles.map((article: { id: number; title?: string; slug: string; publishedAt?: string; updatedAt?: string; archivedAt?: string; isFeatured?: boolean; category?: { slug: string }; articleImages?: { image: { path: string } }[] }) => ({
-      id: article.id,
-      slug: article.slug,
-      publishedAt: article.publishedAt,
-      updatedAt: article.updatedAt,
-      isFeatured: article.isFeatured || false,
-      category: {
-        slug: article.category?.slug || '',
-      },
-      translations: {
-        ro: {
-          locale: 'ro' as Locale,
-          slug: article.slug,
-          categorySlug: article.category?.slug || '',
-          title: article.title,
-        },
-        en: {
-          locale: 'en' as Locale,
-          slug: article.slug, // TODO: Fetch actual translation
-          categorySlug: article.category?.slug || '',
-          title: article.title,
-        },
-        ru: {
-          locale: 'ru' as Locale,
-          slug: article.slug, // TODO: Fetch actual translation
-          categorySlug: article.category?.slug || '',
-          title: article.title,
-        },
-      },
-      articleImages: article.articleImages || [],
-    }));
+    return articles.map(mapArticleToSitemap);
   } catch (error) {
     console.error('Error fetching articles for sitemap:', error);
     return [];
   }
+}
+
+/**
+ * Raw article shape returned by `/api/articles` (list endpoint).
+ */
+interface RawArticle {
+  id: number;
+  title?: string;
+  slug: string;
+  publishedAt?: string;
+  updatedAt?: string;
+  archivedAt?: string;
+  isFeatured?: boolean;
+  publishedLocales?: string[];
+  translatedSlugs?: Partial<Record<Locale, string>>;
+  category?: {
+    slug?: string;
+    translatedSlugs?: Partial<Record<Locale, string>>;
+  };
+  articleImages?: Array<{ image: { path: string; alt?: string; caption?: string; title?: string } }>;
+}
+
+const SUPPORTED_LOCALES: Locale[] = ['ro', 'en', 'ru'];
+
+function isSupportedLocale(value: string): value is Locale {
+  return (SUPPORTED_LOCALES as string[]).includes(value);
+}
+
+/**
+ * Build the sparse `translations` map: one entry per locale that has a
+ * real translated slug. Consumers will iterate `publishedLocales` and
+ * only emit hreflang alternates for locales present in this map.
+ */
+function buildTranslationsMap(article: RawArticle): Partial<Record<Locale, ArticleTranslation>> {
+  const translations: Partial<Record<Locale, ArticleTranslation>> = {};
+  const categorySlugFallback = article.category?.slug ?? '';
+  const categoryTranslatedSlugs = article.category?.translatedSlugs ?? {};
+  const articleTranslatedSlugs = article.translatedSlugs ?? {};
+
+  for (const locale of SUPPORTED_LOCALES) {
+    const slug = articleTranslatedSlugs[locale];
+    if (!slug) {
+      continue;
+    }
+    translations[locale] = {
+      locale,
+      slug,
+      categorySlug: categoryTranslatedSlugs[locale] ?? categorySlugFallback,
+      title: article.title ?? '',
+    };
+  }
+
+  return translations;
+}
+
+function normalizePublishedLocales(raw: RawArticle): Locale[] {
+  const list = Array.isArray(raw.publishedLocales) ? raw.publishedLocales : [];
+  return list.filter(isSupportedLocale);
+}
+
+function mapArticleToSitemap(article: RawArticle): SitemapArticle {
+  return {
+    id: article.id,
+    slug: article.slug,
+    publishedAt: article.publishedAt ?? '',
+    updatedAt: article.updatedAt ?? '',
+    isFeatured: article.isFeatured ?? false,
+    publishedLocales: normalizePublishedLocales(article),
+    category: {
+      slug: article.category?.slug ?? '',
+    },
+    translations: buildTranslationsMap(article),
+    articleImages: article.articleImages ?? [],
+  };
 }
 
 /**
