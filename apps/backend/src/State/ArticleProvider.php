@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\State;
 
+use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\Pagination\Pagination;
 use ApiPlatform\State\ProviderInterface;
@@ -83,8 +84,21 @@ final class ArticleProvider implements ProviderInterface
             $result = $query->getOneOrNullResult();
 
             if ($result instanceof Article) {
-                // Per-locale publishing: return 404 if article not published in requested locale
-                if (!$result->isPublishedInLocale($locale)) {
+                // Per-locale publishing gate: ONLY applies to the public single-item
+                // read (GET /api/articles/{id}) served by API Platform's ReadListener.
+                //
+                // Must NOT apply when API Platform's IriConverter calls this provider
+                // to denormalize a write payload referencing an Article by IRI
+                // (e.g. POST /api/article_images with "article": "/api/articles/{id}").
+                // AbstractItemNormalizer sets $context['fetch_data'] = true in that
+                // path; the public ReadListener does not.
+                //
+                // See ADR-027.
+                $isPublicRead = $operation instanceof Get
+                    && $operation->getClass() === Article::class
+                    && !isset($context['fetch_data']);
+
+                if ($isPublicRead && !$result->isPublishedInLocale($locale)) {
                     return null;
                 }
                 $this->populateTranslatedSlugs([$result]);
