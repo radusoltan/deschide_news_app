@@ -12,6 +12,65 @@ between production releases, sprint RCs, and orphaned bugfix-branch tags.
 
 ## Production releases
 
+### v1.4.2 — 2026-04-24 (Hotfix)
+
+- **Status**: hotfix off `main` at `v1.4.1` (branch `hotfix/sprint-59-sitemap-hreflang`)
+- **Motivation**: Sprint 59 T59.1 (Language Switcher) pre-implementation audit
+  surfaced an SEO defect in the public sitemaps. `<loc>` entries and
+  `<xhtml:link hreflang>` alternates for `en` and `ru` pointed at the
+  Romanian article slug because `lib/api/sitemap-data.ts` fabricated the
+  `translations` structure (two mock fabrication sites in that file, one
+  for active articles and one for archived) with a
+  `// TODO: Fetch actual translation` comment that fell back to
+  `article.slug` for non-default locales. Google therefore indexed
+  duplicate RO URLs under `hreflang="en"` and `hreflang="ru"`,
+  contradicting canonical. Pre-FRA1 deploy priority.
+- **Fixes**:
+  - **T60.1 — Sitemap hreflang emits RO slug for EN/RU** (`fix(frontend)`).
+    `lib/api/sitemap-data.ts` now consumes the backend's real
+    `translatedSlugs` and `publishedLocales` fields exposed on
+    `/api/articles` (no new endpoint required). `SitemapArticle.translations`
+    is now `Partial<Record<Locale, ArticleTranslation>>` — a locale key is
+    present only when a translated slug exists. `publishedLocales: Locale[]`
+    is surfaced verbatim. `fetchAllArticlesForSitemap` and
+    `fetchArchivedArticlesForSitemap` share a `mapArticleToSitemap` helper
+    instead of copy-pasted mock blocks. All seven consumer files
+    (`app/sitemap.ts`, `app/sitemap-archive.ts`, `app/image-sitemap.ts`,
+    `app/news-sitemap.ts`, plus the three `*.xml/route.ts` variants)
+    iterate only `article.publishedLocales` (with fallback to all
+    configured locales for legacy rows that pre-date the field) and skip
+    iterations when `translations[locale]?.slug` is absent. The
+    `generateLanguageAlternates` type signature is relaxed from
+    `Record<Locale, string>` to `Partial<Record<Locale, string>>` to
+    match the existing permissive runtime behavior.
+- **Tests**:
+  - `apps/frontend/__tests__/unit/app/sitemap.test.ts` — 4 new tests with
+    `fetchAllArticlesForSitemap` mocked (green): distinct translated slugs
+    per locale, hreflang skipped for unpublished locale, graceful fallback
+    on missing translations (no `/en/` or `/ru/` sitemap URLs for RO-only
+    articles), per-locale category slug cascade.
+  - Full suite: 2 failed / 845 passed / 847 total on `develop` post
+    back-merge. The 2 failures are the pre-existing T60.4 category-page
+    error-fallback tests, unchanged from v1.4.1.
+  - Placed under `__tests__/unit/app/` not `__tests__/integration/`
+    because `jest.config.mjs:43` lists the integration directory in
+    `testPathIgnorePatterns` (reserved for Playwright).
+- **Deferred to S+1** (out of scope for this hotfix, confirmed by test 4):
+  - `fetchAllCategoriesForSitemap` uses a `SitemapCategory.translations`
+    type that the backend payload never populates (backend returns
+    `translatedSlugs`). The `|| category.slug` fallback masks this so
+    category sitemap entries are correct-but-duplicated across locales.
+    Tracked for optional S+1 cleanup; not SEO-critical because category
+    canonical URLs are unaffected by the article-hreflang bug.
+- **Back-merge**: `develop` received `v1.4.2` via `--no-ff` merge with
+  zero conflicts (T59.1 and T60.1 touch disjoint file sets).
+- **References**:
+  - Discovery context: Sprint 59 T59.1 (Language Switcher)
+    pre-implementation audit on the `develop` branch. See
+    `docs/adr/ADR-028-unified-locale-url-builder.md` on develop
+    for the full audit trail that surfaced this bug in its
+    "Out of scope" section.
+
 ### v1.4.1 — 2026-04-24 (Hotfix)
 
 - **Status**: hotfix off `main` at `v1.4.0` (branch `hotfix/image-attach-locale-gate`)
