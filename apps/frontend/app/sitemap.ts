@@ -122,27 +122,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const articles = await fetchAllArticlesForSitemap();
 
     for (const article of articles) {
-      // For each locale, create a sitemap entry with translations
-      for (const locale of locales) {
-        const translation = article.translations?.[locale];
-        const categorySlug = translation?.categorySlug || article.category.slug;
-        const articleSlug = translation?.slug || article.slug;
+      // Backend omits `publishedLocales` for pre-migration rows → treat as
+      // "all locales available" so older articles still appear in sitemap.
+      const availableLocales = article.publishedLocales.length > 0
+        ? article.publishedLocales.filter((l) => locales.includes(l))
+        : locales;
 
-        // Determine priority based on featured status
+      // hreflang alternates: only locales with a real translated slug.
+      const alternatePaths: Partial<Record<Locale, string>> = {};
+      for (const locale of availableLocales) {
+        const t = article.translations[locale];
+        if (t?.slug) {
+          alternatePaths[locale] = `${t.categorySlug}/${t.slug}`;
+        }
+      }
+
+      for (const locale of availableLocales) {
+        const translation = article.translations[locale];
+        // Skip the primary URL when there is no translated slug for this
+        // locale. Emitting `/en/<slug-ro>` was the original bug.
+        if (!translation?.slug) {
+          continue;
+        }
+
         const articlePriority = article.isFeatured
           ? priority.featuredArticle
           : priority.article;
 
         sitemapEntries.push({
-          url: buildArticleUrl(locale, categorySlug, articleSlug),
+          url: buildArticleUrl(locale, translation.categorySlug, translation.slug),
           lastModified: parseDate(article.updatedAt),
           changeFrequency: changeFrequency.article,
           priority: articlePriority,
-          alternates: generateLanguageAlternates({
-            ro: `${article.translations.ro.categorySlug}/${article.translations.ro.slug}`,
-            en: `${article.translations.en.categorySlug}/${article.translations.en.slug}`,
-            ru: `${article.translations.ru.categorySlug}/${article.translations.ru.slug}`,
-          }),
+          alternates: generateLanguageAlternates(alternatePaths),
         });
       }
     }

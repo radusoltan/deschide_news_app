@@ -26,13 +26,21 @@ export default async function newsSitemap(): Promise<MetadataRoute.Sitemap> {
     const recentArticles = await fetchRecentArticlesForNewsSitemap();
 
     for (const article of recentArticles) {
-      // Generate entry for each locale
-      for (const locale of SITEMAP_CONFIG.locales) {
-        const translation = article.translations?.[locale];
-        if (!translation) continue;
+      const availableLocales = article.publishedLocales.length > 0
+        ? article.publishedLocales.filter((l) => SITEMAP_CONFIG.locales.includes(l))
+        : SITEMAP_CONFIG.locales;
 
-        const categorySlug = translation.categorySlug || article.category.slug;
-        const articleSlug = translation.slug || article.slug;
+      const alternatePaths = {};
+      for (const locale of availableLocales) {
+        const t = article.translations?.[locale];
+        if (t?.slug) {
+          alternatePaths[locale] = `${t.categorySlug}/${t.slug}`;
+        }
+      }
+
+      for (const locale of availableLocales) {
+        const translation = article.translations?.[locale];
+        if (!translation?.slug) continue;
 
         // Build image URLs from articleImages
         const imageUrls = article.articleImages?.map(
@@ -40,16 +48,12 @@ export default async function newsSitemap(): Promise<MetadataRoute.Sitemap> {
         ) || [];
 
         entries.push({
-          url: buildArticleUrl(locale, categorySlug, articleSlug),
+          url: buildArticleUrl(locale, translation.categorySlug, translation.slug),
           lastModified: parseDate(article.updatedAt || article.publishedAt),
           changeFrequency: 'hourly', // News articles change frequently
           priority: 1.0, // Highest priority for fresh news
           images: imageUrls.length > 0 ? imageUrls : undefined,
-          alternates: generateLanguageAlternates({
-            ro: `${article.translations?.ro?.categorySlug || article.category.slug}/${article.translations?.ro?.slug || article.slug}`,
-            en: `${article.translations?.en?.categorySlug || article.category.slug}/${article.translations?.en?.slug || article.slug}`,
-            ru: `${article.translations?.ru?.categorySlug || article.category.slug}/${article.translations?.ru?.slug || article.slug}`,
-          }),
+          alternates: generateLanguageAlternates(alternatePaths),
         });
       }
     }

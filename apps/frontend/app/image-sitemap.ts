@@ -27,11 +27,15 @@ export default async function imageSitemap(): Promise<MetadataRoute.Sitemap> {
         continue;
       }
 
-      // For each locale, create an entry with all images
-      for (const locale of locales) {
+      const availableLocales = article.publishedLocales.length > 0
+        ? article.publishedLocales.filter((l) => locales.includes(l))
+        : locales;
+
+      for (const locale of availableLocales) {
         const translation = article.translations?.[locale];
-        const categorySlug = translation?.categorySlug || article.category.slug;
-        const articleSlug = translation?.slug || article.slug;
+        if (!translation?.slug) {
+          continue;
+        }
 
         // Next.js 16 expects images as string[] (URLs only)
         const images = article.articleImages.map((articleImage: ArticleImage) =>
@@ -39,7 +43,7 @@ export default async function imageSitemap(): Promise<MetadataRoute.Sitemap> {
         );
 
         sitemapEntries.push({
-          url: buildArticleUrl(locale, categorySlug, articleSlug),
+          url: buildArticleUrl(locale, translation.categorySlug, translation.slug),
           lastModified: parseDate(article.updatedAt),
           images,
         });
