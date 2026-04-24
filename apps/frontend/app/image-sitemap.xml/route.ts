@@ -31,11 +31,12 @@ ${articles
     // Use default locale (ro) for image sitemap to avoid duplicates
     const locale = SITEMAP_CONFIG.defaultLocale;
     const translation = article.translations?.[locale];
-    const categorySlug = translation?.categorySlug || article.category.slug;
-    const articleSlug = translation?.slug || article.slug;
-    const articleTitle = translation?.title || article.slug;
+    // Skip articles without a translated slug in the default locale —
+    // they have no canonical URL here.
+    if (!translation?.slug) return '';
 
-    const url = buildArticleUrl(locale, categorySlug, articleSlug);
+    const articleTitle = translation.title || translation.slug;
+    const url = buildArticleUrl(locale, translation.categorySlug, translation.slug);
 
     // Get images (featured + inline, up to max)
     const images = article.articleImages || [];
@@ -61,6 +62,7 @@ ${limitedImages
   .join('\n')}
   </url>`;
   })
+  .filter((entry) => entry !== '')
   .join('\n')}
 </urlset>`;
 

@@ -34,22 +34,28 @@ export async function GET(request: NextRequest) {
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${recentArticles
   .map((article) => {
-    // Generate entries for all locales
-    return SITEMAP_CONFIG.locales
+    const availableLocales: readonly Locale[] = article.publishedLocales.length > 0
+      ? article.publishedLocales.filter((l: Locale) => SITEMAP_CONFIG.locales.includes(l))
+      : SITEMAP_CONFIG.locales;
+
+    const alternatePaths: Partial<Record<Locale, string>> = {};
+    for (const locale of availableLocales) {
+      const t = article.translations?.[locale];
+      if (t?.slug) {
+        alternatePaths[locale] = `${t.categorySlug}/${t.slug}`;
+      }
+    }
+
+    return availableLocales
       .map((locale) => {
         const translation = article.translations?.[locale];
-        const categorySlug = translation?.categorySlug || article.category.slug;
-        const articleSlug = translation?.slug || article.slug;
-        const title = translation?.title || article.slug;
+        if (!translation?.slug) return '';
 
-        const url = buildArticleUrl(locale, categorySlug, articleSlug);
+        const title = translation.title || translation.slug;
+        const url = buildArticleUrl(locale, translation.categorySlug, translation.slug);
         const publishedAt = new Date(article.publishedAt).toISOString();
         const language = news.languageMap[locale];
-        const alternates = generateLanguageAlternates({
-          ro: `${article.translations?.ro?.categorySlug || article.category.slug}/${article.translations?.ro?.slug || article.slug}`,
-          en: `${article.translations?.en?.categorySlug || article.category.slug}/${article.translations?.en?.slug || article.slug}`,
-          ru: `${article.translations?.ru?.categorySlug || article.category.slug}/${article.translations?.ru?.slug || article.slug}`,
-        });
+        const alternates = generateLanguageAlternates(alternatePaths);
         const alternateLinks = Object.entries(alternates.languages)
           .map(
             ([lang, href]) =>
@@ -58,7 +64,7 @@ ${recentArticles
           .join('\n');
 
         // Extract keywords from category (basic implementation)
-        const keywords = categorySlug.replace(/-/g, ', ');
+        const keywords = translation.categorySlug.replace(/-/g, ', ');
 
         return `  <url>
     <loc>${escapeXml(url)}</loc>
@@ -74,6 +80,7 @@ ${alternateLinks}
     </news:news>
   </url>`;
       })
+      .filter((entry) => entry !== '')
       .join('\n');
   })
   .join('\n')}
