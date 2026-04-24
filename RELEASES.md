@@ -63,6 +63,12 @@ between production releases, sprint RCs, and orphaned bugfix-branch tags.
   counts recorded as 0 across all 76+ rows despite schema support.
   Blocks ADR-025 reactivation cost model. Priority S+1 fix.
 
+- **CI infrastructure stale**: GitHub Actions workflows failing on develop since
+  2026-04-21 (pre-v1.4.0). Root causes: backend workflow missing .env copy step
+  before composer install; frontend workflow missing `cd apps/frontend` before
+  pnpm install. Not a code issue — local verification suffices for v1.4.0.
+  Priority S+1 fix (trivial, ~2 one-line patches to workflow files).
+
 ### v1.2.0 — 2026-04-06
 
 - **Title**: Complete Aggregator System (Sprints 24-26)
