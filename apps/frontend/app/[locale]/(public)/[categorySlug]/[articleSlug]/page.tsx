@@ -10,12 +10,13 @@
  * - SEO optimization
  */
 
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/api/important-articles';
 import { fetchRelatedArticles } from '@/lib/api/articles';
 import { lookupArticle } from '@/lib/api/slug-lookup';
 import type { Locale } from '@/lib/types';
+import type { Article } from '@/lib/types/article';
 import {
   ArticleLayout,
   ArticleHeader,
@@ -27,7 +28,7 @@ import {
 import ArticleDisclaimer from '@/components/article/ArticleDisclaimer';
 import DRRMBanner from '@/components/banners/DRRMBanner';
 import { generateArticleMetadata, generateArticleStructuredData } from '@/lib/seo';
-import { LocaleFallbackNotice } from '@/lib/i18n/locale-fallback';
+import { getFallbackContent, hasPendingTranslation, LocaleFallbackNotice } from '@/lib/i18n/locale-fallback';
 import StructuredData from '@/components/seo/StructuredData';
 import Breadcrumb, { buildArticleBreadcrumbs } from '@/components/navigation/Breadcrumb';
 
@@ -110,6 +111,29 @@ async function fetchArticleBySlug(
   }
 }
 
+/**
+ * Fetch article with locale fallback.
+ * Requested locale enforces full categorySlug match (URL integrity).
+ * Fallback (RO) bypasses categorySlug match since the article's own category
+ * is canonical when we render RO content at the requested-locale URL.
+ */
+async function fetchArticleWithFallback(
+  categorySlug: string,
+  articleSlug: string,
+  requestedLocale: Locale
+) {
+  return getFallbackContent<Article>(requestedLocale, async (candidateLocale) => {
+    if (candidateLocale === requestedLocale) {
+      return await fetchArticleBySlug(categorySlug, articleSlug, candidateLocale);
+    }
+    // Fallback path: skip categorySlug match, rely on article's own category
+    if (!isValidArticleRequest(categorySlug, articleSlug)) {
+      return null;
+    }
+    return await lookupArticle(articleSlug, candidateLocale);
+  }, { isTranslationPending: hasPendingTranslation });
+}
+
 
 /**
  * Generate dynamic metadata for SEO
@@ -129,8 +153,9 @@ export async function generateMetadata({
   }
 
   try {
-    // Fetch article data
-    const article = await fetchArticleBySlug(
+    // Fetch article with language fallback — enables correct metadata even
+    // when the requested locale has no translation (RO content served).
+    const { content: article, effectiveLocale } = await fetchArticleWithFallback(
       categorySlug,
       articleSlug,
       locale
@@ -152,7 +177,7 @@ export async function generateMetadata({
     const imageUrl = imageToUse ? buildImageUrl(imageToUse.path) : undefined;
 
     // Generate comprehensive metadata using SEO utilities
-    return generateArticleMetadata(article, locale, imageUrl);
+    return generateArticleMetadata(article, effectiveLocale, imageUrl);
   } catch (error) {
     console.error('Error generating metadata:', error);
     return {
@@ -162,37 +187,29 @@ export async function generateMetadata({
   }
 }
 
-export default async function ArticlePage({ params, searchParams }: ArticlePageProps) {
+export default async function ArticlePage({ params }: ArticlePageProps) {
   const { locale, categorySlug, articleSlug } = await params;
-  const resolvedSearchParams = await searchParams;
-  const isLangFallback = resolvedSearchParams?.lang_fallback === 'true';
 
   // Validate locale to prevent Intl API errors
   if (!isValidLocale(locale)) {
     notFound();
   }
 
-  // Fetch article from API with category validation
-  let article = await fetchArticleBySlug(
-    categorySlug, // category slug
-    articleSlug, // article slug
+  // Fetch article with in-place locale fallback (renders RO content at
+  // requested-locale URL with a notice when translation is missing).
+  const articleFallback = await fetchArticleWithFallback(
+    categorySlug,
+    articleSlug,
     locale
   );
 
-  // Per-locale fallback: if not found in current locale, try RO and redirect.
-  // Note: works when RO and non-RO slugs match; if slugs differ per locale,
-  // the RO lookup won't find a match and we fall through to notFound().
-  if (!article && locale !== 'ro') {
-    const roArticle = await fetchArticleBySlug(categorySlug, articleSlug, 'ro');
-    if (roArticle) {
-      redirect(`/ro/${categorySlug}/${articleSlug}?lang_fallback=true`);
-    }
-    notFound();
-  }
-
+  const article = articleFallback.content;
   if (!article) {
     notFound();
   }
+
+  const isLangFallback = articleFallback.isFallback;
+  const effectiveLocale = articleFallback.effectiveLocale;
 
   // Get featured image
   const featuredImage = getFeaturedImage(article.articleImages || []);
@@ -241,7 +258,11 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
 
         {/* Language fallback banner */}
         {isLangFallback && (
-          <LocaleFallbackNotice />
+          <LocaleFallbackNotice
+            requestedLocale={locale}
+            effectiveLocale={effectiveLocale}
+            translationPending={articleFallback.translationPending}
+          />
         )}
 
         {/* Article Header */}

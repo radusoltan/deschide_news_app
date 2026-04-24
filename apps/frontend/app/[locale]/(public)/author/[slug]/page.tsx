@@ -32,13 +32,15 @@ async function fetchAuthorArticles(
   currentPage: number,
   itemsPerPage: number
 ): Promise<AuthorArticlesResult | null> {
+  // API Platform collection filter: `authors` expects array notation
+  // (`authors[]=ID`), not scalar (`authors=ID` returns HTTP 400).
   const queryParams = new URLSearchParams({
     status: 'published',
-    authors: authorId.toString(),
     page: currentPage.toString(),
     itemsPerPage: itemsPerPage.toString(),
     'order[publishedAt]': 'DESC',
   });
+  queryParams.append('authors[]', authorId.toString());
 
   const response = await fetch(`${API_URL}/api/articles?${queryParams.toString()}`, {
     headers: {

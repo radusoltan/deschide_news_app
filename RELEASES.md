@@ -37,6 +37,32 @@ between production releases, sprint RCs, and orphaned bugfix-branch tags.
 - **Reference**: [ADR-026](20_Architecture/Decisions/ADR-026-v1.3.0-recovery-tag-strategy.md)
   in Obsidian vault.
 
+### Known Issues (deferred to S+1)
+
+- **Author page locale inconsistency**: /en/author/{slug} and
+  /ru/author/{slug} render RO article content without fallback notice
+  when backend returns unfiltered articles under non-RO locale header.
+  Root cause: backend /api/articles endpoint does not apply strict-locale
+  filtering on translation presence. Frontend fallback notice (Day 4 /
+  Day 7e) only triggers when totalItems === 0, which doesn't fire here.
+  Workaround for users: explicit language switcher in header changes URL
+  locale consistently. Tracked for S+1 backend fix (add translation-aware
+  filter to ArticleProvider).
+
+- **PHPStan baseline drift**: 644 suppressions (vs 22 in ADR-022).
+  Triaged in Day 3 into 4 buckets; 5-sprint roadmap deferred. Tracked in
+  vault/50_Audit/phpstan-baseline-analysis-2026-04-24.md.
+
+- **Failed messages queue**: 139 messages deferred from DI drift S57.P2a
+  transitional state. Triage doc in vault/50_Audit/sprint-58-recovery-
+  day2-failed-triage.md. Recommended cleanup: re-translate 19 translation
+  failures via `app:translate:articles --force`, evict 120 editorial
+  failures (transports suspended).
+
+- **Cost instrumentation gap on LlmAgentCallLog**: cost_usd and token
+  counts recorded as 0 across all 76+ rows despite schema support.
+  Blocks ADR-025 reactivation cost model. Priority S+1 fix.
+
 ### v1.2.0 — 2026-04-06
 
 - **Title**: Complete Aggregator System (Sprints 24-26)
