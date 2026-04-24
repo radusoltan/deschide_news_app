@@ -351,35 +351,9 @@ export async function fetchArchivedArticlesForSitemap(): Promise<ArchivedArticle
       const data = await response.json();
       const articles = data['member'] ?? data['hydra:member'] ?? [];
 
-      // Map to our interface
-      const mappedArticles = articles.map((article: { id: number; title?: string; slug: string; publishedAt?: string; updatedAt?: string; archivedAt?: string; isFeatured?: boolean; category?: { slug: string }; articleImages?: { image: { path: string } }[] }) => ({
-        id: article.id,
-        slug: article.slug,
-        updatedAt: article.updatedAt,
+      const mappedArticles: ArchivedArticle[] = articles.map((article: RawArticle) => ({
+        ...mapArticleToSitemap(article),
         archivedAt: article.archivedAt || article.updatedAt,
-        category: {
-          slug: article.category?.slug || '',
-        },
-        translations: {
-          ro: {
-            locale: 'ro' as Locale,
-            slug: article.slug,
-            categorySlug: article.category?.slug || '',
-            title: article.title,
-          },
-          en: {
-            locale: 'en' as Locale,
-            slug: article.slug, // TODO: Fetch actual translation
-            categorySlug: article.category?.slug || '',
-            title: article.title,
-          },
-          ru: {
-            locale: 'ru' as Locale,
-            slug: article.slug, // TODO: Fetch actual translation
-            categorySlug: article.category?.slug || '',
-            title: article.title,
-          },
-        },
       }));
 
       allArticles.push(...mappedArticles);
