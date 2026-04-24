@@ -57,7 +57,7 @@ export interface LanguageAlternates {
 }
 
 export function generateLanguageAlternates(
-  paths: Record<Locale, string>
+  paths: Partial<Record<Locale, string>>
 ): { languages: LanguageAlternates } {
   const languages: LanguageAlternates = {};
   const defaultPath = paths[SITEMAP_CONFIG.defaultLocale];
