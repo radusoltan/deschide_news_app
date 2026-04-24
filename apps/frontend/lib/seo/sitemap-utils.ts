@@ -5,20 +5,13 @@
  */
 
 import { SITEMAP_CONFIG, type Locale } from './sitemap-config';
+import { buildLocalizedUrl as buildAbsoluteLocalizedUrl } from './locale-url';
 
 /**
  * Build URL for a specific locale
  */
 export function buildLocalizedUrl(locale: Locale, path: string): string {
-  const { baseUrl, defaultLocale } = SITEMAP_CONFIG;
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-
-  if (locale === defaultLocale) {
-    // Default locale has no prefix
-    return `${baseUrl}/${cleanPath}`;
-  }
-
-  return `${baseUrl}/${locale}/${cleanPath}`;
+  return buildAbsoluteLocalizedUrl(SITEMAP_CONFIG.baseUrl, locale, path);
 }
 
 /**
@@ -67,20 +60,24 @@ export function generateLanguageAlternates(
   paths: Record<Locale, string>
 ): { languages: LanguageAlternates } {
   const languages: LanguageAlternates = {};
+  const defaultPath = paths[SITEMAP_CONFIG.defaultLocale];
 
-  for (const locale of SITEMAP_CONFIG.locales) {
-    const path = paths[locale];
-    if (path) {
-      languages[locale] = buildLocalizedUrl(locale, path);
-    }
+  if (defaultPath !== undefined) {
+    const defaultUrl = buildLocalizedUrl(SITEMAP_CONFIG.defaultLocale, defaultPath);
+    languages['ro-MD'] = defaultUrl;
+    languages.ro = defaultUrl;
+    languages['x-default'] = defaultUrl;
   }
 
-  // Add x-default for default locale
-  if (paths[SITEMAP_CONFIG.defaultLocale]) {
-    languages['x-default'] = buildLocalizedUrl(
-      SITEMAP_CONFIG.defaultLocale,
-      paths[SITEMAP_CONFIG.defaultLocale]
-    );
+  for (const locale of SITEMAP_CONFIG.locales) {
+    if (locale === SITEMAP_CONFIG.defaultLocale) {
+      continue;
+    }
+
+    const path = paths[locale];
+    if (path !== undefined) {
+      languages[locale] = buildLocalizedUrl(locale, path);
+    }
   }
 
   return { languages };

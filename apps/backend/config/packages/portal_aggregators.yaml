@@ -3,18 +3,25 @@ parameters:
     portal.guardian.keywords: ['Moldovan', 'Moldova', 'Transnistria']
 
     portal.ansa.enabled: true
-    portal.ansa.keywords: ['moldavo', 'moldava', 'Moldova']
-    portal.ansa.rate_limit_ms: 120000  # 2 min between keywords
+    portal.ansa.feed_urls:
+        mondo: 'https://www.ansa.it/sito/notizie/mondo/mondo_rss.xml'
+        cronaca: 'https://www.ansa.it/sito/notizie/cronaca/cronaca_rss.xml'
+        topnews: 'https://www.ansa.it/sito/notizie/topnews/topnews_rss.xml'
+    portal.ansa.rate_limit_ms: 60000  # 1 min between feeds (RSS is more tolerant than scraping)
 
     portal.corriere.enabled: true
-    portal.corriere.keywords: ['moldavo', 'Moldova']
-    portal.corriere.rate_limit_ms: 300000  # 5 min between keywords
+    portal.corriere.feed_urls:
+        esteri: 'https://www.corriere.it/dynamic-feed/rss/section/Esteri.xml'
+        cronache: 'https://www.corriere.it/dynamic-feed/rss/section/Cronache.xml'
+        homepage: 'https://xml2.corriereobjects.it/feed-hp/homepage.xml'
+    portal.corriere.rate_limit_ms: 60000  # 1 min between feeds (RSS is more tolerant than scraping)
 
     portal.lemonde.enabled: true
     portal.lemonde.keywords: ['moldave', 'Moldavie']
     portal.lemonde.rate_limit_ms: 300000  # 5 min between keywords
 
-    portal.bild_alternative.enabled: true
+    # bild_alternative: DISABLED 2026-04-06 — German sources now have direct RSS feeds in scraping.yaml
+    portal.bild_alternative.enabled: false
     portal.bild_alternative.german_domains:
         - 'bild.de'
         - 'spiegel.de'

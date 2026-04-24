@@ -33,7 +33,8 @@ class FetchPressEmailsCommand extends Command
 {
     private const WHITELIST_DOMAINS = [
         'ipn.md',
-        'gov.md',
+        // 'gov.md' — removed 2026-04-06: Gov.md has dedicated RSS feed (scraping.yaml:gov_md).
+        // Email ingestion disabled to avoid duplicates between RSS and email channels.
         'moldpres.md',
         'presidency.md',
         'parlament.md',

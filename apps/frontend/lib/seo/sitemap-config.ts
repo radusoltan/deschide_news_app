@@ -11,7 +11,7 @@ export const SITEMAP_CONFIG = {
   // Supported locales
   locales: ['ro', 'en', 'ru'] as const,
 
-  // Default locale (no prefix in URL)
+  // Default content locale. Public URLs still include the locale prefix (/ro).
   defaultLocale: 'ro' as const,
 
   // Change frequencies

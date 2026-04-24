@@ -273,9 +273,11 @@ export async function generateMetadata({ params }: YearArchivePageProps): Promis
     alternates: {
       canonical: `/${locale}/archive/${year}`,
       languages: {
-        ro: `/archive/${year}`,
+        'ro-MD': `/ro/archive/${year}`,
+        ro: `/ro/archive/${year}`,
         en: `/en/archive/${year}`,
         ru: `/ru/archive/${year}`,
+        'x-default': `/ro/archive/${year}`,
       },
     },
     openGraph: {

@@ -1354,9 +1354,11 @@ export async function generateMetadata({ params }: AdvertisePageProps): Promise<
     alternates: {
       canonical: `/${locale}/advertise`,
       languages: {
-        ro: '/advertise',
+        'ro-MD': '/ro/advertise',
+        ro: '/ro/advertise',
         en: '/en/advertise',
         ru: '/ru/advertise',
+        'x-default': '/ro/advertise',
       },
     },
     openGraph: {

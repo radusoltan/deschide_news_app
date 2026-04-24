@@ -502,9 +502,11 @@ export async function generateMetadata({ params }: PrivacyPageProps): Promise<Me
     alternates: {
       canonical: `/${locale}/privacy`,
       languages: {
-        ro: '/privacy',
+        'ro-MD': '/ro/privacy',
+        ro: '/ro/privacy',
         en: '/en/privacy',
         ru: '/ru/privacy',
+        'x-default': '/ro/privacy',
       },
     },
     openGraph: {

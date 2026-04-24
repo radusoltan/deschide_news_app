@@ -65,9 +65,11 @@ export async function generateMetadata({
       alternates: {
         canonical: `${SITE_URL}/${locale}/tags/${slug}`,
         languages: {
+          'ro-MD': `${SITE_URL}/ro/tags/${slugRo}`,
           ro: `${SITE_URL}/ro/tags/${slugRo}`,
           en: `${SITE_URL}/en/tags/${slugEn}`,
           ru: `${SITE_URL}/ru/tags/${slugRu}`,
+          'x-default': `${SITE_URL}/ro/tags/${slugRo}`,
         },
       },
     };

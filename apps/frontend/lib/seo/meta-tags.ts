@@ -5,6 +5,11 @@
  */
 
 import type { Metadata } from 'next';
+import {
+  buildCanonicalUrl,
+  buildHreflangAlternates,
+  type HreflangLocale,
+} from './locale-url';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
@@ -18,11 +23,7 @@ export interface MetaTagsConfig {
   author?: string;
   locale: 'ro' | 'en' | 'ru';
   canonicalUrl?: string;
-  alternateUrls?: {
-    ro?: string;
-    en?: string;
-    ru?: string;
-  };
+  alternateUrls?: Partial<Record<HreflangLocale, string>>;
   imageUrl?: string;
   imageAlt?: string;
   publishedTime?: string;
@@ -65,14 +66,11 @@ export function generatePageMetadata(config: MetaTagsConfig): Metadata {
 
   // Language alternates
   const languages: Record<string, string> = {};
+  if (alternateUrls['ro-MD']) languages['ro-MD'] = alternateUrls['ro-MD'];
   if (alternateUrls.ro) languages.ro = alternateUrls.ro;
   if (alternateUrls.en) languages.en = alternateUrls.en;
   if (alternateUrls.ru) languages.ru = alternateUrls.ru;
-
-  // Set x-default to Romanian (default locale)
-  if (alternateUrls.ro) {
-    languages['x-default'] = alternateUrls.ro;
-  }
+  if (alternateUrls['x-default']) languages['x-default'] = alternateUrls['x-default'];
 
   const metadata: Metadata = {
     title: fullTitle,
@@ -166,19 +164,13 @@ export function generateHomepageMetadata(locale: 'ro' | 'en' | 'ru'): Metadata {
     ru: ['новости', 'Молдова', 'текущие события', 'политика', 'экономика', 'общество'],
   };
 
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-
   return generatePageMetadata({
     title: titles[locale],
     description: descriptions[locale],
     keywords: keywords[locale],
     locale,
-    canonicalUrl: `${SITE_URL}/${localePrefix}`,
-    alternateUrls: {
-      ro: `${SITE_URL}/`,
-      en: `${SITE_URL}/en/`,
-      ru: `${SITE_URL}/ru/`,
-    },
+    canonicalUrl: buildCanonicalUrl(SITE_URL, locale, ''),
+    alternateUrls: buildHreflangAlternates(SITE_URL, ''),
   });
 }
 
@@ -191,8 +183,6 @@ export function generateCategoryMetadata(
   locale: 'ro' | 'en' | 'ru',
   description?: string
 ): Metadata {
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-
   const defaultDescriptions = {
     ro: `Citește ultimele articole din categoria ${categoryTitle}. Știri și informații actualizate.`,
     en: `Read the latest articles from ${categoryTitle}. Updated news and information.`,
@@ -203,12 +193,8 @@ export function generateCategoryMetadata(
     title: categoryTitle,
     description: description || defaultDescriptions[locale],
     locale,
-    canonicalUrl: `${SITE_URL}/${localePrefix}${categorySlug}`,
-    alternateUrls: {
-      ro: `${SITE_URL}/${categorySlug}`,
-      en: `${SITE_URL}/en/${categorySlug}`,
-      ru: `${SITE_URL}/ru/${categorySlug}`,
-    },
+    canonicalUrl: buildCanonicalUrl(SITE_URL, locale, categorySlug),
+    alternateUrls: buildHreflangAlternates(SITE_URL, categorySlug),
   });
 }
 
@@ -221,8 +207,6 @@ export function generateAuthorMetadata(
   locale: 'ro' | 'en' | 'ru',
   bio?: string
 ): Metadata {
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-
   const defaultDescriptions = {
     ro: `Articole scrise de ${authorName}. Citește toate articolele autorului.`,
     en: `Articles written by ${authorName}. Read all author's articles.`,
@@ -234,12 +218,8 @@ export function generateAuthorMetadata(
     description: bio || defaultDescriptions[locale],
     author: authorName,
     locale,
-    canonicalUrl: `${SITE_URL}/${localePrefix}author/${authorSlug}`,
-    alternateUrls: {
-      ro: `${SITE_URL}/author/${authorSlug}`,
-      en: `${SITE_URL}/en/author/${authorSlug}`,
-      ru: `${SITE_URL}/ru/author/${authorSlug}`,
-    },
+    canonicalUrl: buildCanonicalUrl(SITE_URL, locale, `author/${authorSlug}`),
+    alternateUrls: buildHreflangAlternates(SITE_URL, `author/${authorSlug}`),
   });
 }
 
@@ -252,18 +232,12 @@ export function generateStaticPageMetadata(
   slug: string,
   locale: 'ro' | 'en' | 'ru'
 ): Metadata {
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-
   return generatePageMetadata({
     title,
     description,
     locale,
-    canonicalUrl: `${SITE_URL}/${localePrefix}${slug}`,
-    alternateUrls: {
-      ro: `${SITE_URL}/${slug}`,
-      en: `${SITE_URL}/en/${slug}`,
-      ru: `${SITE_URL}/ru/${slug}`,
-    },
+    canonicalUrl: buildCanonicalUrl(SITE_URL, locale, slug),
+    alternateUrls: buildHreflangAlternates(SITE_URL, slug),
   });
 }
 

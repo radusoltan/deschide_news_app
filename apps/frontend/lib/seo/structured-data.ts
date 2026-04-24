@@ -6,6 +6,7 @@
 import type { Article, Author } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 import { getCategorySlug, getCategoryTitle, getAuthorNames } from './metadata-generator';
+import { buildLocalizedUrl } from './locale-url';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
@@ -52,12 +53,11 @@ export function generatePersonSchema(author: Author | string, locale: Locale): P
     return { '@type': 'Person', name: author };
   }
   const authorSlug = author.slug || '';
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
 
   return {
     '@type': 'Person',
     name: author.fullName || 'Unknown Author',
-    url: authorSlug ? `${SITE_URL}/${localePrefix}author/${authorSlug}` : undefined,
+    url: authorSlug ? buildLocalizedUrl(SITE_URL, locale, `author/${authorSlug}`) : undefined,
   };
 }
 
@@ -100,8 +100,7 @@ export function generateNewsArticleSchema(
   additionalImages?: string[]
 ): NewsArticleSchema {
   const categorySlug = getCategorySlug(article.category);
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-  const articleUrl = `${SITE_URL}/${localePrefix}${categorySlug}/${article.slug}`;
+  const articleUrl = buildLocalizedUrl(SITE_URL, locale, `${categorySlug}/${article.slug}`);
 
   // Check if article is archived
   const isArchived = article.status === 'archived' || !!article.archivedAt;
@@ -192,7 +191,6 @@ export function generateBreadcrumbSchema(
 ): BreadcrumbSchema {
   const categorySlug = getCategorySlug(article.category);
   const categoryTitle = getCategoryTitle(article.category);
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
 
   return {
     '@context': 'https://schema.org',
@@ -202,13 +200,13 @@ export function generateBreadcrumbSchema(
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: `${SITE_URL}/${localePrefix}`,
+        item: buildLocalizedUrl(SITE_URL, locale, ''),
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: categoryTitle,
-        item: `${SITE_URL}/${localePrefix}${categorySlug}`,
+        item: buildLocalizedUrl(SITE_URL, locale, categorySlug),
       },
       {
         '@type': 'ListItem',
@@ -242,8 +240,7 @@ export function generateWebPageSchema(
   locale: Locale
 ): WebPageSchema {
   const categorySlug = getCategorySlug(article.category);
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-  const articleUrl = `${SITE_URL}/${localePrefix}${categorySlug}/${article.slug}`;
+  const articleUrl = buildLocalizedUrl(SITE_URL, locale, `${categorySlug}/${article.slug}`);
 
   // Check if article is archived and use archivedAt as dateModified
   const isArchived = article.status === 'archived' || !!article.archivedAt;

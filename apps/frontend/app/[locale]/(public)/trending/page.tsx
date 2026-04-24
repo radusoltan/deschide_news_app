@@ -233,9 +233,11 @@ export async function generateMetadata({
     alternates: {
       canonical: `/${locale}/trending`,
       languages: {
-        ro: '/trending',
+        'ro-MD': '/ro/trending',
+        ro: '/ro/trending',
         en: '/en/trending',
         ru: '/ru/trending',
+        'x-default': '/ro/trending',
       },
     },
     openGraph: {
