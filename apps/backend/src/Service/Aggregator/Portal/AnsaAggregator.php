@@ -5,33 +5,31 @@ declare(strict_types=1);
 namespace App\Service\Aggregator\Portal;
 
 use App\Dto\Aggregator\AggregatorResult;
+use App\Dto\Scraping\FeedItem;
 use App\Enum\AggregatorSourceType;
 use App\Service\Aggregator\AggregatorInterface;
+use App\Service\Scraping\RelevanceFilterService;
+use App\Service\Scraping\RssFeedParser;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
-use Symfony\Component\DomCrawler\Crawler;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 #[AutoconfigureTag('app.aggregator')]
 final readonly class AnsaAggregator implements AggregatorInterface
 {
-    private const BASE_URL = 'https://www.ansa.it/sito/ricerca.shtml';
-    private const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
-    private const REQUEST_TIMEOUT = 15;
-
     /**
-     * @param list<string> $keywords
+     * @param array<string, string> $feedUrls  category => RSS URL
      */
     public function __construct(
-        private HttpClientInterface $httpClient,
+        private RssFeedParser $rssFeedParser,
+        private RelevanceFilterService $relevanceFilter,
         private LoggerInterface $logger,
         #[Autowire('%portal.ansa.enabled%')]
         private bool $enabled = true,
-        #[Autowire('%portal.ansa.keywords%')]
-        private array $keywords = [],
+        #[Autowire('%portal.ansa.feed_urls%')]
+        private array $feedUrls = [],
         #[Autowire('%portal.ansa.rate_limit_ms%')]
-        private int $rateLimitMs = 120_000,
+        private int $rateLimitMs = 60_000,
     ) {}
 
     public function fetch(): array
@@ -43,27 +41,46 @@ final readonly class AnsaAggregator implements AggregatorInterface
         }
 
         $results = [];
+        $feedCount = 0;
 
-        foreach ($this->keywords as $keyword) {
+        foreach ($this->feedUrls as $category => $url) {
             try {
-                $keywordResults = $this->searchKeyword($keyword);
-                $results = array_merge($results, $keywordResults);
+                $feedItems = $this->rssFeedParser->parse($url, 'ANSA', 'it');
 
-                $this->logger->info('AnsaAggregator: fetched for keyword', [
-                    'keyword' => $keyword,
-                    'count' => \count($keywordResults),
+                $this->logger->info('AnsaAggregator: parsed feed', [
+                    'category' => $category,
+                    'items' => \count($feedItems),
                 ]);
+
+                foreach ($feedItems as $item) {
+                    $relevance = $this->relevanceFilter->evaluate(
+                        title: $item->title,
+                        bodyText: $item->description ?? '',
+                        sourceName: 'ANSA',
+                    );
+
+                    if ($relevance->isRelevant) {
+                        $results[] = $this->mapToResult($item, $category, $relevance->score);
+                    }
+                }
             } catch (\Throwable $e) {
-                $this->logger->warning('AnsaAggregator: search failed', [
-                    'keyword' => $keyword,
+                $this->logger->warning('AnsaAggregator: feed failed', [
+                    'category' => $category,
+                    'url' => $url,
                     'error' => $e->getMessage(),
                 ]);
             }
 
-            if ($this->rateLimitMs > 0) {
+            $feedCount++;
+            if ($this->rateLimitMs > 0 && $feedCount < \count($this->feedUrls)) {
                 usleep($this->rateLimitMs * 1000);
             }
         }
+
+        $this->logger->info('AnsaAggregator: completed', [
+            'feeds' => \count($this->feedUrls),
+            'relevant' => \count($results),
+        ]);
 
         return $results;
     }
@@ -78,90 +95,18 @@ final readonly class AnsaAggregator implements AggregatorInterface
         return 'ANSA.it';
     }
 
-    /**
-     * @return AggregatorResult[]
-     */
-    private function searchKeyword(string $keyword): array
+    private function mapToResult(FeedItem $item, string $category, int $relevanceScore): AggregatorResult
     {
-        $url = self::BASE_URL . '?' . http_build_query(['q' => $keyword]);
-
-        $response = $this->httpClient->request('GET', $url, [
-            'headers' => [
-                'User-Agent' => self::USER_AGENT,
-                'Accept-Language' => 'it-IT,it;q=0.9',
-                'Accept' => 'text/html,application/xhtml+xml',
-            ],
-            'timeout' => self::REQUEST_TIMEOUT,
-        ]);
-
-        $statusCode = $response->getStatusCode();
-        if ($statusCode !== 200) {
-            $this->logger->warning('AnsaAggregator: non-200 response', [
-                'statusCode' => $statusCode,
-                'keyword' => $keyword,
-            ]);
-
-            return [];
-        }
-
-        $html = $response->getContent();
-
-        return $this->parseSearchResults($html, $keyword);
-    }
-
-    /**
-     * @return AggregatorResult[]
-     */
-    private function parseSearchResults(string $html, string $keyword): array
-    {
-        $crawler = new Crawler($html);
-        $results = [];
-
-        $crawler->filter('.search-result-item, .news-item, article')->each(
-            function (Crawler $node) use (&$results, $keyword): void {
-                $title = '';
-                $url = '';
-                $snippet = '';
-
-                // Extract title
-                $titleNode = $node->filter('h3, h2, .title');
-                if ($titleNode->count() > 0) {
-                    $title = trim($titleNode->text(''));
-                }
-
-                // Extract URL
-                $linkNode = $node->filter('a');
-                if ($linkNode->count() > 0) {
-                    $href = $linkNode->attr('href') ?? '';
-                    // Make absolute URL if relative
-                    if ($href !== '' && !str_starts_with($href, 'http')) {
-                        $href = 'https://www.ansa.it' . $href;
-                    }
-                    $url = $href;
-                }
-
-                // Extract snippet
-                $descNode = $node->filter('.summary, .description, p');
-                if ($descNode->count() > 0) {
-                    $snippet = trim($descNode->first()->text(''));
-                }
-
-                if ($title !== '' && $url !== '') {
-                    $results[] = new AggregatorResult(
-                        title: $title,
-                        summary: $snippet,
-                        sourceUrl: $url,
-                        sourceLanguage: 'it',
-                        sourceName: 'ANSA',
-                        publishedAt: new \DateTimeImmutable(),
-                        rawContent: $snippet,
-                        keywords: [$keyword],
-                        aggregatorSourceType: AggregatorSourceType::DIRECT_PORTAL,
-                    );
-                }
-            },
+        return new AggregatorResult(
+            title: $item->title,
+            summary: $item->description ?? '',
+            sourceUrl: $item->url,
+            sourceLanguage: 'it',
+            sourceName: 'ANSA',
+            publishedAt: $item->publishedAt ?? new \DateTimeImmutable(),
+            rawContent: $item->description ?? '',
+            keywords: [$category, 'relevance:' . $relevanceScore],
+            aggregatorSourceType: AggregatorSourceType::DIRECT_PORTAL,
         );
-
-        return $results;
     }
 }

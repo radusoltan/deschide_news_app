@@ -5,30 +5,31 @@ parameters:
             name: 'Moldpres'
             base_url: 'https://www.moldpres.md'
             feed_urls:
-                ro: 'https://www.moldpres.md/ro/rss'
-                en: 'https://www.moldpres.md/en/rss'
-                ru: 'https://www.moldpres.md/ru/rss'
-            type: 'rss'
+                ro: 'https://www.moldpres.md/rss'
+            type: 'scrape'  # No real RSS — /rss returns HTML listing page
             rate_limit: 1
             original_language: 'ro'
             is_international: false
             priority_weight: 5
             relevance_filter: false
-        ipn:
-            name: 'IPN Press'
-            base_url: 'https://www.ipn.md'
-            feed_urls:
-                ro: 'https://www.ipn.md/ro/rss'
-                en: 'https://www.ipn.md/en/rss'
-                ru: 'https://www.ipn.md/ru/rss'
-            type: 'rss'
-            rate_limit: 1
-            original_language: 'ro'
-            is_international: false
-            priority_weight: 5
-            relevance_filter: false
+        # ipn:
+        #   DISABLED 2026-04-06: RSS blocat cu WAF 403.
+        #   IPN se preia EXCLUSIV din email via Zoho Mail (FetchPressEmailsCommand).
+        #   NU reactiva RSS pentru a evita duplicări email/RSS.
+        #     name: 'IPN Press'
+        #     base_url: 'https://www.ipn.md'
+        #     feed_urls:
+        #         ro: 'https://www.ipn.md/ro/rss'
+        #         en: 'https://www.ipn.md/en/rss'
+        #         ru: 'https://www.ipn.md/ru/rss'
+        #     type: 'rss'
+        #     rate_limit: 1
+        #     original_language: 'ro'
+        #     is_international: false
+        #     priority_weight: 5
+        #     relevance_filter: false
         gov_md:
-            name: 'Gov.md'
+            name: 'Guvernul Republicii Moldova'
             base_url: 'https://gov.md'
             feed_urls:
                 ro: 'https://gov.md/ro/rss.xml'
@@ -37,44 +38,80 @@ parameters:
             original_language: 'ro'
             is_international: false
             priority_weight: 5
+            relevance_filter: false  # 100% Moldova content, no relevance filter needed
+        logos_press:
+            name: 'Logos Press'
+            base_url: 'https://logos-pres.md'
+            feed_urls:
+                ro: 'https://logos-pres.md/feed/'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'ro'
+            is_international: false
+            priority_weight: 5
             relevance_filter: false
+        # infotag: https://www.infotag.md/ — nu expune RSS public (verificat 2026-04-06, /rss returnează 404)
 
-        # === SURSE INTERNAȚIONALE ===
-        reuters_world:
-            name: 'Reuters'
-            base_url: 'https://www.reuters.com'
+        # === SURSE ROMÂNIA ===
+        digi24:
+            name: 'Digi24'
+            base_url: 'https://www.digi24.ro'
             feed_urls:
-                en: 'https://www.reuters.com/arc/outboundfeeds/v3/all/rss.xml'
-            type: 'rss'
-            rate_limit: 1
-            original_language: 'en'
-            is_international: true
-            priority_weight: 3
-            relevance_filter: true
-
-        ap_news:
-            name: 'AP News'
-            base_url: 'https://apnews.com'
-            feed_urls:
-                en: 'https://rsshub.app/apnews/topics/world-news'
-            type: 'rss'
-            rate_limit: 1
-            original_language: 'en'
-            is_international: true
-            priority_weight: 3
-            relevance_filter: true
-
-        agerpres:
-            name: 'Agerpres'
-            base_url: 'https://www.agerpres.ro'
-            feed_urls:
-                ro: 'https://www.agerpres.ro/rss/externe.xml'
+                ro: 'https://www.digi24.ro/rss'
             type: 'rss'
             rate_limit: 1
             original_language: 'ro'
             is_international: true
             priority_weight: 4
             relevance_filter: true
+        hotnews:
+            name: 'HotNews.ro'
+            base_url: 'https://hotnews.ro'
+            feed_urls:
+                ro: 'https://hotnews.ro/feed'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'ro'
+            is_international: true
+            priority_weight: 4
+            relevance_filter: true
+
+        # === SURSE INTERNAȚIONALE ===
+        # reuters_world:  # DISABLED 2026-04-06 — Reuters killed public RSS (404)
+        #     name: 'Reuters'
+        #     base_url: 'https://www.reuters.com'
+        #     feed_urls:
+        #         en: 'https://www.reuters.com/arc/outboundfeeds/v3/all/rss.xml'
+        #     type: 'rss'
+        #     rate_limit: 1
+        #     original_language: 'en'
+        #     is_international: true
+        #     priority_weight: 3
+        #     relevance_filter: true
+
+        ap_news:
+            name: 'AP News'
+            base_url: 'https://apnews.com'
+            feed_urls:
+                en: 'https://feedx.net/rss/ap.xml'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'en'
+            is_international: true
+            priority_weight: 3
+            relevance_filter: true
+
+        # agerpres:  # DISABLED 2026-04-06 — RSS redirects to dead proxy (allorigins.win → 522)
+        #     name: 'Agerpres'
+        #     base_url: 'https://www.agerpres.ro'
+        #     feed_urls:
+        #         ro: 'https://www.agerpres.ro/rss/externe.xml'
+        #     type: 'rss'
+        #     rate_limit: 1
+        #     original_language: 'ro'
+        #     is_international: true
+        #     priority_weight: 4
+        #     relevance_filter: true
 
         ec_press:
             name: 'Comisia Europeană'
@@ -92,7 +129,9 @@ parameters:
             name: 'UNIAN'
             base_url: 'https://www.unian.net'
             feed_urls:
-                en: 'https://www.unian.net/rss/index.xml'
+                en: 'https://rss.unian.net/site/news_eng.rss'
+                ru: 'https://rss.unian.net/site/news_rus.rss'
+                uk: 'https://rss.unian.net/site/news_ukr.rss'
             type: 'rss'
             rate_limit: 1
             original_language: 'en'
@@ -116,7 +155,8 @@ parameters:
             name: 'Consiliul European'
             base_url: 'https://www.consilium.europa.eu'
             feed_urls:
-                en: 'https://www.consilium.europa.eu/en/press/press-releases/rss/'
+                press: 'https://www.consilium.europa.eu/en/rss/pressreleases.ashx'
+                fac: 'https://www.consilium.europa.eu/en/rss/meetings.ashx?cat=fac'
             type: 'rss'
             rate_limit: 1
             original_language: 'en'
@@ -134,6 +174,74 @@ parameters:
             original_language: 'en'
             is_international: true
             priority_weight: 4
+            relevance_filter: true
+
+        # === SURSE GERMANIA ===
+        bild:
+            name: 'Bild.de'
+            base_url: 'https://www.bild.de'
+            feed_urls:
+                de: 'https://www.bild.de/feed/alles.xml'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'de'
+            is_international: true
+            priority_weight: 3
+            relevance_filter: true
+        spiegel:
+            name: 'Spiegel.de'
+            base_url: 'https://www.spiegel.de'
+            feed_urls:
+                de: 'https://www.spiegel.de/schlagzeilen/index.rss'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'de'
+            is_international: true
+            priority_weight: 3
+            relevance_filter: true
+        faz:
+            name: 'Frankfurter Allgemeine'
+            base_url: 'https://www.faz.net'
+            feed_urls:
+                de: 'https://www.faz.net/rss/aktuell/'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'de'
+            is_international: true
+            priority_weight: 3
+            relevance_filter: true
+        welt:
+            name: 'Welt.de'
+            base_url: 'https://www.welt.de'
+            feed_urls:
+                de: 'https://www.welt.de/feeds/latest.rss'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'de'
+            is_international: true
+            priority_weight: 3
+            relevance_filter: true
+        sueddeutsche:
+            name: 'Süddeutsche Zeitung'
+            base_url: 'https://www.sueddeutsche.de'
+            feed_urls:
+                de: 'https://rss.sueddeutsche.de/alles'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'de'
+            is_international: true
+            priority_weight: 3
+            relevance_filter: true
+        focus:
+            name: 'Focus.de'
+            base_url: 'https://www.focus.de'
+            feed_urls:
+                de: 'https://www.focus.de/rss'
+            type: 'rss'
+            rate_limit: 1
+            original_language: 'de'
+            is_international: true
+            priority_weight: 3
             relevance_filter: true
 
     scraping.rate_limit_default: 1
