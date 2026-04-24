@@ -6,6 +6,7 @@
  */
 
 import type { Article } from '@/lib/types/article';
+import { buildLocalizedUrl } from './locale-url';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
@@ -284,7 +285,6 @@ export function generateHomepageSocialMeta(locale: 'ro' | 'en' | 'ru') {
     ru: 'ru_RU',
   };
 
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
   const fallbackImage = getFallbackOGImage();
 
   return {
@@ -292,7 +292,7 @@ export function generateHomepageSocialMeta(locale: 'ro' | 'en' | 'ru') {
       type: 'website' as const,
       title: titles[locale],
       description: descriptions[locale],
-      url: `${SITE_URL}/${localePrefix}`,
+      url: buildLocalizedUrl(SITE_URL, locale, ''),
       siteName: SITE_NAME,
       locale: localeMap[locale],
       images: [
@@ -337,8 +337,7 @@ export function generateCategorySocialMeta(
     ru: 'ru_RU',
   };
 
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-  const categoryUrl = `${SITE_URL}/${localePrefix}${categorySlug}`;
+  const categoryUrl = buildLocalizedUrl(SITE_URL, locale, categorySlug);
   const fallbackImage = getFallbackOGImage();
 
   return {

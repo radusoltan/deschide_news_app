@@ -556,9 +556,11 @@ export async function generateMetadata({ params }: LicensePageProps): Promise<Me
     alternates: {
       canonical: `/${locale}/license`,
       languages: {
-        ro: '/license',
+        'ro-MD': '/ro/license',
+        ro: '/ro/license',
         en: '/en/license',
         ru: '/ru/license',
+        'x-default': '/ro/license',
       },
     },
     openGraph: {

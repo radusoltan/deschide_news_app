@@ -290,9 +290,11 @@ export async function generateMetadata({ params }: AboutPageProps): Promise<Meta
     alternates: {
       canonical: `/${locale}/about`,
       languages: {
-        ro: '/about',
+        'ro-MD': '/ro/about',
+        ro: '/ro/about',
         en: '/en/about',
         ru: '/ru/about',
+        'x-default': '/ro/about',
       },
     },
     openGraph: {

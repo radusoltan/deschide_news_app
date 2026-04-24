@@ -112,9 +112,11 @@ export async function generateMetadata({ params }: TopicPageProps): Promise<Meta
     alternates: {
       canonical: `${SITE_URL}/${locale}/topics/${slug}`,
       languages: {
+        'ro-MD': `${SITE_URL}/ro/topics/${slugRo}`,
         ro: `${SITE_URL}/ro/topics/${slugRo}`,
         en: `${SITE_URL}/en/topics/${slugEn}`,
         ru: `${SITE_URL}/ru/topics/${slugRu}`,
+        'x-default': `${SITE_URL}/ro/topics/${slugRo}`,
       },
     },
   };

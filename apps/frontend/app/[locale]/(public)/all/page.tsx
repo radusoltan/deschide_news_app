@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: AllArticlesPageProps): Promis
     description: l.subtitle,
     alternates: {
       canonical: `/${locale}/all`,
-      languages: { ro: '/all', en: '/en/all', ru: '/ru/all' },
+      languages: { 'ro-MD': '/ro/all', ro: '/ro/all', en: '/en/all', ru: '/ru/all', 'x-default': '/ro/all' },
     },
   };
 }

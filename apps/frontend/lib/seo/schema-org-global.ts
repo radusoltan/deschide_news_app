@@ -5,6 +5,8 @@
  * These should be included on every page or in the root layout
  */
 
+import { buildLocalizedUrl } from './locale-url';
+
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
 
@@ -112,13 +114,11 @@ export function generateWebSiteSchema(
     ru: 'Новостной и информационный портал на румынском, английском и русском языках',
   };
 
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: SITE_NAME,
-    url: `${SITE_URL}/${localePrefix}`,
+    url: buildLocalizedUrl(SITE_URL, locale, ''),
     description: descriptions[locale],
     inLanguage: ['ro-RO', 'en-US', 'ru-RU'],
     publisher: {
@@ -129,7 +129,7 @@ export function generateWebSiteSchema(
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${SITE_URL}/${localePrefix}search?q={search_term_string}`,
+        urlTemplate: `${buildLocalizedUrl(SITE_URL, locale, 'search')}?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },
@@ -191,8 +191,7 @@ export function generateCollectionPageSchema(
   locale: 'ro' | 'en' | 'ru',
   description?: string
 ): CollectionPageSchema {
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-  const categoryUrl = `${SITE_URL}/${localePrefix}${categorySlug}`;
+  const categoryUrl = buildLocalizedUrl(SITE_URL, locale, categorySlug);
 
   return {
     '@context': 'https://schema.org',

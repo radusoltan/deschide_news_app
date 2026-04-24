@@ -1,4 +1,6 @@
 import { getAccessToken } from '@/lib/dal';
+import { featureFlags } from '@/lib/config/feature-flags';
+import { notFound } from 'next/navigation';
 import AiAssistantClient from './AiAssistantClient';
 
 export const metadata = {
@@ -11,6 +13,10 @@ export default async function AiAssistantPage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  if (!featureFlags.aiChatEnabled) {
+    notFound();
+  }
+
   const { locale } = await params;
   const token = await getAccessToken();
 

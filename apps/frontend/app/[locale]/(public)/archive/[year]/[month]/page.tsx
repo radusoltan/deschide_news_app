@@ -336,9 +336,11 @@ export async function generateMetadata({
     alternates: {
       canonical: `/${locale}/archive/${year}/${month}`,
       languages: {
-        ro: `/archive/${year}/${month}`,
+        'ro-MD': `/ro/archive/${year}/${month}`,
+        ro: `/ro/archive/${year}/${month}`,
         en: `/en/archive/${year}/${month}`,
         ru: `/ru/archive/${year}/${month}`,
+        'x-default': `/ro/archive/${year}/${month}`,
       },
     },
     openGraph: {

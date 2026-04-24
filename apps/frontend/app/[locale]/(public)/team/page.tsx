@@ -466,9 +466,11 @@ export async function generateMetadata({ params }: TeamPageProps): Promise<Metad
     alternates: {
       canonical: `/${locale}/team`,
       languages: {
-        ro: '/team',
+        'ro-MD': '/ro/team',
+        ro: '/ro/team',
         en: '/en/team',
         ru: '/ru/team',
+        'x-default': '/ro/team',
       },
     },
     openGraph: {

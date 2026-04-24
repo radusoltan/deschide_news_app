@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { featureFlags } from '@/lib/config/feature-flags';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 const MERCURE_URL = process.env.NEXT_PUBLIC_MERCURE_URL ?? 'http://localhost:3000/.well-known/mercure';
@@ -44,6 +45,13 @@ interface ChatResponse {
   agentType: string;
   model: string | null;
   tokensUsed: number | null;
+}
+
+function createHeaders(token: string): HeadersInit {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
 }
 
 // ============================================================================
@@ -93,6 +101,8 @@ export default function AiAssistantClient({
   locale: string;
   token: string;
 }) {
+  const aiChatEnabled = featureFlags.aiChatEnabled;
+
   // State
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConvId, setCurrentConvId] = useState<string | null>(null);
@@ -110,56 +120,65 @@ export default function AiAssistantClient({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const headers = {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
-  };
-
   // ============================================================================
   // Data Fetching
   // ============================================================================
 
   const loadConversations = useCallback(async () => {
+    if (!aiChatEnabled) return;
+
     try {
-      const res = await fetch(`${API_URL}/api/ai/conversations`, { headers });
+      const res = await fetch(`${API_URL}/api/ai/conversations`, {
+        headers: createHeaders(token),
+      });
       if (res.ok) {
         const data = await res.json();
         setConversations(data.items ?? []);
       }
     } catch { /* ignore */ }
-  }, [token]);
+  }, [aiChatEnabled, token]);
 
   const loadTemplates = useCallback(async () => {
+    if (!aiChatEnabled) return;
+
     try {
-      const res = await fetch(`${API_URL}/api/ai/templates`, { headers });
+      const res = await fetch(`${API_URL}/api/ai/templates`, {
+        headers: createHeaders(token),
+      });
       if (res.ok) {
         const data = await res.json();
         setTemplates(data.categories ?? {});
       }
     } catch { /* ignore */ }
-  }, [token]);
+  }, [aiChatEnabled, token]);
 
   const loadMessages = useCallback(async (convId: string) => {
+    if (!aiChatEnabled) return;
+
     try {
-      const res = await fetch(`${API_URL}/api/ai/conversations/${convId}/messages`, { headers });
+      const res = await fetch(`${API_URL}/api/ai/conversations/${convId}/messages`, {
+        headers: createHeaders(token),
+      });
       if (res.ok) {
         const data = await res.json();
         setMessages(data.items ?? []);
       }
     } catch { /* ignore */ }
-  }, [token]);
+  }, [aiChatEnabled, token]);
 
   useEffect(() => {
+    if (!aiChatEnabled) return;
+
     loadConversations();
     loadTemplates();
-  }, [loadConversations, loadTemplates]);
+  }, [aiChatEnabled, loadConversations, loadTemplates]);
 
   // ============================================================================
   // Mercure SSE Subscription
   // ============================================================================
 
   useEffect(() => {
-    if (!currentConvId) return;
+    if (!aiChatEnabled || !currentConvId) return;
 
     const topic = encodeURIComponent(`/ai/conversations/${currentConvId}`);
     const url = `${MERCURE_URL}?topic=${topic}`;
@@ -204,7 +223,7 @@ export default function AiAssistantClient({
     return () => {
       try { es?.close(); } catch { /* ignore */ }
     };
-  }, [currentConvId]);
+  }, [aiChatEnabled, currentConvId]);
 
   // Auto-scroll
   useEffect(() => {
@@ -217,7 +236,7 @@ export default function AiAssistantClient({
 
   const sendMessage = async (overrideMessage?: string, templateId?: string, fields?: Record<string, string>) => {
     const text = overrideMessage ?? input.trim();
-    if (!text || loading) return;
+    if (!aiChatEnabled || !text || loading) return;
 
     setLoading(true);
     setInput('');
@@ -245,7 +264,7 @@ export default function AiAssistantClient({
 
       const res = await fetch(`${API_URL}/api/ai/chat`, {
         method: 'POST',
-        headers,
+        headers: createHeaders(token),
         body: JSON.stringify(body),
       });
 
@@ -297,6 +316,8 @@ export default function AiAssistantClient({
   // ============================================================================
 
   const selectConversation = (conv: Conversation) => {
+    if (!aiChatEnabled) return;
+
     setCurrentConvId(conv.id);
     loadMessages(conv.id);
     setShowSidebar(false);
@@ -313,6 +334,8 @@ export default function AiAssistantClient({
   // ============================================================================
 
   const submitTemplate = (template: Template) => {
+    if (!aiChatEnabled) return;
+
     // Check all required fields are filled
     const missing = template.requiredFields.filter((f) => !templateFields[f]?.trim());
     if (missing.length > 0) return;
@@ -348,6 +371,14 @@ export default function AiAssistantClient({
   // ============================================================================
   // Render
   // ============================================================================
+
+  if (!aiChatEnabled) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
+        AI Assistant este suspendat temporar conform ADR-025.
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-6rem)] -mt-2 gap-0 rounded-lg overflow-hidden border border-border dark:border-border-dark bg-surface dark:bg-surface-dark">

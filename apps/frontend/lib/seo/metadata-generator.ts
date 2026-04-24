@@ -6,6 +6,7 @@
 import type { Metadata } from 'next';
 import type { Article, Category } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
+import { buildCanonicalUrl as buildLocaleCanonicalUrl, buildLocalizedUrl } from './locale-url';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
@@ -117,9 +118,8 @@ export function buildCanonicalUrl(
   locale: Locale
 ): string {
   const categorySlug = getCategorySlug(article.category);
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
 
-  return `${SITE_URL}/${localePrefix}${categorySlug}/${article.slug}`;
+  return buildLocaleCanonicalUrl(SITE_URL, locale, `${categorySlug}/${article.slug}`);
 }
 
 /**
@@ -137,28 +137,34 @@ export function buildAlternateUrls(
 
   // If translations are provided, use them
   if (translations) {
+    const roPath = translations.ro
+      ? `${translations.ro.category.slug}/${translations.ro.slug}`
+      : `${categorySlug}/${article.slug}`;
+    const enPath = translations.en
+      ? `${translations.en.category.slug}/${translations.en.slug}`
+      : `${categorySlug}/${article.slug}`;
+    const ruPath = translations.ru
+      ? `${translations.ru.category.slug}/${translations.ru.slug}`
+      : `${categorySlug}/${article.slug}`;
+
     return {
-      ro: translations.ro
-        ? `${SITE_URL}/${translations.ro.category.slug}/${translations.ro.slug}`
-        : `${SITE_URL}/${categorySlug}/${article.slug}`,
-      en: translations.en
-        ? `${SITE_URL}/en/${translations.en.category.slug}/${translations.en.slug}`
-        : `${SITE_URL}/en/${categorySlug}/${article.slug}`,
-      ru: translations.ru
-        ? `${SITE_URL}/ru/${translations.ru.category.slug}/${translations.ru.slug}`
-        : `${SITE_URL}/ru/${categorySlug}/${article.slug}`,
-      'x-default': translations.ro
-        ? `${SITE_URL}/${translations.ro.category.slug}/${translations.ro.slug}`
-        : `${SITE_URL}/${categorySlug}/${article.slug}`,
+      'ro-MD': buildLocalizedUrl(SITE_URL, 'ro', roPath),
+      ro: buildLocalizedUrl(SITE_URL, 'ro', roPath),
+      en: buildLocalizedUrl(SITE_URL, 'en', enPath),
+      ru: buildLocalizedUrl(SITE_URL, 'ru', ruPath),
+      'x-default': buildLocalizedUrl(SITE_URL, 'ro', roPath),
     };
   }
 
   // Fallback: use same slug for all locales
+  const path = `${categorySlug}/${article.slug}`;
+
   return {
-    ro: `${SITE_URL}/${categorySlug}/${article.slug}`,
-    en: `${SITE_URL}/en/${categorySlug}/${article.slug}`,
-    ru: `${SITE_URL}/ru/${categorySlug}/${article.slug}`,
-    'x-default': `${SITE_URL}/${categorySlug}/${article.slug}`,
+    'ro-MD': buildLocalizedUrl(SITE_URL, 'ro', path),
+    ro: buildLocalizedUrl(SITE_URL, 'ro', path),
+    en: buildLocalizedUrl(SITE_URL, 'en', path),
+    ru: buildLocalizedUrl(SITE_URL, 'ru', path),
+    'x-default': buildLocalizedUrl(SITE_URL, 'ro', path),
   };
 }
 
