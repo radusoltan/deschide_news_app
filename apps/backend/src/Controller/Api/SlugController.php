@@ -64,8 +64,8 @@ class SlugController extends AbstractController
             ->addSelect('ai')
             ->leftJoin('ai.image', 'img')
             ->addSelect('img')
-            ->leftJoin('a.tags', 't')
-            ->addSelect('t')
+            ->leftJoin('a.tags', 'tg')
+            ->addSelect('tg')
             ->where('a.status = :status')
             ->setParameter('status', 'published');
 
