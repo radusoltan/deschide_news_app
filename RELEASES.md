@@ -51,10 +51,61 @@ between production releases, sprint RCs, and orphaned bugfix-branch tags.
   auto-resolved, to verify post-deploy.
 - T60.9: LanguageSwitcher RO target hardening (Cluster C) — likely
   auto-resolved, to verify post-deploy.
-- T60.10: Verify FRA1 deploy script invalidates Next.js fetch cache.
+- ~~T60.10: Verify FRA1 deploy script invalidates Next.js fetch cache.~~
+  **Resolved 2026-04-29** — see follow-up entry below.
 - T60.4 (carried): 2 pre-existing category-page test failures.
 - Author locale gate (T60.2)
 - PHPStan baseline 644 errors
+
+---
+
+### T60.10 — Cache invalidation coherence (post-v1.4.3, 2026-04-29)
+
+**Scope:** Frontend + deploy script. Closes the cache-invalidation gap
+surfaced during T60.6 Phase 3.5 dev verification (stale `/uncategorized/`
+slug persisted 5 minutes after backend hotfix).
+
+#### Fixed
+- 23 brief-scoped fetches across 5 `lib/api/` modules (categories.ts,
+  tags.ts, video-shows.ts, special-articles.ts, sitemap-data.ts) lacked
+  `tags: [...]` declarations and were therefore invisible to the existing
+  `/api/revalidate` endpoint. Now coherent.
+- 8 additional fetches across 3 files surfaced during discovery
+  (slug-lookup.ts, statistics.ts, translations.ts) — same defect class,
+  now tagged.
+- Deploy script `scripts/deploy.sh` had no cache-invalidation step;
+  fetch-cache could persist stale data up to 1h post-deploy until ISR
+  window expired.
+
+#### Added
+- `scripts/deploy.sh` STEP 5.5 — POST `/api/revalidate` with the 9-tag
+  payload covering all entity classes after PM2 reload settles.
+- `scripts/deploy.sh` STEP 6 — trilingual `/uncategorized/` smoke probe
+  across ro/en/ru homepages. Detects post-T60.6 cache regression.
+- `apps/frontend/__tests__/unit/lib/api/cache-tags.test.ts` — 11-case
+  static-analysis Jest guard. Asserts every `next: { revalidate: N }`
+  block is paired with `tags: [...]` and that all touched files import
+  `CACHE_TAGS` from `@/lib/data/cache-config`.
+
+#### Architecture invariant established
+- All `lib/api/*.ts` fetches MUST declare `tags` alongside `revalidate`.
+- Tag values come from `CACHE_TAGS` constants — string literals are
+  banned (with grandfathered exceptions in articles.ts and
+  important-articles.ts pre-T60.10).
+
+#### Verification
+- `tsc --noEmit`: clean
+- `pnpm lint`: 0 errors (29 pre-existing warnings, none in touched files)
+- `pnpm test`: 892/892 passing across 54 suites (+11 new from cache-tags)
+- `pnpm build`: 174/174 static pages, standalone artifact produced
+- Live revalidation smoke (port 3005): HTTP 200, `revalidated: true`
+- Deploy dry-run: STEP 5.5 + trilingual probe both render
+
+#### Known follow-ups (filed as backlog)
+- T60.11 — `lib/api/` vs `lib/data/` paradigm convergence audit.
+- T60.12 — Backend → frontend revalidation webhook (Symfony entity-write
+  events trigger `/api/revalidate` instead of waiting for next deploy).
+- T60.13 — `revalidatePath` on locale switcher pre-warm.
 
 ---
 
