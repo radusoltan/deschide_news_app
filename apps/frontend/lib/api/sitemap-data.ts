@@ -5,6 +5,7 @@
  */
 
 import { Locale } from '../seo/sitemap-config';
+import { CACHE_TAGS } from '../data/cache-config';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -85,7 +86,10 @@ export async function fetchAllArticlesForSitemap(): Promise<SitemapArticle[]> {
           'Accept': 'application/ld+json',
           'Accept-Language': 'ro', // Start with default locale
         },
-        next: { revalidate: 3600 }, // ISR: revalidate every hour
+        next: {
+          revalidate: 3600, // ISR: revalidate every hour
+          tags: [CACHE_TAGS.articles, CACHE_TAGS.locale('ro')],
+        },
       }
     );
 
@@ -190,7 +194,10 @@ export async function fetchArticlesByLocale(locale: Locale): Promise<SitemapArti
           'Accept': 'application/ld+json',
           'Accept-Language': locale,
         },
-        next: { revalidate: 3600 }, // ISR: revalidate every hour
+        next: {
+          revalidate: 3600, // ISR: revalidate every hour
+          tags: [CACHE_TAGS.articles, CACHE_TAGS.locale(locale)],
+        },
       }
     );
 
@@ -222,7 +229,10 @@ export async function fetchRecentArticlesForNewsSitemap(): Promise<SitemapArticl
           'Accept': 'application/ld+json',
           'Accept-Language': 'ro',
         },
-        next: { revalidate: 3600 }, // ISR: revalidate every hour
+        next: {
+          revalidate: 3600, // ISR: revalidate every hour
+          tags: [CACHE_TAGS.articles, CACHE_TAGS.locale('ro')],
+        },
       }
     );
 
@@ -249,7 +259,10 @@ export async function fetchAllCategoriesForSitemap(): Promise<SitemapCategory[]>
         'Accept': 'application/ld+json',
         'Accept-Language': 'ro',
       },
-      next: { revalidate: 3600 }, // ISR: revalidate every hour
+      next: {
+        revalidate: 3600, // ISR: revalidate every hour
+        tags: [CACHE_TAGS.categories, CACHE_TAGS.locale('ro')],
+      },
     });
 
     if (!response.ok) {
@@ -274,7 +287,10 @@ export async function fetchAllAuthorsForSitemap(): Promise<SitemapAuthor[]> {
       headers: {
         'Accept': 'application/ld+json',
       },
-      next: { revalidate: 3600 }, // ISR: revalidate every hour
+      next: {
+        revalidate: 3600, // ISR: revalidate every hour
+        tags: [CACHE_TAGS.authors],
+      },
     });
 
     if (!response.ok) {
@@ -301,7 +317,10 @@ export async function getArticleCount(): Promise<number> {
         headers: {
           'Accept': 'application/ld+json',
         },
-        next: { revalidate: 3600 }, // ISR: revalidate every hour
+        next: {
+          revalidate: 3600, // ISR: revalidate every hour
+          tags: [CACHE_TAGS.articles],
+        },
       }
     );
 
@@ -339,7 +358,10 @@ export async function fetchArchivedArticlesForSitemap(): Promise<ArchivedArticle
             'Accept': 'application/ld+json',
             'Accept-Language': 'ro', // Start with default locale
           },
-          next: { revalidate: 3600 }, // ISR: revalidate every hour
+          next: {
+            revalidate: 3600, // ISR: revalidate every hour
+            tags: [CACHE_TAGS.articles, CACHE_TAGS.locale('ro')],
+          },
         }
       );
 
