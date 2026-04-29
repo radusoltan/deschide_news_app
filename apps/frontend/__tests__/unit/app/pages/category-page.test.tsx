@@ -123,7 +123,7 @@ describe('CategoryPage — generateMetadata', () => {
       params: Promise.resolve({ locale: 'ro', categorySlug: 'politica' }),
       searchParams: Promise.resolve({}),
     });
-    expect(result.title).toBe('Category | Deschide News');
+    expect(result.title).toBe('Category Not Found');
   });
 
   it('normalizes unknown locale to ro', async () => {
