@@ -4,6 +4,7 @@
  */
 
 import { Article, ArticleListResponse, ArticleBadge } from '../types/article';
+import { CACHE_TAGS } from '../data/cache-config';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -40,6 +41,7 @@ export async function fetchArticlesByBadge(
     headers,
     next: {
       revalidate: 30, // Revalidate every 30 seconds (urgent content)
+      tags: [CACHE_TAGS.specialArticles, CACHE_TAGS.articles, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
