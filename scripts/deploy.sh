@@ -353,6 +353,50 @@ fi
 echo ""
 
 # =============================================================================
+# STEP 5.5: Cache Invalidation (T60.10)
+# =============================================================================
+# Tag-based revalidation post-build. Without this, fetch-cache entries from
+# previous build can serve stale data for up to 1h after deploy.
+# Requires REVALIDATE_SECRET env var or REVALIDATE_SECRET= in frontend/.env.local.
+
+if [ "$BACKEND_ONLY" = false ]; then
+    log_step "[5.5/6] Frontend cache invalidation"
+
+    REVALIDATE_SECRET_VALUE="${REVALIDATE_SECRET:-}"
+    if [ -z "$REVALIDATE_SECRET_VALUE" ] && [ -f "$FRONTEND_DIR/.env.local" ]; then
+        REVALIDATE_SECRET_VALUE=$(grep -E '^REVALIDATE_SECRET=' "$FRONTEND_DIR/.env.local" | cut -d= -f2- | tr -d '"' | tr -d "'")
+    fi
+
+    if [ -z "$REVALIDATE_SECRET_VALUE" ]; then
+        log_warning "REVALIDATE_SECRET not set — skipping tag-based invalidation"
+        log_warning "Stale fetch cache may persist up to 1h post-deploy"
+    else
+        # Allow PM2 reload to settle before hitting the endpoint
+        sleep 2
+        REVALIDATE_PAYLOAD='{"tags":["categories","navigation","homepage","articles","tags","video-shows","important-articles","special-articles","authors"]}'
+        if [ "$DRY_RUN" = true ]; then
+            log_dry "curl POST $FRONTEND_URL/api/revalidate with tags payload"
+        else
+            HTTP_CODE=$(curl -sf -o /tmp/revalidate-response.json -w "%{http_code}" \
+                --max-time 10 \
+                -X POST "$FRONTEND_URL/api/revalidate" \
+                -H "Content-Type: application/json" \
+                -H "x-revalidate-secret: $REVALIDATE_SECRET_VALUE" \
+                -d "$REVALIDATE_PAYLOAD" 2>/dev/null || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+                log_success "Cache invalidated (HTTP $HTTP_CODE)"
+            elif [ "$HTTP_CODE" = "207" ]; then
+                log_warning "Partial invalidation (HTTP 207) — see /tmp/revalidate-response.json"
+            else
+                log_error "Cache invalidation failed (HTTP $HTTP_CODE)"
+                log_warning "Continuing deploy; manual revalidation may be required"
+            fi
+        fi
+    fi
+    echo ""
+fi
+
+# =============================================================================
 # STEP 6: Post-Deploy Verification
 # =============================================================================
 
