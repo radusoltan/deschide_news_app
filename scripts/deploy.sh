@@ -405,6 +405,7 @@ log_step "[6/6] Post-deploy verification"
 if [ "$DRY_RUN" = true ]; then
     log_dry "curl -sf --max-time $SMOKE_TIMEOUT $BACKEND_URL/api"
     log_dry "curl -sf --max-time $SMOKE_TIMEOUT $FRONTEND_URL/ro"
+    log_dry "Trilingual slug probe (T60.10): for LOCALE in ro en ru; curl $FRONTEND_URL/\$LOCALE | grep -q /uncategorized/"
     log_dry "Run full smoke check: $SCRIPTS_DIR/smoke-check.sh"
 else
     SMOKE_PASS=0
