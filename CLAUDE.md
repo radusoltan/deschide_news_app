@@ -779,6 +779,16 @@ NEXT_PUBLIC_AVAILABLE_LOCALES=ro,en,ru
 - Turbopack for fast dev builds
 - Mercure integration for real-time updates
 
+**Cache tag invariant (T60.10):**
+- All `lib/api/*.ts` fetches MUST declare `tags` alongside `revalidate`.
+  Without tags, the fetch is invisible to `revalidateTag()` at
+  `/api/revalidate` and serves stale data for the full revalidate
+  window after a backend change.
+- Use only `CACHE_TAGS` constants from `lib/data/cache-config.ts` — do
+  not inline string literals.
+- See `__tests__/unit/lib/api/cache-tags.test.ts` for the regression
+  guard. CI fails if a new fetch lands without tags.
+
 ### Cross-cutting Concerns
 
 - **API Communication**: Frontend (port 3005) → Backend (port 8081)

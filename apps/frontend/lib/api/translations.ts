@@ -8,6 +8,7 @@
 
 import type { Locale } from '../types';
 import { lookupArticle, lookupCategory } from './slug-lookup';
+import { CACHE_TAGS } from '../data/cache-config';
 
 const AVAILABLE_LOCALES: Locale[] = ['ro', 'en', 'ru'];
 
@@ -66,6 +67,7 @@ export async function fetchArticleTranslations(
       },
       next: {
         revalidate: 300, // Cache for 5 minutes
+        tags: [CACHE_TAGS.articles, CACHE_TAGS.articleById(articleId)],
       },
     });
 
@@ -140,6 +142,7 @@ export async function fetchCategoryTranslations(
       },
       next: {
         revalidate: 300, // Cache for 5 minutes
+        tags: [CACHE_TAGS.categories, CACHE_TAGS.categoryById(categoryId)],
       },
     });
 

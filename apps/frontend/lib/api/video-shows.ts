@@ -8,6 +8,7 @@ import {
   YouTubeVideo,
   YouTubeVideosListResponse,
 } from '../types/video';
+import { CACHE_TAGS } from '../data/cache-config';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -43,6 +44,7 @@ export async function fetchVideoShows(
     headers,
     next: {
       revalidate: 300, // Revalidate every 5 minutes
+      tags: [CACHE_TAGS.videoShows, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -83,6 +85,7 @@ export async function fetchVideoShowBySlug(
     headers,
     next: {
       revalidate: 300,
+      tags: [CACHE_TAGS.videoShows, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -131,6 +134,12 @@ export async function fetchHomepageVideos(
     headers,
     next: {
       revalidate: 300, // Revalidate every 5 minutes
+      tags: [
+        CACHE_TAGS.videoShows,
+        CACHE_TAGS.homepageVideos,
+        CACHE_TAGS.homepage,
+        CACHE_TAGS.locale(locale ?? 'ro'),
+      ],
     },
   });
 
@@ -179,6 +188,7 @@ export async function fetchVideosByShow(
     headers,
     next: {
       revalidate: 300,
+      tags: [CACHE_TAGS.videoShows, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -224,6 +234,7 @@ export async function fetchAllVideos(
     headers,
     next: {
       revalidate: 300,
+      tags: [CACHE_TAGS.videoShows, CACHE_TAGS.videos, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -261,6 +272,7 @@ export async function fetchVideoById(
     headers,
     next: {
       revalidate: 300,
+      tags: [CACHE_TAGS.videoShows, CACHE_TAGS.videos, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 

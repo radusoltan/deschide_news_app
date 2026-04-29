@@ -4,6 +4,7 @@
  */
 
 import { apiRequest } from './client';
+import { CACHE_TAGS } from '../data/cache-config';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -84,7 +85,10 @@ export async function getArticleStats(
 
   const response = await apiRequest<ArticleStats>(endpoint, {
     token,
-    next: { revalidate: 60 }, // Cache for 60 seconds
+    next: {
+      revalidate: 60, // Cache for 60 seconds
+      tags: [CACHE_TAGS.articleById(articleId), CACHE_TAGS.articles],
+    },
   });
 
   return response;
@@ -102,7 +106,10 @@ export async function getTrendingArticles(
 
   const response = await apiRequest<TrendingArticle[]>(endpoint, {
     locale,
-    next: { revalidate: 60 }, // Cache for 60 seconds
+    next: {
+      revalidate: 60, // Cache for 60 seconds
+      tags: [CACHE_TAGS.trendingArticles, CACHE_TAGS.articles, CACHE_TAGS.locale(locale)],
+    },
   });
 
   return response;
@@ -120,7 +127,10 @@ export async function getSiteStats(
 
   const response = await apiRequest<SiteStats>(endpoint, {
     token,
-    next: { revalidate: 60 }, // Cache for 60 seconds
+    next: {
+      revalidate: 60, // Cache for 60 seconds
+      tags: [CACHE_TAGS.articles],
+    },
   });
 
   return response;
