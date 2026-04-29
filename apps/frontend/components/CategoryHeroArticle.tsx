@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { Article, Category } from '@/lib/types/article';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Locale } from '@/lib/types';
 
 interface CategoryHeroArticleProps {
@@ -16,13 +17,11 @@ interface CategoryHeroArticleProps {
 }
 
 /**
- * Extract excerpt from HTML content
+ * Extract excerpt from HTML content (strips tags + decodes HTML entities)
  */
 function getExcerpt(html: string, maxLength: number = 150): string {
-  // Remove HTML tags
-  const text = html.replace(/<[^>]*>/g, '');
-  // Truncate if needed
-  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  const text = stripHtml(html);
+  return text.length > maxLength ? text.substring(0, maxLength) + '…' : text;
 }
 
 /**
@@ -47,8 +46,10 @@ export default function CategoryHeroArticle({ article, locale }: CategoryHeroArt
   // Use thumbnail if available, fallback to original image
   const imageToUse = thumbnail || featuredImage;
 
-  // Get excerpt: use lead if available, otherwise extract from content
-  const excerpt = article.lead || (article.content ? getExcerpt(article.content) : '');
+  // Get excerpt: use lead if available (stripped), otherwise extract from content
+  const excerpt = article.lead
+    ? stripHtml(article.lead)
+    : (article.content ? getExcerpt(article.content) : '');
 
   // Build article URL using url-builder utility
   const articleUrl = buildArticleUrl(article, locale);

@@ -18,6 +18,7 @@ import { generateCategoryMetadata } from '@/lib/seo/meta-tags';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { getSectionColor, getCategorySlugFromArticle } from '@/components/cards/utils';
+import { stripHtml } from '@/lib/utils/strip-html';
 import LocaleContextSetter from '@/app/components/LocaleContextSetter';
 import type { Locale } from '@/lib/types';
 import type { Article, Category } from '@/lib/types/article';
@@ -287,7 +288,7 @@ function HeroCard({ article, locale }: { article: Article; locale: Locale }) {
           </h2>
           {article.lead && (
             <p className="text-gray-100 hidden sm:inline-block font-serif line-clamp-2" style={{ fontSize: 'var(--font-size-sm)' }}>
-              {article.lead}
+              {stripHtml(article.lead)}
             </p>
           )}
           {categoryTitle && (
@@ -340,7 +341,7 @@ function GridArticleCard({ article, locale }: { article: Article; locale: Locale
         {/* Excerpt */}
         {article.lead && (
           <p className="mt-1 text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] line-clamp-2 font-serif">
-            {article.lead}
+            {stripHtml(article.lead)}
           </p>
         )}
       </Link>

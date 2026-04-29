@@ -12,6 +12,7 @@ import type { Article } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 import { getFeaturedImage, getThumbnailByProfile, buildImageUrl } from '@/lib/api/important-articles';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
+import { stripHtml } from '@/lib/utils/strip-html';
 import { getSectionColor, getCategorySlugFromArticle, getCategoryTitle, formatRelativeTime, getLocalizedBadgeText, getFirstSentence } from './utils';
 
 interface FeatureCardProps {
@@ -32,7 +33,9 @@ export function FeatureCard({ article, locale, className = '', showExcerpt = tru
   const sectionColor = getSectionColor(categorySlug);
   const relativeTime = article.publishedAt ? formatRelativeTime(article.publishedAt, locale) : '';
   const badgeText = getLocalizedBadgeText(article.badge, locale);
-  const excerpt = article.lead || (article.content ? getFirstSentence(article.content) : '');
+  const excerpt = article.lead
+    ? stripHtml(article.lead)
+    : (article.content ? getFirstSentence(article.content) : '');
 
   return (
     <article className={`group bg-[var(--color-surface-elevated)] dark:bg-[var(--color-surface-elevated-dark)] rounded-[var(--radius-card)] overflow-hidden hover-lift-sm transition-all duration-300 col-span-full @md:col-span-6 @lg:col-span-4 ${className}`}>

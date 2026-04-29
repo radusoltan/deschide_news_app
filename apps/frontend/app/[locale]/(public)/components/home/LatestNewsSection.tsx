@@ -39,6 +39,7 @@ import {
   getCategoryTitle,
   formatRelativeTime,
 } from '@/components/cards/utils';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Article } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 
@@ -98,7 +99,7 @@ function FeaturedArticleCard({ article, locale }: { article: Article; locale: st
           </h2>
           {article.lead && (
             <p className="text-gray-100 hidden sm:inline-block font-serif line-clamp-2" style={{ fontSize: 'var(--font-size-sm)' }}>
-              {article.lead}
+              {stripHtml(article.lead)}
             </p>
           )}
           <div className="flex items-center gap-2 mt-2">
@@ -160,7 +161,7 @@ function GridArticleCard({ article, locale }: { article: Article; locale: string
         {/* Excerpt */}
         {article.lead && (
           <p className="mt-1 text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] line-clamp-2 font-serif">
-            {article.lead}
+            {stripHtml(article.lead)}
           </p>
         )}
       </Link>

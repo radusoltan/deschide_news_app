@@ -21,6 +21,7 @@ import Image from 'next/image';
 import { Article } from '@/lib/types/article';
 import { buildArticleUrl, getCategorySlugForLocale } from '@/lib/utils/url-builder';
 import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/api/important-articles';
+import { stripHtml } from '@/lib/utils/strip-html';
 
 interface HeroArticleProps {
   article: {
@@ -174,7 +175,7 @@ export default function HeroArticle({ article, locale }: HeroArticleProps) {
               {/* Lead text - Serif font for editorial feel */}
               {article.lead && (
                 <p className="font-serif text-white/95 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed mb-6 sm:mb-8 max-w-3xl animate-fade-in-up stagger-2 text-on-photo">
-                  {article.lead}
+                  {stripHtml(article.lead)}
                 </p>
               )}
 

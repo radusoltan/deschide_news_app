@@ -11,6 +11,7 @@ import Image from 'next/image';
 import type { Article } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
+import { stripHtml } from '@/lib/utils/strip-html';
 import { getSectionColor, getCategorySlugFromArticle, getCategoryTitle, formatRelativeTime, getLocalizedBadgeText, getFirstSentence } from './utils';
 
 interface TextOnlyCardProps {
@@ -28,7 +29,9 @@ export function TextOnlyCard({ article, locale, authorName, authorAvatar, classN
   const sectionColor = getSectionColor(categorySlug);
   const relativeTime = article.publishedAt ? formatRelativeTime(article.publishedAt, locale) : '';
   const badgeText = getLocalizedBadgeText(article.badge, locale);
-  const excerpt = article.lead || (article.content ? getFirstSentence(article.content, 200) : '');
+  const excerpt = article.lead
+    ? stripHtml(article.lead)
+    : (article.content ? getFirstSentence(article.content, 200) : '');
 
   return (
     <article

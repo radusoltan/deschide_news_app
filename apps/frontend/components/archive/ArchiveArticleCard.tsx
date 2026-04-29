@@ -16,6 +16,7 @@ import {
 } from '@/lib/api/important-articles';
 import type { Locale } from '@/lib/types';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
+import { stripHtml } from '@/lib/utils/strip-html';
 
 interface ArchiveArticleCardProps {
   article: Article;
@@ -152,7 +153,7 @@ export default function ArchiveArticleCard({
           {/* Lead */}
           {showLead && article.lead && (
             <p className="text-sm text-amber-800/70 line-clamp-2 mb-4 italic">
-              {article.lead}
+              {stripHtml(article.lead)}
             </p>
           )}
 

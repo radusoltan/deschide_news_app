@@ -3,6 +3,7 @@ import Image from "next/image";
 import { fetchImportantArticles, getFeaturedImage, buildImageUrl, getThumbnailByProfile } from "@/lib/api/important-articles";
 import { ImportantArticle, Category } from "@/lib/types/article";
 import { buildArticleUrl } from "@/lib/utils/url-builder";
+import { stripHtml } from "@/lib/utils/strip-html";
 import type { Locale } from "@/lib/types";
 
 interface ImportantListProps {
@@ -135,7 +136,7 @@ const ImportantList = async ({ locale }: ImportantListProps) => {
                 {/* Lead text */}
                 {mainArticle.article.lead && (
                   <p className="text-white text-on-photo text-sm line-clamp-2 max-w-xl font-body leading-relaxed">
-                    {mainArticle.article.lead}
+                    {stripHtml(mainArticle.article.lead)}
                   </p>
                 )}
 

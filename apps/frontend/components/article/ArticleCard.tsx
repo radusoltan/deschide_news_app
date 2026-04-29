@@ -12,6 +12,7 @@ import {
   getThumbnailByProfile,
   buildImageUrl,
 } from '@/lib/api/important-articles';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Locale } from '@/lib/types';
 
 interface ArticleCardProps {
@@ -181,7 +182,7 @@ export default function ArticleCard({
           {/* Lead Text */}
           {showLead && article.lead && (
             <p className="text-sm font-body text-brand-oxford-900/70 line-clamp-2 mb-3 leading-relaxed">
-              {article.lead}
+              {stripHtml(article.lead)}
             </p>
           )}
 

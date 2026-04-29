@@ -12,6 +12,7 @@ import type { Article } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 import { getFeaturedImage, getThumbnailByProfile, buildImageUrl } from '@/lib/api/important-articles';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
+import { stripHtml } from '@/lib/utils/strip-html';
 import { getSectionColor, getCategorySlugFromArticle, getCategoryTitle, formatRelativeTime, getLocalizedBadgeText } from './utils';
 
 interface HeroCardProps {
@@ -89,7 +90,7 @@ export function HeroCard({ article, locale, priority = true, className = '' }: H
               className="text-white/90 text-on-photo leading-[var(--leading-snug)] mb-4 line-clamp-2 max-w-2xl font-serif hidden @md:block"
               style={{ fontSize: 'var(--font-size-lg)' }}
             >
-              {article.lead}
+              {stripHtml(article.lead)}
             </p>
           )}
 

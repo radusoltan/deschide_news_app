@@ -20,6 +20,7 @@ import { HeroTemplateProps, CTA_TRANSLATIONS } from '../types';
 import { HeroBadge } from '../partials/HeroBadge';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/api/important-articles';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Locale } from '@/lib/types';
 
 /**
@@ -127,7 +128,7 @@ export const BreakingNewsHero: React.FC<HeroTemplateProps> = ({
               {/* Lead text - High contrast */}
               {article.lead && (
                 <p className="font-serif text-white/95 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed mb-6 sm:mb-8 max-w-3xl animate-hero-content-enter hero-stagger-3 drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
-                  {article.lead}
+                  {stripHtml(article.lead)}
                 </p>
               )}
 
