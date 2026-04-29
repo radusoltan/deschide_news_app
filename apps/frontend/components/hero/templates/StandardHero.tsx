@@ -17,7 +17,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { HeroTemplateProps, CTA_TRANSLATIONS } from '../types';
-import { buildArticleUrl, buildCategoryUrl } from '@/lib/utils/url-builder';
+import { buildArticleUrl, buildCategoryUrl, getCategorySlugForLocale } from '@/lib/utils/url-builder';
 import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/api/important-articles';
 import type { Locale } from '@/lib/types';
 
@@ -67,7 +67,7 @@ export const StandardHero: React.FC<HeroTemplateProps> = ({
 
   // Build URLs
   const articleUrl = buildArticleUrl(article as Article, locale as Locale);
-  const categorySlug = article.category?.slug || 'uncategorized';
+  const categorySlug = getCategorySlugForLocale(article.category, locale as Locale);
   const categoryTitle = article.category?.title || 'News';
   const ctaText = CTA_TRANSLATIONS[locale] || CTA_TRANSLATIONS.en;
 

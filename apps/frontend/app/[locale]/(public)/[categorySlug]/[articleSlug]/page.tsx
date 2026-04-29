@@ -31,6 +31,8 @@ import { generateArticleMetadata, generateArticleStructuredData } from '@/lib/se
 import { getFallbackContent, hasPendingTranslation, LocaleFallbackNotice } from '@/lib/i18n/locale-fallback';
 import StructuredData from '@/components/seo/StructuredData';
 import Breadcrumb, { buildArticleBreadcrumbs } from '@/components/navigation/Breadcrumb';
+import LocaleContextSetter from '@/app/components/LocaleContextSetter';
+import { buildArticleLocaleAlternates } from '@/lib/utils/url-builder';
 
 // Valid locales for the application
 const VALID_LOCALES = ['ro', 'en', 'ru'] as const;
@@ -243,6 +245,14 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     <>
       {/* Structured Data (JSON-LD) */}
       <StructuredData data={structuredData} />
+
+      {/* Push article publishedLocales + per-locale alternate URLs into context so the
+          global LanguageSwitcher renders disabled state for locales not represented and
+          emits hrefs that consume translatedSlugs (T60.6 / ADR-028 refinement). */}
+      <LocaleContextSetter
+        publishedLocales={article.publishedLocales}
+        localeAlternates={buildArticleLocaleAlternates(article)}
+      />
 
       <ArticleLayout
         sidebar={

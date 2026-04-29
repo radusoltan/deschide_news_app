@@ -49,6 +49,7 @@ jest.mock('@/lib/api/important-articles', () => ({
 
 jest.mock('@/lib/utils/url-builder', () => ({
   buildArticleUrl: jest.fn((article: any, locale: string) => `/${locale}/${article.slug}`),
+  buildCategoryLocaleAlternates: jest.fn(() => ({})),
 }));
 
 jest.mock('@/components/cards/utils', () => ({

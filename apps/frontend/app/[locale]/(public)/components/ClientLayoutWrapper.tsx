@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
+import { PublishedLocalesProvider } from '@/lib/contexts/PublishedLocalesContext';
 import type { Category } from '@/lib/types/article';
 import type { MenuItem } from '@/lib/types/menu';
 import type { Locale } from '@/lib/types';
@@ -47,40 +48,42 @@ export default function ClientLayoutWrapper({
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)]">
-      {/* Skip to content link for accessibility */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 px-4 py-2 bg-[var(--color-accent)] text-white rounded-md font-sans text-[var(--font-size-sm)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] dark:focus:ring-offset-[var(--color-surface-dark)]"
-      >
-        Skip to content
-      </a>
+    <PublishedLocalesProvider>
+      <div className="min-h-screen flex flex-col bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)]">
+        {/* Skip to content link for accessibility */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 px-4 py-2 bg-[var(--color-accent)] text-white rounded-md font-sans text-[var(--font-size-sm)] font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] dark:focus:ring-offset-[var(--color-surface-dark)]"
+        >
+          Skip to content
+        </a>
 
-      <Header locale={locale} categories={categories} menuItems={headerMenuItems} />
+        <Header locale={locale} categories={categories} menuItems={headerMenuItems} />
 
-      <main
-        id="main-content"
-        className="flex-1 pt-16 sm:pt-20 pb-16 md:pb-0"
-        role="main"
-      >
-        {children}
-      </main>
+        <main
+          id="main-content"
+          className="flex-1 pt-16 sm:pt-20 pb-16 md:pb-0"
+          role="main"
+        >
+          {children}
+        </main>
 
-      <Footer locale={locale} menuItems={footerMenuItems} />
+        <Footer locale={locale} menuItems={footerMenuItems} />
 
-      {/* Mobile Bottom Navigation - Only on mobile */}
-      <MobileBottomNav
-        locale={locale as Locale}
-        // TODO: Add proper handlers when implementing search/categories functionality
-        onSearchClick={() => {
-          // Implement search modal/page
-          console.log('Search clicked');
-        }}
-        onCategoriesClick={() => {
-          // Implement categories modal/page
-          console.log('Categories clicked');
-        }}
-      />
-    </div>
+        {/* Mobile Bottom Navigation - Only on mobile */}
+        <MobileBottomNav
+          locale={locale as Locale}
+          // TODO: Add proper handlers when implementing search/categories functionality
+          onSearchClick={() => {
+            // Implement search modal/page
+            console.log('Search clicked');
+          }}
+          onCategoriesClick={() => {
+            // Implement categories modal/page
+            console.log('Categories clicked');
+          }}
+        />
+      </div>
+    </PublishedLocalesProvider>
   );
 }
