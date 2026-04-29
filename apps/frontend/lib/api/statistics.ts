@@ -32,6 +32,13 @@ export interface TrendingArticle {
     id: number;
     name: string;
     slug: string;
+    /**
+     * Optional per-locale slug map used by sidebar/trending links to consume
+     * translated category slugs across locales (T60.6 Cluster B).
+     * Backend may populate via the same pattern as SlugController; helper
+     * gracefully falls back to `slug` when absent.
+     */
+    translatedSlugs?: { ro?: string; en?: string; ru?: string };
   } | null;
   views_24h: number;
   published_at: string;
