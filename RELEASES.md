@@ -12,6 +12,52 @@ between production releases, sprint RCs, and orphaned bugfix-branch tags.
 
 ## Production releases
 
+### v1.4.3 — 2026-04-29 (Hotfix)
+
+**Scope:** Backend + frontend hotfix, complete Category slug i18n.
+
+#### Fixed
+- All 79 published RO articles returned frontend 404 despite backend 200.
+- All EN/RU article URLs rendered with `/uncategorized/` category segment.
+- LanguageSwitcher could not navigate from EN/RU pages back to RO.
+- Header navigation, sidebar trending widgets, Footer fallback links, and
+  cross-locale switcher all emitted RO category slugs under non-RO
+  locale prefixes (5 distinct call sites).
+
+#### Added
+- `app:category:preview-slug-translations` — generates JSON proposal of
+  translated slugs from existing translated titles + RomanianSlugger.
+  Output reviewed manually pre-persist.
+- `app:category:apply-slug-translations` — persists approved translations
+  to `ext_translations`. Idempotent.
+- `apps/backend/fixtures/data/category-slug-translations.json` — source
+  of truth for translated category slugs. Drives both DevReset and
+  CategoryFixtures.
+- `CategoryProvider.populateTranslatedSlugs` (mirror of TagProvider pattern).
+- `getCategorySlugForLocale` helper as single point of truth for URL building.
+- `Footer.buildFallbackCategoryHref` static map for menuItems-empty fallback.
+- ADR-029: Category slug i18n strategy.
+
+#### Discovery process
+- Found during post-v1.4.2 browser testing by orchestrator.
+- 4 hypotheses verified read-only, narrowed to Cluster B as root cause.
+- Decomposed into Cluster A (article 404), Cluster B (uncategorized URL),
+  Cluster C (switcher asymmetric).
+- 5 evaluator-optimizer cycles during implementation surfaced 5 distinct
+  defect classes (DB, provider, URL builders, switcher, Footer).
+
+#### Known issues — carried forward
+- T60.8: RO article 404 silent null swallow (Cluster A residual) — likely
+  auto-resolved, to verify post-deploy.
+- T60.9: LanguageSwitcher RO target hardening (Cluster C) — likely
+  auto-resolved, to verify post-deploy.
+- T60.10: Verify FRA1 deploy script invalidates Next.js fetch cache.
+- T60.4 (carried): 2 pre-existing category-page test failures.
+- Author locale gate (T60.2)
+- PHPStan baseline 644 errors
+
+---
+
 ### v1.4.2 — 2026-04-24 (Hotfix)
 
 - **Status**: hotfix off `main` at `v1.4.1` (branch `hotfix/sprint-59-sitemap-hreflang`)
