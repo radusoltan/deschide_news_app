@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
-import { PublishedLocalesProvider } from '@/lib/contexts/PublishedLocalesContext';
+import { LocaleContextProvider } from '@/lib/contexts/LocaleContext';
 import type { Category } from '@/lib/types/article';
 import type { MenuItem } from '@/lib/types/menu';
 import type { Locale } from '@/lib/types';
@@ -48,7 +48,7 @@ export default function ClientLayoutWrapper({
   }, []);
 
   return (
-    <PublishedLocalesProvider>
+    <LocaleContextProvider>
       <div className="min-h-screen flex flex-col bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)]">
         {/* Skip to content link for accessibility */}
         <a
@@ -84,6 +84,6 @@ export default function ClientLayoutWrapper({
           }}
         />
       </div>
-    </PublishedLocalesProvider>
+    </LocaleContextProvider>
   );
 }

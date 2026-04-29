@@ -1,39 +1,53 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePublishedLocales } from '@/lib/contexts/PublishedLocalesContext';
+import {
+  useLocaleContext,
+  type LocaleSwitcherContext,
+} from '@/lib/contexts/LocaleContext';
 import type { Locale } from '@/lib/types';
 
 interface Props {
   publishedLocales?: string[];
-  localeAlternates?: Partial<Record<Locale, string>>;
+  translatedSlugs?: Partial<Record<Locale, string>>;
+  categoryTranslatedSlugs?: Partial<Record<Locale, string>>;
+  context: LocaleSwitcherContext;
 }
 
 /**
- * Client island that pushes per-page locale availability metadata into
- * `PublishedLocalesContext`, so the shared Header's `LanguageSwitcher`
- * can render correct disabled states for unavailable locales and emit
- * locale-correct hrefs that consume `translatedSlugs` (T60.6 Cluster B).
+ * Client helper that writes per-page locale metadata into `LocaleContext`
+ * so the shared Header's `LanguageSwitcher` can render correct cross-locale
+ * URLs and disabled states. Renders nothing.
  *
- * Renders nothing. Resets to undefined on unmount.
+ * Cleanup on unmount restores the default (generic) context so the switcher
+ * falls back to naive prefix-swap for pages that do not set their own.
  */
-export default function LocaleContextSetter({ publishedLocales, localeAlternates }: Props) {
-  const { setPublishedLocales, setLocaleAlternates, resetPublishedLocales } = usePublishedLocales();
-  const publishedKey = publishedLocales ? publishedLocales.slice().sort().join(',') : '';
-  const alternatesKey = localeAlternates
-    ? Object.entries(localeAlternates)
-        .filter(([, v]) => typeof v === 'string')
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([k, v]) => `${k}=${v}`)
-        .join('|')
-    : '';
+export default function LocaleContextSetter({
+  publishedLocales,
+  translatedSlugs,
+  categoryTranslatedSlugs,
+  context,
+}: Props) {
+  const { setLocaleContext, resetLocaleContext } = useLocaleContext();
+
+  const key = JSON.stringify({
+    publishedLocales,
+    translatedSlugs,
+    categoryTranslatedSlugs,
+    context,
+  });
 
   useEffect(() => {
-    setPublishedLocales(publishedLocales);
-    setLocaleAlternates(localeAlternates);
-    return () => resetPublishedLocales();
+    setLocaleContext({
+      publishedLocales,
+      translatedSlugs,
+      categoryTranslatedSlugs,
+      context,
+    });
+    return () => resetLocaleContext();
+    // `key` is the stable JSON hash of all payload fields; safe to skip deep deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [publishedKey, alternatesKey, setPublishedLocales, setLocaleAlternates, resetPublishedLocales]);
+  }, [key, setLocaleContext, resetLocaleContext]);
 
   return null;
 }

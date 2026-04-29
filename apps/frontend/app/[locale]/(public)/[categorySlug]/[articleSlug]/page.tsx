@@ -32,7 +32,6 @@ import { getFallbackContent, hasPendingTranslation, LocaleFallbackNotice } from 
 import StructuredData from '@/components/seo/StructuredData';
 import Breadcrumb, { buildArticleBreadcrumbs } from '@/components/navigation/Breadcrumb';
 import LocaleContextSetter from '@/app/components/LocaleContextSetter';
-import { buildArticleLocaleAlternates } from '@/lib/utils/url-builder';
 
 // Valid locales for the application
 const VALID_LOCALES = ['ro', 'en', 'ru'] as const;
@@ -241,17 +240,20 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   // Build breadcrumbs
   const breadcrumbItems = buildArticleBreadcrumbs(article, locale);
 
+  const articleCategory =
+    typeof article.category === 'object' ? article.category : null;
+
   return (
     <>
       {/* Structured Data (JSON-LD) */}
       <StructuredData data={structuredData} />
 
-      {/* Push article publishedLocales + per-locale alternate URLs into context so the
-          global LanguageSwitcher renders disabled state for locales not represented and
-          emits hrefs that consume translatedSlugs (T60.6 / ADR-028 refinement). */}
+      {/* Feeds per-article metadata into the shared Header's LanguageSwitcher */}
       <LocaleContextSetter
+        context="article"
         publishedLocales={article.publishedLocales}
-        localeAlternates={buildArticleLocaleAlternates(article)}
+        translatedSlugs={article.translatedSlugs}
+        categoryTranslatedSlugs={articleCategory?.translatedSlugs}
       />
 
       <ArticleLayout

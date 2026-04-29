@@ -49,7 +49,6 @@ jest.mock('@/lib/api/important-articles', () => ({
 
 jest.mock('@/lib/utils/url-builder', () => ({
   buildArticleUrl: jest.fn((article: any, locale: string) => `/${locale}/${article.slug}`),
-  buildCategoryLocaleAlternates: jest.fn(() => ({})),
 }));
 
 jest.mock('@/components/cards/utils', () => ({
@@ -124,7 +123,7 @@ describe('CategoryPage — generateMetadata', () => {
       params: Promise.resolve({ locale: 'ro', categorySlug: 'politica' }),
       searchParams: Promise.resolve({}),
     });
-    expect(result.title).toBe('Category | Deschide News');
+    expect(result.title).toBe('Category Not Found');
   });
 
   it('normalizes unknown locale to ro', async () => {

@@ -39,15 +39,17 @@ Development admin credentials are defined in environment config. **Do not** run 
 # Read credentials from environment
 symfony console debug:dotenv | grep -E 'ADMIN_EMAIL|ADMIN_PASSWORD'
 
-# Authenticate via API
+# Authenticate via API (the field is "username", NOT "email")
 curl -s -X POST http://127.0.0.1:8081/api/login_check \
   -H "Content-Type: application/json" \
-  -d '{"email":"${ADMIN_EMAIL}","password":"${ADMIN_PASSWORD}"}' | jq .token
+  -d '{"username":"admin","password":"password"}' | jq .token
 
 # Use the token for subsequent requests
 curl -s http://127.0.0.1:8081/api/articles \
   -H "Authorization: Bearer {token}"
 ```
+
+> **Authentication note:** the JWT login endpoint expects `username`, NOT `email`. The User entity exposes both fields, but `getUserIdentifier()` returns `username` (Symfony default). The canonical dev seed user is `admin`. Confirmed 2026-04-26 against `/api/login_check`.
 
 If credentials are not in `.env.local`, check `.env.test` or ask Radu. Do NOT:
 - Query `app_users` table directly for passwords
@@ -776,6 +778,16 @@ NEXT_PUBLIC_AVAILABLE_LOCALES=ro,en,ru
 - Image optimization with Next.js Image
 - Turbopack for fast dev builds
 - Mercure integration for real-time updates
+
+**Cache tag invariant (T60.10):**
+- All `lib/api/*.ts` fetches MUST declare `tags` alongside `revalidate`.
+  Without tags, the fetch is invisible to `revalidateTag()` at
+  `/api/revalidate` and serves stale data for the full revalidate
+  window after a backend change.
+- Use only `CACHE_TAGS` constants from `lib/data/cache-config.ts` — do
+  not inline string literals.
+- See `__tests__/unit/lib/api/cache-tags.test.ts` for the regression
+  guard. CI fails if a new fetch lands without tags.
 
 ### Cross-cutting Concerns
 

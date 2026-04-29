@@ -353,6 +353,50 @@ fi
 echo ""
 
 # =============================================================================
+# STEP 5.5: Cache Invalidation (T60.10)
+# =============================================================================
+# Tag-based revalidation post-build. Without this, fetch-cache entries from
+# previous build can serve stale data for up to 1h after deploy.
+# Requires REVALIDATE_SECRET env var or REVALIDATE_SECRET= in frontend/.env.local.
+
+if [ "$BACKEND_ONLY" = false ]; then
+    log_step "[5.5/6] Frontend cache invalidation"
+
+    REVALIDATE_SECRET_VALUE="${REVALIDATE_SECRET:-}"
+    if [ -z "$REVALIDATE_SECRET_VALUE" ] && [ -f "$FRONTEND_DIR/.env.local" ]; then
+        REVALIDATE_SECRET_VALUE=$(grep -E '^REVALIDATE_SECRET=' "$FRONTEND_DIR/.env.local" | cut -d= -f2- | tr -d '"' | tr -d "'")
+    fi
+
+    if [ -z "$REVALIDATE_SECRET_VALUE" ]; then
+        log_warning "REVALIDATE_SECRET not set — skipping tag-based invalidation"
+        log_warning "Stale fetch cache may persist up to 1h post-deploy"
+    else
+        # Allow PM2 reload to settle before hitting the endpoint
+        sleep 2
+        REVALIDATE_PAYLOAD='{"tags":["categories","navigation","homepage","articles","tags","video-shows","important-articles","special-articles","authors"]}'
+        if [ "$DRY_RUN" = true ]; then
+            log_dry "curl POST $FRONTEND_URL/api/revalidate with tags payload"
+        else
+            HTTP_CODE=$(curl -sf -o /tmp/revalidate-response.json -w "%{http_code}" \
+                --max-time 10 \
+                -X POST "$FRONTEND_URL/api/revalidate" \
+                -H "Content-Type: application/json" \
+                -H "x-revalidate-secret: $REVALIDATE_SECRET_VALUE" \
+                -d "$REVALIDATE_PAYLOAD" 2>/dev/null || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+                log_success "Cache invalidated (HTTP $HTTP_CODE)"
+            elif [ "$HTTP_CODE" = "207" ]; then
+                log_warning "Partial invalidation (HTTP 207) — see /tmp/revalidate-response.json"
+            else
+                log_error "Cache invalidation failed (HTTP $HTTP_CODE)"
+                log_warning "Continuing deploy; manual revalidation may be required"
+            fi
+        fi
+    fi
+    echo ""
+fi
+
+# =============================================================================
 # STEP 6: Post-Deploy Verification
 # =============================================================================
 
@@ -361,6 +405,7 @@ log_step "[6/6] Post-deploy verification"
 if [ "$DRY_RUN" = true ]; then
     log_dry "curl -sf --max-time $SMOKE_TIMEOUT $BACKEND_URL/api"
     log_dry "curl -sf --max-time $SMOKE_TIMEOUT $FRONTEND_URL/ro"
+    log_dry "Trilingual slug probe (T60.10): for LOCALE in ro en ru; curl $FRONTEND_URL/\$LOCALE | grep -q /uncategorized/"
     log_dry "Run full smoke check: $SCRIPTS_DIR/smoke-check.sh"
 else
     SMOKE_PASS=0
@@ -414,6 +459,26 @@ else
             log_warning "Romanian homepage returned HTTP $HTTP_CODE"
             ((SMOKE_FAIL++))
         fi
+
+        # T60.10: Verify trilingual category slugs are not stale
+        # Detects post-T60.6 regression where cache freezes /uncategorized/
+        # fallback slug after backend translates categories.
+        for LOCALE in ro en ru; do
+            LOC_HTTP=$(curl -sf -o /tmp/smoke-${LOCALE}.html -w "%{http_code}" \
+                --max-time "$SMOKE_TIMEOUT" -L "$FRONTEND_URL/$LOCALE" 2>/dev/null || echo "000")
+            if [ "$LOC_HTTP" = "200" ]; then
+                if grep -q "/uncategorized/" /tmp/smoke-${LOCALE}.html; then
+                    log_error "[$LOCALE] /uncategorized/ slug leaked — cache likely stale"
+                    ((SMOKE_FAIL++))
+                else
+                    log_success "[$LOCALE] homepage clean of /uncategorized/"
+                    ((SMOKE_PASS++))
+                fi
+            else
+                log_warning "[$LOCALE] homepage HTTP $LOC_HTTP — cannot verify slugs"
+                ((SMOKE_FAIL++))
+            fi
+        done
     fi
 
     echo ""

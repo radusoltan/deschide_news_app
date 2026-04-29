@@ -16,7 +16,7 @@ import { isReservedSlug } from '@/lib/constants/reserved-slugs';
 import { getFallbackContent, hasPendingTranslation, isSupportedLocale, LocaleFallbackNotice } from '@/lib/i18n/locale-fallback';
 import { generateCategoryMetadata } from '@/lib/seo/meta-tags';
 import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/api/important-articles';
-import { buildArticleUrl, buildCategoryLocaleAlternates } from '@/lib/utils/url-builder';
+import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { getSectionColor, getCategorySlugFromArticle } from '@/components/cards/utils';
 import LocaleContextSetter from '@/app/components/LocaleContextSetter';
 import type { Locale } from '@/lib/types';
@@ -170,10 +170,11 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)]">
-      {/* Push per-locale category alternate URLs into context so the global LanguageSwitcher
-          emits locale-correct hrefs that consume category.translatedSlugs (T60.6 Cluster B). */}
-      <LocaleContextSetter localeAlternates={buildCategoryLocaleAlternates(category)} />
-
+      {/* Feeds per-category metadata into the shared Header's LanguageSwitcher */}
+      <LocaleContextSetter
+        context="category"
+        translatedSlugs={category.translatedSlugs}
+      />
       <main className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
         {isLangFallback && (
           <LocaleFallbackNotice

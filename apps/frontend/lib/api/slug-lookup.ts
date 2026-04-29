@@ -5,6 +5,7 @@
 
 import type { Locale } from '../types';
 import type { Article, Category, Author } from '../types/article';
+import { CACHE_TAGS } from '../data/cache-config';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -33,6 +34,7 @@ export async function lookupArticle(
       headers,
       next: {
         revalidate: 120, // Cache for 2 minutes
+        tags: [CACHE_TAGS.articles, CACHE_TAGS.locale(locale)],
       },
     });
 
@@ -76,6 +78,7 @@ export async function lookupCategory(
       headers,
       next: {
         revalidate: 300, // Cache for 5 minutes
+        tags: [CACHE_TAGS.categories, CACHE_TAGS.categoryBySlug(slug), CACHE_TAGS.locale(locale)],
       },
     });
 
@@ -124,6 +127,7 @@ export async function lookupAuthor(
       headers,
       next: {
         revalidate: 300, // Cache for 5 minutes
+        tags: [CACHE_TAGS.authors, CACHE_TAGS.authorBySlug(slug)],
       },
     });
 

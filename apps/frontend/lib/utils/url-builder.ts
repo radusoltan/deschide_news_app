@@ -1,10 +1,14 @@
 /**
  * URL Builder Utilities
- * Helper functions to build correct article and category URLs
+ * Helper functions to build correct article and category URLs.
+ *
+ * Locale-prefix handling is delegated to `lib/seo/locale-url.ts` (the single
+ * source of truth for "locale → URL path" mapping). See ADR-028.
  */
 
 import type { Article, Category } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
+import { applyLocalePrefix } from '@/lib/seo/locale-url';
 
 /**
  * Get category slug from Category object or string (locale-agnostic, RO base slug).
@@ -47,7 +51,7 @@ export type CategorySlugSource =
  * Resolve the category slug for a given locale, preferring `translatedSlugs[locale]`,
  * falling back to the base RO slug, and only as a last resort 'uncategorized'.
  *
- * This is the single point of truth for category slugs in URL building (T60.6 Cluster B):
+ * Single point of truth for category slugs in URL building (T60.6 Cluster B):
  * before this helper, consumers used `category?.slug || 'uncategorized'`, which leaked
  * the RO slug into EN/RU URLs and triggered 'uncategorized' for any non-RO locale that
  * lacked a fallback chain.
@@ -78,7 +82,7 @@ export function getCategorySlugForLocale(
 
 /**
  * Build article URL: /{locale}/{category_slug}/{article_slug}
- * For Romanian (default locale), omit the locale prefix.
+ * For Romanian (default locale with prefixDefault=false), omit the locale prefix.
  *
  * Uses translated category + article slugs when available.
  */
@@ -88,14 +92,12 @@ export function buildArticleUrl(
 ): string {
   const categorySlug = getCategorySlugForLocale(article.category, locale);
   const articleSlug = article.translatedSlugs?.[locale] ?? article.slug;
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-
-  return `/${localePrefix}${categorySlug}/${articleSlug}`;
+  return applyLocalePrefix(locale, `${categorySlug}/${articleSlug}`);
 }
 
 /**
  * Build category URL: /{locale}/{category_slug}
- * For Romanian (default locale), omit the locale prefix.
+ * For Romanian (default locale with prefixDefault=false), omit the locale prefix.
  *
  * Uses translated slug when available.
  */
@@ -104,9 +106,7 @@ export function buildCategoryUrl(
   locale: Locale
 ): string {
   const categorySlug = getCategorySlugForLocale(category, locale);
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-
-  return `/${localePrefix}${categorySlug}`;
+  return applyLocalePrefix(locale, categorySlug);
 }
 
 /**
@@ -117,71 +117,16 @@ export function buildAuthorUrl(
   authorSlug: string,
   locale: Locale
 ): string {
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-
-  return `/${localePrefix}author/${authorSlug}`;
+  return applyLocalePrefix(locale, `author/${authorSlug}`);
 }
 
 /**
  * Build locale-prefixed URL
- * For Romanian (default locale), omit the locale prefix
+ * For Romanian (default locale with prefixDefault=false), omit the locale prefix.
  */
 export function buildLocalizedUrl(
   path: string,
   locale: Locale
 ): string {
-  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
-  // Remove leading slash if present
-  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-
-  const result = `/${localePrefix}${cleanPath}`;
-  // Remove trailing slash (except for root '/')
-  return result.length > 1 && result.endsWith('/') ? result.slice(0, -1) : result;
-}
-
-const SUPPORTED_LOCALES: readonly Locale[] = ['ro', 'en', 'ru'];
-
-/**
- * Build per-locale alternate URLs for an article. Used by `LocaleContextSetter`
- * to feed `LanguageSwitcher` so cross-locale hrefs consume `translatedSlugs`
- * instead of the dumb pathname rewrite (T60.6 Cluster B).
- */
-export function buildArticleLocaleAlternates(
-  article: Article,
-): Partial<Record<Locale, string>> {
-  const category = typeof article.category === 'object' ? article.category : null;
-  const result: Partial<Record<Locale, string>> = {};
-
-  for (const targetLocale of SUPPORTED_LOCALES) {
-    const categorySlug = getCategorySlugForLocale(category, targetLocale);
-    if (!categorySlug || categorySlug === 'uncategorized') {
-      continue;
-    }
-    const articleSlug = article.translatedSlugs?.[targetLocale] ?? article.slug;
-    const localePrefix = targetLocale === 'ro' ? '' : `${targetLocale}/`;
-    result[targetLocale] = `/${localePrefix}${categorySlug}/${articleSlug}`;
-  }
-
-  return result;
-}
-
-/**
- * Build per-locale alternate URLs for a category. Mirror of
- * `buildArticleLocaleAlternates` for the category landing page.
- */
-export function buildCategoryLocaleAlternates(
-  category: Category,
-): Partial<Record<Locale, string>> {
-  const result: Partial<Record<Locale, string>> = {};
-
-  for (const targetLocale of SUPPORTED_LOCALES) {
-    const categorySlug = getCategorySlugForLocale(category, targetLocale);
-    if (!categorySlug || categorySlug === 'uncategorized') {
-      continue;
-    }
-    const localePrefix = targetLocale === 'ro' ? '' : `${targetLocale}/`;
-    result[targetLocale] = `/${localePrefix}${categorySlug}`;
-  }
-
-  return result;
+  return applyLocalePrefix(locale, path);
 }

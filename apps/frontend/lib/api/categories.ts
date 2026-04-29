@@ -3,6 +3,7 @@
  */
 
 import { Category } from '../types/article';
+import { CACHE_TAGS } from '../data/cache-config';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -39,6 +40,7 @@ export async function fetchCategories(locale?: string): Promise<CategoriesListRe
     headers,
     next: {
       revalidate: 300, // Revalidate every 5 minutes
+      tags: [CACHE_TAGS.categories, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -79,6 +81,7 @@ export async function fetchFrontPageCategories(
     headers,
     next: {
       revalidate: 300, // Revalidate every 5 minutes
+      tags: [CACHE_TAGS.categories, CACHE_TAGS.homepage, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
