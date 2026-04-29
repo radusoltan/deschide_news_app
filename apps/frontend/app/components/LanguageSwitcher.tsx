@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useIntl } from 'react-intl';
 import type { Locale } from '@/lib/types';
+import { usePublishedLocales } from '@/lib/contexts/PublishedLocalesContext';
 
 const LOCALE_OPTIONS: Array<{ code: Locale; label: string; lang: string }> = [
   { code: 'ro', label: 'Română', lang: 'ro' },
@@ -36,10 +37,15 @@ interface LanguageSwitcherProps {
   publishedLocales?: string[];
 }
 
-export default function LanguageSwitcher({ publishedLocales }: LanguageSwitcherProps = {}) {
+export default function LanguageSwitcher({ publishedLocales: publishedLocalesProp }: LanguageSwitcherProps = {}) {
   const pathname = usePathname() || '/';
   const intl = useIntl();
   const currentLocale = (intl.locale as Locale) || 'ro';
+  const { publishedLocales: publishedLocalesCtx } = usePublishedLocales();
+
+  // Prop wins; otherwise use context (populated by per-page LocaleContextSetter);
+  // when both are absent every locale is enabled (homepage, category, generic pages).
+  const publishedLocales = publishedLocalesProp ?? publishedLocalesCtx;
 
   return (
     <nav
@@ -58,6 +64,7 @@ export default function LanguageSwitcher({ publishedLocales }: LanguageSwitcherP
                 aria-current={isCurrent ? 'true' : undefined}
                 aria-label={`Switch to ${option.label}`}
                 lang={option.lang}
+                data-testid={`locale-switch-${option.code}`}
                 className={[
                   'rounded-sm px-1.5 py-1 transition-colors',
                   isCurrent
@@ -69,8 +76,11 @@ export default function LanguageSwitcher({ publishedLocales }: LanguageSwitcherP
               </Link>
             ) : (
               <span
+                role="link"
+                aria-disabled="true"
                 title={UNAVAILABLE_TOOLTIP[currentLocale] || UNAVAILABLE_TOOLTIP.en}
                 lang={option.lang}
+                data-testid={`locale-switch-${option.code}-disabled`}
                 className="cursor-not-allowed rounded-sm px-1.5 py-1 opacity-40"
               >
                 {option.label}
