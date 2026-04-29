@@ -458,6 +458,26 @@ else
             log_warning "Romanian homepage returned HTTP $HTTP_CODE"
             ((SMOKE_FAIL++))
         fi
+
+        # T60.10: Verify trilingual category slugs are not stale
+        # Detects post-T60.6 regression where cache freezes /uncategorized/
+        # fallback slug after backend translates categories.
+        for LOCALE in ro en ru; do
+            LOC_HTTP=$(curl -sf -o /tmp/smoke-${LOCALE}.html -w "%{http_code}" \
+                --max-time "$SMOKE_TIMEOUT" -L "$FRONTEND_URL/$LOCALE" 2>/dev/null || echo "000")
+            if [ "$LOC_HTTP" = "200" ]; then
+                if grep -q "/uncategorized/" /tmp/smoke-${LOCALE}.html; then
+                    log_error "[$LOCALE] /uncategorized/ slug leaked — cache likely stale"
+                    ((SMOKE_FAIL++))
+                else
+                    log_success "[$LOCALE] homepage clean of /uncategorized/"
+                    ((SMOKE_PASS++))
+                fi
+            else
+                log_warning "[$LOCALE] homepage HTTP $LOC_HTTP — cannot verify slugs"
+                ((SMOKE_FAIL++))
+            fi
+        done
     fi
 
     echo ""
