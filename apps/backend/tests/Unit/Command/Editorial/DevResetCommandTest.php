@@ -110,10 +110,11 @@ class DevResetCommandTest extends TestCase
 
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
 
-        // All ten dispatched sub-commands must have run at least once.
+        // All eleven dispatched sub-commands must have run at least once.
         self::assertContains('doctrine:schema:drop', $executed);
         self::assertContains('doctrine:migrations:migrate', $executed);
         self::assertContains('doctrine:fixtures:load', $executed);
+        self::assertContains('app:category:apply-slug-translations', $executed);
         self::assertContains('app:import:csv-legacy-articles', $executed);
         self::assertContains('app:fixtures:generate-translations', $executed);
         self::assertContains('app:fixtures:download-images', $executed);
@@ -253,6 +254,7 @@ class DevResetCommandTest extends TestCase
             'doctrine:schema:drop',
             'doctrine:migrations:migrate',
             'doctrine:fixtures:load',
+            'app:category:apply-slug-translations',
             'app:import:csv-legacy-articles',
             'app:fixtures:generate-translations',
             'app:fixtures:download-images',
