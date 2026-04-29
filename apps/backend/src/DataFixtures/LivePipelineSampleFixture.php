@@ -108,7 +108,7 @@ class LivePipelineSampleFixture extends Fixture implements FixtureGroupInterface
         $catEditoriale = $this->getReference('category-editoriale', Category::class);
         $catOpinii = $this->getReference('category-opinii', Category::class);
 
-        // Draft #1: AI-generated from Cluster 1 (pending review)
+        // Draft #1: AI-generated from Cluster 1 (PUBLISHED RO-only — smoke test anchor for T60.6 Cluster B)
         $draft1 = new Article();
         $draft1->setTranslatableLocale('ro');
         $draft1->setTitle('Moldova deschide oficial Clusterul 1 al negocierilor cu UE');
@@ -116,7 +116,9 @@ class LivePipelineSampleFixture extends Fixture implements FixtureGroupInterface
         $draft1->setLead('Republica Moldova a început oficial negocierile pe Clusterul 1 al procesului de aderare la Uniunea Europeană, un moment istoric care marchează o nouă etapă în relația dintre Chișinău și Bruxelles.');
         $draft1->setContent($this->getEuDraftContent());
         $draft1->setCategory($catPolitica);
-        $draft1->setStatus(ArticleStatus::SUBMITTED);
+        $draft1->setStatus(ArticleStatus::PUBLISHED);
+        $draft1->setPublishedAt(new \DateTimeImmutable('-2 hours'));
+        $draft1->setPublishedLocales(['ro']);
         $draft1->setAiGenerated(true);
         $draft1->setAiConfidenceScore(0.94);
 
@@ -145,7 +147,7 @@ class LivePipelineSampleFixture extends Fixture implements FixtureGroupInterface
 
         $manager->flush();
 
-        // Draft #2: Editorial op-ed
+        // Draft #2: Editorial op-ed (PUBLISHED RO+EN — exercises live cross-locale alternates in switcher)
         $draft2 = new Article();
         $draft2->setTranslatableLocale('ro');
         $draft2->setTitle('Editorial săptămânal: Alegerile din 2025 și drumul spre Europa');
@@ -153,7 +155,9 @@ class LivePipelineSampleFixture extends Fixture implements FixtureGroupInterface
         $draft2->setLead('O analiză a contextului politic din Republica Moldova la un an după alegerile parlamentare.');
         $draft2->setContent($this->getEditorialContent());
         $draft2->setCategory($catEditoriale);
-        $draft2->setStatus(ArticleStatus::NEW);
+        $draft2->setStatus(ArticleStatus::PUBLISHED);
+        $draft2->setPublishedAt(new \DateTimeImmutable('-1 hour'));
+        $draft2->setPublishedLocales(['ro', 'en']);
         $draft2->setAiGenerated(false);
 
         $manager->persist($draft2);
