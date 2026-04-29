@@ -1,11 +1,14 @@
 /**
  * LanguageSwitcher unit tests
  *
- * Covers the disabled-state behavior driven by `publishedLocales` (T60.6 / ADR-028 refinement):
+ * Covers the disabled-state behavior driven by `publishedLocales` (T60.6 / ADR-028 refinement)
+ * AND the per-locale alternate href behavior driven by `localeAlternates` (T60.6 Cluster B):
  * - locales not present in `publishedLocales` render as aria-disabled spans
  * - the disabled span is NOT clickable (no <a href>)
  * - prop wins over PublishedLocalesContext when both provide a value
  * - when both are absent, all locales remain enabled
+ * - when `localeAlternates` is set, the switcher uses the alternate URL instead of
+ *   the dumb pathname rewrite (e.g. /en/politics → /ro/politica, not /ro/politics)
  */
 
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -21,11 +24,18 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/ro/politica/some-article',
 }));
 
-function ContextSeed({ locales }: { locales?: string[] }) {
-  const { setPublishedLocales } = usePublishedLocales();
+function ContextSeed({
+  locales,
+  alternates,
+}: {
+  locales?: string[];
+  alternates?: Partial<Record<'ro' | 'en' | 'ru', string>>;
+}) {
+  const { setPublishedLocales, setLocaleAlternates } = usePublishedLocales();
   useEffect(() => {
     setPublishedLocales(locales);
-  }, [locales, setPublishedLocales]);
+    setLocaleAlternates(alternates);
+  }, [locales, alternates, setPublishedLocales, setLocaleAlternates]);
   return null;
 }
 
@@ -94,5 +104,67 @@ describe('LanguageSwitcher (publishedLocales disabled state)', () => {
 
     expect(screen.queryByTestId('locale-switch-en-disabled')).not.toBeInTheDocument();
     expect(screen.queryByTestId('locale-switch-ru-disabled')).not.toBeInTheDocument();
+  });
+});
+
+describe('LanguageSwitcher (localeAlternates href)', () => {
+  it('uses alternate hrefs from context, not pathname rewrite', () => {
+    renderSwitcher(
+      <>
+        <ContextSeed
+          alternates={{
+            ro: '/politica/moldova-eu-summit',
+            en: '/en/politics/moldova-eu-summit',
+            ru: '/ru/politika/moldova-eu-summit',
+          }}
+        />
+        <LanguageSwitcher />
+      </>,
+      'en',
+    );
+
+    expect(screen.getByTestId('locale-switch-ro')).toHaveAttribute(
+      'href',
+      '/politica/moldova-eu-summit',
+    );
+    expect(screen.getByTestId('locale-switch-en')).toHaveAttribute(
+      'href',
+      '/en/politics/moldova-eu-summit',
+    );
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute(
+      'href',
+      '/ru/politika/moldova-eu-summit',
+    );
+  });
+
+  it('falls back to pathname rewrite when alternates are absent', () => {
+    renderSwitcher(<LanguageSwitcher />);
+
+    // Pathname mock is /ro/politica/some-article — switcher rewrites segment[0]
+    expect(screen.getByTestId('locale-switch-en')).toHaveAttribute(
+      'href',
+      '/en/politica/some-article',
+    );
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute(
+      'href',
+      '/ru/politica/some-article',
+    );
+  });
+
+  it('partial alternates: defined locales use alternate, others fall back to pathname rewrite', () => {
+    renderSwitcher(
+      <>
+        <ContextSeed alternates={{ ro: '/politica/some', ru: '/ru/politika/some' }} />
+        <LanguageSwitcher />
+      </>,
+    );
+
+    expect(screen.getByTestId('locale-switch-ro')).toHaveAttribute('href', '/politica/some');
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute('href', '/ru/politika/some');
+    // EN absent from alternates → falls back to pathname rewrite
+    expect(screen.getByTestId('locale-switch-en')).toHaveAttribute(
+      'href',
+      '/en/politica/some-article',
+    );
   });
 });

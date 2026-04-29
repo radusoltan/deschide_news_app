@@ -41,7 +41,7 @@ export default function LanguageSwitcher({ publishedLocales: publishedLocalesPro
   const pathname = usePathname() || '/';
   const intl = useIntl();
   const currentLocale = (intl.locale as Locale) || 'ro';
-  const { publishedLocales: publishedLocalesCtx } = usePublishedLocales();
+  const { publishedLocales: publishedLocalesCtx, localeAlternates } = usePublishedLocales();
 
   // Prop wins; otherwise use context (populated by per-page LocaleContextSetter);
   // when both are absent every locale is enabled (homepage, category, generic pages).
@@ -55,12 +55,13 @@ export default function LanguageSwitcher({ publishedLocales: publishedLocalesPro
       {LOCALE_OPTIONS.map((option, index) => {
         const isCurrent = option.code === currentLocale;
         const isAvailable = !publishedLocales || publishedLocales.includes(option.code);
+        const targetHref = localeAlternates?.[option.code] ?? buildLocaleHref(pathname, option.code);
 
         return (
           <span key={option.code} className="flex items-center">
             {isAvailable ? (
               <Link
-                href={buildLocaleHref(pathname, option.code)}
+                href={targetHref}
                 aria-current={isCurrent ? 'true' : undefined}
                 aria-label={`Switch to ${option.label}`}
                 lang={option.lang}
