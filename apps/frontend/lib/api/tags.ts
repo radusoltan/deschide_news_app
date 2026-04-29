@@ -11,6 +11,7 @@ import {
   TagStatistics,
 } from '../types/tag';
 import type { Article } from '../types/article';
+import { CACHE_TAGS } from '../data/cache-config';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
 
@@ -67,6 +68,7 @@ export async function fetchTags(
     headers,
     next: {
       revalidate: 300, // Revalidate every 5 minutes
+      tags: [CACHE_TAGS.tags, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -101,6 +103,7 @@ export async function fetchTag(id: number, locale?: string): Promise<Tag> {
     headers,
     next: {
       revalidate: 300,
+      tags: [CACHE_TAGS.tags, CACHE_TAGS.tagById(id), CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -141,6 +144,7 @@ export async function fetchPopularTags(
     headers,
     next: {
       revalidate: 600, // Cache for 10 minutes (same as backend)
+      tags: [CACHE_TAGS.tags, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -188,6 +192,7 @@ export async function searchTags(
     headers,
     next: {
       revalidate: 300, // Cache for 5 minutes
+      tags: [CACHE_TAGS.tags, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -230,6 +235,7 @@ export async function fetchRelatedTags(
     headers,
     next: {
       revalidate: 600, // Cache for 10 minutes
+      tags: [CACHE_TAGS.tags, CACHE_TAGS.tagById(tagId), CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -272,6 +278,7 @@ export async function fetchTagStats(
     headers,
     next: {
       revalidate: 300, // Cache for 5 minutes
+      tags: [CACHE_TAGS.tags, CACHE_TAGS.tagById(tagId)],
     },
   });
 
@@ -312,6 +319,7 @@ export async function fetchUnusedTags(
     headers,
     next: {
       revalidate: 300, // Cache for 5 minutes
+      tags: [CACHE_TAGS.tags, CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
@@ -360,6 +368,7 @@ export async function fetchArticlesByTag(
     headers,
     next: {
       revalidate: 120, // Revalidate every 2 minutes
+      tags: [CACHE_TAGS.articles, CACHE_TAGS.tagBySlug(tagSlug), CACHE_TAGS.locale(locale ?? 'ro')],
     },
   });
 
