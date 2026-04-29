@@ -45,7 +45,12 @@ final class CategoryProvider implements ProviderInterface
                 $locale
             );
 
-            return $query->getOneOrNullResult();
+            $category = $query->getOneOrNullResult();
+            if ($category instanceof Category) {
+                $this->populateTranslatedSlugs([$category]);
+            }
+
+            return $category;
         }
 
         // Handle collection retrieval
@@ -83,6 +88,64 @@ final class CategoryProvider implements ProviderInterface
             $locale
         );
 
-        return $query->getResult();
+        $categories = $query->getResult();
+        if (\is_array($categories) && !empty($categories)) {
+            $this->populateTranslatedSlugs($categories);
+        }
+
+        return $categories;
+    }
+
+    /**
+     * Batch-populate translatedSlugs on Category entities by querying the base table
+     * (for default locale RO) and ext_translations (for EN, RU). Mirrors the pattern
+     * used in TagProvider; consumed by frontend URL builders to emit cross-locale
+     * hrefs (T60.6 Cluster B).
+     *
+     * @param Category[] $categories
+     */
+    private function populateTranslatedSlugs(array $categories): void
+    {
+        $catMap = [];
+        foreach ($categories as $category) {
+            if ($category->getId() !== null) {
+                $catMap[$category->getId()] = $category;
+            }
+        }
+
+        if (empty($catMap)) {
+            return;
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $placeholders = implode(',', array_map(fn ($id) => $conn->quote((string) $id), array_keys($catMap)));
+
+        // 1. Base table slugs = RO defaults
+        $baseSlugs = $conn->executeQuery(
+            "SELECT id, slug FROM categories WHERE id IN ($placeholders)"
+        )->fetchAllAssociative();
+
+        foreach ($baseSlugs as $row) {
+            $id = (int) $row['id'];
+            if (isset($catMap[$id])) {
+                $catMap[$id]->setTranslatedSlugs(['ro' => $row['slug']]);
+            }
+        }
+
+        // 2. ext_translations slugs for EN and RU
+        $translationRows = $conn->executeQuery(
+            "SELECT foreign_key, locale, content FROM ext_translations "
+            . "WHERE object_class = 'App\\Entity\\Category' AND field = 'slug' "
+            . "AND foreign_key IN ($placeholders)"
+        )->fetchAllAssociative();
+
+        foreach ($translationRows as $row) {
+            $id = (int) $row['foreign_key'];
+            if (isset($catMap[$id])) {
+                $slugs = $catMap[$id]->getTranslatedSlugs() ?? [];
+                $slugs[$row['locale']] = $row['content'];
+                $catMap[$id]->setTranslatedSlugs($slugs);
+            }
+        }
     }
 }
