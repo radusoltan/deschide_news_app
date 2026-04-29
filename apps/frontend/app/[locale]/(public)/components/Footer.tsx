@@ -11,6 +11,25 @@ interface FooterProps {
   menuItems?: MenuItem[];
 }
 
+// Static locale-aware slug map for the menuItems-empty fallback so the footer
+// never emits a RO slug under /en or /ru (T60.6 Cluster B). Mirrors the slug
+// translations seeded by CategoryFixtures.
+const FALLBACK_CATEGORY_SLUGS: Record<'politics' | 'economy' | 'society', { ro: string; en: string; ru: string }> = {
+  politics: { ro: 'politica', en: 'politics', ru: 'politika' },
+  economy: { ro: 'economie', en: 'economy', ru: 'ekonomika' },
+  society: { ro: 'societate', en: 'society', ru: 'obshchestvo' },
+};
+
+function buildFallbackCategoryHref(
+  category: 'politics' | 'economy' | 'society',
+  locale: string,
+): string {
+  const slugs = FALLBACK_CATEGORY_SLUGS[category];
+  const targetLocale: 'ro' | 'en' | 'ru' = locale === 'en' || locale === 'ru' ? locale : 'ro';
+  const slug = slugs[targetLocale];
+  return targetLocale === 'ro' ? `/${slug}` : `/${targetLocale}/${slug}`;
+}
+
 export default function Footer({ locale, menuItems = [] }: FooterProps) {
   const intl = useIntl();
 
@@ -137,7 +156,7 @@ export default function Footer({ locale, menuItems = [] }: FooterProps) {
                       <>
                         <li>
                           <Link
-                            href={locale === 'ro' ? '/politica' : `/${locale}/politica`}
+                            href={buildFallbackCategoryHref('politics', locale)}
                             className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
                           >
                             {intl.formatMessage({ id: 'categories.politics' })}
@@ -145,7 +164,7 @@ export default function Footer({ locale, menuItems = [] }: FooterProps) {
                         </li>
                         <li>
                           <Link
-                            href={locale === 'ro' ? '/economie' : `/${locale}/economie`}
+                            href={buildFallbackCategoryHref('economy', locale)}
                             className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
                           >
                             {intl.formatMessage({ id: 'categories.economy', defaultMessage: 'Economie' })}
@@ -153,7 +172,7 @@ export default function Footer({ locale, menuItems = [] }: FooterProps) {
                         </li>
                         <li>
                           <Link
-                            href={locale === 'ro' ? '/societate' : `/${locale}/societate`}
+                            href={buildFallbackCategoryHref('society', locale)}
                             className="text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] hover:text-[var(--color-accent)] transition-colors"
                           >
                             {intl.formatMessage({ id: 'categories.society' })}
