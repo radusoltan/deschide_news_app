@@ -1,0 +1,167 @@
+[
+    {
+        "category_id": 1,
+        "ro_slug": "politica",
+        "ro_title": "Politică",
+        "translations": {
+            "en": {
+                "title": "Politics",
+                "proposed_slug": "politics"
+            },
+            "ru": {
+                "title": "Политика",
+                "proposed_slug": "politika"
+            }
+        }
+    },
+    {
+        "category_id": 2,
+        "ro_slug": "societate",
+        "ro_title": "Societate",
+        "translations": {
+            "en": {
+                "title": "Society",
+                "proposed_slug": "society"
+            },
+            "ru": {
+                "title": "Общество",
+                "proposed_slug": "obshchestvo"
+            }
+        }
+    },
+    {
+        "category_id": 3,
+        "ro_slug": "externe",
+        "ro_title": "Externe",
+        "translations": {
+            "en": {
+                "title": "International",
+                "proposed_slug": "international"
+            },
+            "ru": {
+                "title": "Международные",
+                "proposed_slug": "mir"
+            }
+        }
+    },
+    {
+        "category_id": 4,
+        "ro_slug": "economie",
+        "ro_title": "Economie",
+        "translations": {
+            "en": {
+                "title": "Economy",
+                "proposed_slug": "economy"
+            },
+            "ru": {
+                "title": "Экономика",
+                "proposed_slug": "ekonomika"
+            }
+        }
+    },
+    {
+        "category_id": 5,
+        "ro_slug": "romania",
+        "ro_title": "România",
+        "translations": {
+            "en": {
+                "title": "Romania",
+                "proposed_slug": "romania"
+            },
+            "ru": {
+                "title": "Румыния",
+                "proposed_slug": "rumyniya"
+            }
+        }
+    },
+    {
+        "category_id": 6,
+        "ro_slug": "cultura",
+        "ro_title": "Cultură",
+        "translations": {
+            "en": {
+                "title": "Culture",
+                "proposed_slug": "culture"
+            },
+            "ru": {
+                "title": "Культура",
+                "proposed_slug": "kultura"
+            }
+        }
+    },
+    {
+        "category_id": 7,
+        "ro_slug": "sport",
+        "ro_title": "Sport",
+        "translations": {
+            "en": {
+                "title": "Sports",
+                "proposed_slug": "sport"
+            },
+            "ru": {
+                "title": "Спорт",
+                "proposed_slug": "sport"
+            }
+        }
+    },
+    {
+        "category_id": 8,
+        "ro_slug": "editoriale",
+        "ro_title": "Editoriale",
+        "translations": {
+            "en": {
+                "title": "Editorials",
+                "proposed_slug": "editorials"
+            },
+            "ru": {
+                "title": "Редакция",
+                "proposed_slug": "redaktorskie"
+            }
+        }
+    },
+    {
+        "category_id": 9,
+        "ro_slug": "opinii",
+        "ro_title": "Opinii",
+        "translations": {
+            "en": {
+                "title": "Opinions",
+                "proposed_slug": "opinions"
+            },
+            "ru": {
+                "title": "Мнения",
+                "proposed_slug": "mneniya"
+            }
+        }
+    },
+    {
+        "category_id": 10,
+        "ro_slug": "advertorial",
+        "ro_title": "Advertorial",
+        "translations": {
+            "en": {
+                "title": "Advertorial",
+                "proposed_slug": "advertorial"
+            },
+            "ru": {
+                "title": "Рекламный материал",
+                "proposed_slug": "reklama"
+            }
+        }
+    },
+    {
+        "category_id": 11,
+        "ro_slug": "anti-fake",
+        "ro_title": "Anti-Fake",
+        "translations": {
+            "en": {
+                "title": "Anti-Fake",
+                "proposed_slug": "anti-fake"
+            },
+            "ru": {
+                "title": "Антифейк",
+                "proposed_slug": "antifeik"
+            }
+        }
+    }
+]

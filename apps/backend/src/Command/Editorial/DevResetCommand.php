@@ -21,6 +21,8 @@ final class DevResetCommand extends Command
 {
     private const DEFAULT_CSV_GLOB = '/var/www/deschide_news_app/articles-export-*.csv';
 
+    private const CATEGORY_SLUG_TRANSLATIONS_JSON = __DIR__ . '/../../../fixtures/data/category-slug-translations.json';
+
     /** Per-category article caps for CSV article selection. */
     private const ARTICLE_CAPS = [
         'politica' => 400, 'societate' => 400, 'externe' => 400, 'economie' => 400,
@@ -100,6 +102,17 @@ final class DevResetCommand extends Command
             ['--group' => $fixtureGroups],
         ));
         $this->em->clear();
+
+        // --- Step 3b: Belt-and-braces — re-apply category slug translations from JSON
+        // (idempotent; CategoryFixtures already applies on first load, but this guarantees
+        // convergence if JSON is amended without re-running fixtures).
+        if (is_file(self::CATEGORY_SLUG_TRANSLATIONS_JSON)) {
+            $this->runStep($io, '3b. Apply category slug translations', fn () => $this->runSubCommand(
+                $output, 'app:category:apply-slug-translations',
+                ['--input' => self::CATEGORY_SLUG_TRANSLATIONS_JSON],
+            ));
+            $this->em->clear();
+        }
 
         // --- Step 4: CSV import phases 1-3 ---
         if (!$skipCsv) {

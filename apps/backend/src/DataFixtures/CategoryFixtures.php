@@ -118,6 +118,7 @@ class CategoryFixtures extends Fixture implements FixtureGroupInterface
     public function load(ObjectManager $manager): void
     {
         $translationRepo = $manager->getRepository(Translation::class);
+        $slugTranslationsByRoSlug = $this->loadSlugTranslations();
 
         foreach (self::CATEGORIES as $data) {
             $category = new Category();
@@ -140,10 +141,66 @@ class CategoryFixtures extends Fixture implements FixtureGroupInterface
             // even when the translated value matches the default locale (e.g. "Advertorial")
             $translationRepo->translate($category, 'title', 'en', $data['en']);
             $translationRepo->translate($category, 'title', 'ru', $data['ru']);
+
+            // Persist translated slugs from JSON source-of-truth (T60.6)
+            $slugTranslations = $slugTranslationsByRoSlug[$data['slug']] ?? null;
+            if ($slugTranslations !== null) {
+                foreach ($slugTranslations as $locale => $translatedSlug) {
+                    $translationRepo->translate($category, 'slug', $locale, $translatedSlug);
+                }
+            }
+
             $manager->flush();
 
             // Reference for MenuItemFixtures and other dependents
             $this->addReference("category-{$data['slug']}", $category);
         }
+    }
+
+    /**
+     * @return array<string, array<string, string>> keyed by RO slug → [locale => translated_slug]
+     */
+    private function loadSlugTranslations(): array
+    {
+        $path = __DIR__ . '/../../fixtures/data/category-slug-translations.json';
+        if (!is_file($path)) {
+            return [];
+        }
+
+        $raw = file_get_contents($path);
+        if ($raw === false) {
+            return [];
+        }
+
+        try {
+            $entries = json_decode($raw, true, 512, \JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return [];
+        }
+
+        if (!\is_array($entries)) {
+            return [];
+        }
+
+        $byRoSlug = [];
+        foreach ($entries as $entry) {
+            $roSlug = $entry['ro_slug'] ?? null;
+            $translations = $entry['translations'] ?? [];
+            if (!\is_string($roSlug) || !\is_array($translations)) {
+                continue;
+            }
+
+            foreach ($translations as $locale => $payload) {
+                if (!\is_string($locale) || !\is_array($payload)) {
+                    continue;
+                }
+                $proposed = $payload['proposed_slug'] ?? null;
+                if (\is_string($proposed) && $proposed !== '') {
+                    $byRoSlug[$roSlug][$locale] = $proposed;
+                }
+            }
+        }
+
+        return $byRoSlug;
     }
 }
