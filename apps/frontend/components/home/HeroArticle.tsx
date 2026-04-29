@@ -19,7 +19,7 @@ import type { Locale } from "@/lib/types";
 import Link from 'next/link';
 import Image from 'next/image';
 import { Article } from '@/lib/types/article';
-import { buildArticleUrl, getCategorySlug } from '@/lib/utils/url-builder';
+import { buildArticleUrl, getCategorySlugForLocale } from '@/lib/utils/url-builder';
 import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/api/important-articles';
 
 interface HeroArticleProps {
@@ -101,7 +101,7 @@ export default function HeroArticle({ article, locale }: HeroArticleProps) {
 
   // Build URLs
   const articleUrl = buildArticleUrl(article as Article, locale as Locale);
-  const categorySlug = article.category?.slug || 'uncategorized';
+  const categorySlug = getCategorySlugForLocale(article.category, locale as Locale);
   const categoryTitle = article.category?.title || 'News';
 
   // CTA text based on locale

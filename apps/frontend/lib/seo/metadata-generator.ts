@@ -7,6 +7,7 @@ import type { Metadata } from 'next';
 import type { Article, Category } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 import { buildCanonicalUrl as buildLocaleCanonicalUrl, buildLocalizedUrl } from './locale-url';
+import { getCategorySlugForLocale } from '@/lib/utils/url-builder';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
@@ -111,15 +112,17 @@ export function getCategorySlug(category: Category | string | null | undefined):
 }
 
 /**
- * Build canonical URL for article
+ * Build canonical URL for article (locale-aware: uses translated category +
+ * article slugs when available, falls back to RO base slug otherwise).
  */
 export function buildCanonicalUrl(
   article: Article,
   locale: Locale
 ): string {
-  const categorySlug = getCategorySlug(article.category);
+  const categorySlug = getCategorySlugForLocale(article.category, locale);
+  const articleSlug = article.translatedSlugs?.[locale] ?? article.slug;
 
-  return buildLocaleCanonicalUrl(SITE_URL, locale, `${categorySlug}/${article.slug}`);
+  return buildLocaleCanonicalUrl(SITE_URL, locale, `${categorySlug}/${articleSlug}`);
 }
 
 /**

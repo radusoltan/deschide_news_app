@@ -2,11 +2,54 @@
  * URL Builder Utility Tests
  */
 
-import { buildArticleUrl, buildCategoryUrl, buildImageUrl } from '@/lib/utils/url-builder';
+import { buildArticleUrl, buildCategoryUrl, buildImageUrl, getCategorySlugForLocale } from '@/lib/utils/url-builder';
 import { mockArticle, mockArticles } from '@/__tests__/__mocks__/articles';
 import { mockCategory } from '@/__tests__/__mocks__/categories';
+import type { Category } from '@/lib/types/article';
 
 describe('URL Builder Utilities', () => {
+  describe('getCategorySlugForLocale', () => {
+    const trilingual: Category = {
+      ...mockCategory,
+      slug: 'politica',
+      translatedSlugs: { ro: 'politica', en: 'politics', ru: 'politika' },
+    };
+
+    it('returns the translated slug when present for the locale', () => {
+      expect(getCategorySlugForLocale(trilingual, 'en')).toBe('politics');
+      expect(getCategorySlugForLocale(trilingual, 'ru')).toBe('politika');
+      expect(getCategorySlugForLocale(trilingual, 'ro')).toBe('politica');
+    });
+
+    it('falls back to base slug when locale translation is missing', () => {
+      const partial: Category = {
+        ...mockCategory,
+        slug: 'politica',
+        translatedSlugs: { ro: 'politica' },
+      };
+      expect(getCategorySlugForLocale(partial, 'en')).toBe('politica');
+      expect(getCategorySlugForLocale(partial, 'ru')).toBe('politica');
+    });
+
+    it('falls back to base slug when translatedSlugs is absent entirely', () => {
+      const noTranslations: Category = { ...mockCategory, slug: 'politica' };
+      expect(getCategorySlugForLocale(noTranslations, 'en')).toBe('politica');
+      expect(getCategorySlugForLocale(noTranslations, 'ru')).toBe('politica');
+    });
+
+    it('returns the bare string when category is a string', () => {
+      expect(getCategorySlugForLocale('politica', 'en')).toBe('politica');
+    });
+
+    it('returns "uncategorized" only when category is null/undefined or has no slug at all', () => {
+      expect(getCategorySlugForLocale(null, 'en')).toBe('uncategorized');
+      expect(getCategorySlugForLocale(undefined, 'en')).toBe('uncategorized');
+      const slugless = { ...mockCategory, slug: undefined as unknown as string, translatedSlugs: undefined };
+      expect(getCategorySlugForLocale(slugless, 'en')).toBe('uncategorized');
+    });
+  });
+
+
   describe('buildArticleUrl', () => {
     it('should build article URL for default locale (ro)', () => {
       const url = buildArticleUrl(mockArticle, 'ro');
