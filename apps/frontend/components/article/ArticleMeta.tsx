@@ -10,7 +10,7 @@ import React from 'react';
 import Link from 'next/link';
 import type { Article, Category, Author } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
-import { buildAuthorUrl, buildCategoryUrl } from '@/lib/utils/url-builder';
+import { buildAuthorUrl, buildCategoryUrl, getCategorySlugForLocale } from '@/lib/utils/url-builder';
 
 interface ArticleMetaProps {
   article: Article;
@@ -37,13 +37,16 @@ function formatDate(dateString: string, locale: Locale = 'ro'): string {
 }
 
 /**
- * Get category title and slug
+ * Get category title and locale-aware slug
  */
-function getCategoryData(category: Category | string | null): { title: string; slug: string } {
+function getCategoryData(
+  category: Category | string | null,
+  locale: Locale,
+): { title: string; slug: string } {
   if (typeof category === 'object' && category) {
     return {
       title: category.title || 'Uncategorized',
-      slug: category.slug || 'uncategorized',
+      slug: getCategorySlugForLocale(category, locale),
     };
   }
   return { title: 'Uncategorized', slug: 'uncategorized' };
@@ -148,7 +151,7 @@ function SocialShare({
 export default function ArticleMeta({ article, locale, className = '' }: ArticleMetaProps) {
   const authors = article.authors || [];
   const primaryAuthor = authors[0] as never; // TODO: Fix type - should fetch Author objects
-  const categoryData = getCategoryData(article.category);
+  const categoryData = getCategoryData(article.category, locale);
 
   // Get current page URL for sharing - will be empty on server, updated on client
   const [pageUrl, setPageUrl] = React.useState('');

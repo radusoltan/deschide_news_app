@@ -7,6 +7,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { getTrendingArticles } from '@/lib/api/statistics';
 import { getSectionColor } from '@/components/cards/utils';
+import { getCategorySlugForLocale } from '@/lib/utils/url-builder';
 import type { Locale } from '@/lib/types';
 import type { TrendingArticle } from '@/lib/api/statistics';
 
@@ -28,7 +29,7 @@ interface HomepageSidebarProps {
   locale: string;
 }
 
-async function SidebarContent({ locale }: HomepageSidebarProps) {
+export async function SidebarContent({ locale }: HomepageSidebarProps) {
   let trending: TrendingArticle[] = [];
 
   try {
@@ -53,9 +54,10 @@ async function SidebarContent({ locale }: HomepageSidebarProps) {
 
           <ul className="space-y-0">
             {trending.slice(0, 10).map((article) => {
-              const catSlug = article.category?.slug || 'news';
+              const catSlug = getCategorySlugForLocale(article.category, locale as Locale);
               const sectionColor = getSectionColor(catSlug);
-              const articleUrl = `/${locale}/${catSlug}/${article.slug}`;
+              const localePrefix = locale === 'ro' ? '' : `${locale}/`;
+              const articleUrl = `/${localePrefix}${catSlug}/${article.slug}`;
 
               return (
                 <li

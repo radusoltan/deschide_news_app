@@ -47,16 +47,6 @@ function getCategoryTitle(category: Category | string | null): string {
 }
 
 /**
- * Get category slug safely
- */
-function getCategorySlug(category: Category | string | null): string {
-  if (typeof category === 'object' && category?.slug) {
-    return category.slug;
-  }
-  return 'uncategorized';
-}
-
-/**
  * Calculate reading time estimate (assumes 200 words per minute)
  */
 function estimateReadingTime(content: string): number {

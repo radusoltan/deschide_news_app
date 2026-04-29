@@ -4,6 +4,8 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils/cn';
+import { getCategorySlugForLocale } from '@/lib/utils/url-builder';
+import type { Locale } from '@/lib/types';
 
 // Badge type definitions
 export type BadgeType = 'breaking' | 'alert' | 'flash';
@@ -20,6 +22,8 @@ interface Category {
   id: number;
   title: string;
   slug: string;
+  /** Optional per-locale slug map; consumed by sidebar/banner links (T60.6 Cluster B). */
+  translatedSlugs?: { ro?: string; en?: string; ru?: string };
 }
 
 interface ArticleImage {
@@ -139,13 +143,6 @@ function getFeaturedImageUrl(articleImages?: ArticleImage[]): string | null {
   return `${cdnUrl}/uploads/${imagePath}`;
 }
 
-// Get category slug
-function getCategorySlug(category: Category | string | undefined): string {
-  if (!category) return 'article';
-  if (typeof category === 'string') return 'article';
-  return category.slug;
-}
-
 // Get badge label based on locale
 function getBadgeLabel(config: typeof BADGE_CONFIG[BadgeType], locale: string): string {
   if (locale === 'ro') return config.labelRo;
@@ -170,8 +167,9 @@ export const SpecialArticleBanner: React.FC<SpecialArticleBannerProps> = ({
 }) => {
   const config = BADGE_CONFIG[article.badge];
   const imageUrl = getFeaturedImageUrl(article.articleImages);
-  const categorySlug = getCategorySlug(article.category);
-  const articleUrl = `/${locale}/${categorySlug}/${article.slug}`;
+  const categorySlug = getCategorySlugForLocale(article.category, locale as Locale);
+  const localePrefix = locale === 'ro' ? '' : `${locale}/`;
+  const articleUrl = `/${localePrefix}${categorySlug}/${article.slug}`;
 
   return (
     <Link
