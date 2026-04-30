@@ -204,7 +204,7 @@ Same bug class. Single ADR covers both.
   - `3b3a6aa` fix(frontend): pipe translatedSlugs through generateCategoryMetadata
   - `2fb5d00` test(frontend): SSR canonical hreflang + dedup + head/switcher consistency e2e
   - `36a863c` chore(frontend): cap Playwright local workers at 2 for WSL2 stability
-- Merge commit: filled at merge time
+- Merge commit: `cdb6708` (develop, pushed to origin 2026-04-30)
 - Tests added: 71 (58 unit + 13 e2e)
 - Regression posture: 16-baseline-failure invariant in
   `locale-switching.spec.ts` preserved; line 538 (the Phase 1.5 trigger)
