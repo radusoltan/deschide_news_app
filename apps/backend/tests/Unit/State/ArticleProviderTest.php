@@ -20,10 +20,12 @@ use Gedmo\Translatable\TranslatableListener;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\HeaderBag;
 use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * Unit tests for ArticleProvider.
@@ -39,16 +41,23 @@ class ArticleProviderTest extends TestCase
 
     private RequestStack $requestStack;
 
+    private Security $security;
+
     private EntityRepository $repository;
 
     private QueryBuilder $queryBuilder;
 
     private Query $query;
 
+    private bool $editorGranted = false;
+
+    private ?UserInterface $mockedUser = null;
+
     protected function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->requestStack = $this->createMock(RequestStack::class);
+        $this->security = $this->createMock(Security::class);
         $this->repository = $this->createMock(EntityRepository::class);
         $this->queryBuilder = $this->createMock(QueryBuilder::class);
         $this->query = $this->createMock(Query::class);
@@ -58,9 +67,25 @@ class ArticleProviderTest extends TestCase
             ->with(Article::class)
             ->willReturn($this->repository);
 
+        // Defaults model an anonymous request: not granted ROLE_EDITOR, no user.
+        // Tests asserting admin bypass flip $this->editorGranted = true; tests
+        // for an authenticated non-editor user also set $this->mockedUser so
+        // a future regression that swaps isGranted() for getUser() !== null
+        // would be caught (the provider currently consults only isGranted, but
+        // mocking getUser keeps the negative test path honest as defence-in-depth).
+        $this->editorGranted = false;
+        $this->mockedUser = null;
+        $this->security
+            ->method('isGranted')
+            ->willReturnCallback(fn (string $attribute): bool => $attribute === 'ROLE_EDITOR' && $this->editorGranted);
+        $this->security
+            ->method('getUser')
+            ->willReturnCallback(fn () => $this->mockedUser);
+
         $this->provider = new ArticleProvider(
             $this->entityManager,
-            $this->requestStack
+            $this->requestStack,
+            $this->security
         );
     }
 
@@ -363,6 +388,131 @@ class ArticleProviderTest extends TestCase
         $result = $this->provider->provide($operation, ['id' => 1], ['fetch_data' => true]);
 
         $this->assertInstanceOf(Article::class, $result, 'Draft article must resolve via IRI in write path');
+    }
+
+    // ======================
+    // Per-Locale Publishing Gate — Editor Bypass (T60.6 / hotfix v1.4.5)
+    // ======================
+    //
+    // The discriminator was extended to bypass the gate for authenticated
+    // editors, so the manual translation workflow can reach articles in
+    // locales that aren't yet in publishedLocales. The provider consults
+    // Security::isGranted('ROLE_EDITOR'), which delegates to RoleHierarchyVoter
+    // — so a holder of ROLE_ADMIN passes the check via security.yaml's
+    // role_hierarchy without us listing both roles literally.
+    //
+    // Tests below assert behaviour at the Provider level (path-agnostic) so
+    // they survive the future admin-surface split tracked under ADR-027
+    // Open Questions #2.
+
+    #[Test]
+    public function itAllowsEditorToReadArticleInLocaleNotInPublishedLocales(): void
+    {
+        // Primary regression: editor with Accept-Language: en reads an
+        // article published only in ro. Pre-T60.6 this returned null
+        // (→ 404 in HTTP land) and broke the manual translation tab switch.
+        $this->editorGranted = true;
+        $this->mockedUser = $this->createMock(UserInterface::class);
+
+        $request = $this->createRequestWithLocale('en');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $article = new Article();
+        $article->setTitle('RO-only article');
+        $article->setPublishedLocales(['ro']);
+
+        $this->setupSingleItemQuery();
+        $this->query->method('getOneOrNullResult')->willReturn($article);
+
+        $operation = (new Get())->withClass(Article::class);
+        $result = $this->provider->provide($operation, ['id' => 1]);
+
+        $this->assertInstanceOf(
+            Article::class,
+            $result,
+            'Editor must read an article in a locale not in publishedLocales'
+        );
+    }
+
+    #[Test]
+    public function itAllowsEditorToReadArticleInPublishedLocale(): void
+    {
+        // Sanity check: bypass must not regress the happy path for editors.
+        $this->editorGranted = true;
+        $this->mockedUser = $this->createMock(UserInterface::class);
+
+        $request = $this->createRequestWithLocale('ro');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $article = new Article();
+        $article->setTitle('RO article');
+        $article->setPublishedLocales(['ro']);
+
+        $this->setupSingleItemQuery();
+        $this->query->method('getOneOrNullResult')->willReturn($article);
+
+        $operation = (new Get())->withClass(Article::class);
+        $result = $this->provider->provide($operation, ['id' => 1]);
+
+        $this->assertInstanceOf(Article::class, $result);
+    }
+
+    #[Test]
+    public function itAppliesLocaleGateForAuthenticatedNonEditorUser(): void
+    {
+        // Defence-in-depth: an authenticated user who is NOT granted
+        // ROLE_EDITOR (e.g. a plain reader) must still hit the gate. The
+        // mockedUser is intentionally non-null so a future regression that
+        // swaps the discriminator for `getUser() !== null` would still fail
+        // this assertion (gate would be bypassed; result would no longer be
+        // null). Bypass is editor-grant-only, not "any-authenticated".
+        $this->editorGranted = false;
+        $this->mockedUser = $this->createMock(UserInterface::class);
+
+        $request = $this->createRequestWithLocale('en');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $article = new Article();
+        $article->setTitle('RO-only article');
+        $article->setPublishedLocales(['ro']);
+
+        $this->setupSingleItemQuery();
+        $this->query->method('getOneOrNullResult')->willReturn($article);
+
+        $operation = (new Get())->withClass(Article::class);
+        $result = $this->provider->provide($operation, ['id' => 1]);
+
+        $this->assertNull(
+            $result,
+            'Non-editor authenticated users must still be subject to the per-locale gate'
+        );
+    }
+
+    #[Test]
+    public function itDoesNotBypassGateForAnonymousUser(): void
+    {
+        // Meta-regression: catches a typo or sign-flip in the discriminator
+        // (e.g. !$isAdminContext → $isAdminContext, or isGranted call removed).
+        // Anonymous request: editorGranted=false, mockedUser=null (defaults).
+        // Article published only in 'ro'; request locale 'en' → must return null.
+
+        $request = $this->createRequestWithLocale('en');
+        $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+        $article = new Article();
+        $article->setTitle('RO-only article');
+        $article->setPublishedLocales(['ro']);
+
+        $this->setupSingleItemQuery();
+        $this->query->method('getOneOrNullResult')->willReturn($article);
+
+        $operation = (new Get())->withClass(Article::class);
+        $result = $this->provider->provide($operation, ['id' => 1]);
+
+        $this->assertNull(
+            $result,
+            'Anonymous user must never bypass the per-locale publishing gate'
+        );
     }
 
     // ======================
