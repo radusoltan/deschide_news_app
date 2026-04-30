@@ -7,6 +7,8 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ArticleCard from '@/components/ArticleCard';
+import LocaleContextSetter from '@/app/components/LocaleContextSetter';
+import { fetchTopicBySlug } from '@/lib/api/topics';
 import type { Article } from '@/lib/types/article';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? '';
@@ -17,38 +19,11 @@ interface TopicPageProps {
   searchParams?: Promise<{ page?: string }>;
 }
 
-interface TopicData {
-  id: number;
-  title: string;
-  slug: string;
-  description?: string | null;
-  lvl: number;
-  isActive: boolean;
-  translatedSlugs?: { ro?: string; en?: string; ru?: string };
-}
-
 interface PathItem {
   id: number;
   title: string;
   slug: string;
   lvl: number;
-}
-
-async function fetchTopicBySlug(slug: string, locale: string): Promise<TopicData | null> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/topics?slug=${encodeURIComponent(slug)}&itemsPerPage=1`, {
-      headers: { 'Accept-Language': locale },
-      next: { revalidate: 600 },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const members = data['hydra:member'] || [];
-      return members[0] || null;
-    }
-  } catch {
-    // silent
-  }
-  return null;
 }
 
 async function fetchTopicPath(topicId: number, locale: string): Promise<PathItem[]> {
@@ -146,6 +121,14 @@ export default async function TopicDetailPage({ params, searchParams }: TopicPag
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {/* Feeds per-topic translated slugs into the shared LanguageSwitcher
+          for client-side navigation between topics (layout-level resolver
+          only runs on hard nav). */}
+      <LocaleContextSetter
+        context="topic"
+        translatedSlugs={topic.translatedSlugs}
+      />
+
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-secondary dark:text-gray-400">
         <ol className="flex flex-wrap items-center gap-1">
