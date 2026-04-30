@@ -20,10 +20,12 @@ use Gedmo\Translatable\TranslatableListener;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\HeaderBag;
 use Symfony\Component\HttpFoundation\InputBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * Unit tests for ArticleProvider.
@@ -39,16 +41,23 @@ class ArticleProviderTest extends TestCase
 
     private RequestStack $requestStack;
 
+    private Security $security;
+
     private EntityRepository $repository;
 
     private QueryBuilder $queryBuilder;
 
     private Query $query;
 
+    private bool $editorGranted = false;
+
+    private ?UserInterface $mockedUser = null;
+
     protected function setUp(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
         $this->requestStack = $this->createMock(RequestStack::class);
+        $this->security = $this->createMock(Security::class);
         $this->repository = $this->createMock(EntityRepository::class);
         $this->queryBuilder = $this->createMock(QueryBuilder::class);
         $this->query = $this->createMock(Query::class);
@@ -58,9 +67,25 @@ class ArticleProviderTest extends TestCase
             ->with(Article::class)
             ->willReturn($this->repository);
 
+        // Defaults model an anonymous request: not granted ROLE_EDITOR, no user.
+        // Tests asserting admin bypass flip $this->editorGranted = true; tests
+        // for an authenticated non-editor user also set $this->mockedUser so
+        // a future regression that swaps isGranted() for getUser() !== null
+        // would be caught (the provider currently consults only isGranted, but
+        // mocking getUser keeps the negative test path honest as defence-in-depth).
+        $this->editorGranted = false;
+        $this->mockedUser = null;
+        $this->security
+            ->method('isGranted')
+            ->willReturnCallback(fn (string $attribute): bool => $attribute === 'ROLE_EDITOR' && $this->editorGranted);
+        $this->security
+            ->method('getUser')
+            ->willReturnCallback(fn () => $this->mockedUser);
+
         $this->provider = new ArticleProvider(
             $this->entityManager,
-            $this->requestStack
+            $this->requestStack,
+            $this->security
         );
     }
 

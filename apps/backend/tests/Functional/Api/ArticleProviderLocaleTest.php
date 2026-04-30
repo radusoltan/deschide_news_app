@@ -19,21 +19,31 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  * Regression tests for the ArticleProvider per-locale publishing gate scope.
  *
  * Hotfix v1.4.1 / ADR-027 — see docs/adr/ADR-027-article-provider-locale-gate-scope.md
+ * Hotfix v1.4.5 / T60.6   — editor bypass for cross-locale admin reads. The
+ *                            gate now also exempts authenticated editors
+ *                            (Security::isGranted('ROLE_EDITOR')), so this
+ *                            file's matrix row #2 became "GET as editor in a
+ *                            non-published locale → 200" rather than 404.
+ *                            See unit tests in tests/Unit/State/ArticleProviderTest.php
+ *                            for the four-cell editor/anonymous × published
+ *                            matrix at the Provider level.
  *
  * The gate at ArticleProvider::provide() returns null (→ 404) when the
- * requested article is not published in the current Accept-Language locale.
- * Before the hotfix, the same gate also blocked API Platform's IriConverter
- * lookups during denormalization of write payloads (e.g. POST /api/article_images
- * with "article": "/api/articles/{id}"), breaking admin image-attach in any
- * non-RO browser locale.
+ * requested article is not published in the current Accept-Language locale
+ * AND the caller is neither an editor nor in an IRI-denormalization context.
  *
- * Matrix (all four rows must be green after the hotfix):
- * | # | Article state          | Request                                 | Accept-Language | Expected |
- * |---|------------------------|-----------------------------------------|-----------------|----------|
- * | 1 | Published in ro only   | GET  /api/articles/{id}                 | ro              | 200      |
- * | 2 | Published in ro only   | GET  /api/articles/{id}                 | en              | 404      |
- * | 3 | Published in ro only   | POST /api/article_images (IRI = article) | en              | 201      |
- * | 4 | Draft (no locales)     | POST /api/article_images (IRI = article) | en              | 201      |
+ * Matrix (all four rows must be green after both hotfixes):
+ * | # | Article state          | Request                                  | Auth   | Accept-Language | Expected |
+ * |---|------------------------|------------------------------------------|--------|-----------------|----------|
+ * | 1 | Published in ro only   | GET  /api/articles/{id}                  | admin  | ro              | 200      |
+ * | 2 | Published in ro only   | GET  /api/articles/{id}                  | admin  | en              | 200 *    |
+ * | 3 | Published in ro only   | POST /api/article_images (IRI = article) | admin  | en              | 201      |
+ * | 4 | Draft (no locales)     | POST /api/article_images (IRI = article) | admin  | en              | 201      |
+ *
+ * (*) row #2 was "404" pre-T60.6; admin holds ROLE_EDITOR via role_hierarchy
+ *     so the gate now exempts the read. Anonymous-caller behaviour against
+ *     the same article path is "401 Unauthorized" — Symfony's auth wall fires
+ *     before the provider runs and is therefore not modelled here.
  */
 class ArticleProviderLocaleTest extends WebTestCase
 {
@@ -99,10 +109,16 @@ class ArticleProviderLocaleTest extends WebTestCase
     }
 
     // ======================
-    // Matrix row #2: public GET, not published in requested locale → 404
+    // Matrix row #2: editor GET, not published in requested locale → 200
+    //                (T60.6 bypass — see ADR-027 follow-up).
     // ======================
-    public function testPublicGetReturns404WhenArticleNotPublishedInRequestedLocale(): void
+    public function testEditorGetReturns200ForArticleNotPublishedInRequestedLocale(): void
     {
+        // Pre-T60.6 this returned 404. Editors need to reach the article in
+        // every locale to perform manual translations (Sprint 58-Recovery
+        // turned auto-translations off, leaving publishedLocales=['ro'] for
+        // new articles). The gate is now bypassed for ROLE_EDITOR holders;
+        // admin holds ROLE_EDITOR via security.yaml's role_hierarchy.
         $article = $this->createArticle(['ro'], ArticleStatus::PUBLISHED);
         $token = $this->authenticateAdmin();
 
@@ -112,7 +128,7 @@ class ArticleProviderLocaleTest extends WebTestCase
             'HTTP_ACCEPT_LANGUAGE' => 'en',
         ]);
 
-        $this->assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
     }
 
     // ======================
