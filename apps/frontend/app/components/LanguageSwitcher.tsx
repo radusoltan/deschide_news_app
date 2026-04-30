@@ -8,6 +8,8 @@ import {
   applyLocalePrefix,
   buildLocaleUrlForArticle,
   buildLocaleUrlForCategory,
+  buildLocaleUrlForTag,
+  buildLocaleUrlForTopic,
   buildLocaleUrlGeneric,
 } from '@/lib/seo/locale-url';
 import {
@@ -26,6 +28,19 @@ const UNAVAILABLE_TOOLTIP_FALLBACK: Record<Locale, string> = {
   en: 'Article is not translated in this language',
   ru: 'Статья не переведена на этот язык',
 };
+
+const LOCALE_COOKIE_NAME = 'NEXT_LOCALE';
+const LOCALE_COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
+
+// Aligns with proxy.ts:withLocaleCookie so a click on the switcher updates
+// the cookie before navigation, preventing proxy from resolving an unprefixed
+// default-locale URL back to the previous locale.
+function setLocaleCookie(locale: Locale): void {
+  if (typeof document === 'undefined') {
+    return;
+  }
+  document.cookie = `${LOCALE_COOKIE_NAME}=${locale}; path=/; max-age=${LOCALE_COOKIE_MAX_AGE}; SameSite=Lax`;
+}
 
 export interface LanguageSwitcherProps {
   /** When set, locales not in this list are shown as disabled */
@@ -71,6 +86,20 @@ export default function LanguageSwitcher(props: LanguageSwitcherProps = {}) {
         currentLocale
       );
     }
+    if (context === 'topic') {
+      return buildLocaleUrlForTopic(
+        target,
+        { translatedSlugs },
+        currentLocale
+      );
+    }
+    if (context === 'tag') {
+      return buildLocaleUrlForTag(
+        target,
+        { translatedSlugs },
+        currentLocale
+      );
+    }
     return buildLocaleUrlGeneric(target, pathname, currentLocale);
   };
 
@@ -109,6 +138,7 @@ export default function LanguageSwitcher(props: LanguageSwitcherProps = {}) {
             ) : (
               <Link
                 href={href ?? applyLocalePrefix(option.code, '/')}
+                onClick={() => setLocaleCookie(option.code)}
                 aria-current={isCurrent ? 'true' : undefined}
                 aria-label={`Switch to ${option.label}`}
                 lang={option.lang}

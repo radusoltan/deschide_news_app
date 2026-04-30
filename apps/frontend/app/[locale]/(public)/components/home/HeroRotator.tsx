@@ -19,6 +19,7 @@ import {
   getLocalizedBadgeText,
 } from '@/components/cards/utils';
 import { useArticleUpdates } from '@/lib/hooks/useArticleUpdates';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Article, ImportantArticle } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 
@@ -169,7 +170,7 @@ function OverlayCard({
 
           {showExcerpt && article.lead && (
             <p className="mt-2 text-sm text-white/80 text-on-photo line-clamp-2 font-serif hidden md:block">
-              {article.lead}
+              {stripHtml(article.lead)}
             </p>
           )}
 

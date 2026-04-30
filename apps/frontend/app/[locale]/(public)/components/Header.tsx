@@ -23,14 +23,10 @@ interface DarkModeToggleProps {
 }
 
 function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
-    if (typeof window === 'undefined') return 'system'
-    try {
-      const saved = window.localStorage.getItem('theme-preference')
-      if (saved === 'light' || saved === 'dark' || saved === 'system') return saved
-    } catch { /* ignore */ }
-    return 'system'
-  })
+  // Initial state must match SSR output to avoid hydration mismatch.
+  // localStorage is read in useEffect after hydration completes.
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
+  const [mounted, setMounted] = useState(false)
 
   const applyTheme = useCallback((nextTheme: 'light' | 'dark' | 'system') => {
     if (typeof document === 'undefined') {
@@ -59,8 +55,22 @@ function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
   }, [])
 
   useEffect(() => {
-    applyTheme(theme)
-  }, [applyTheme, theme])
+    let saved: 'light' | 'dark' | 'system' = 'system'
+    try {
+      const stored = window.localStorage.getItem('theme-preference')
+      if (stored === 'light' || stored === 'dark' || stored === 'system') {
+        saved = stored
+      }
+    } catch { /* ignore */ }
+    setTheme(saved)
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (mounted) {
+      applyTheme(theme)
+    }
+  }, [applyTheme, theme, mounted])
 
   const cycleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'

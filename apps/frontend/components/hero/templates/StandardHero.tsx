@@ -19,6 +19,7 @@ import Image from 'next/image';
 import { HeroTemplateProps, CTA_TRANSLATIONS } from '../types';
 import { buildArticleUrl, buildCategoryUrl, getCategorySlugForLocale } from '@/lib/utils/url-builder';
 import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/api/important-articles';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Locale } from '@/lib/types';
 
 /**
@@ -135,7 +136,7 @@ export const StandardHero: React.FC<HeroTemplateProps> = ({
               {/* Lead text - Serif font for editorial feel */}
               {article.lead && (
                 <p className="font-serif text-white/95 text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed mb-6 sm:mb-8 max-w-3xl animate-fade-in-up stagger-2 text-on-photo">
-                  {article.lead}
+                  {stripHtml(article.lead)}
                 </p>
               )}
 

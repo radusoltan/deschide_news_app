@@ -13,7 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * Required fields: title, lead, content (must all be non-empty in ext_translations).
  * Default locale (ro) is always considered complete since fields live on the entity itself.
  */
-final readonly class ArticleTranslationCompletenessChecker
+final readonly class ArticleTranslationCompletenessChecker implements ArticleTranslationCompletenessCheckerInterface
 {
     private const REQUIRED_FIELDS = ['title', 'lead', 'content'];
 

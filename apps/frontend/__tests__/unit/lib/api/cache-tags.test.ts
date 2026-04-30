@@ -18,6 +18,7 @@ const LIB_API_DIR = path.resolve(__dirname, '../../../../lib/api');
 const FILES_REQUIRING_TAGS = [
   'categories.ts',
   'tags.ts',
+  'topics.ts',
   'video-shows.ts',
   'special-articles.ts',
   'sitemap-data.ts',

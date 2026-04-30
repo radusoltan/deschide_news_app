@@ -14,7 +14,7 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import LanguageSwitcher, {
   type LanguageSwitcherProps,
@@ -270,6 +270,193 @@ describe('LanguageSwitcher — translatedSlugs application', () => {
       'href',
       '/en/politics/article-en'
     );
+  });
+});
+
+describe('LanguageSwitcher — NEXT_LOCALE cookie sync on click', () => {
+  // jsdom defines document.cookie via Document.prototype with a getter/setter.
+  // We swap in a spy descriptor for the test and restore the original after.
+  let cookieSetterSpy: jest.Mock<void, [string]>;
+  let originalCookieDescriptor: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    cookieSetterSpy = jest.fn();
+    originalCookieDescriptor =
+      Object.getOwnPropertyDescriptor(Document.prototype, 'cookie') ??
+      Object.getOwnPropertyDescriptor(document, 'cookie');
+
+    Object.defineProperty(document, 'cookie', {
+      configurable: true,
+      get: () => '',
+      set: (value: string) => cookieSetterSpy(value),
+    });
+  });
+
+  afterEach(() => {
+    // Remove the per-instance override so the prototype getter/setter takes over again.
+    delete (document as unknown as { cookie?: unknown }).cookie;
+    if (originalCookieDescriptor) {
+      Object.defineProperty(Document.prototype, 'cookie', originalCookieDescriptor);
+    }
+  });
+
+  it('sets NEXT_LOCALE cookie with proxy-aligned attrs when clicking an active locale', () => {
+    renderSwitcher(
+      { publishedLocales: ['ro', 'en', 'ru'] },
+      { locale: 'en', pathname: '/en/about' }
+    );
+
+    const roLink = screen.getByTestId('locale-switch-ro');
+    fireEvent.click(roLink);
+
+    expect(cookieSetterSpy).toHaveBeenCalledTimes(1);
+    const written = cookieSetterSpy.mock.calls[0][0];
+    expect(written).toContain('NEXT_LOCALE=ro');
+    expect(written).toContain('path=/');
+    expect(written).toContain('max-age=31536000');
+    expect(written).toContain('SameSite=Lax');
+    // Must not introduce attributes that diverge from withLocaleCookie in proxy.ts.
+    expect(written).not.toMatch(/Secure/i);
+    expect(written).not.toMatch(/HttpOnly/i);
+    expect(written).not.toMatch(/Domain=/i);
+  });
+
+  it('writes the target locale value (not the current locale) for each active link', () => {
+    renderSwitcher(
+      { publishedLocales: ['ro', 'en', 'ru'] },
+      { locale: 'ro', pathname: '/about' }
+    );
+
+    fireEvent.click(screen.getByTestId('locale-switch-en'));
+    fireEvent.click(screen.getByTestId('locale-switch-ru'));
+    fireEvent.click(screen.getByTestId('locale-switch-ro'));
+
+    const writes = cookieSetterSpy.mock.calls.map((args) => args[0]);
+    expect(writes[0]).toContain('NEXT_LOCALE=en');
+    expect(writes[1]).toContain('NEXT_LOCALE=ru');
+    expect(writes[2]).toContain('NEXT_LOCALE=ro');
+  });
+
+  it('does not set cookie when clicking a disabled (unpublished) locale span', () => {
+    renderSwitcher(
+      { publishedLocales: ['ro'] },
+      { locale: 'ro', pathname: '/about' }
+    );
+
+    const disabledEn = screen.getByTestId('locale-switch-en-disabled');
+    fireEvent.click(disabledEn);
+    const disabledRu = screen.getByTestId('locale-switch-ru-disabled');
+    fireEvent.click(disabledRu);
+
+    expect(cookieSetterSpy).not.toHaveBeenCalled();
+  });
+
+  it('still sets the cookie on modifier-click (cmd/ctrl) so a new tab inherits it', () => {
+    renderSwitcher(
+      { publishedLocales: ['ro', 'en', 'ru'] },
+      { locale: 'en', pathname: '/en/about' }
+    );
+
+    const roLink = screen.getByTestId('locale-switch-ro');
+    fireEvent.click(roLink, { metaKey: true });
+    fireEvent.click(roLink, { ctrlKey: true });
+
+    expect(cookieSetterSpy).toHaveBeenCalledTimes(2);
+    expect(cookieSetterSpy.mock.calls[0][0]).toContain('NEXT_LOCALE=ro');
+    expect(cookieSetterSpy.mock.calls[1][0]).toContain('NEXT_LOCALE=ro');
+  });
+});
+
+describe('LanguageSwitcher — topic context (T60.15 / ADR-029)', () => {
+  it('uses translated topic slug for href under /<locale>/topics/<slug>', () => {
+    renderSwitcher(
+      {
+        context: 'topic',
+        publishedLocales: ['ro', 'en', 'ru'],
+        translatedSlugs: { ro: 'educatie', en: 'education', ru: 'obrazovanie' },
+      },
+      { locale: 'en', pathname: '/en/topics/education' }
+    );
+
+    expect(screen.getByTestId('locale-switch-ro')).toHaveAttribute(
+      'href',
+      '/topics/educatie'
+    );
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute(
+      'href',
+      '/ru/topics/obrazovanie'
+    );
+  });
+
+  it('disables topic locale when its translated slug is missing', () => {
+    renderSwitcher(
+      {
+        context: 'topic',
+        publishedLocales: ['ro', 'en', 'ru'],
+        translatedSlugs: { ro: 'educatie', en: 'education' }, // no ru
+      },
+      { locale: 'en', pathname: '/en/topics/education' }
+    );
+
+    expect(screen.getByTestId('locale-switch-ru-disabled')).toBeInTheDocument();
+    expect(screen.queryByTestId('locale-switch-ru')).not.toBeInTheDocument();
+  });
+});
+
+describe('LanguageSwitcher — tag context (T60.15 / ADR-029)', () => {
+  it('uses translated tag slug for href under /<locale>/tags/<slug>', () => {
+    renderSwitcher(
+      {
+        context: 'tag',
+        publishedLocales: ['ro', 'en', 'ru'],
+        translatedSlugs: { ro: 'politica', en: 'politics', ru: 'politika' },
+      },
+      { locale: 'en', pathname: '/en/tags/politics' }
+    );
+
+    expect(screen.getByTestId('locale-switch-ro')).toHaveAttribute(
+      'href',
+      '/tags/politica'
+    );
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute(
+      'href',
+      '/ru/tags/politika'
+    );
+  });
+
+  it('disables tag locale when its translated slug is missing', () => {
+    renderSwitcher(
+      {
+        context: 'tag',
+        publishedLocales: ['ro', 'en', 'ru'],
+        translatedSlugs: { ro: 'politica', en: 'politics' }, // no ru
+      },
+      { locale: 'en', pathname: '/en/tags/politics' }
+    );
+
+    expect(screen.getByTestId('locale-switch-ru-disabled')).toBeInTheDocument();
+  });
+});
+
+describe('LanguageSwitcher — generic context for author/static pages', () => {
+  it('falls back to prefix-swap for /<locale>/author/<slug> (slug shared)', () => {
+    renderSwitcher({}, { locale: 'en', pathname: '/en/author/john-doe' });
+
+    expect(screen.getByTestId('locale-switch-ro')).toHaveAttribute(
+      'href',
+      '/author/john-doe'
+    );
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute(
+      'href',
+      '/ru/author/john-doe'
+    );
+  });
+
+  it('falls back to prefix-swap for /<locale>/gdpr (D4 static slug)', () => {
+    renderSwitcher({}, { locale: 'en', pathname: '/en/gdpr' });
+
+    expect(screen.getByTestId('locale-switch-ro')).toHaveAttribute('href', '/gdpr');
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute('href', '/ru/gdpr');
   });
 });
 

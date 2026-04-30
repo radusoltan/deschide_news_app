@@ -20,6 +20,7 @@ import { HeroTemplateProps, CTA_TRANSLATIONS } from '../types';
 import { HeroBadge } from '../partials/HeroBadge';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/api/important-articles';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Locale } from '@/lib/types';
 
 /**
@@ -127,7 +128,7 @@ export const FlashHero: React.FC<HeroTemplateProps> = ({
                   className="font-serif text-white/90 text-base sm:text-lg md:text-xl leading-relaxed mb-4 sm:mb-6 max-w-3xl animate-flash-slide-in"
                   style={{ animationDelay: '0.2s' }}
                 >
-                  {article.lead}
+                  {stripHtml(article.lead)}
                 </p>
               )}
 

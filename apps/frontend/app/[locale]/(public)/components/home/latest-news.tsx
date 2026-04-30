@@ -5,6 +5,7 @@ import { getFeaturedImage, buildImageUrl, getThumbnailByProfile } from "@/lib/ap
 import { Article } from "@/lib/types/article";
 import { buildArticleUrl, buildLocalizedUrl } from "@/lib/utils/url-builder";
 import { ViewCountBadge } from "@/components/public/ViewCountBadge";
+import { stripHtml } from "@/lib/utils/strip-html";
 import type { Locale } from "@/lib/types";
 
 interface LatestNewsProps {
@@ -145,7 +146,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                     </h2>
                     {featuredArticle.lead && (
                       <p className="text-white/80 hidden sm:block text-sm font-body line-clamp-2">
-                        {featuredArticle.lead}
+                        {stripHtml(featuredArticle.lead)}
                       </p>
                     )}
                     {featuredArticle.category && (
@@ -213,7 +214,7 @@ const LatestNews = async ({ locale }: LatestNewsProps) => {
                       </h3>
 
                       <p className="hidden md:block text-secondary text-sm leading-relaxed mb-3 line-clamp-2 flex-grow font-body">
-                        {article.lead || '\u00A0'}
+                        {article.lead ? stripHtml(article.lead) : '\u00A0'}
                       </p>
 
                       <div className="mt-auto pt-2">

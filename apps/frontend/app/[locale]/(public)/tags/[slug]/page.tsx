@@ -7,6 +7,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { fetchArticlesByTag, fetchTags, fetchRelatedTags } from '@/lib/api';
 import ArticleCard from '@/components/ArticleCard';
+import LocaleContextSetter from '@/app/components/LocaleContextSetter';
 import { TagList } from '@/components/tags';
 import type { Locale } from '@/lib/types';
 import type { Article } from '@/lib/types/article';
@@ -145,6 +146,14 @@ export default async function TagPage({
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
+      {/* Feeds per-tag translated slugs into the shared LanguageSwitcher
+          for client-side navigation between tags (layout-level resolver
+          only runs on hard nav). */}
+      <LocaleContextSetter
+        context="tag"
+        translatedSlugs={tag.translatedSlugs}
+      />
+
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-3 text-primary dark:text-gray-100">

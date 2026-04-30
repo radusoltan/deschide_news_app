@@ -4,6 +4,7 @@
  */
 
 import type { Article, Category } from '@/lib/types/article';
+import { stripHtml } from '@/lib/utils/strip-html';
 
 /**
  * Map category slugs to CSS custom property names
@@ -97,20 +98,20 @@ export function formatRelativeTime(dateString: string, locale: string): string {
 }
 
 /**
- * Extract first sentence from HTML content for excerpts
+ * Extract first sentence from HTML content for excerpts.
+ * Strips tags and decodes named/numeric HTML entities so previews never
+ * leak `<p>` or `&icirc;` to the reader.
  */
 export function getFirstSentence(html: string, maxLength: number = 150): string {
-  // Strip HTML tags
-  const text = html.replace(/<[^>]*>/g, '');
+  const text = stripHtml(html);
+  if (!text) return '';
 
-  // Find first sentence
   const match = text.match(/^[^.!?]*[.!?]/);
   if (match) {
     return match[0].trim();
   }
 
-  // Fallback to character limit
-  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  return text.length > maxLength ? text.substring(0, maxLength) + '…' : text;
 }
 
 /**

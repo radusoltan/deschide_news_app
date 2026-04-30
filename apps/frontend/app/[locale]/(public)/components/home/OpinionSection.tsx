@@ -34,6 +34,7 @@ import {
 } from '@/lib/api/important-articles';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { formatRelativeTime } from '@/components/cards/utils';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Article, Author } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 
@@ -132,7 +133,7 @@ function OpinionLargeCard({
         {/* Excerpt */}
         {article.lead && (
           <p className="font-serif text-[var(--color-text-secondary)] dark:text-[var(--color-text-secondary-dark)] leading-relaxed line-clamp-2 mb-2 text-sm">
-            {article.lead}
+            {stripHtml(article.lead)}
           </p>
         )}
       </Link>

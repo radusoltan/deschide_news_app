@@ -11,6 +11,7 @@ import type { Locale } from '@/lib/types';
 import { buildAuthorUrl, buildCategoryUrl } from '@/lib/utils/url-builder';
 import { SafeHtml } from '@/components/SafeHtml';
 import { TagList } from '@/components/tags';
+import { stripHtml } from '@/lib/utils/strip-html';
 
 interface ArticleHeaderProps {
   article: Article;
@@ -80,15 +81,14 @@ export default function ArticleHeader({
   return (
     <header className={`w-full py-3 mb-6 ${className}`}>
       {/* Article Title */}
-      <h1 className="text-brand-oxford-900 dark:text-primary-dark text-3xl md:text-4xl font-heading leading-tight mb-4">
-        <span className="inline-block h-5 border-l-3 border-brand-tomato-500 mr-2" />
+      <h1 className="font-heading font-bold text-brand-oxford-900 dark:text-white text-3xl md:text-4xl font-heading leading-tight mb-4">
         {article.title}
       </h1>
 
       {/* Article Lead/Summary - Premium Typography */}
       {article.lead && (
         <p className="text-xl text-primary dark:text-primary-dark mb-4 font-body font-medium leading-relaxed">
-          {article.lead}
+          {stripHtml(article.lead)}
         </p>
       )}
 

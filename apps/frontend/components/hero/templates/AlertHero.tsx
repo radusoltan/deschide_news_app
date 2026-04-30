@@ -20,6 +20,7 @@ import { HeroTemplateProps, CTA_TRANSLATIONS } from '../types';
 import { HeroBadge } from '../partials/HeroBadge';
 import { buildArticleUrl } from '@/lib/utils/url-builder';
 import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/api/important-articles';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Locale } from '@/lib/types';
 
 /**
@@ -124,7 +125,7 @@ export const AlertHero: React.FC<HeroTemplateProps> = ({
               {/* Lead text */}
               {article.lead && (
                 <p className="font-serif text-white/90 text-base sm:text-lg md:text-xl leading-relaxed mb-5 sm:mb-7 max-w-3xl animate-hero-content-enter hero-stagger-3 drop-shadow-[0_1px_3px_rgba(0,0,0,0.5)]">
-                  {article.lead}
+                  {stripHtml(article.lead)}
                 </p>
               )}
 

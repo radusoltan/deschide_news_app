@@ -16,6 +16,7 @@ import { buildImageUrl, getThumbnailByProfile, getFeaturedImage } from '@/lib/ap
 import { buildArticleUrl, buildCategoryUrl, getCategorySlug as getSlug } from '@/lib/utils/url-builder';
 import { ViewCountBadge } from '@/components/public/ViewCountBadge';
 import { TagList } from '@/components/tags';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Locale } from '@/lib/types';
 
 type CardVariant = 'default' | 'compact' | 'featured';
@@ -85,7 +86,9 @@ export default function ArticleCard({
     ? getThumbnailByProfile(featuredImage, thumbnailProfile)
     : null;
   const imageToUse = thumbnail || featuredImage;
-  const excerpt = article.lead || (article.content ? getFirstSentence(article.content) : '');
+  const excerpt = article.lead
+    ? stripHtml(article.lead)
+    : (article.content ? getFirstSentence(article.content) : '');
   const articleUrl = buildArticleUrl(article, locale as Locale);
   const categoryUrl = buildCategoryUrl(article.category, locale as Locale);
   const authorAttribution = getAuthorAttribution(article, locale);

@@ -25,6 +25,7 @@ import {
   getFirstSentence,
   formatRelativeTime,
 } from '@/components/cards/utils';
+import { stripHtml } from '@/lib/utils/strip-html';
 import type { Article, Category } from '@/lib/types/article';
 import type { Locale } from '@/lib/types';
 
@@ -111,7 +112,9 @@ function VerticalCard({
   const categorySlug = getCategorySlugFromArticle(article.category);
   const categoryTitle = getCategoryTitle(article.category);
   const sectionColor = getSectionColor(categorySlug);
-  const excerpt = article.lead || (article.content ? getFirstSentence(article.content) : '');
+  const excerpt = article.lead
+    ? stripHtml(article.lead)
+    : (article.content ? getFirstSentence(article.content) : '');
 
   return (
     <article className="group">
@@ -256,7 +259,9 @@ function FeaturedCard({
   const categorySlug = getCategorySlugFromArticle(article.category);
   const categoryTitle = getCategoryTitle(article.category);
   const sectionColor = getSectionColor(categorySlug);
-  const excerpt = article.lead || (article.content ? getFirstSentence(article.content, 200) : '');
+  const excerpt = article.lead
+    ? stripHtml(article.lead)
+    : (article.content ? getFirstSentence(article.content, 200) : '');
 
   return (
     <article className="group">

@@ -18,7 +18,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Local: cap at 2 workers to avoid Next.js dev-server contention that
+  // causes spurious `waitForLoadState('networkidle')` timeouts on WSL2
+  // (T60.15 / ADR-029 §D16). CI runs serial.
+  workers: process.env.CI ? 1 : 2,
 
   // Reporter configuration
   reporter: [
