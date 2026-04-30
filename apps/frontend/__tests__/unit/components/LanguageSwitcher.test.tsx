@@ -367,6 +367,99 @@ describe('LanguageSwitcher — NEXT_LOCALE cookie sync on click', () => {
   });
 });
 
+describe('LanguageSwitcher — topic context (T60.15 / ADR-029)', () => {
+  it('uses translated topic slug for href under /<locale>/topics/<slug>', () => {
+    renderSwitcher(
+      {
+        context: 'topic',
+        publishedLocales: ['ro', 'en', 'ru'],
+        translatedSlugs: { ro: 'educatie', en: 'education', ru: 'obrazovanie' },
+      },
+      { locale: 'en', pathname: '/en/topics/education' }
+    );
+
+    expect(screen.getByTestId('locale-switch-ro')).toHaveAttribute(
+      'href',
+      '/topics/educatie'
+    );
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute(
+      'href',
+      '/ru/topics/obrazovanie'
+    );
+  });
+
+  it('disables topic locale when its translated slug is missing', () => {
+    renderSwitcher(
+      {
+        context: 'topic',
+        publishedLocales: ['ro', 'en', 'ru'],
+        translatedSlugs: { ro: 'educatie', en: 'education' }, // no ru
+      },
+      { locale: 'en', pathname: '/en/topics/education' }
+    );
+
+    expect(screen.getByTestId('locale-switch-ru-disabled')).toBeInTheDocument();
+    expect(screen.queryByTestId('locale-switch-ru')).not.toBeInTheDocument();
+  });
+});
+
+describe('LanguageSwitcher — tag context (T60.15 / ADR-029)', () => {
+  it('uses translated tag slug for href under /<locale>/tags/<slug>', () => {
+    renderSwitcher(
+      {
+        context: 'tag',
+        publishedLocales: ['ro', 'en', 'ru'],
+        translatedSlugs: { ro: 'politica', en: 'politics', ru: 'politika' },
+      },
+      { locale: 'en', pathname: '/en/tags/politics' }
+    );
+
+    expect(screen.getByTestId('locale-switch-ro')).toHaveAttribute(
+      'href',
+      '/tags/politica'
+    );
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute(
+      'href',
+      '/ru/tags/politika'
+    );
+  });
+
+  it('disables tag locale when its translated slug is missing', () => {
+    renderSwitcher(
+      {
+        context: 'tag',
+        publishedLocales: ['ro', 'en', 'ru'],
+        translatedSlugs: { ro: 'politica', en: 'politics' }, // no ru
+      },
+      { locale: 'en', pathname: '/en/tags/politics' }
+    );
+
+    expect(screen.getByTestId('locale-switch-ru-disabled')).toBeInTheDocument();
+  });
+});
+
+describe('LanguageSwitcher — generic context for author/static pages', () => {
+  it('falls back to prefix-swap for /<locale>/author/<slug> (slug shared)', () => {
+    renderSwitcher({}, { locale: 'en', pathname: '/en/author/john-doe' });
+
+    expect(screen.getByTestId('locale-switch-ro')).toHaveAttribute(
+      'href',
+      '/author/john-doe'
+    );
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute(
+      'href',
+      '/ru/author/john-doe'
+    );
+  });
+
+  it('falls back to prefix-swap for /<locale>/gdpr (D4 static slug)', () => {
+    renderSwitcher({}, { locale: 'en', pathname: '/en/gdpr' });
+
+    expect(screen.getByTestId('locale-switch-ro')).toHaveAttribute('href', '/gdpr');
+    expect(screen.getByTestId('locale-switch-ru')).toHaveAttribute('href', '/ru/gdpr');
+  });
+});
+
 describe('LanguageSwitcher — context vs props precedence', () => {
   it('reads publishedLocales + translatedSlugs from LocaleContext when no props are passed', () => {
     renderSwitcher(

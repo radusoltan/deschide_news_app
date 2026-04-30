@@ -46,6 +46,48 @@ export function buildHreflangAlternates(
   };
 }
 
+/**
+ * Per-locale-slug variant of `buildHreflangAlternates` for resources whose
+ * URL slug differs across locales (categories, topics, tags, articles).
+ *
+ * Each locale's hreflang entry is built from its own translated slug. When a
+ * locale lacks a translated slug the entry is skipped — matching the
+ * LanguageSwitcher's disabled-state semantics (the resource simply doesn't
+ * exist in that locale, so we must not emit an alternate URL pointing to
+ * a 404 / locale-leaked URL). This is the SEO-correct behavior per Google's
+ * hreflang guidance.
+ *
+ * For articles, the path may include a category prefix per locale (e.g.
+ * `politics/article-en` for EN, `politica/articol-ro` for RO).
+ *
+ * Added in T60.15 / ADR-029 to keep `<head>` hreflang consistent with the
+ * shared LanguageSwitcher hrefs (both should resolve to the same canonical
+ * URL per locale).
+ */
+export function buildHreflangAlternatesForResource(
+  baseUrl: string,
+  translatedPaths: Partial<Record<Locale, string>>
+): Partial<Record<HreflangLocale, string>> {
+  const result: Partial<Record<HreflangLocale, string>> = {};
+
+  if (translatedPaths.ro) {
+    const roUrl = buildLocalizedUrl(baseUrl, 'ro', translatedPaths.ro);
+    result['ro-MD'] = roUrl;
+    result.ro = roUrl;
+    result['x-default'] = roUrl;
+  }
+
+  if (translatedPaths.en) {
+    result.en = buildLocalizedUrl(baseUrl, 'en', translatedPaths.en);
+  }
+
+  if (translatedPaths.ru) {
+    result.ru = buildLocalizedUrl(baseUrl, 'ru', translatedPaths.ru);
+  }
+
+  return result;
+}
+
 /* ============================================================================
  * Relative-path locale URL builders (navigation)
  *
@@ -144,6 +186,51 @@ export function buildLocaleUrlForCategory(
     '';
 
   return applyLocalePrefix(targetLocale, slug);
+}
+
+export interface TopicLocaleInput {
+  slug?: string;
+  translatedSlugs?: Partial<Record<Locale, string>>;
+}
+
+/**
+ * Build the relative URL of a topic in `targetLocale`. Returns `null` when no
+ * translated slug exists for `targetLocale` — the caller must treat that
+ * locale as unavailable (disabled switcher button), matching the article
+ * behavior. Topic URLs follow the `/{locale}/topics/{slug}` pattern.
+ */
+export function buildLocaleUrlForTopic(
+  targetLocale: Locale,
+  topic: TopicLocaleInput,
+  _currentLocale: Locale
+): string | null {
+  const slug = topic.translatedSlugs?.[targetLocale];
+  if (!slug) {
+    return null;
+  }
+  return applyLocalePrefix(targetLocale, `topics/${slug}`);
+}
+
+export interface TagLocaleInput {
+  slug?: string;
+  translatedSlugs?: Partial<Record<Locale, string>>;
+}
+
+/**
+ * Build the relative URL of a tag in `targetLocale`. Returns `null` when no
+ * translated slug exists for `targetLocale`. Tag URLs follow the
+ * `/{locale}/tags/{slug}` pattern.
+ */
+export function buildLocaleUrlForTag(
+  targetLocale: Locale,
+  tag: TagLocaleInput,
+  _currentLocale: Locale
+): string | null {
+  const slug = tag.translatedSlugs?.[targetLocale];
+  if (!slug) {
+    return null;
+  }
+  return applyLocalePrefix(targetLocale, `tags/${slug}`);
 }
 
 /**

@@ -171,7 +171,15 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const response = NextResponse.next();
+  // Surface the request pathname to server components (read via `headers()`
+  // in `(public)/layout.tsx`) so the layout can resolve per-route
+  // LocaleContext on the SSR pass (T60.15 / ADR-029).
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
   response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
 
   return withLocaleCookie(response, localeFromPath);

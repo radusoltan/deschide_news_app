@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import MobileBottomNav from '@/components/navigation/MobileBottomNav';
-import { LocaleContextProvider } from '@/lib/contexts/LocaleContext';
+import { LocaleContextProvider, type LocaleContextData } from '@/lib/contexts/LocaleContext';
 import type { Category } from '@/lib/types/article';
 import type { MenuItem } from '@/lib/types/menu';
 import type { Locale } from '@/lib/types';
@@ -16,6 +16,7 @@ interface ClientLayoutWrapperProps {
   categories?: Category[];
   headerMenuItems?: MenuItem[];
   footerMenuItems?: MenuItem[];
+  initialLocaleData?: LocaleContextData;
 }
 
 /**
@@ -29,6 +30,7 @@ export default function ClientLayoutWrapper({
   categories = [],
   headerMenuItems = [],
   footerMenuItems = [],
+  initialLocaleData,
 }: ClientLayoutWrapperProps) {
   // Initialize dark mode on mount
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function ClientLayoutWrapper({
   }, []);
 
   return (
-    <LocaleContextProvider>
+    <LocaleContextProvider initialData={initialLocaleData}>
       <div className="min-h-screen flex flex-col bg-[var(--color-surface)] dark:bg-[var(--color-surface-dark)]">
         {/* Skip to content link for accessibility */}
         <a

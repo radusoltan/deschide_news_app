@@ -8,8 +8,10 @@ import type { Metadata } from 'next';
 import {
   buildCanonicalUrl,
   buildHreflangAlternates,
+  buildHreflangAlternatesForResource,
   type HreflangLocale,
 } from './locale-url';
+import type { Locale } from '@/lib/types';
 
 const SITE_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Deschide News';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? '';
@@ -175,13 +177,20 @@ export function generateHomepageMetadata(locale: 'ro' | 'en' | 'ru'): Metadata {
 }
 
 /**
- * Generate metadata for category pages
+ * Generate metadata for category pages.
+ *
+ * Pass `translatedSlugs` (from `category.translatedSlugs`) so the `<head>`
+ * hreflang alternates use the correct per-locale slug — without it the
+ * helper falls back to the same slug for all locales (naive prefix-swap),
+ * which mismatches the LanguageSwitcher and points crawlers at 404 URLs
+ * for non-default locales.
  */
 export function generateCategoryMetadata(
   categoryTitle: string,
   categorySlug: string,
   locale: 'ro' | 'en' | 'ru',
-  description?: string
+  description?: string,
+  translatedSlugs?: Partial<Record<Locale, string>>
 ): Metadata {
   const defaultDescriptions = {
     ro: `Citește ultimele articole din categoria ${categoryTitle}. Știri și informații actualizate.`,
@@ -189,12 +198,16 @@ export function generateCategoryMetadata(
     ru: `Читайте последние статьи из категории ${categoryTitle}. Обновленные новости и информация.`,
   };
 
+  const alternateUrls = translatedSlugs
+    ? buildHreflangAlternatesForResource(SITE_URL, translatedSlugs)
+    : buildHreflangAlternates(SITE_URL, categorySlug);
+
   return generatePageMetadata({
     title: categoryTitle,
     description: description || defaultDescriptions[locale],
     locale,
     canonicalUrl: buildCanonicalUrl(SITE_URL, locale, categorySlug),
-    alternateUrls: buildHreflangAlternates(SITE_URL, categorySlug),
+    alternateUrls,
   });
 }
 

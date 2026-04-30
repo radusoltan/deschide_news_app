@@ -8,6 +8,8 @@ import {
   applyLocalePrefix,
   buildLocaleUrlForArticle,
   buildLocaleUrlForCategory,
+  buildLocaleUrlForTag,
+  buildLocaleUrlForTopic,
   buildLocaleUrlGeneric,
 } from '@/lib/seo/locale-url';
 import {
@@ -79,6 +81,20 @@ export default function LanguageSwitcher(props: LanguageSwitcherProps = {}) {
     }
     if (context === 'category') {
       return buildLocaleUrlForCategory(
+        target,
+        { translatedSlugs },
+        currentLocale
+      );
+    }
+    if (context === 'topic') {
+      return buildLocaleUrlForTopic(
+        target,
+        { translatedSlugs },
+        currentLocale
+      );
+    }
+    if (context === 'tag') {
+      return buildLocaleUrlForTag(
         target,
         { translatedSlugs },
         currentLocale
