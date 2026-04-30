@@ -102,16 +102,25 @@ describe('CategoryPage — generateMetadata', () => {
 
   it('returns category metadata when category found', async () => {
     mockIsReservedSlug.mockReturnValue(false);
+    const translatedSlugs = { ro: 'politica', en: 'politics', ru: 'politika' };
     mockFetchCategories.mockResolvedValue({
-      member: [{ id: 1, slug: 'politica', title: 'Politică', description: 'Politics' }],
+      member: [{
+        id: 1,
+        slug: 'politica',
+        title: 'Politică',
+        description: 'Politics',
+        translatedSlugs,
+      }],
     });
     const mod = await import('@/app/[locale]/(public)/[categorySlug]/page');
-    const result = await mod.generateMetadata({
+    await mod.generateMetadata({
       params: Promise.resolve({ locale: 'ro', categorySlug: 'politica' }),
       searchParams: Promise.resolve({}),
     });
+    // T60.15 / ADR-029 Phase 1.5: page now passes translatedSlugs through to
+    // the metadata generator so head hreflang uses per-locale slugs.
     expect(mockGenerateCategoryMetadata).toHaveBeenCalledWith(
-      'Politică', 'politica', 'ro', 'Politics'
+      'Politică', 'politica', 'ro', 'Politics', translatedSlugs,
     );
   });
 

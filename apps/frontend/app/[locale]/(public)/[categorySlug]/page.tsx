@@ -91,7 +91,13 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       return (categoriesResponse.member || []).find((cat: Category) => cat.slug === categorySlug) || null;
     }, { isTranslationPending: hasPendingTranslation });
     if (!category) return { title: 'Category Not Found' };
-    return generateCategoryMetadata(category.title, category.slug, effectiveLocale, category.description);
+    return generateCategoryMetadata(
+      category.title,
+      category.slug,
+      effectiveLocale,
+      category.description,
+      category.translatedSlugs,
+    );
   } catch {
     return { title: 'Category | Deschide News' };
   }
