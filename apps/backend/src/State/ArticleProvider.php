@@ -11,6 +11,7 @@ use ApiPlatform\State\ProviderInterface;
 use App\Entity\Article;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator as DoctrinePaginator;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
@@ -20,7 +21,8 @@ final class ArticleProvider implements ProviderInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly RequestStack $requestStack
+        private readonly RequestStack $requestStack,
+        private readonly Security $security
     ) {
     }
 
@@ -94,9 +96,22 @@ final class ArticleProvider implements ProviderInterface
                 // path; the public ReadListener does not.
                 //
                 // See ADR-027.
+
+                // TODO(ADR-027 Open Questions #2): Replace with admin surface split
+                // (separate /api/admin/articles/{id} resource + AdminArticleProvider).
+                // Tracked for S+1. This bypass is a tactical hotfix — see T60.6.
+                //
+                // isGranted() consults the AccessDecisionManager (RoleHierarchyVoter
+                // included), so a user holding ROLE_ADMIN passes the ROLE_EDITOR
+                // check via the role hierarchy declared in security.yaml. Inspecting
+                // $user->getRoles() directly would NOT — that returns only literal
+                // assigned roles, untransformed by the hierarchy.
+                $isAdminContext = $this->security->isGranted('ROLE_EDITOR');
+
                 $isPublicRead = $operation instanceof Get
                     && $operation->getClass() === Article::class
-                    && !isset($context['fetch_data']);
+                    && !isset($context['fetch_data'])
+                    && !$isAdminContext;
 
                 if ($isPublicRead && !$result->isPublishedInLocale($locale)) {
                     return null;
