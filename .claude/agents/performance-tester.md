@@ -10,7 +10,7 @@ tools:
   - Bash
   - mcp__playwright__browser_navigate
   - mcp__playwright__browser_network_requests
-model: claude-3-5-sonnet-20241022
+model: claude-sonnet-4-6
 permissionMode: default
 color: green
 ---

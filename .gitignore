@@ -188,3 +188,4 @@ tools/python-scraper/**/__pycache__/
 
 # Accidental nested clones
 apps/frontend/apps/
+.envrc

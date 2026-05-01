@@ -26,7 +26,7 @@ tools:
   - Grep
   - Glob
 
-model: claude-3-5-sonnet-20241022
+model: claude-sonnet-4-6
 permissionMode: default
 color: red
 ---

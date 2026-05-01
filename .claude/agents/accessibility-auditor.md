@@ -18,7 +18,7 @@ tools:
   - Glob
   - WebSearch
 
-model: claude-sonnet-4-20250514
+model: claude-sonnet-4-6
 permissionMode: default
 color: green
 ---
