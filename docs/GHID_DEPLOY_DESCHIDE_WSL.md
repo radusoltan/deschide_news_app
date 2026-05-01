@@ -3322,7 +3322,7 @@ tail -f /var/log/deschide/nginx/error.log \
 
 ### Documentație Internă
 
-- `ARCHITECTURE.md` - Arhitectura aplicației
+- `docs/architecture/README.md` - Arhitectura aplicației
 - `SETUP.md` - Setup guide pentru development
 - `docs/CRON_SETUP.md` - Configurare cron jobs
 - `docs/DATABASE_BACKUP_GUIDE.md` - Ghid backup database

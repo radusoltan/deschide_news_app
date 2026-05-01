@@ -136,3 +136,55 @@ lerna-debug.log*
 *.db
 *.sqlite
 *.sqlite3
+
+# ------------------------------------------------------------------------------
+# Repo-cleanup pass (pre-FRA1) — 2026-04-30
+# ------------------------------------------------------------------------------
+
+# Stray Obsidian artifacts (canonical vault is OUTSIDE repo)
+.obsidian/
+deschide/
+vault/
+
+# Top-level orphan log dir (canonical: apps/backend/var/)
+/var/
+
+# Ad-hoc data exports
+articles-export-*.csv
+*-export-*.csv
+*.csv:Zone.Identifier
+
+# Local-only scratch at repo root
+/Wiki_models_report.txt
+/from_prod.txt
+/urls_status.txt
+/fb_promts.txt
+/skills-lock.json
+/Screenshot_*.png
+/Screenshot_*.jpg
+
+# CC-generated reports at root
+/T??-*.md
+/S??-*.md
+/sprint-*-*.md
+
+# Test session screenshots in app roots
+apps/frontend/*.png
+apps/frontend/*.jpg
+apps/backend/*.png
+
+# PHPStan ad-hoc output
+apps/backend/phpstan_analysis.json
+apps/backend/phpstan_analysis.txt
+
+# Pytest cache
+tools/python-scraper/.pytest_cache/
+tools/python-scraper/**/__pycache__/
+
+# Claude Code transient state
+.claude/inbox.md
+.claude/scheduled_tasks.lock
+.claude/agents/skills/news-scrapper/
+
+# Accidental nested clones
+apps/frontend/apps/

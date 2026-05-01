@@ -86,7 +86,7 @@ Strategie import arhivă.
 - **Frontend Docs**: [../deschide_frontend/docs/](../deschide_frontend/docs/)
 - **Archive**: [../archive/](../archive/)
 - **Setup**: [../SETUP.md](../SETUP.md)
-- **Architecture**: [../ARCHITECTURE.md](../ARCHITECTURE.md)
+- **Architecture**: [architecture/README.md](./architecture/README.md)
 
 ---
 

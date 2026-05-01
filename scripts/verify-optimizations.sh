@@ -128,12 +128,10 @@ if [ -f ".env.local" ]; then
     else
       check_fail "PgBouncer not responding (may not be installed/running)"
       echo "   → Install: sudo apt-get install pgbouncer"
-      echo "   → Configure: See P1_PERFORMANCE_OPTIMIZATIONS.md"
     fi
   else
     check_info "Direct PostgreSQL connection (port 5432)"
     echo "   → Consider PgBouncer for production (4x connection capacity)"
-    echo "   → See: P1_PERFORMANCE_OPTIMIZATIONS.md - Fix 4"
   fi
 else
   check_fail ".env.local not found"
@@ -216,6 +214,4 @@ echo "3. Run regression tests:"
 echo "   cd apps/backend && vendor/bin/phpunit"
 echo "   cd apps/frontend && pnpm test"
 echo ""
-echo "4. See full implementation guide:"
-echo "   cat P1_PERFORMANCE_OPTIMIZATIONS.md"
 echo ""
