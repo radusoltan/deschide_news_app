@@ -10,7 +10,7 @@ tools:
   - Grep
   - WebSearch
   - bash:curl
-model: claude-3-5-sonnet-20241022
+model: claude-opus-4-7
 permissionMode: default
 color: red
 ---
