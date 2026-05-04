@@ -6,7 +6,37 @@ nelmio_cors:
         allow_headers: ['Content-Type', 'Authorization']
         expose_headers: ['Link']
         max_age: 3600
+    # IMPORTANT: NelmioCorsBundle uses FIRST-MATCH-WINS regex iteration
+    # (ConfigProvider::getOptions). More specific paths MUST come BEFORE
+    # more general ones, otherwise the general rule shadows the specific one.
+    # Sprint 60 Phase C discovery: with `^/api` listed first, the `^/api/embed`
+    # block was dead code — the documented wildcard never applied in practice.
     paths:
+        # ADR-033 — CORS wildcard intentional on /api/embed.
+        # /api/embed is a product-design public surface for third-party publishers
+        # (WordPress shortcode, iframe embed, JS SDK per docs/features/EMBED_CAPABILITY_GUIDE.md).
+        # An allowlist would break the ecosystem because consumers are unknown a priori.
+        # Safety invariants (enforced by tests/Functional/Cors/EmbedCorsTest.php):
+        #   1. GET-only — no state-mutating verbs may be added under /api/embed/*
+        #   2. allow_credentials NOT set — CORS spec forbids ACAO:* + ACAC:true
+        #   3. No sensitive/user-specific fields in responses
+        # Reverse-decision triggers in ADR-033: embed needs auth | exposes user data | mutates state.
+        # See: docs/adr/ADR-033-cors-wildcard-intentional-on-api-embed.md
+        # MUST stay above `^/api` (first-match-wins). Do not reorder.
+        # `forced_allow_origin_value: '*'` is critical: NelmioCorsBundle's
+        # default behaviour echoes the request Origin into ACAO regardless of
+        # the wildcard configuration (CorsListener.php:160). To get the literal
+        # `*` advertised by ADR-033 — and required for cache-friendly responses
+        # without `Vary: Origin` per-origin fragmentation — we force the value.
+        # `allow_origin: ['*']` stays for documentation parity with ADR-033;
+        # `forced_allow_origin_value` is what actually drives the response header.
+        '^/api/embed':
+            allow_origin: ['*']
+            forced_allow_origin_value: '*'
+            allow_methods: ['GET', 'OPTIONS']
+            allow_headers: ['Content-Type', 'Accept-Language']
+            expose_headers: ['Content-Type']
+            max_age: 3600
         '^/api':
             allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
             allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
@@ -17,10 +47,4 @@ nelmio_cors:
             allow_origin: ['%env(CORS_ALLOW_ORIGIN)%', 'http://localhost:3005', 'http://127.0.0.1:3005']
             allow_methods: ['GET', 'OPTIONS']
             allow_headers: ['Content-Type', 'Accept']
-            max_age: 3600
-        '^/api/embed':
-            allow_origin: ['*']
-            allow_methods: ['GET', 'OPTIONS']
-            allow_headers: ['Content-Type', 'Accept-Language']
-            expose_headers: ['Content-Type']
             max_age: 3600

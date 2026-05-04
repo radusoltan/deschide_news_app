@@ -87,6 +87,9 @@ GIT_BRANCH=develop ./scripts/deploy.sh
 
 # Custom PHP-FPM service:
 PHP_FPM_SERVICE=php8.5-fpm ./scripts/deploy.sh
+
+# Flush Redis cache before migrations (entity-removal deploys):
+./scripts/deploy.sh --confirm-flush
 ```
 
 ### What the Deploy Script Does
@@ -96,9 +99,10 @@ PHP_FPM_SERVICE=php8.5-fpm ./scripts/deploy.sh
 3. **Git pull**: Fetches and pulls the target branch
 4. **Backend deploy**:
    - `composer install --no-dev --optimize-autoloader`
-   - `doctrine:migrations:migrate`
-   - `cache:clear --env=prod`
-   - `cache:warmup --env=prod`
+   - **Redis FLUSHDB** (only if `--confirm-flush` provided — see "Redis pre-flight" below)
+   - `symfony console doctrine:migrations:migrate`
+   - `symfony console cache:clear --env=prod`
+   - `symfony console cache:warmup --env=prod`
    - `systemctl reload php-fpm`
 5. **Frontend deploy**:
    - `pnpm install --frozen-lockfile`
@@ -115,6 +119,50 @@ PHP_FPM_SERVICE=php8.5-fpm ./scripts/deploy.sh
 | `PHP_FPM_SERVICE` | `php8.4-fpm` | PHP-FPM systemd service name |
 | `BACKEND_URL` | `http://127.0.0.1:8081` | Backend URL for smoke check |
 | `FRONTEND_URL` | `http://localhost:3005` | Frontend URL for smoke check |
+| `REDIS_HOST` | `127.0.0.1` | Redis host for FLUSHDB pre-flight |
+| `REDIS_PORT` | `6379` | Redis port for FLUSHDB pre-flight |
+| `REDIS_CACHE_DB` | `1` | Redis DB index to flush (project standard: DB 1) |
+
+### Redis pre-flight
+
+The Doctrine metadata cache for production lives in Redis DB 1 (prefix
+`deschide_news:*`, policy `volatile-lru`). When a deploy contains
+migrations that drop or rename Doctrine entities, the metadata cache may
+still hold class definitions for the removed entities. The first request
+after deploy then explodes with a metadata-mapping error referencing a
+class that no longer exists.
+
+This is what happened during the Sprint 52 cluster hard-drop (ADR-019):
+the `StoryCluster` entity was dropped but the metadata cache held its
+mapping; production threw 500s on every API call until the cache was
+manually flushed.
+
+**Use `--confirm-flush` whenever the deploy contains entity-removal,
+entity-rename, or non-trivial schema-shape migrations.** The flag
+performs `redis-cli -h $REDIS_HOST -p $REDIS_PORT -n $REDIS_CACHE_DB FLUSHDB`
+before the migrations run, ensuring a clean cache on the first request
+after deploy.
+
+**Without `--confirm-flush`**, the deploy script logs a warning but
+continues — most deploys (frontend-only, hotfixes, additive migrations
+that only ADD columns or tables) do not require a flush, and a routine
+flush would discard the application's hot session/cache state.
+
+```bash
+# Routine deploy (no entity removals): no flush needed
+./scripts/deploy.sh
+
+# Deploy contains entity-removal migrations (e.g. ADR-019, future cleanups):
+./scripts/deploy.sh --confirm-flush
+
+# Custom Redis target (e.g. staging cluster):
+REDIS_HOST=cache.staging.deschide.md REDIS_CACHE_DB=2 \
+  ./scripts/deploy.sh --confirm-flush
+```
+
+**When in doubt, use `--confirm-flush`.** The cost is one cold cache
+re-warm (a few seconds of slower first requests). The cost of forgetting
+when needed is a hard 500 on every API call until manual recovery.
 
 ---
 
