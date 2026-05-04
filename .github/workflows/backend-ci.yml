@@ -165,23 +165,14 @@ jobs:
 
       - name: Run PHPUnit Tests
         working-directory: apps/backend
-        # `--exclude-group=performance,integration` keeps two test categories
-        # out of the default CI run (T60.19-L4):
-        #   - performance: hardware-sensitive thresholds (tests/Performance/
-        #     ApiResponseTimeTest.php:22-27 explicitly notes "relaxed for
-        #     WSL/dev environments"). Shared GitHub runners produce ~1.5%
-        #     threshold variance per run; misclassifies as regressions.
-        #   - integration: network-dependent (live HTTP to gov.md, meteo.md
-        #     etc. in tests/Service/Scraping/PythonScraperServiceTest at
-        #     lines 46, 99). CI firewall blocks; would need allowlist or
-        #     mock layer.
-        # Both groups have explicit `@group` annotations indicating non-
-        # default execution. T60.22 tracks restoring them on dedicated
-        # infra (separate workflow + benchmark hardware OR HTTP mocks).
-        # Future safeguard: PHPUnit config-level exclusion in phpunit.dist.xml
-        # OR CI lint that grep-s for @group annotations not present in
-        # the workflow exclude list. Tracked as part of T60.22 acceptance.
-        run: XDEBUG_MODE=coverage vendor/bin/phpunit --exclude-group=performance,integration --coverage-clover=coverage.xml --coverage-text --colors=never
+        # Group exclusions (performance, integration) are declared in
+        # phpunit.dist.xml's <groups><exclude>...</exclude></groups> block
+        # rather than via CLI flags. PHPUnit 12's CLI parsing of
+        # comma-separated --exclude-group values proved unreliable in earlier
+        # T60.19-L4 iterations; the config-level declaration also makes
+        # local runs match CI behaviour by default. T60.22 tracks restoring
+        # both groups on dedicated infrastructure.
+        run: XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text --colors=never
         env:
           APP_ENV: test
           SYMFONY_DEPRECATIONS_HELPER: weak

@@ -59,6 +59,28 @@
         </report>
     </coverage>
 
+    <!--
+      T60.19-L4: Exclude `performance` and `integration` groups from default
+      runs. Both groups have explicit @group / #[Group] annotations that mark
+      them as non-default execution surface (hardware-sensitive thresholds
+      and live HTTP respectively). T60.22 tracks restoring them on dedicated
+      infrastructure.
+
+      Declared in phpunit.dist.xml rather than CI flag --exclude-group because
+      PHPUnit 12's CLI parsing of comma-separated lists is unreliable, and
+      because the local-run experience should match CI by default.
+
+      To run excluded groups locally:
+        vendor/bin/phpunit --group=performance
+        vendor/bin/phpunit --group=integration
+    -->
+    <groups>
+        <exclude>
+            <group>performance</group>
+            <group>integration</group>
+        </exclude>
+    </groups>
+
     <!-- DAMA Doctrine Test Bundle: Automatic database transaction rollback between tests -->
     <extensions>
         <bootstrap class="DAMA\DoctrineTestBundle\PHPUnit\PHPUnitExtension"/>

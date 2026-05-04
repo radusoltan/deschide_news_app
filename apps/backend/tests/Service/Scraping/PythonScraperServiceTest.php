@@ -6,6 +6,7 @@ namespace App\Tests\Service\Scraping;
 
 use App\Service\Scraping\PythonScraperException;
 use App\Service\Scraping\PythonScraperService;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -46,9 +47,7 @@ class PythonScraperServiceTest extends TestCase
         self::assertCount(3, $types);
     }
 
-    /**
-     * @group integration
-     */
+    #[Group('integration')]
     public function testFetchGovRssReturnsValidStructure(): void
     {
         $result = $this->service->fetch(
@@ -69,9 +68,7 @@ class PythonScraperServiceTest extends TestCase
         self::assertLessThanOrEqual(3, \count($result['items']));
     }
 
-    /**
-     * @group integration
-     */
+    #[Group('integration')]
     public function testFetchGovRssItemsHaveRequiredFields(): void
     {
         $result = $this->service->fetch(
@@ -99,9 +96,7 @@ class PythonScraperServiceTest extends TestCase
         }
     }
 
-    /**
-     * @group integration
-     */
+    #[Group('integration')]
     public function testFetchDomScraperReturnsValidStructure(): void
     {
         $result = $this->service->fetch(
