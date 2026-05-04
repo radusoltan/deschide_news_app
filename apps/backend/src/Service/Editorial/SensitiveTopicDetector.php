@@ -58,27 +58,31 @@ class SensitiveTopicDetector
     {
         $reasons = [];
 
-        // Check 1: Topic-based sensitivity via Topic.isSensitive boolean (ADR-015)
-        $hasTopics = !$article->getTopics()->isEmpty();
+        // The slug list is consulted by Check 2 (category-based sensitivity)
+        // unconditionally — Check 1 (Topic.isSensitive) and Check 2 are
+        // independent dimensions and the article may match either or both.
+        // Hoisted out of the if/else below so the variable is always defined
+        // even when the article already has topics (the previous structure
+        // only assigned it in the else branch, leaving Check 2 to read
+        // an undefined variable when topics existed).
+        $sensitiveTopicSlugs = $this->settings->getJson(
+            'auto_publish.sensitive_topics',
+            self::DEFAULT_SENSITIVE_TOPICS,
+        );
 
-        if ($hasTopics) {
+        // Check 1: Topic-based sensitivity via Topic.isSensitive boolean (ADR-015)
+        // TODO Sprint 52 (T60.18): once every article is topic-tagged, this
+        // boolean check supersedes Check 2 and the slug list can retire.
+        if (!$article->getTopics()->isEmpty()) {
             // Primary path: read isSensitive directly from Topic entity
             foreach ($article->getTopics() as $topic) {
                 if ($topic->isSensitive()) {
                     $reasons[] = $topic->getSlug() ?? 'sensitive_topic';
                 }
             }
-        } else {
-            // Fallback for articles without topic tags: slug-based matching
-            // TODO Sprint 52: remove this fallback when all articles are topic-tagged
-            $sensitiveTopicSlugs = $this->settings->getJson(
-                'auto_publish.sensitive_topics',
-                self::DEFAULT_SENSITIVE_TOPICS,
-            );
-            // Check category slug against legacy sensitive list
         }
 
-        // Check 2: Category-based sensitivity
+        // Check 2: Category-based sensitivity (legacy slug-list fallback)
         $category = $article->getCategory();
         if ($category !== null) {
             $categorySlug = $category->getSlug();
