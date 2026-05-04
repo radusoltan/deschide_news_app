@@ -15,10 +15,16 @@ class PythonScraperServiceTest extends TestCase
 
     protected function setUp(): void
     {
+        // scraperPath is the Process cwd. Symfony\Component\Process throws
+        // RuntimeException at construction if the cwd does not exist, which
+        // would mask the actual error path the test is trying to verify
+        // (PythonScraperException on URL fetch failure). Using a guaranteed
+        // existing directory here lets the test exercise the real failure
+        // mode regardless of dev/CI filesystem layout. T60.19-L4.
         $this->service = new PythonScraperService(
             logger: new NullLogger(),
             pythonBin: '/usr/bin/python3',
-            scraperPath: '/var/www/deschide_news_app/tools/python-scraper',
+            scraperPath: sys_get_temp_dir(),
         );
     }
 
