@@ -76,6 +76,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
 
+      - name: "[T60.19] Bootstrap .env (CI fallback for composer post-install)"
+        working-directory: apps/backend
+        run: |
+          # composer install runs scripts.auto-scripts.cache:clear post-install,
+          # which boots Symfony Runtime and requires apps/backend/.env. The file
+          # is gitignored locally; CI uses .env.example as the canonical default.
+          # Test-specific overrides land later via the "Setup environment" step
+          # (.env.test.local) and the APP_ENV=test override on the PHPUnit step.
+          # See: docs/adr/ADR-... (none yet — escalated as T60.19, gates v1.5.1).
+          cp .env.example .env
+
       - name: Install Composer dependencies
         working-directory: apps/backend
         run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
