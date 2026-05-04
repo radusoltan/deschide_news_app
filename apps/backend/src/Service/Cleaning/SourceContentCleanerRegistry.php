@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\Cleaning;
 
-use Symfony\Component\DependencyInjection\Attribute\TaggedIterator;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
 class SourceContentCleanerRegistry
 {
@@ -15,7 +15,7 @@ class SourceContentCleanerRegistry
      * @param iterable<SourceContentCleanerInterface> $cleaners
      */
     public function __construct(
-        #[TaggedIterator('app.source_content_cleaner')]
+        #[AutowireIterator('app.source_content_cleaner')]
         iterable $cleaners,
     ) {
         $this->cleaners = $cleaners;
