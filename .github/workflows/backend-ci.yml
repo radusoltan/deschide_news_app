@@ -104,6 +104,22 @@ jobs:
           php bin/console doctrine:database:create --env=test --if-not-exists
           php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
 
+      - name: "[T60.19] Warm up dev cache for PHPStan Symfony plugin"
+        working-directory: apps/backend
+        env:
+          APP_DEBUG: '1'
+        run: |
+          # phpstan.neon symfony.containerXmlPath points at
+          # var/cache/dev/App_KernelDevDebugContainer.xml. None of the
+          # earlier steps generate it: composer post-install warms the
+          # prod cache (APP_ENV=prod from .env.example), the database
+          # step warms test cache (--env=test). Without the dev-debug
+          # XML, phpstan-symfony's XmlServiceMapFactory throws and the
+          # entire PHPStan step fails before it analyses a single file.
+          # APP_DEBUG=1 (overrides .env.example's APP_DEBUG=0) ensures
+          # the file is named with the "Debug" suffix the plugin expects.
+          php bin/console cache:warmup --env=dev
+
       - name: Run PHPStan (Static Analysis)
         working-directory: apps/backend
         run: vendor/bin/phpstan analyse --no-progress --error-format=github
