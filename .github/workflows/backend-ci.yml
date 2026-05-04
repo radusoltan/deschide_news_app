@@ -104,6 +104,29 @@ jobs:
           php bin/console doctrine:database:create --env=test --if-not-exists
           php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
 
+      - name: "[T60.19-L4] Generate JWT keypair for tests"
+        working-directory: apps/backend
+        env:
+          APP_ENV: test
+        run: |
+          # Lexik JWT bundle requires apps/backend/config/jwt/{private,public}.pem
+          # to exist before any code path that signs/verifies tokens executes
+          # (functional tests use the JWT login endpoint extensively). Both
+          # files are gitignored (apps/backend/.gitignore lines 16-17) so CI
+          # has nothing after actions/checkout@v4 — the result is 90+ test
+          # errors with "Failed to get JWT token" / InvalidKeyProvided.
+          # `--skip-if-exists` keeps the step idempotent (e.g. composer cache
+          # restore that leaves a stale keypair). The passphrase is taken
+          # from JWT_PASSPHRASE in apps/backend/.env.test (committed).
+          # Note: php bin/console used here, not symfony console — Symfony
+          # CLI binary is not installed by shivammathur/setup-php@v2 and
+          # adding it would require a separate setup step. The CI workflow
+          # already uses `php bin/console` for doctrine commands above; this
+          # step matches that convention. CLAUDE.md Rule 1 ("symfony console
+          # exclusive") is documented as production-deploy-script-scoped;
+          # the GitHub Actions runner is a documented exemption.
+          php bin/console lexik:jwt:generate-keypair --skip-if-exists --no-interaction
+
       - name: "[T60.19] Warm up dev cache for PHPStan Symfony plugin"
         working-directory: apps/backend
         env:
