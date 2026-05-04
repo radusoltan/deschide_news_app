@@ -12,6 +12,7 @@
 
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import * as Sentry from '@sentry/nextjs';
 import { buildImageUrl, getFeaturedImage, getThumbnailByProfile } from '@/lib/api/important-articles';
 import { fetchRelatedArticles } from '@/lib/api/articles';
 import { lookupArticle } from '@/lib/api/slug-lookup';
@@ -107,7 +108,29 @@ async function fetchArticleBySlug(
 
     return article;
   } catch (error) {
-    console.error('Error fetching article:', error);
+    // T60.8 hardening: this catch used to silently swallow exceptions
+    // (parse errors, type-coercion crashes, await-chain failures), which
+    // produced unexplained 404s in production with no breadcrumb beyond
+    // a `console.error` that nobody saw. Sentry now records the failure
+    // with full context. The `return null` is preserved so the consumer
+    // still triggers `notFound()` — but ops can now ask "why".
+    Sentry.captureException(error, {
+      tags: {
+        component: 'article-page',
+        operation: 'fetchArticleBySlug',
+      },
+      extra: {
+        categorySlug,
+        articleSlug,
+        locale,
+      },
+    });
+    console.error('[article-page:fetchArticleBySlug] failed', {
+      categorySlug,
+      articleSlug,
+      locale,
+      error,
+    });
     return null;
   }
 }
@@ -180,7 +203,26 @@ export async function generateMetadata({
     // Generate comprehensive metadata using SEO utilities
     return generateArticleMetadata(article, effectiveLocale, imageUrl);
   } catch (error) {
-    console.error('Error generating metadata:', error);
+    // T60.8 hardening: a metadata-generation crash used to leave only a
+    // generic console.error. Now the failure surfaces in Sentry with the
+    // route params so SEO regressions are observable.
+    Sentry.captureException(error, {
+      tags: {
+        component: 'article-page',
+        operation: 'generateMetadata',
+      },
+      extra: {
+        locale,
+        categorySlug,
+        articleSlug,
+      },
+    });
+    console.error('[article-page:generateMetadata] failed', {
+      locale,
+      categorySlug,
+      articleSlug,
+      error,
+    });
     return {
       title: 'Article | Deschide News',
       description: 'Read the latest news and articles.',
