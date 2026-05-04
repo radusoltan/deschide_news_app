@@ -23,7 +23,6 @@ All critical documentation files are present in the repository root:
 |------|--------|-------|---------|
 | `CLAUDE.md` | ✅ | 932 | AI assistant instructions & project overview |
 | `README.md` | ✅ | 360 | Project introduction & quick start |
-| `ARCHITECTURE.md` | ✅ | 611 | System architecture & design decisions |
 | `SETUP.md` | ✅ | 587 | Complete development environment setup |
 
 ---
@@ -144,7 +143,7 @@ apps/frontend/docs/
 
 ### Categorization Logic
 
-1. **Root Level** - Critical project files (CLAUDE.md, README.md, ARCHITECTURE.md, SETUP.md)
+1. **Root Level** - Critical project files (CLAUDE.md, README.md, SETUP.md)
 2. **docs/** - Centralized, project-wide documentation organized by type
 3. **apps/{backend,frontend}/docs/** - Application-specific technical documentation
 4. **archive/** - Historical data and migration backups

@@ -3,11 +3,14 @@
 # Deschide News — Production Deployment Script
 # =============================================================================
 # Usage:
-#   ./scripts/deploy.sh              # Full deployment
-#   ./scripts/deploy.sh --dry-run    # Print commands without executing
-#   ./scripts/deploy.sh --skip-backup # Skip database backup step
-#   ./scripts/deploy.sh --backend-only # Deploy backend only
-#   ./scripts/deploy.sh --frontend-only # Deploy frontend only
+#   ./scripts/deploy.sh                  # Full deployment
+#   ./scripts/deploy.sh --dry-run        # Print commands without executing
+#   ./scripts/deploy.sh --skip-backup    # Skip database backup step
+#   ./scripts/deploy.sh --backend-only   # Deploy backend only
+#   ./scripts/deploy.sh --frontend-only  # Deploy frontend only
+#   ./scripts/deploy.sh --confirm-flush  # Flush Redis DB 1 before migrations
+#                                        # (required when deploying entity-removal
+#                                        # migrations, e.g. ADR-019 cluster drop)
 # =============================================================================
 
 set -euo pipefail
@@ -44,6 +47,7 @@ DRY_RUN=false
 SKIP_BACKUP=false
 BACKEND_ONLY=false
 FRONTEND_ONLY=false
+CONFIRM_FLUSH=false
 
 for arg in "$@"; do
     case "$arg" in
@@ -59,6 +63,9 @@ for arg in "$@"; do
         --frontend-only)
             FRONTEND_ONLY=true
             ;;
+        --confirm-flush)
+            CONFIRM_FLUSH=true
+            ;;
         --help|-h)
             echo "Usage: $0 [OPTIONS]"
             echo ""
@@ -67,6 +74,8 @@ for arg in "$@"; do
             echo "  --skip-backup     Skip database backup step"
             echo "  --backend-only    Deploy backend (Symfony) only"
             echo "  --frontend-only   Deploy frontend (Next.js) only"
+            echo "  --confirm-flush   Flush Redis DB 1 before migrations (see"
+            echo "                    DEPLOY_README.md 'Redis pre-flight' section)"
             echo "  --help, -h        Show this help message"
             echo ""
             echo "Environment variables:"
@@ -74,6 +83,9 @@ for arg in "$@"; do
             echo "  PHP_FPM_SERVICE     PHP-FPM service name (default: php8.4-fpm)"
             echo "  BACKEND_URL         Backend URL for smoke check (default: http://127.0.0.1:8081)"
             echo "  FRONTEND_URL        Frontend URL for smoke check (default: http://localhost:3005)"
+            echo "  REDIS_HOST          Redis host for FLUSHDB (default: 127.0.0.1)"
+            echo "  REDIS_PORT          Redis port for FLUSHDB (default: 6379)"
+            echo "  REDIS_CACHE_DB      Redis DB index to flush (default: 1)"
             exit 0
             ;;
         *)
@@ -184,6 +196,7 @@ echo -e "  Dry Run:      ${BOLD}$DRY_RUN${NC}"
 echo -e "  Skip Backup:  ${BOLD}$SKIP_BACKUP${NC}"
 echo -e "  Backend Only: ${BOLD}$BACKEND_ONLY${NC}"
 echo -e "  Frontend Only:${BOLD}$FRONTEND_ONLY${NC}"
+echo -e "  Confirm Flush:${BOLD}$CONFIRM_FLUSH${NC}"
 echo ""
 echo -e "${BLUE}----------------------------------------------------------------------------${NC}"
 
@@ -310,14 +323,49 @@ if [ "$FRONTEND_ONLY" = false ]; then
     log_info "Installing PHP dependencies..."
     run_shell "cd '$BACKEND_DIR' && composer install --no-dev --optimize-autoloader --no-interaction --classmap-authoritative"
 
+    # =========================================================================
+    # Redis pre-flight (ADR-019 / Sprint 52 cluster-drop pattern)
+    # =========================================================================
+    # When a deploy includes migrations that drop or rename entities, the
+    # Doctrine metadata cache in Redis (DB 1, prefix deschide_news:*) may
+    # still hold class definitions for the removed entities. The first
+    # request after deploy then explodes with a metadata-mapping error.
+    #
+    # Gate the FLUSHDB behind --confirm-flush so the operator opts in
+    # explicitly. Without the flag, we warn but do not fail — many deploys
+    # (frontend-only, hotfixes that don't touch entities) don't need it.
+    #
+    # See: scripts/DEPLOY_README.md § "Redis pre-flight" for when to opt in.
+    REDIS_HOST_VALUE="${REDIS_HOST:-127.0.0.1}"
+    REDIS_PORT_VALUE="${REDIS_PORT:-6379}"
+    REDIS_CACHE_DB_VALUE="${REDIS_CACHE_DB:-1}"
+
+    if [ "$CONFIRM_FLUSH" = true ]; then
+        log_info "Flushing Redis cache (DB ${REDIS_CACHE_DB_VALUE} on ${REDIS_HOST_VALUE}:${REDIS_PORT_VALUE}) ..."
+        if [ "$DRY_RUN" = true ]; then
+            log_dry "redis-cli -h ${REDIS_HOST_VALUE} -p ${REDIS_PORT_VALUE} -n ${REDIS_CACHE_DB_VALUE} FLUSHDB"
+        else
+            if redis-cli -h "$REDIS_HOST_VALUE" -p "$REDIS_PORT_VALUE" -n "$REDIS_CACHE_DB_VALUE" FLUSHDB > /dev/null 2>&1; then
+                log_success "Redis DB ${REDIS_CACHE_DB_VALUE} flushed"
+            else
+                log_error "Redis FLUSHDB failed (host=${REDIS_HOST_VALUE} port=${REDIS_PORT_VALUE} db=${REDIS_CACHE_DB_VALUE})"
+                exit 1
+            fi
+        fi
+    else
+        log_warning "Redis pre-flight SKIPPED (no --confirm-flush)"
+        log_warning "  Use --confirm-flush when deploying entity-removal migrations"
+        log_warning "  (e.g. ADR-019 cluster drop). See DEPLOY_README.md § 'Redis pre-flight'."
+    fi
+
     log_info "Running database migrations..."
-    run_shell "cd '$BACKEND_DIR' && php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration"
+    run_shell "cd '$BACKEND_DIR' && symfony console doctrine:migrations:migrate --no-interaction --allow-no-migration"
 
     log_info "Clearing production cache..."
-    run_shell "cd '$BACKEND_DIR' && php bin/console cache:clear --env=prod --no-debug"
+    run_shell "cd '$BACKEND_DIR' && symfony console cache:clear --env=prod --no-debug"
 
     log_info "Warming up cache..."
-    run_shell "cd '$BACKEND_DIR' && php bin/console cache:warmup --env=prod --no-debug"
+    run_shell "cd '$BACKEND_DIR' && symfony console cache:warmup --env=prod --no-debug"
 
     log_info "Reloading PHP-FPM..."
     run_cmd sudo systemctl reload "$PHP_FPM_SERVICE"

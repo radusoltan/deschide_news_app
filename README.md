@@ -102,7 +102,7 @@ pnpm dev
 | **Mercure** | 3000 | Real-time updates |
 | **CDN Server** | 8082 | Static assets |
 
-**Detalii**: Vezi [ARCHITECTURE.md](./ARCHITECTURE.md)
+**Detalii**: Vezi [docs/architecture/README.md](./docs/architecture/README.md)
 
 ---
 

@@ -567,7 +567,7 @@ Pentru setup production, vezi:
 
 ## 🔗 Link-uri Utile
 
-- **Architecture**: [ARCHITECTURE.md](./ARCHITECTURE.md)
+- **Architecture**: [docs/architecture/README.md](./docs/architecture/README.md)
 - **Backend Docs**: [deschide_backend/docs/](./deschide_backend/docs/)
 - **Frontend Docs**: [deschide_frontend/docs/](./deschide_frontend/docs/)
 - **Infrastructure**: [docs/infrastructure/](./docs/infrastructure/)
