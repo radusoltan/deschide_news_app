@@ -76,6 +76,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
 
+      - name: "[T60.19] Bootstrap .env (CI fallback for composer post-install)"
+        working-directory: apps/backend
+        run: |
+          # composer install runs scripts.auto-scripts.cache:clear post-install,
+          # which boots Symfony Runtime and requires apps/backend/.env. The file
+          # is gitignored locally; CI uses .env.example as the canonical default.
+          # Test-specific overrides land later via the "Setup environment" step
+          # (.env.test.local) and the APP_ENV=test override on the PHPUnit step.
+          # See: docs/adr/ADR-... (none yet — escalated as T60.19, gates v1.5.1).
+          cp .env.example .env
+
       - name: Install Composer dependencies
         working-directory: apps/backend
         run: composer install --prefer-dist --no-progress --no-interaction --optimize-autoloader
@@ -85,13 +96,57 @@ jobs:
         run: |
           cp .env.test .env.test.local
           echo "DATABASE_URL=postgresql://deschide_test:deschide_test@127.0.0.1:5432/deschide_test?serverVersion=17&charset=utf8" >> .env.test.local
-          echo "REDIS_URL=redis://127.0.0.1:6379" >> .env.test.local
+          # REDIS_URL must include the database index (/N suffix). The project
+          # standard is DB 1 (per CLAUDE.md: REDIS_URL=redis://localhost:6379/1).
+          # `tests/Integration/Config/RedisPoolDsnTest::testRedisUrlEnvResolvesToValidDsn`
+          # asserts the URL matches the pattern `^redis://[^/]+/\d+$`. Without
+          # the /N suffix the test fails. [T60.19-L4]
+          echo "REDIS_URL=redis://127.0.0.1:6379/1" >> .env.test.local
 
       - name: Create database schema
         working-directory: apps/backend
         run: |
           php bin/console doctrine:database:create --env=test --if-not-exists
           php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
+
+      - name: "[T60.19-L4] Generate JWT keypair for tests"
+        working-directory: apps/backend
+        env:
+          APP_ENV: test
+        run: |
+          # Lexik JWT bundle requires apps/backend/config/jwt/{private,public}.pem
+          # to exist before any code path that signs/verifies tokens executes
+          # (functional tests use the JWT login endpoint extensively). Both
+          # files are gitignored (apps/backend/.gitignore lines 16-17) so CI
+          # has nothing after actions/checkout@v4 — the result is 90+ test
+          # errors with "Failed to get JWT token" / InvalidKeyProvided.
+          # `--skip-if-exists` keeps the step idempotent (e.g. composer cache
+          # restore that leaves a stale keypair). The passphrase is taken
+          # from JWT_PASSPHRASE in apps/backend/.env.test (committed).
+          # Note: php bin/console used here, not symfony console — Symfony
+          # CLI binary is not installed by shivammathur/setup-php@v2 and
+          # adding it would require a separate setup step. The CI workflow
+          # already uses `php bin/console` for doctrine commands above; this
+          # step matches that convention. CLAUDE.md Rule 1 ("symfony console
+          # exclusive") is documented as production-deploy-script-scoped;
+          # the GitHub Actions runner is a documented exemption.
+          php bin/console lexik:jwt:generate-keypair --skip-if-exists --no-interaction
+
+      - name: "[T60.19] Warm up dev cache for PHPStan Symfony plugin"
+        working-directory: apps/backend
+        env:
+          APP_DEBUG: '1'
+        run: |
+          # phpstan.neon symfony.containerXmlPath points at
+          # var/cache/dev/App_KernelDevDebugContainer.xml. None of the
+          # earlier steps generate it: composer post-install warms the
+          # prod cache (APP_ENV=prod from .env.example), the database
+          # step warms test cache (--env=test). Without the dev-debug
+          # XML, phpstan-symfony's XmlServiceMapFactory throws and the
+          # entire PHPStan step fails before it analyses a single file.
+          # APP_DEBUG=1 (overrides .env.example's APP_DEBUG=0) ensures
+          # the file is named with the "Debug" suffix the plugin expects.
+          php bin/console cache:warmup --env=dev
 
       - name: Run PHPStan (Static Analysis)
         working-directory: apps/backend
@@ -110,6 +165,13 @@ jobs:
 
       - name: Run PHPUnit Tests
         working-directory: apps/backend
+        # Group exclusions (performance, integration) are declared in
+        # phpunit.dist.xml's <groups><exclude>...</exclude></groups> block
+        # rather than via CLI flags. PHPUnit 12's CLI parsing of
+        # comma-separated --exclude-group values proved unreliable in earlier
+        # T60.19-L4 iterations; the config-level declaration also makes
+        # local runs match CI behaviour by default. T60.22 tracks restoring
+        # both groups on dedicated infrastructure.
         run: XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover=coverage.xml --coverage-text --colors=never
         env:
           APP_ENV: test
