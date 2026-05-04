@@ -97,6 +97,60 @@ parameters:
 			path: src/Command/CacheWarmCommand.php
 
 		-
+			message: '#^Call to function is_array\(\) with array\<string, array\{title\?\: string, proposed_slug\: string\}\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Command/Category/ApplySlugTranslationsCommand.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\{title\?\: string, proposed_slug\: string\} will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Command/Category/ApplySlugTranslationsCommand.php
+
+		-
+			message: '#^Call to function is_array\(\) with list\<array\{category_id\: int, ro_slug\?\: string, ro_title\?\: string, translations\: array\<string, array\{title\?\: string, proposed_slug\: string\}\>\}\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Command/Category/ApplySlugTranslationsCommand.php
+
+		-
+			message: '#^Call to function is_int\(\) with int will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: src/Command/Category/ApplySlugTranslationsCommand.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: src/Command/Category/ApplySlugTranslationsCommand.php
+
+		-
+			message: '#^Offset ''category_id'' on array\{category_id\: int, ro_slug\?\: string, ro_title\?\: string, translations\: array\<string, array\{title\?\: string, proposed_slug\: string\}\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/Category/ApplySlugTranslationsCommand.php
+
+		-
+			message: '#^Offset ''proposed_slug'' on array\{title\?\: string, proposed_slug\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/Category/ApplySlugTranslationsCommand.php
+
+		-
+			message: '#^Offset ''translations'' on array\{category_id\: int, ro_slug\?\: string, ro_title\?\: string, translations\: array\<string, array\{title\?\: string, proposed_slug\: string\}\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: src/Command/Category/ApplySlugTranslationsCommand.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 2
+			path: src/Command/Category/ApplySlugTranslationsCommand.php
+
+		-
 			message: '#^Method App\\Command\\CleanupPageViewsCommand\:\:getCurrentStats\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -137,12 +191,6 @@ parameters:
 			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Command/Editorial/DevResetCommand.php
-
-		-
-			message: '#^Call to an undefined method App\\Entity\\Topic\:\:getName\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: src/Command/Editorial/GenerateDossiersCommand.php
 
 		-
 			message: '#^Part \$articles \(list\<App\\Entity\\Article\>\) of encapsed string cannot be cast to string\.$#'
@@ -570,6 +618,12 @@ parameters:
 			path: src/Command/SimulateTrafficCommand.php
 
 		-
+			message: '#^Property App\\Command\\Topic\\DetectTopicsCommand\:\:\$pressReleaseRepository is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: src/Command/Topic/DetectTopicsCommand.php
+
+		-
 			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
 			identifier: greater.alwaysTrue
 			count: 1
@@ -728,7 +782,7 @@ parameters:
 		-
 			message: '#^Call to protected method getEntityManager\(\) of class Doctrine\\ORM\\EntityRepository\<App\\Entity\\Topic\>\.$#'
 			identifier: method.protected
-			count: 2
+			count: 3
 			path: src/Controller/TopicController.php
 
 		-
@@ -1926,18 +1980,6 @@ parameters:
 			path: src/Entity/Topic.php
 
 		-
-			message: '#^Property App\\Entity\\TopicBriefing\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
-			identifier: doctrine.columnType
-			count: 1
-			path: src/Entity/TopicBriefing.php
-
-		-
-			message: '#^Property App\\Entity\\TopicBriefing\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
-			identifier: doctrine.columnType
-			count: 1
-			path: src/Entity/TopicBriefing.php
-
-		-
 			message: '#^Property App\\Entity\\Topic\:\:\$title type mapping mismatch\: property can contain string\|null but database expects string\.$#'
 			identifier: doctrine.columnType
 			count: 1
@@ -1948,6 +1990,18 @@ parameters:
 			identifier: doctrine.columnType
 			count: 1
 			path: src/Entity/Topic.php
+
+		-
+			message: '#^Property App\\Entity\\TopicBriefing\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TopicBriefing.php
+
+		-
+			message: '#^Property App\\Entity\\TopicBriefing\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
+			identifier: doctrine.columnType
+			count: 1
+			path: src/Entity/TopicBriefing.php
 
 		-
 			message: '#^Property App\\Entity\\User\:\:\$email type mapping mismatch\: property can contain string\|null but database expects string\.$#'
@@ -2106,6 +2160,12 @@ parameters:
 			path: src/Message/CheckOrphanedTagsMessage.php
 
 		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: src/MessageHandler/Aggregator/ProcessAggregatorResultHandler.php
+
+		-
 			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -2120,6 +2180,12 @@ parameters:
 		-
 			message: '#^Property App\\MessageHandler\\Editorial\\ProcessScrapedArticleHandler\:\:\$authorResolver is never read, only written\.$#'
 			identifier: property.onlyWritten
+			count: 1
+			path: src/MessageHandler/Editorial/ProcessScrapedArticleHandler.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: src/MessageHandler/Editorial/ProcessScrapedArticleHandler.php
 
@@ -2158,6 +2224,12 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/MessageHandler/TranslateEntityHandler.php
+
+		-
+			message: '#^Method App\\Repository\\AppSettingRepository\:\:getJson\(\) has parameter \$default with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Repository/AppSettingRepository.php
 
 		-
 			message: '#^Method App\\Repository\\ArticleLockRepository\:\:findActiveLocksForUser\(\) return type has no value type specified in iterable type array\.$#'
@@ -2382,12 +2454,6 @@ parameters:
 			path: src/Service/Aggregator/TrendScoringService.php
 
 		-
-			message: '#^Method App\\Service\\Ai\\AiMercureService\:\:publish\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/Ai/AiMercureService.php
-
-		-
 			message: '#^Property App\\Service\\Ai\\AiOrchestratorService\:\:\$articleRepository is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
@@ -2530,6 +2596,39 @@ parameters:
 			identifier: method.unused
 			count: 1
 			path: src/Service/Editorial/ArticleIngestionService.php
+
+		-
+			message: '''
+				#^Call to method getSensitiveTopics\(\) of deprecated class App\\Service\\Editorial\\SensitiveTopicDetector\:
+				Sprint 49 — Check 1 now uses Topic\.isSensitive boolean \(ADR\-015\)\.
+				            Slug\-based matching remains as fallback for articles without topic tags\.
+				            Full removal planned Sprint 52 when all articles are topic\-tagged\.$#
+			'''
+			identifier: method.deprecatedClass
+			count: 1
+			path: src/Service/Editorial/AutoPublishGateService.php
+
+		-
+			message: '''
+				#^Call to method isSensitive\(\) of deprecated class App\\Service\\Editorial\\SensitiveTopicDetector\:
+				Sprint 49 — Check 1 now uses Topic\.isSensitive boolean \(ADR\-015\)\.
+				            Slug\-based matching remains as fallback for articles without topic tags\.
+				            Full removal planned Sprint 52 when all articles are topic\-tagged\.$#
+			'''
+			identifier: method.deprecatedClass
+			count: 1
+			path: src/Service/Editorial/AutoPublishGateService.php
+
+		-
+			message: '''
+				#^Parameter \$sensitiveTopicDetector of method App\\Service\\Editorial\\AutoPublishGateService\:\:__construct\(\) has typehint with deprecated class App\\Service\\Editorial\\SensitiveTopicDetector\:
+				Sprint 49 — Check 1 now uses Topic\.isSensitive boolean \(ADR\-015\)\.
+				            Slug\-based matching remains as fallback for articles without topic tags\.
+				            Full removal planned Sprint 52 when all articles are topic\-tagged\.$#
+			'''
+			identifier: parameter.deprecatedClass
+			count: 1
+			path: src/Service/Editorial/AutoPublishGateService.php
 
 		-
 			message: '#^Offset ''source'' on array\{id\: int, score\: float, source\: array\<string, mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
@@ -2718,12 +2817,6 @@ parameters:
 			path: src/Service/ImageElasticService.php
 
 		-
-			message: '#^Parameter \#1 \$params of method Elastic\\Elasticsearch\\Client\:\:delete\(\) expects array\{id\: string, index\: string, wait_for_active_shards\?\: string, refresh\?\: string, routing\?\: string, timeout\?\: int\|string, if_seq_no\?\: int, if_primary_term\?\: int, \.\.\.\}\|null, array\{index\: string, id\: int\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Service/ImageElasticService.php
-
-		-
 			message: '#^Expression on left side of \?\? is not nullable\.$#'
 			identifier: nullCoalesce.expr
 			count: 1
@@ -2853,12 +2946,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Service/Import/LegacyAuthorMapper.php
-
-		-
-			message: '#^Method App\\Service\\Import\\LegacyCategoryMapper\:\:createCategory\(\) has parameter \$titles with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/Import/LegacyCategoryMapper.php
 
 		-
 			message: '#^Constant App\\Service\\Import\\LegacyHtmlSanitizer\:\:ALLOWED_ATTRS is unused\.$#'
@@ -3257,6 +3344,42 @@ parameters:
 			path: src/State/ArchivedArticleProvider.php
 
 		-
+			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\Article\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
+			identifier: generics.lessTypes
+			count: 1
+			path: src/State/Article/ArticleCreateProcessor.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\Article and App\\Entity\\Article will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/State/Article/ArticleCreateProcessor.php
+
+		-
+			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\Article\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
+			identifier: generics.lessTypes
+			count: 1
+			path: src/State/Article/ArticleDeleteProcessor.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\Article and App\\Entity\\Article will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/State/Article/ArticleDeleteProcessor.php
+
+		-
+			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\Article\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
+			identifier: generics.lessTypes
+			count: 1
+			path: src/State/Article/ArticleUpdateProcessor.php
+
+		-
+			message: '#^Instanceof between App\\Entity\\Article and App\\Entity\\Article will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: src/State/Article/ArticleUpdateProcessor.php
+
+		-
 			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\ArticleImage\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
 			identifier: generics.lessTypes
 			count: 1
@@ -3309,30 +3432,6 @@ parameters:
 			identifier: missingType.parameter
 			count: 1
 			path: src/State/ArticleLockProcessor.php
-
-		-
-			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\Article\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'
-			identifier: generics.lessTypes
-			count: 1
-			path: src/State/ArticleProcessor.php
-
-		-
-			message: '#^Instanceof between App\\Entity\\Article and App\\Entity\\Article will always evaluate to true\.$#'
-			identifier: instanceof.alwaysTrue
-			count: 2
-			path: src/State/ArticleProcessor.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
-			count: 1
-			path: src/State/ArticleProcessor.php
-
-		-
-			message: '#^Variable \$oldStatus might not be defined\.$#'
-			identifier: variable.undefined
-			count: 1
-			path: src/State/ArticleProcessor.php
 
 		-
 			message: '#^Call to function is_array\(\) with array\<mixed\> will always evaluate to true\.$#'

@@ -131,7 +131,12 @@ final class ApplySlugTranslationsCommand extends Command
 
             if ($hasChanges && !$dryRun) {
                 $this->em->flush();
-                $this->em->clear(Translation::class);
+                // Doctrine ORM 3.x: EntityManager::clear() takes no arguments
+                // (the per-class signature was deprecated in 2.x and removed
+                // in 3.x). Clearing everything is safe here because this
+                // command runs in batch mode and the loop re-fetches
+                // categories on the next iteration.
+                $this->em->clear();
             }
         }
 

@@ -18,12 +18,17 @@ class AiMercureService
         private readonly LoggerInterface $logger,
     ) {}
 
-    public function publishTyping(int $conversationId): void
+    public function publishTyping(string $conversationId, ?string $agentType = null): void
     {
         try {
+            $payload = ['type' => 'typing', 'conversationId' => $conversationId];
+            if ($agentType !== null) {
+                $payload['agentType'] = $agentType;
+            }
+
             $this->hub->publish(new Update(
-                sprintf('deschide_news/ai/conversation/%d', $conversationId),
-                json_encode(['type' => 'typing', 'conversationId' => $conversationId]),
+                sprintf('deschide_news/ai/conversation/%s', $conversationId),
+                json_encode($payload),
             ));
         } catch (\Throwable $e) {
             $this->logger->warning('AiMercureService: failed to publish typing event', [
@@ -32,11 +37,11 @@ class AiMercureService
         }
     }
 
-    public function publishMessage(int $conversationId, string $content, string $role = 'assistant'): void
+    public function publishMessage(string $conversationId, string $content, string $role = 'assistant'): void
     {
         try {
             $this->hub->publish(new Update(
-                sprintf('deschide_news/ai/conversation/%d', $conversationId),
+                sprintf('deschide_news/ai/conversation/%s', $conversationId),
                 json_encode([
                     'type' => 'message',
                     'conversationId' => $conversationId,
