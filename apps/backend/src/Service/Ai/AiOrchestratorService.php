@@ -121,7 +121,7 @@ final class AiOrchestratorService
         // Publish the assistant message via Mercure
         $this->mercure->publishMessage(
             (string) $conversation->getId(),
-            $assistantMessage,
+            $assistantMessage->getContent(),
         );
 
         // Persist
