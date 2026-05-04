@@ -96,7 +96,12 @@ jobs:
         run: |
           cp .env.test .env.test.local
           echo "DATABASE_URL=postgresql://deschide_test:deschide_test@127.0.0.1:5432/deschide_test?serverVersion=17&charset=utf8" >> .env.test.local
-          echo "REDIS_URL=redis://127.0.0.1:6379" >> .env.test.local
+          # REDIS_URL must include the database index (/N suffix). The project
+          # standard is DB 1 (per CLAUDE.md: REDIS_URL=redis://localhost:6379/1).
+          # `tests/Integration/Config/RedisPoolDsnTest::testRedisUrlEnvResolvesToValidDsn`
+          # asserts the URL matches the pattern `^redis://[^/]+/\d+$`. Without
+          # the /N suffix the test fails. [T60.19-L4]
+          echo "REDIS_URL=redis://127.0.0.1:6379/1" >> .env.test.local
 
       - name: Create database schema
         working-directory: apps/backend
