@@ -219,7 +219,7 @@ class ArticleContextService
         return match ($article->getStatus()) {
             ArticleStatus::NEW => 'draft',
             ArticleStatus::SUBMITTED => 'review',
-            ArticleStatus::PUBLISHED => 'published',
+            ArticleStatus::PUBLISHED, ArticleStatus::PUBLISHED_FULL => 'published',
             ArticleStatus::ARCHIVED => 'archived',
         };
     }
