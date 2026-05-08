@@ -10,7 +10,7 @@ use App\Service\Ai\Exception\ClaudeCliPermanentException;
 use App\Service\Ai\Exception\ClaudeCliTransientException;
 use App\Service\Ai\Exception\LlmUnavailableException;
 use App\Service\Ai\LlmRetryExecutor;
-use App\Service\Editorial\Llm\LlmInvocationLogger;
+use App\Service\Ai\Logging\LlmInvocationLogger;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;

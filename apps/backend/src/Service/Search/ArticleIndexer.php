@@ -129,12 +129,6 @@ final readonly class ArticleIndexer
         $doc['topic_titles'] = $topicTitles;
         $doc['topic_slugs'] = $topicSlugs;
 
-        // Source name from sourceEmail field prefix
-        $sourceEmail = $article->getSourceEmail();
-        if ($sourceEmail !== null && str_starts_with($sourceEmail, 'scrape-')) {
-            $doc['source_name'] = 'scraped';
-        }
-
         return $doc;
     }
 }

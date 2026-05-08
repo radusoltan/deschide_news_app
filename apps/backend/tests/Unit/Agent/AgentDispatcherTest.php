@@ -13,7 +13,7 @@ use App\Repository\AppSettingRepository;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliException;
 use App\Service\Ai\Provider\GeminiCliService;
-use App\Service\Editorial\Llm\LlmInvocationLogger;
+use App\Service\Ai\Logging\LlmInvocationLogger;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -28,7 +28,7 @@ use Psr\Log\NullLogger;
  *    return array → typed AgentResponse DTO.
  *  - Tier passthrough: dispatcher does NOT resolve tier; it forwards the
  *    caller-resolved tier verbatim (ADR-024 Q2 — mechanical pipe).
- *  - editorial.emergency_halt raises EmergencyHaltException on either transport
+ *  - agent.emergency_halt raises EmergencyHaltException on either transport
  *    BEFORE any LLM call (non-handler callers; handlers keep their own fast-path
  *    unchanged).
  *  - LlmAgentCallLog is NOT written from the dispatcher on the claude_cli
@@ -77,7 +77,7 @@ class AgentDispatcherTest extends TestCase
     public function happyPathDispatchesThroughExecutorAndWrapsAsDto(): void
     {
         $this->appSettings->method('getBool')
-            ->with('editorial.emergency_halt', false)
+            ->with('agent.emergency_halt', false)
             ->willReturn(false);
 
         $this->executor->expects($this->once())
@@ -173,7 +173,7 @@ class AgentDispatcherTest extends TestCase
     public function tierPassesThroughVerbatimDispatcherDoesNotResolve(): void
     {
         $this->appSettings->method('getBool')
-            ->with('editorial.emergency_halt', false)
+            ->with('agent.emergency_halt', false)
             ->willReturn(false);
 
         // Assert the tier received by executor matches the caller-passed tier
@@ -214,14 +214,14 @@ class AgentDispatcherTest extends TestCase
     {
         $this->appSettings->expects($this->once())
             ->method('getBool')
-            ->with('editorial.emergency_halt', false)
+            ->with('agent.emergency_halt', false)
             ->willReturn(true);
 
         // Executor must NEVER be invoked when emergency_halt is active.
         $this->executor->expects($this->never())->method('executeWithRetry');
 
         $this->expectException(EmergencyHaltException::class);
-        $this->expectExceptionMessageMatches('/editorial\.emergency_halt is active.*verification_gate/');
+        $this->expectExceptionMessageMatches('/agent\.emergency_halt is active.*verification_gate/');
 
         $this->dispatcher->dispatch(new AgentRequest(
             agentId: 'verification_gate',
@@ -270,7 +270,7 @@ class AgentDispatcherTest extends TestCase
     public function geminiTransportRoutesToGeminiCliService(): void
     {
         $this->appSettings->method('getBool')
-            ->with('editorial.emergency_halt', false)
+            ->with('agent.emergency_halt', false)
             ->willReturn(false);
 
         // Timeout lookup: agent.journalistic_translator.timeout_seconds, default 300.
@@ -336,7 +336,7 @@ class AgentDispatcherTest extends TestCase
     {
         $this->appSettings->expects($this->once())
             ->method('getBool')
-            ->with('editorial.emergency_halt', false)
+            ->with('agent.emergency_halt', false)
             ->willReturn(true);
 
         // Keeper pattern #3 — mock never() on the downstream transport to prove
@@ -346,7 +346,7 @@ class AgentDispatcherTest extends TestCase
         $this->executor->expects($this->never())->method('executeWithRetry');
 
         $this->expectException(EmergencyHaltException::class);
-        $this->expectExceptionMessageMatches('/editorial\.emergency_halt is active.*journalistic_translator/');
+        $this->expectExceptionMessageMatches('/agent\.emergency_halt is active.*journalistic_translator/');
 
         $this->dispatcher->dispatch(new AgentRequest(
             agentId: 'journalistic_translator',

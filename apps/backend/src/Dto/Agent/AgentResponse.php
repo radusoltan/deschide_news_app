@@ -27,7 +27,7 @@ use App\Enum\LlmModelTier;
  *  - `invocationId`:   ULID of the LlmAgentCallLog row opened by the
  *                      executor. `null` when persistence failed — callers
  *                      with a post-parse verdict should then skip
- *                      {@see \App\Service\Editorial\Llm\LlmInvocationLogger::attachVerdict()}.
+ *                      {@see \App\Service\Ai\Logging\LlmInvocationLogger::attachVerdict()}.
  *  - `metrics`:        raw Claude CLI token/cost envelope, copied through
  *                      for cost observability. Kept as `?array` in P2 for
  *                      pragmatic reasons (converting to a typed sub-DTO is

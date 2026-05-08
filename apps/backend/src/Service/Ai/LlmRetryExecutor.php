@@ -8,7 +8,7 @@ use App\Enum\LlmModelTier;
 use App\Service\Ai\Exception\ClaudeCliPermanentException;
 use App\Service\Ai\Exception\ClaudeCliTransientException;
 use App\Service\Ai\Exception\LlmUnavailableException;
-use App\Service\Editorial\Llm\LlmInvocationLogger;
+use App\Service\Ai\Logging\LlmInvocationLogger;
 use Psr\Log\LoggerInterface;
 use Sentry\Breadcrumb;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
