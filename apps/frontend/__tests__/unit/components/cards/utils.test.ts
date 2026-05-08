@@ -145,8 +145,8 @@ describe('Card Utilities', () => {
     it('truncates long text without sentences', () => {
       const longText = 'a'.repeat(200);
       const result = getFirstSentence(longText, 150);
-      expect(result.length).toBeLessThanOrEqual(153); // 150 + '...'
-      expect(result.endsWith('...')).toBe(true);
+      expect(result.length).toBeLessThanOrEqual(151); // 150 + '…' (Unicode ellipsis, 1 code unit)
+      expect(result.endsWith('…')).toBe(true);
     });
 
     it('strips HTML tags', () => {
