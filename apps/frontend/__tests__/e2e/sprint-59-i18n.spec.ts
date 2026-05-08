@@ -20,7 +20,7 @@
  *     scenarios that don't require the article page to render still execute.
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
 
 // ─────────────────────────────────────────────────────────────────
 // Fixtures
@@ -526,6 +526,28 @@ const ARTICLE_TRILINGUAL_ID4 = {
 
 const KNOWN_TOPIC_SLUG = 'politics-governance';
 
+/**
+ * Mobile Chrome (Pixel 5 viewport, 393×851) hides the desktop LangSwitcher
+ * behind a hamburger menu — the inline LangSwitcher resolves in DOM but is
+ * `display: none` at mobile breakpoint. Click-based locale-switch coverage
+ * needs a distinct mobile-menu fixture (open hamburger → assert menu items
+ * visible → click). That is separate scope from this gap-fill.
+ *
+ * Topic test below uses `toHaveCount()` (DOM presence) and works on every
+ * viewport, so it does NOT skip. Search + No-flash require .click() and
+ * therefore skip on Mobile Chrome via this helper.
+ *
+ * Backlog: T60.X-MOBILE-MENU-LANGSWITCHER-E2E.
+ */
+function skipMobileChromeForClick(testInfo: TestInfo): void {
+  test.skip(
+    testInfo.project.name === 'Mobile Chrome',
+    'Mobile Chrome (Pixel 5) hides desktop LangSwitcher behind hamburger menu. ' +
+    'Click-based locale switch coverage requires distinct mobile-menu fixture. ' +
+    'Backlog: T60.X-MOBILE-MENU-LANGSWITCHER-E2E.',
+  );
+}
+
 test.describe('Sprint 60 — LangSwitcher gap-fill (T60.9)', () => {
   test('Topic page LangSwitcher renders disabled state (translatedSlugs unpopulated)', async ({ page }) => {
     // KNOWN LIMITATION: Topic page does not populate translatedSlugs in
@@ -563,7 +585,8 @@ test.describe('Sprint 60 — LangSwitcher gap-fill (T60.9)', () => {
     ).toHaveCount(0);
   });
 
-  test('Search results locale switch (generic fallback) drops query param', async ({ page }) => {
+  test('Search results locale switch (generic fallback) drops query param', async ({ page }, testInfo) => {
+    skipMobileChromeForClick(testInfo);
     // KNOWN LIMITATION: LanguageSwitcher has no 'search' context branch.
     // Search routes fall through to buildLocaleUrlGeneric → prefix-swap on
     // usePathname() (which excludes the query string). Query param is
@@ -590,7 +613,8 @@ test.describe('Sprint 60 — LangSwitcher gap-fill (T60.9)', () => {
     await expect(page).toHaveURL(/\/en\/search$/);
   });
 
-  test('RO → EN article switch: no flash of mismatched locale', async ({ page }) => {
+  test('RO → EN article switch: no flash of mismatched locale', async ({ page }, testInfo) => {
+    skipMobileChromeForClick(testInfo);
     const roUrl = articleUrl(
       'ro',
       ARTICLE_TRILINGUAL_ID4.category,
