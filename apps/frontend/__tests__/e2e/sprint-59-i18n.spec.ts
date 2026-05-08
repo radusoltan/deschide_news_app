@@ -488,3 +488,133 @@ test.describe('Sprint 59 — Graceful degradation', () => {
     expect(errors, `Unexpected page errors: ${errors.join('; ')}`).toHaveLength(0);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────
+// 7. Sprint 60 — LangSwitcher gap-fill (T60.9)
+// ─────────────────────────────────────────────────────────────────
+//
+// Three surgical gap cases discovered in Phase 3.1 inventory against the
+// existing Sprint 59 corpus + LangSwitcher implementation:
+//   - Topic page locale switch (route exists, context handled, no E2E coverage)
+//   - Search results locale switch (route exists, NO context — generic fallback)
+//   - No-flash assertion on article RO↔EN transition (regression guard)
+//
+// Fixture choices (empirically captured 2026-05-08):
+//   - Article id=4 trilingual (RO/EN/RU), category=economie. Article 100 from
+//     existing fixtures is absent in current dev DB; id=4 is the lowest stable
+//     trilingual article available.
+//   - KNOWN_TOPIC_SLUG=politics-governance, picked from 3 ext_translations
+//     candidates as the most stable English compound. Topic slugs are NOT in
+//     ext_translations (Topic.title and Topic.description ARE translated, but
+//     Topic.slug is single-canonical) so locale switch is prefix-swap behavior.
+//
+// Out-of-scope flags surfaced from this sprint, recorded inline:
+//   - T60.X-LANG-SWITCHER-SEARCH-CONTEXT — search context branch missing in
+//     LangSwitcher. Currently falls through to buildLocaleUrlGeneric which
+//     operates on usePathname() only and does NOT preserve the query string.
+//   - Topic slug localization — open product question, no backlog task yet.
+
+const ARTICLE_TRILINGUAL_ID4 = {
+  id: 4,
+  category: 'economie',
+  slugs: {
+    ro: 'energocom-obligata-sa-cumpere-energie-de-pe-pietele-organizate-ministerul-energiei',
+    en: 'energocom-obliged-to-buy-energy-from-organized-markets-ministry-of-energy',
+    ru: 'energocom-obyazhut-zakupat-elektroenergiyu-na-organizovannyh-rynkah-ministerstvo-energetiki',
+  },
+} as const;
+
+const KNOWN_TOPIC_SLUG = 'politics-governance';
+
+test.describe('Sprint 60 — LangSwitcher gap-fill (T60.9)', () => {
+  test('Topic page locale switch preserves slug across locales (prefix-swap)', async ({ page }) => {
+    await page.goto(`${BASE_URL}/ro/topics/${KNOWN_TOPIC_SLUG}`, {
+      waitUntil: 'domcontentloaded',
+    });
+
+    const enSwitch = page.locator('[data-testid="locale-switch-en"]').first();
+    await expect(enSwitch, 'EN locale switch must render on /ro/topics/<slug>').toHaveCount(1);
+
+    await enSwitch.click();
+
+    // Topic slugs are not translated; switching locale preserves slug.
+    // If/when topic slug localization lands, this assertion target updates to
+    // whatever LangSwitcher emits via translatedSlugs — assertion shape stays
+    // correct because we test "URL contains target locale prefix + topic slug".
+    await expect(page).toHaveURL(`${BASE_URL}/en/topics/${KNOWN_TOPIC_SLUG}`);
+  });
+
+  test('Search results locale switch (generic fallback) drops query param', async ({ page }) => {
+    // KNOWN LIMITATION: LanguageSwitcher has no 'search' context branch.
+    // Search routes fall through to buildLocaleUrlGeneric → prefix-swap on
+    // usePathname() (which excludes the query string). Query param is
+    // therefore DROPPED on locale switch.
+    // Backlog: T60.X-LANG-SWITCHER-SEARCH-CONTEXT.
+    // This test documents current empirical behavior, NOT desired behavior.
+    await page.goto(`${BASE_URL}/ro/search?q=moldova`, {
+      waitUntil: 'domcontentloaded',
+    });
+
+    const enSwitch = page.locator('[data-testid="locale-switch-en"]').first();
+    await expect(enSwitch, 'EN locale switch must render on /ro/search').toHaveCount(1);
+
+    await enSwitch.click();
+
+    // Expect query DROPPED — generic fallback behavior. Once
+    // T60.X-LANG-SWITCHER-SEARCH-CONTEXT lands, flip this to
+    // /\/en\/search\?.*q=moldova/ and remove the inline TODO.
+    await expect(page).toHaveURL(/\/en\/search$/);
+  });
+
+  test('RO → EN article switch: no flash of mismatched locale', async ({ page }) => {
+    const roUrl = articleUrl(
+      'ro',
+      ARTICLE_TRILINGUAL_ID4.category,
+      ARTICLE_TRILINGUAL_ID4.slugs.ro,
+    );
+    const works = await articleRouteWorks(page, roUrl);
+    if (!works) {
+      test.skip(
+        true,
+        `BLOCKER: article route ${roUrl} returns 404 in dev environment. ` +
+        `Article id=4 (economie/energocom-...) must be available for trilingual ` +
+        `no-flash assertion. If the fixture is renamed, update ARTICLE_TRILINGUAL_ID4.`,
+      );
+      return;
+    }
+
+    // Capture console errors emitted during the transition. Hydration / locale
+    // mismatch warnings are the regression signals we are guarding against
+    // (T60.15 SSR prime + LocaleContextSetter pre-hydration href correctness).
+    const consoleErrors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ro');
+
+    const enSwitch = page.locator('[data-testid="locale-switch-en"]').first();
+    await expect(enSwitch, 'EN locale switch must render on RO article page').toHaveCount(1);
+
+    await enSwitch.click();
+
+    // Strict timeout: <html lang> must transition to 'en' within 500ms.
+    // A visible intermediate frame with lang="ro" while EN content is rendering
+    // (or vice versa) would push this past the 500ms window. The test does not
+    // attempt to snapshot every frame — it relies on Playwright's expect.poll
+    // semantics, which already polls fast enough to catch a noticeable flash.
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en', { timeout: 500 });
+
+    await page.waitForLoadState('networkidle');
+
+    const hydrationOrLocaleErrors = consoleErrors.filter((e) =>
+      /hydrat|locale|mismatch/i.test(e),
+    );
+    expect(
+      hydrationOrLocaleErrors,
+      `Hydration / locale console errors detected during transition: ${hydrationOrLocaleErrors.join(' | ')}`,
+    ).toHaveLength(0);
+  });
+});
