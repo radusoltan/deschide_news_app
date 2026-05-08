@@ -15,11 +15,9 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
-use App\Entity\Editorial\SourceSignal;
 use App\Enum\ArchiveReason;
 use App\Enum\ArticleBadge;
 use App\Enum\ArticleStatus;
-use App\Enum\ArticleType;
 use App\Repository\ArticleRepository;
 use App\State\ArchivedArticleProvider;
 use App\State\Article\ArticleCreateProcessor;
@@ -58,10 +56,6 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\Index(name: 'idx_article_category_status_published', columns: ['category_id', 'status', 'published_at'])]
 #[ORM\Index(name: 'idx_article_status_archived', columns: ['status', 'archived_at'])]
 #[ORM\Index(name: 'idx_article_content_hash', columns: ['content_hash'])]
-#[ORM\Index(name: 'idx_article_ingested_at', columns: ['ingested_at'])]
-// Sprint 55 T55.2 — editorial pipeline filters
-#[ORM\Index(name: 'idx_article_type', columns: ['article_type'])]
-#[ORM\Index(name: 'idx_article_type_updated', columns: ['article_type', 'updated_at'])]
 #[ApiResource(
     operations: [
         new Get(
@@ -291,11 +285,6 @@ class Article implements Translatable
     #[Groups(['article:read'])]
     private ?string $webcode = null;
 
-    // Source email ID (set when article is auto-created by email-press-redactor agent)
-    #[ORM\Column(length: 64, nullable: true, unique: true)]
-    #[Groups(['article:read', 'article:write'])]
-    private ?string $sourceEmail = null;
-
     // Content hash for deduplication (SHA-256 of normalized body)
     #[ORM\Column(length: 64, nullable: true)]
     #[Groups(['article:read'])]
@@ -323,67 +312,6 @@ class Article implements Translatable
     #[ORM\Column(type: 'text_array', options: ['default' => '{ro}'])]
     #[Groups(['article:read', 'article:list'])]
     private array $publishedLocales = ['ro'];
-
-    // AI-generated internal summary (TL;DR for editorial workflow)
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['article:read', 'article:detail'])]
-    private ?string $internalSummary = null;
-
-    // Timestamp when AI ingestion pipeline completed (entity extraction, MOC update, etc.)
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-    #[Groups(['article:read'])]
-    private ?DateTimeImmutable $ingestedAt = null;
-
-    // AI generation metadata
-    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
-    #[Groups(['article:read'])]
-    private bool $aiGenerated = false;
-
-    #[ORM\Column(type: Types::FLOAT, nullable: true)]
-    #[Groups(['article:read'])]
-    private ?float $aiConfidenceScore = null;
-
-    #[ORM\Column(type: Types::INTEGER, nullable: true)]
-    #[Groups(['article:read'])]
-    private ?int $aiSourceCount = null;
-
-    // Editorial pipeline classification (Sprint 55 T55.2, ADR-020 D6).
-    // Null for legacy / human-authored articles; writers always set this.
-    #[ORM\Column(type: Types::STRING, length: 30, nullable: true, enumType: ArticleType::class)]
-    #[Groups(['article:read'])]
-    private ?ArticleType $articleType = null;
-
-    /**
-     * Append-only revision trail for DEVELOPING_STORY articles (Sprint 55 T55.2, ADR-020 D9).
-     *
-     * Schema per entry (locked audit D2):
-     *   [
-     *     'rev' => int,
-     *     'ts' => string ISO-8601 (ATOM),
-     *     'diff' => string|array,
-     *     'actor' => ['type' => 'writer'|'editor'|'system', 'id' => int|null],
-     *     'source_signal_id' => int|null,
-     *   ]
-     *
-     * Capped at 100 entries; the oldest is dropped when a 101st is appended.
-     *
-     * @var list<array<string, mixed>>|null
-     */
-    #[ORM\Column(type: Types::JSON, nullable: true)]
-    #[Groups(['article:detail'])]
-    private ?array $revisionHistory = null;
-
-    #[ORM\Column(type: Types::INTEGER, options: ['default' => 0])]
-    #[Groups(['article:read'])]
-    private int $revisionCount = 0;
-
-    // Back-reference to the primary SourceSignal that seeded this Article (Sprint 55 T55.2).
-    // Set only when the Article was emitted by a writer; ON DELETE SET NULL so
-    // archiving signals does not cascade into Article deletion.
-    #[ORM\ManyToOne(targetEntity: SourceSignal::class)]
-    #[ORM\JoinColumn(name: 'original_source_signal_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
-    #[Groups(['article:detail'])]
-    private ?SourceSignal $originalSourceSignal = null;
 
     /**
      * Non-persisted field populated by ArticleProvider / SlugController.
@@ -819,18 +747,6 @@ class Article implements Translatable
         return $this;
     }
 
-    public function getSourceEmail(): ?string
-    {
-        return $this->sourceEmail;
-    }
-
-    public function setSourceEmail(?string $sourceEmail): static
-    {
-        $this->sourceEmail = $sourceEmail;
-
-        return $this;
-    }
-
     public function getContentHash(): ?string
     {
         return $this->contentHash;
@@ -887,66 +803,6 @@ class Article implements Translatable
     public function setTranslatedBy(?string $translatedBy): static
     {
         $this->translatedBy = $translatedBy;
-
-        return $this;
-    }
-
-    public function getInternalSummary(): ?string
-    {
-        return $this->internalSummary;
-    }
-
-    public function setInternalSummary(?string $internalSummary): self
-    {
-        $this->internalSummary = $internalSummary;
-
-        return $this;
-    }
-
-    public function getIngestedAt(): ?DateTimeImmutable
-    {
-        return $this->ingestedAt;
-    }
-
-    public function setIngestedAt(?DateTimeImmutable $ingestedAt): self
-    {
-        $this->ingestedAt = $ingestedAt;
-
-        return $this;
-    }
-
-    public function isAiGenerated(): bool
-    {
-        return $this->aiGenerated;
-    }
-
-    public function setAiGenerated(bool $aiGenerated): self
-    {
-        $this->aiGenerated = $aiGenerated;
-
-        return $this;
-    }
-
-    public function getAiConfidenceScore(): ?float
-    {
-        return $this->aiConfidenceScore;
-    }
-
-    public function setAiConfidenceScore(?float $aiConfidenceScore): self
-    {
-        $this->aiConfidenceScore = $aiConfidenceScore;
-
-        return $this;
-    }
-
-    public function getAiSourceCount(): ?int
-    {
-        return $this->aiSourceCount;
-    }
-
-    public function setAiSourceCount(?int $aiSourceCount): self
-    {
-        $this->aiSourceCount = $aiSourceCount;
 
         return $this;
     }
@@ -1011,75 +867,4 @@ class Article implements Translatable
         return \in_array($locale, $this->publishedLocales, true);
     }
 
-    public function getArticleType(): ?ArticleType
-    {
-        return $this->articleType;
-    }
-
-    public function setArticleType(?ArticleType $articleType): self
-    {
-        $this->articleType = $articleType;
-
-        return $this;
-    }
-
-    /**
-     * @return list<array<string, mixed>>|null
-     */
-    public function getRevisionHistory(): ?array
-    {
-        return $this->revisionHistory;
-    }
-
-    /**
-     * @param list<array<string, mixed>>|null $revisionHistory
-     */
-    public function setRevisionHistory(?array $revisionHistory): self
-    {
-        $this->revisionHistory = $revisionHistory;
-
-        return $this;
-    }
-
-    /**
-     * Append one revision entry to {@see $revisionHistory} while preserving the
-     * 100-entry cap. Oldest entries are dropped first (FIFO by insertion order).
-     *
-     * @param array<string, mixed> $entry
-     */
-    public function appendRevision(array $entry): self
-    {
-        $history = $this->revisionHistory ?? [];
-        $history[] = $entry;
-        if (\count($history) > 100) {
-            $history = \array_slice($history, -100);
-        }
-        $this->revisionHistory = $history;
-
-        return $this;
-    }
-
-    public function getRevisionCount(): int
-    {
-        return $this->revisionCount;
-    }
-
-    public function setRevisionCount(int $revisionCount): self
-    {
-        $this->revisionCount = $revisionCount;
-
-        return $this;
-    }
-
-    public function getOriginalSourceSignal(): ?SourceSignal
-    {
-        return $this->originalSourceSignal;
-    }
-
-    public function setOriginalSourceSignal(?SourceSignal $signal): self
-    {
-        $this->originalSourceSignal = $signal;
-
-        return $this;
-    }
 }

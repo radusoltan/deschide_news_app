@@ -10,7 +10,7 @@ use App\Dto\Agent\AgentResponse;
 use App\Repository\AppSettingRepository;
 use App\Service\Ai\LlmRetryExecutor;
 use App\Service\Ai\Provider\GeminiCliService;
-use App\Service\Editorial\Llm\LlmInvocationLogger;
+use App\Service\Ai\Logging\LlmInvocationLogger;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -24,7 +24,7 @@ use Psr\Log\LoggerInterface;
  * dispatcher as a thin pipe.
  *
  * Responsibilities kept inside the dispatcher:
- *  1. Pre-LLM `editorial.emergency_halt` circuit breaker — generalizes
+ *  1. Pre-LLM `agent.emergency_halt` circuit breaker — generalizes
  *     the [[ADR-022]] D5 silent-ACK pattern (previously hardcoded in 5
  *     MessageHandlers) to every agent call. Raises
  *     {@see EmergencyHaltException} so non-handler callers (CLI
@@ -58,7 +58,7 @@ use Psr\Log\LoggerInterface;
  */
 readonly class AgentDispatcher
 {
-    private const EMERGENCY_HALT_KEY = 'editorial.emergency_halt';
+    private const EMERGENCY_HALT_KEY = 'agent.emergency_halt';
 
     /**
      * Short generic argv directive for Gemini-transport dispatch. Translator-
@@ -86,7 +86,7 @@ readonly class AgentDispatcher
     /**
      * Dispatch an agent request through the editorial LLM pipeline.
      *
-     * @throws EmergencyHaltException when `editorial.emergency_halt` is `true`
+     * @throws EmergencyHaltException when `agent.emergency_halt` is `true`
      * @throws \App\Service\Ai\Exception\LlmUnavailableException when claude_cli retries exhaust
      * @throws \App\Service\Ai\Exception\ClaudeCliPermanentException on permanent transport errors (claude_cli)
      * @throws \App\Service\Ai\Provider\GeminiCliException on Gemini subprocess failure/timeout (gemini_cli)

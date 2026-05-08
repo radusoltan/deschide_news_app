@@ -1,18 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Property App\\Command\\AggregateStatsCommand\:\:\$redis is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Command/AggregateStatsCommand.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: src/Command/AggregatorSchedulerCommand.php
-
-		-
 			message: '#^Constant App\\Command\\Archive\\ProcessArchiveContentCommand\:\:DEFAULT_BATCH_SIZE is unused\.$#'
 			identifier: classConstant.unused
 			count: 1
@@ -185,18 +173,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Command/DatabaseQueryAuditCommand.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between mixed and 0 will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: src/Command/Editorial/DevResetCommand.php
-
-		-
-			message: '#^Part \$articles \(list\<App\\Entity\\Article\>\) of encapsed string cannot be cast to string\.$#'
-			identifier: encapsedStringPart.nonString
-			count: 1
-			path: src/Command/Editorial/GenerateDossiersCommand.php
 
 		-
 			message: '#^Property App\\Command\\ElasticsearchIndexArticlesCommand\:\:\$supportedLocales type has no value type specified in iterable type array\.$#'
@@ -444,66 +420,6 @@ parameters:
 			path: src/Command/RedirectStatsCommand.php
 
 		-
-			message: '#^Constant App\\Command\\SampleImportCommand\:\:LANGUAGE_MAP is unused\.$#'
-			identifier: classConstant.unused
-			count: 1
-			path: src/Command/SampleImportCommand.php
-
-		-
-			message: '#^Method App\\Command\\SampleImportCommand\:\:associateAuthorsWithArticles\(\) has parameter \$newscoopArticleNumbers with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Command/SampleImportCommand.php
-
-		-
-			message: '#^Method App\\Command\\SampleImportCommand\:\:fetchSection\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Command/SampleImportCommand.php
-
-		-
-			message: '#^Method App\\Command\\SampleImportCommand\:\:fetchXstiriContent\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Command/SampleImportCommand.php
-
-		-
-			message: '#^Property App\\Command\\SampleImportCommand\:\:\$articleIdMap type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Command/SampleImportCommand.php
-
-		-
-			message: '#^Property App\\Command\\SampleImportCommand\:\:\$authorIdMap type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Command/SampleImportCommand.php
-
-		-
-			message: '#^Property App\\Command\\SampleImportCommand\:\:\$categoryIdMap type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Command/SampleImportCommand.php
-
-		-
-			message: '#^Property App\\Command\\SampleImportCommand\:\:\$imageIdMap is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Command/SampleImportCommand.php
-
-		-
-			message: '#^Property App\\Command\\SampleImportCommand\:\:\$imageIdMap type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Command/SampleImportCommand.php
-
-		-
-			message: '#^Method App\\Command\\ScrapeSourcesCommand\:\:__construct\(\) has parameter \$sources with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Command/ScrapeSourcesCommand.php
-
-		-
 			message: '#^Constant App\\Command\\SeedDemoDataCommand\:\:TAGS_COUNT is unused\.$#'
 			identifier: classConstant.unused
 			count: 1
@@ -556,12 +472,6 @@ parameters:
 			identifier: booleanAnd.rightAlwaysTrue
 			count: 2
 			path: src/Command/SeedProductionDataCommand.php
-
-		-
-			message: '#^Call to function is_array\(\) with array\<string, mixed\> will always evaluate to true\.$#'
-			identifier: function.alreadyNarrowedType
-			count: 1
-			path: src/Command/SeoBackfillCommand.php
 
 		-
 			message: '#^Method App\\Command\\SimulateTrafficCommand\:\:buildWeightedPool\(\) has parameter \$articles with no value type specified in iterable type array\.$#'
@@ -618,12 +528,6 @@ parameters:
 			path: src/Command/SimulateTrafficCommand.php
 
 		-
-			message: '#^Property App\\Command\\Topic\\DetectTopicsCommand\:\:\$pressReleaseRepository is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Command/Topic/DetectTopicsCommand.php
-
-		-
 			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
 			identifier: greater.alwaysTrue
 			count: 1
@@ -646,18 +550,6 @@ parameters:
 			identifier: property.onlyWritten
 			count: 1
 			path: src/Controller/Admin/ArticleArchiveController.php
-
-		-
-			message: '#^Parameter \$user of method App\\Service\\Ai\\AiOrchestratorService\:\:processMessage\(\) expects App\\Entity\\User, Symfony\\Component\\Security\\Core\\User\\UserInterface\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Controller/Api/AiChatController.php
-
-		-
-			message: '#^Method App\\Controller\\Api\\DedupStatsController\:\:computeStats\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Controller/Api/DedupStatsController.php
 
 		-
 			message: '#^Method App\\Controller\\Api\\StatsController\:\:parseDateRange\(\) return type has no value type specified in iterable type array\.$#'
@@ -782,7 +674,7 @@ parameters:
 		-
 			message: '#^Call to protected method getEntityManager\(\) of class Doctrine\\ORM\\EntityRepository\<App\\Entity\\Topic\>\.$#'
 			identifier: method.protected
-			count: 3
+			count: 2
 			path: src/Controller/TopicController.php
 
 		-
@@ -904,54 +796,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Dto/LiveText/ViewersCountEventDto.php
-
-		-
-			message: '#^Method App\\Entity\\AggregatorRun\:\:getErrorDetails\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/AggregatorRun.php
-
-		-
-			message: '#^Method App\\Entity\\AggregatorRun\:\:setErrorDetails\(\) has parameter \$errorDetails with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/AggregatorRun.php
-
-		-
-			message: '#^Property App\\Entity\\AggregatorRun\:\:\$errorDetails type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/AggregatorRun.php
-
-		-
-			message: '#^Property App\\Entity\\AiConversation\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
-			identifier: doctrine.columnType
-			count: 1
-			path: src/Entity/AiConversation.php
-
-		-
-			message: '#^Property App\\Entity\\AiConversation\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
-			identifier: doctrine.columnType
-			count: 1
-			path: src/Entity/AiConversation.php
-
-		-
-			message: '#^Property App\\Entity\\AiMessage\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
-			identifier: doctrine.columnType
-			count: 1
-			path: src/Entity/AiMessage.php
-
-		-
-			message: '#^Property App\\Entity\\AiPromptTemplate\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
-			identifier: doctrine.columnType
-			count: 1
-			path: src/Entity/AiPromptTemplate.php
-
-		-
-			message: '#^Property App\\Entity\\AiPromptTemplate\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
-			identifier: doctrine.columnType
-			count: 1
-			path: src/Entity/AiPromptTemplate.php
 
 		-
 			message: '#^Property App\\Entity\\Article\:\:\$articleImages type mapping mismatch\: property can contain Doctrine\\Common\\Collections\\Collection but database expects Doctrine\\Common\\Collections\\Collection&iterable\<App\\Entity\\ArticleImage\>\.$#'
@@ -1222,24 +1066,6 @@ parameters:
 			identifier: doctrine.columnType
 			count: 1
 			path: src/Entity/ExternalArticleMapping.php
-
-		-
-			message: '#^Method App\\Entity\\GeneratedContent\:\:getMetadata\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/GeneratedContent.php
-
-		-
-			message: '#^Method App\\Entity\\GeneratedContent\:\:setMetadata\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/GeneratedContent.php
-
-		-
-			message: '#^Property App\\Entity\\GeneratedContent\:\:\$metadata type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/GeneratedContent.php
 
 		-
 			message: '#^Attribute class Vich\\UploaderBundle\\Mapping\\Annotation\\Uploadable is deprecated\: since 2\.9, use Vich\\UploaderBundle\\Mapping\\Attribute\\Uploadable instead$#'
@@ -1764,24 +1590,6 @@ parameters:
 			path: src/Entity/MenuItem.php
 
 		-
-			message: '#^Method App\\Entity\\PressRelease\:\:getSuggestedTopics\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/PressRelease.php
-
-		-
-			message: '#^Method App\\Entity\\PressRelease\:\:setSuggestedTopics\(\) has parameter \$suggestedTopics with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/PressRelease.php
-
-		-
-			message: '#^Property App\\Entity\\PressRelease\:\:\$suggestedTopics type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Entity/PressRelease.php
-
-		-
 			message: '#^Strict comparison using \!\=\= between DateTimeInterface and null will always evaluate to true\.$#'
 			identifier: notIdentical.alwaysTrue
 			count: 1
@@ -1992,18 +1800,6 @@ parameters:
 			path: src/Entity/Topic.php
 
 		-
-			message: '#^Property App\\Entity\\TopicBriefing\:\:\$createdAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
-			identifier: doctrine.columnType
-			count: 1
-			path: src/Entity/TopicBriefing.php
-
-		-
-			message: '#^Property App\\Entity\\TopicBriefing\:\:\$updatedAt type mapping mismatch\: property can contain DateTimeImmutable\|null but database expects DateTimeImmutable\.$#'
-			identifier: doctrine.columnType
-			count: 1
-			path: src/Entity/TopicBriefing.php
-
-		-
 			message: '#^Property App\\Entity\\User\:\:\$email type mapping mismatch\: property can contain string\|null but database expects string\.$#'
 			identifier: doctrine.columnType
 			count: 1
@@ -2158,48 +1954,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Message/CheckOrphanedTagsMessage.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: src/MessageHandler/Aggregator/ProcessAggregatorResultHandler.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: src/MessageHandler/Aggregator/TriggerAggregatorRunHandler.php
-
-		-
-			message: '#^Property App\\MessageHandler\\Editorial\\EvaluateTranslationHandler\:\:\$messageBus is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/MessageHandler/Editorial/EvaluateTranslationHandler.php
-
-		-
-			message: '#^Property App\\MessageHandler\\Editorial\\ProcessScrapedArticleHandler\:\:\$authorResolver is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/MessageHandler/Editorial/ProcessScrapedArticleHandler.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between string and null will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: src/MessageHandler/Editorial/ProcessScrapedArticleHandler.php
-
-		-
-			message: '#^Method App\\MessageHandler\\Editorial\\ScrapeSourceHandler\:\:__construct\(\) has parameter \$sources with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/MessageHandler/Editorial/ScrapeSourceHandler.php
-
-		-
-			message: '#^Call to protected method getEntityManager\(\) of class Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository\<App\\Entity\\Article\>\.$#'
-			identifier: method.protected
-			count: 1
-			path: src/MessageHandler/OptimizeSeoHandler.php
 
 		-
 			message: '#^Property App\\MessageHandler\\TranslateArticleHandler\:\:\$messageBus is never read, only written\.$#'
@@ -2400,78 +2154,6 @@ parameters:
 			path: src/Serializer/MultipartDecoder.php
 
 		-
-			message: '#^Offset ''subject'' on array\{messageId\: string, folderId\: string, subject\: string, fromAddress\: non\-falsy\-string, receivedTime\: string, summary\: string, hasAttachment\: bool, hasInline\: bool\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/Aggregator/GoogleAlertsAggregator.php
-
-		-
-			message: '#^Method App\\Service\\Aggregator\\GoogleNewsRssAggregator\:\:pickUserAgent\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/Aggregator/GoogleNewsRssAggregator.php
-
-		-
-			message: '#^Dead catch \- App\\Service\\Ai\\Provider\\GeminiCliException is never thrown in the try block\.$#'
-			identifier: catch.neverThrown
-			count: 1
-			path: src/Service/Aggregator/SemanticDeduplicatorService.php
-
-		-
-			message: '#^Method App\\Service\\Aggregator\\SemanticDeduplicatorService\:\:extractJson\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/Aggregator/SemanticDeduplicatorService.php
-
-		-
-			message: '#^Method App\\Service\\Aggregator\\TelegramAggregator\:\:extractTitle\(\) has parameter \$message with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/Aggregator/TelegramAggregator.php
-
-		-
-			message: '#^Method App\\Service\\Aggregator\\TelegramAggregator\:\:extractUrls\(\) has parameter \$message with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/Aggregator/TelegramAggregator.php
-
-		-
-			message: '#^Offset ''messages'' on array\{messages\: list\<array\<string, mixed\>\>\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/Aggregator/TelegramAggregator.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between non\-empty\-string and null will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: src/Service/Aggregator/TrendQueryGeneratorService.php
-
-		-
-			message: '#^Property App\\Service\\Aggregator\\TrendScoringService\:\:\$topicRepository is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Service/Aggregator/TrendScoringService.php
-
-		-
-			message: '#^Property App\\Service\\Ai\\AiOrchestratorService\:\:\$articleRepository is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Service/Ai/AiOrchestratorService.php
-
-		-
-			message: '#^Property App\\Service\\Ai\\AiOrchestratorService\:\:\$messageBus is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Service/Ai/AiOrchestratorService.php
-
-		-
-			message: '#^Property App\\Service\\Ai\\AiOrchestratorService\:\:\$weeklySummaryService is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: src/Service/Ai/AiOrchestratorService.php
-
-		-
 			message: '#^Method App\\Service\\Ai\\AnthropicApiClient\:\:buildRequestBody\(\) has parameter \$messages with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -2566,87 +2248,6 @@ parameters:
 			identifier: identical.alwaysFalse
 			count: 1
 			path: src/Service/Cache/CacheService.php
-
-		-
-			message: '#^Match arm comparison between ''alert''\|''breaking''\|''flash'' and ''analysis'' is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: src/Service/Editorial/ArticleContextService.php
-
-		-
-			message: '#^Match arm comparison between ''alert''\|''breaking''\|''flash'' and ''opinion'' is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: src/Service/Editorial/ArticleContextService.php
-
-		-
-			message: '#^Match arm comparison between ''alert''\|''breaking''\|''flash'' and ''photo_gallery'' is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: src/Service/Editorial/ArticleContextService.php
-
-		-
-			message: '#^Match arm comparison between ''alert''\|''breaking''\|''flash'' and ''video'' is always false\.$#'
-			identifier: match.alwaysFalse
-			count: 1
-			path: src/Service/Editorial/ArticleContextService.php
-
-		-
-			message: '#^Method App\\Service\\Editorial\\ArticleIngestionService\:\:slugify\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/Editorial/ArticleIngestionService.php
-
-		-
-			message: '''
-				#^Call to method getSensitiveTopics\(\) of deprecated class App\\Service\\Editorial\\SensitiveTopicDetector\:
-				Sprint 49 — Check 1 now uses Topic\.isSensitive boolean \(ADR\-015\)\.
-				            Slug\-based matching remains as fallback for articles without topic tags\.
-				            Full removal planned Sprint 52 when all articles are topic\-tagged\.$#
-			'''
-			identifier: method.deprecatedClass
-			count: 1
-			path: src/Service/Editorial/AutoPublishGateService.php
-
-		-
-			message: '''
-				#^Call to method isSensitive\(\) of deprecated class App\\Service\\Editorial\\SensitiveTopicDetector\:
-				Sprint 49 — Check 1 now uses Topic\.isSensitive boolean \(ADR\-015\)\.
-				            Slug\-based matching remains as fallback for articles without topic tags\.
-				            Full removal planned Sprint 52 when all articles are topic\-tagged\.$#
-			'''
-			identifier: method.deprecatedClass
-			count: 1
-			path: src/Service/Editorial/AutoPublishGateService.php
-
-		-
-			message: '''
-				#^Parameter \$sensitiveTopicDetector of method App\\Service\\Editorial\\AutoPublishGateService\:\:__construct\(\) has typehint with deprecated class App\\Service\\Editorial\\SensitiveTopicDetector\:
-				Sprint 49 — Check 1 now uses Topic\.isSensitive boolean \(ADR\-015\)\.
-				            Slug\-based matching remains as fallback for articles without topic tags\.
-				            Full removal planned Sprint 52 when all articles are topic\-tagged\.$#
-			'''
-			identifier: parameter.deprecatedClass
-			count: 1
-			path: src/Service/Editorial/AutoPublishGateService.php
-
-		-
-			message: '#^Offset ''source'' on array\{id\: int, score\: float, source\: array\<string, mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/Editorial/BackgroundGeneratorService.php
-
-		-
-			message: '#^Offset ''id'' on array\{id\: int, score\: float, highlight\: array\<string, list\<string\>\>, source\: array\<string, mixed\>\} on left side of \?\? always exists and is not nullable\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: src/Service/Editorial/ConnectionDetectionService.php
-
-		-
-			message: '#^Method App\\Service\\Editorial\\DossierGenerationService\:\:buildDossierFrontmatter\(\) is unused\.$#'
-			identifier: method.unused
-			count: 1
-			path: src/Service/Editorial/DossierGenerationService.php
 
 		-
 			message: '#^Method App\\Service\\Elasticsearch\\ArticleSearchService\:\:buildSortArray\(\) has parameter \$sort with no value type specified in iterable type array\.$#'
@@ -3164,40 +2765,10 @@ parameters:
 			path: src/Service/LiveTextSportService.php
 
 		-
-			message: '#^Method App\\Service\\PressEmailParser\:\:buildContent\(\) has parameter \$paragraphs with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/PressEmailParser.php
-
-		-
-			message: '#^Method App\\Service\\PressEmailParser\:\:buildLead\(\) has parameter \$paragraphs with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/PressEmailParser.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between non\-empty\-list\<non\-empty\-string\> and array\{\} will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: src/Service/ScrapedContentCleaner.php
-
-		-
-			message: '#^Method App\\Service\\Scraping\\FrontmatterGenerator\:\:toYaml\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/Scraping/FrontmatterGenerator.php
-
-		-
 			message: '#^Method App\\Service\\Search\\SearchService\:\:formatResults\(\) has parameter \$data with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: src/Service/Search/SearchService.php
-
-		-
-			message: '#^Method App\\Service\\SeoResultProcessor\:\:process\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/SeoResultProcessor.php
 
 		-
 			message: '#^Method App\\Service\\SlugLookupService\:\:bulkValidate\(\) has parameter \$slugs with no value type specified in iterable type array\.$#'
@@ -3318,12 +2889,6 @@ parameters:
 			identifier: property.onlyWritten
 			count: 1
 			path: src/Service/YouTubeSyncService.php
-
-		-
-			message: '#^Method App\\Service\\ZohoMailService\:\:apiRequest\(\) has parameter \$options with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: src/Service/ZohoMailService.php
 
 		-
 			message: '#^Call to function is_array\(\) with array\<mixed\> will always evaluate to true\.$#'
@@ -3780,30 +3345,6 @@ parameters:
 			identifier: property.onlyWritten
 			count: 1
 			path: src/State/MenuItemProvider.php
-
-		-
-			message: '#^Class App\\State\\PressReleaseApproveProcessor implements generic interface ApiPlatform\\State\\ProcessorInterface but does not specify its types\: T1, T2$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/State/PressReleaseApproveProcessor.php
-
-		-
-			message: '#^Parameter \#1 \$processedBy of method App\\Entity\\PressRelease\:\:setProcessedBy\(\) expects App\\Entity\\User\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/State/PressReleaseApproveProcessor.php
-
-		-
-			message: '#^Class App\\State\\PressReleaseRejectProcessor implements generic interface ApiPlatform\\State\\ProcessorInterface but does not specify its types\: T1, T2$#'
-			identifier: missingType.generics
-			count: 1
-			path: src/State/PressReleaseRejectProcessor.php
-
-		-
-			message: '#^Parameter \#1 \$processedBy of method App\\Entity\\PressRelease\:\:setProcessedBy\(\) expects App\\Entity\\User\|null, Symfony\\Component\\Security\\Core\\User\\UserInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/State/PressReleaseRejectProcessor.php
 
 		-
 			message: '#^Generic type ApiPlatform\\State\\ProcessorInterface\<App\\Entity\\ShortLink\> in PHPDoc tag @implements does not specify all template types of interface ApiPlatform\\State\\ProcessorInterface\: T1, T2$#'

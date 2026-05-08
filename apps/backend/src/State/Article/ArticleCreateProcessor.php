@@ -9,9 +9,8 @@ use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Article;
 use App\Entity\Category;
 use App\Enum\ArticleStatus;
-use App\Event\ArticleAutoCreatedEvent;
 use App\Event\ArticlePublishedEvent;
-use App\Service\Editorial\CollectionSyncService;
+use App\Service\Article\CollectionSyncService;
 use Doctrine\ORM\EntityManagerInterface;
 use Gedmo\Translatable\Entity\Repository\TranslationRepository;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -83,11 +82,6 @@ final class ArticleCreateProcessor implements ProcessorInterface
         // Dispatch notification for new published articles
         if ($data->getStatus() === ArticleStatus::PUBLISHED) {
             $this->eventDispatcher->dispatch(new ArticlePublishedEvent($data));
-        }
-
-        // Dispatch notification if article was auto-created by agent
-        if ($data->getSourceEmail() !== null) {
-            $this->eventDispatcher->dispatch(new ArticleAutoCreatedEvent($data));
         }
 
         return $data;

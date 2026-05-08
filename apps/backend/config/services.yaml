@@ -235,11 +235,6 @@ services:
             $elasticsearchUrl: '%env(ELASTICSEARCH_HOST)%'
             $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
 
-    # Topic Seed Command
-    App\Command\SeedTopicsCommand:
-        arguments:
-            $projectDir: '%kernel.project_dir%'
-
     # Centralized Gemini CLI Service (replaces 18 duplicated Process calls)
     App\Service\Ai\Provider\GeminiCliService:
         arguments:
@@ -249,16 +244,6 @@ services:
     # ADR-024 D2 dispatcher — T57.P7.C1 adds Gemini-transport branch; needs
     # projectDir for GeminiCliService cwd option (agent-file resolution).
     App\Agent\AgentDispatcher:
-        arguments:
-            $projectDir: '%kernel.project_dir%'
-
-    # Topic Detector Service (uses GeminiCliService)
-    App\Service\TopicDetectorService:
-        arguments:
-            $projectDir: '%kernel.project_dir%'
-
-    # Batch Topic Classifier (uses GeminiCliService — Sprint 34)
-    App\Service\Topic\BatchTopicClassifier:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
@@ -272,16 +257,6 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
-    # SEO Optimization Handler (uses GeminiCliService)
-    App\MessageHandler\OptimizeSeoHandler:
-        arguments:
-            $projectDir: '%kernel.project_dir%'
-
-    # SEO Backfill Command (uses GeminiCliService batch)
-    App\Command\SeoBackfillCommand:
-        arguments:
-            $projectDir: '%kernel.project_dir%'
-
     # Elasticsearch Trilingual Index Manager (Sprint 16)
     App\Service\Search\ElasticsearchIndexManager:
         arguments:
@@ -292,36 +267,6 @@ services:
 
     # Gemini Structured Translator (uses GeminiCliService — Sprint 16)
     App\Service\Translation\GeminiStructuredTranslator: ~
-
-    # Scraping Services (Sprint 16)
-    App\Service\Scraping\RssFeedParser:
-        arguments:
-            $scrapingUserAgent: '%scraping.user_agent%'
-            $scrapingTimeout: '%scraping.timeout%'
-
-    App\Service\Scraping\ScraperService:
-        arguments:
-            $scrapingUserAgent: '%scraping.user_agent%'
-            $scrapingTimeout: '%scraping.timeout%'
-            $scrapingRateLimitDefault: '%scraping.rate_limit_default%'
-
-    # NotebookLM Service (Sprint 17 — AI Agents)
-    App\Service\NotebookLM\NotebookLMService:
-        arguments:
-            $enabled: '%notebooklm.enabled%'
-            $cliPath: '%notebooklm.cli_path%'
-
-    # Article Ingestion Service (uses GeminiCliService — Sprint 17)
-    App\Service\Editorial\ArticleIngestionService: ~
-
-    # Dossier Generation Service (uses GeminiCliService — Sprint 17)
-    App\Service\Editorial\DossierGenerationService: ~
-
-    # Weekly Summary Service (uses GeminiCliService — Sprint 17)
-    App\Service\Editorial\WeeklySummaryService: ~
-
-    # Daily Briefing Service (uses GeminiCliService — Sprint 17)
-    App\Service\Editorial\DailyBriefingService: ~
 
     # AI Newsroom: Anthropic API Client (for production with API key)
     App\Service\Ai\AnthropicApiClient:
@@ -348,17 +293,11 @@ services:
         arguments:
             $providers: !tagged_iterator ai.provider
 
-    # Internal Summary Service (uses GeminiCliService — Sprint 20)
-    App\Service\Editorial\InternalSummaryService: ~
-
     # Dev Reset Command (full dev environment reset)
-    App\Command\Editorial\DevResetCommand:
+    App\Command\Dev\DevResetCommand:
         arguments:
             $appEnv: '%kernel.environment%'
             $em: '@doctrine.orm.entity_manager'
-
-    # Background Generator Service (uses GeminiCliService — Sprint 20)
-    App\Service\Editorial\BackgroundGeneratorService: ~
 
     # Translation Evaluator Service (uses GeminiCliService — Sprint 18)
     App\Service\Translation\TranslationEvaluatorService: ~
@@ -367,60 +306,6 @@ services:
     App\Service\YouTubeSyncService:
         arguments:
             $youtubeApiKey: '%env(YOUTUBE_API_KEY)%'
-
-    # Zoho Mail Service (Press Email Fetcher)
-    App\Service\ZohoMailService:
-        arguments:
-            $zohoClientId: '%env(ZOHO_CLIENT_ID)%'
-            $zohoClientSecret: '%env(ZOHO_CLIENT_SECRET)%'
-            $zohoRefreshToken: '%env(ZOHO_REFRESH_TOKEN)%'
-            $zohoAccountId: '%env(ZOHO_ACCOUNT_ID)%'
-            $zohoInboxFolderId: '%env(ZOHO_INBOX_FOLDER_ID)%'
-            $zohoAccountsUrl: '%env(ZOHO_ACCOUNTS_URL)%'
-
-    # Aggregator Services (Sprint 24)
-    App\Service\Translation\AggregatorTranslationService: ~
-
-    App\Service\Aggregator\AggregatorRateLimiter:
-        arguments:
-            $aggregatorGoogleNewsLimiter: '@limiter.aggregator_google_news'
-
-    App\Service\Aggregator\ElasticsearchSimilarityService:
-        arguments:
-            $elasticsearchHost: '%env(ELASTICSEARCH_HOST)%'
-            $elasticsearchUser: '%env(ELASTICSEARCH_USER)%'
-            $elasticsearchPassword: '%env(ELASTICSEARCH_PASSWORD)%'
-            $elasticsearchVerifySsl: '%env(bool:ELASTICSEARCH_VERIFY_SSL)%'
-
-    App\Service\Aggregator\SemanticDeduplicatorService: ~
-
-    App\Service\Aggregator\GoogleNewsRssAggregator:
-        arguments:
-            $keywords: '%aggregator.google_news_rss.keywords%'
-            $locales: '%aggregator.google_news_rss.locales%'
-            $userAgents: '%aggregator.google_news_rss.user_agents%'
-            $enabled: '%aggregator.google_news_rss.enabled%'
-
-    # Source Content Cleaner Registry (Sprint 43 — per-source noise removal)
-    App\Service\Cleaning\SourceContentCleanerRegistry:
-        arguments:
-            $cleaners: !tagged_iterator app.source_content_cleaner
-
-    # Editorial guard pipeline (Sprint 55 T55.6). Iterates all
-    # services tagged `app.editorial_guard` (auto-tagged via
-    # App\Service\Editorial\Guard\GuardInterface attribute).
-    App\Service\Editorial\Guard\GuardPipeline:
-        arguments:
-            $guards: !tagged_iterator app.editorial_guard
-
-    App\Service\Editorial\Guard\GuardPipelineInterface:
-        alias: App\Service\Editorial\Guard\GuardPipeline
-
-    # Sprint 55 T55.16 LLM cost summary CLI was pinned to %kernel.logs_dir%
-    # for its grep-based MVP. T56.09 switched the command to DB-backed
-    # aggregation against LlmAgentCallLogRepository, so the explicit
-    # $logDir arg is no longer required — autowiring handles the repository
-    # injection directly.
 
 # Test environment specific configuration
 when@test:

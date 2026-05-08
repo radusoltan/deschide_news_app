@@ -24,7 +24,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
  * routes through {@see AgentDispatcher} via the Gemini transport branch shipped
  * in T57.P7.C1. This closes the last `LlmAgentCallLog` observability gap in the
  * support layer and brings translator invocations under the uniform
- * `editorial.emergency_halt` circuit breaker (ADR-022 D5 generalized by
+ * `agent.emergency_halt` circuit breaker (ADR-022 D5 generalized by
  * ADR-024 D2).
  *
  * Per-locale isolation is preserved. One `dispatcher->dispatch()` per target

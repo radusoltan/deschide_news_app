@@ -6,7 +6,7 @@ namespace App\Agent\Exception;
 
 /**
  * Thrown by {@see \App\Agent\AgentDispatcher::dispatch()} when the
- * `editorial.emergency_halt` AppSetting is `true` at dispatch time.
+ * `agent.emergency_halt` AppSetting is `true` at dispatch time.
  *
  * ADR-024 D2 generalizes the [[ADR-022]] D5 silent-ACK circuit breaker
  * (previously hardcoded in 5 MessageHandlers) to every agent invocation
@@ -37,7 +37,7 @@ final class EmergencyHaltException extends \RuntimeException
     ) {
         parent::__construct(
             sprintf(
-                'editorial.emergency_halt is active — dispatch for agent "%s" refused.',
+                'agent.emergency_halt is active — dispatch for agent "%s" refused.',
                 $agentId,
             ),
             previous: $previous,

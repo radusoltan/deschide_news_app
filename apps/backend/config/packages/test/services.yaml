@@ -6,9 +6,3 @@ services:
 
     # Completely remove rate limiter for tests
     App\EventSubscriber\RateLimiterSubscriber: ~
-
-    # T55.8 / T55.18 — EscalationClassifier is consumed only by VerifyClaimMessageHandler
-    # in prod, so Symfony's compiler inlines it. The empirical test needs direct access
-    # via the test container → expose explicitly as public.
-    App\Service\Editorial\Escalation\EscalationClassifier:
-        public: true
