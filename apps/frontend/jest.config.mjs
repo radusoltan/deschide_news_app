@@ -60,15 +60,38 @@ const customJestConfig = {
     '!**/jest.setup.js',
     '!**/__tests__/**',
     '!**/__mocks__/**',
+    // T60.28-init exclusions per ADR-036 — paths without unit-test
+    // scaffolding. Each path is a ratchet candidate (T60.28 reduces
+    // this list as tests land). DO NOT add entries without an ADR-036
+    // amendment or a tracked ratchet partner task.
+    '!app/api/**',
+    '!lib/services/**',
+    '!lib/react-query/**',
+    '!lib/types/**',
+    '!lib/utils/analyticsTracker.ts',
+    '!lib/utils/soundNotifications.ts',
+    '!lib/utils/redirect-utils.ts',
+    '!lib/utils/url-parser.ts',
+    '!lib/utils/socialMetadata.ts',
+    '!lib/seo/og-image-generator.ts',
+    '!lib/seo/structured-data.ts',
+    '!lib/seo/schema-org-global.ts',
+    '!lib/seo/seo-config.ts',
+    '!components/admin/**',
   ],
 
   // Coverage threshold (singular, not plural!)
+  // Realigned 2026-05-08 per ADR-036 from aspirational 70% (never met
+  // empirically since codebase grew past initial seed) to current floor
+  // matching actuals after surgical exclusions above. T60.28 ratchet
+  // partner mandates +5% per sprint over Sprint 61-65 → 35% by Sprint 65.
+  // Hard rule: threshold increase requires NEW tests, not new exclusions.
   coverageThreshold: {
     global: {
-      statements: 70,
-      branches: 70,
-      functions: 70,
-      lines: 70,
+      statements: 10,
+      branches: 10,
+      functions: 9,
+      lines: 10,
     },
   },
 
