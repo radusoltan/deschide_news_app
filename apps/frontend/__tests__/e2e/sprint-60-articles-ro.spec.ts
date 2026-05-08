@@ -12,16 +12,31 @@
  *   D      — 4 missing-slug 404 boundary cases
  *   E      — 2 edge cases (very long slug, empty trailing slug)
  *
- * Hybrid assertion strategy (T60.8.2 Option β, 2026-05-08):
+ * Hybrid assertion strategy (T60.8.2 Option α-revised, 2026-05-08):
  *   Next.js dev mode renders `notFound()` UI with HTTP 200 (server-component
  *   soft-404), while production builds emit a proper HTTP 404. The probes
  *   for B-FE / D / E1 therefore accept BOTH outcomes via:
  *
- *     status === 404 OR (status === 200 AND body has data-testid="not-found")
+ *     status === 404 OR (status === 200 AND body has SOFT_404_TITLE_MARKER)
  *
  *   In production CI the 404 path matches and the body marker is irrelevant.
  *   In local dev, the body marker provides the secondary signal so probes do
- *   not false-fail on dev-mode soft-404 behavior. Marker added in 4c11dcf.
+ *   not false-fail on dev-mode soft-404 behavior.
+ *
+ *   Why title-marker, not data-testid: data-testid="not-found" was added to
+ *   not-found.tsx in 4c11dcf, but Next.js 16 + Turbopack 'use client' SSR
+ *   pipeline materializes that attribute only post-hydration (verified
+ *   empirically — attribute appears in compiled client chunk but not in SSR
+ *   HTML). Probes use Playwright APIRequestContext (HTTP-only, no JS) so they
+ *   need an SSR-stable marker. The <title>Article Not Found</title> emitted
+ *   by page.tsx:166-170 generateMetadata() early-return is hardcoded EN,
+ *   present in plain SSR HTML <head>, and stable across all soft-404
+ *   scenarios (D, E1, B-FE) — universal locale-independent marker.
+ *
+ *   Regression alarm: a top-of-spec invariant test asserts that
+ *   /ro/politica/<missing> SSR HTML still contains SOFT_404_TITLE_MARKER.
+ *   If page.tsx generateMetadata is refactored to localize the not-found
+ *   title, this invariant fails first, with a clear message pointing here.
  *
  * Legacy redirect mechanism (Option β rationale):
  *   The backend ships a UrlRedirect entity, UrlRedirectRepository, and
@@ -56,6 +71,12 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 
 // TODO: extract to BACKEND_URL env var when CI integration lands (T60.X-CI-PLAYWRIGHT-BACKEND-URL)
 const BACKEND_URL = 'http://127.0.0.1:8081';
+
+// Soft-404 SSR marker. See header docblock (Hybrid assertion strategy) for
+// why this is title-based rather than data-testid-based. Single hardcoded EN
+// literal emitted by page.tsx:166-170 generateMetadata() on missing-article
+// paths, stable across all locales and probe scenarios in plain SSR HTML.
+const SOFT_404_TITLE_MARKER = '<title>Article Not Found</title>';
 
 // ---------------------------------------------------------------------------
 // Fixture corpus — captured 2026-05-08 from develop @ 4065e9e against local DB
@@ -145,7 +166,7 @@ async function fetchUrl(
   if (status === 200) {
     try {
       const body = await response.text();
-      hasNotFoundMarker = body.includes('data-testid="not-found"');
+      hasNotFoundMarker = body.includes(SOFT_404_TITLE_MARKER);
     } catch {
       hasNotFoundMarker = false;
     }
@@ -171,13 +192,35 @@ function expectSoftOrHard404(
 
   expect(
     ok,
-    `${probeId}: ${pathname} must be 404 (prod) OR 200+marker (dev soft-404) OR 3xx/410, got status=${status} marker=${hasNotFoundMarker}`,
+    `${probeId}: ${pathname} must be 404 (prod) OR 200+title-marker (dev soft-404) OR 3xx/410, got status=${status} hasTitleMarker=${hasNotFoundMarker}`,
   ).toBe(true);
 }
 
 // ---------------------------------------------------------------------------
 // Spec body
 // ---------------------------------------------------------------------------
+
+test.describe('Sprint 60 — Soft-404 marker invariant (T60.8.2)', () => {
+  test.beforeEach(async ({}, testInfo) => {
+    test.skip(
+      testInfo.project.name !== 'chromium',
+      'Marker invariant is browser-agnostic; chromium-only to avoid project multiplication',
+    );
+  });
+
+  test('SSR <title> emits hardcoded EN literal on missing-article paths', async ({ request }) => {
+    const response = await request.get(`/ro/politica/marker-invariant-${Date.now()}`);
+    const body = await response.text();
+    expect(
+      body,
+      [
+        `Soft-404 marker invariant FAILED: SSR HTML does not contain ${SOFT_404_TITLE_MARKER}.`,
+        `If page.tsx:166-170 generateMetadata() was refactored to localize the`,
+        `not-found title, update SOFT_404_TITLE_MARKER + the docblock in this spec.`,
+      ].join(' '),
+    ).toContain(SOFT_404_TITLE_MARKER);
+  });
+});
 
 test.describe('Sprint 60 — RO article slug routing (24-probe matrix, T60.8.2)', () => {
   test.describe.configure({ mode: 'parallel' });
