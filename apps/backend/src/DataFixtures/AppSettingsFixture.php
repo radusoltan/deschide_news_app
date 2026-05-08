@@ -32,8 +32,10 @@ class AppSettingsFixture extends Fixture implements FixtureGroupInterface
         // CLI post-T60.X. Quality-confirmed for RO↔EN↔RU. Timeout headroom
         // accommodates long-form articles + per-locale call pattern that
         // avoids the Gemini 64KB output ceiling.
+        // Note: `agent.journalistic_translator.enabled` was dropped post-review —
+        // had zero consumers (TierResolver::isEnabled() never wired to the dispatch
+        // path). Re-introduce only when there's a code path that reads it.
         'agent.journalistic_translator.model_tier' => 'gemini_flash',
-        'agent.journalistic_translator.enabled' => 'true',
         'agent.journalistic_translator.timeout_seconds' => '300',
     ];
 

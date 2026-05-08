@@ -57,18 +57,6 @@ framework:
                     multiplier: 3
                     max_delay: 60000
 
-            # AI processing transport — dedicated queue with generous retries
-            # for Gemini CLI calls (translation primary use post-T60.X nuke)
-            ai_async:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: ai_async
-                retry_strategy:
-                    max_retries: 3
-                    delay: 5000
-                    multiplier: 3
-                    max_delay: 120000
-
         routing:
             # Route your messages to the transports
 
@@ -84,9 +72,13 @@ framework:
             # Short link analytics (async for fast redirects)
             'App\Message\ShortLinkClickMessage': async
 
-            # Translation: routed to ai_async (Gemini CLI subprocess)
-            'App\Message\TranslateArticleMessage': ai_async
-            'App\Message\TranslateEntityMessage': ai_async
+            # Translation default routing — NORMAL priority transport.
+            # TranslationPriorityDispatcher overrides via TransportNamesStamp
+            # to route CRITICAL/URGENT/HIGH messages to their priority queues;
+            # raw bus->dispatch() callers (RssFeedImporter, TranslationController)
+            # fall back to NORMAL via this default.
+            'App\Message\TranslateArticleMessage': translations
+            'App\Message\TranslateEntityMessage': translations
 
             # Batch translation scheduling (processed by TranslatePendingBatchHandler)
             'App\Message\TranslatePendingBatch': async

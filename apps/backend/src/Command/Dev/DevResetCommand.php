@@ -337,7 +337,6 @@ final class DevResetCommand extends Command
                 'tags' => (int) $conn->fetchOne('SELECT COUNT(*) FROM tags'),
                 'menu_items' => (int) $conn->fetchOne('SELECT COUNT(*) FROM menu_items'),
                 'articles' => (int) $conn->fetchOne('SELECT COUNT(*) FROM articles'),
-                'press_releases' => (int) $conn->fetchOne('SELECT COUNT(*) FROM press_releases'),
             ];
 
             $io->section('Entity Counts');
