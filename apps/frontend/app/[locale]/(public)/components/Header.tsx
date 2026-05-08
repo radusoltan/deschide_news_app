@@ -23,10 +23,26 @@ interface DarkModeToggleProps {
 }
 
 function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
-  // Initial state must match SSR output to avoid hydration mismatch.
-  // localStorage is read in useEffect after hydration completes.
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
-  const [mounted, setMounted] = useState(false)
+  // Lazy useState init reads localStorage on the client first render,
+  // so React 19 strict-mode does not flag a synchronous setState inside
+  // useEffect (react-hooks/set-state-in-effect). The icon path will
+  // legitimately differ between SSR ('system') and the client first
+  // render (whatever localStorage holds); suppressHydrationWarning on
+  // the button is the documented escape hatch for this exact pattern,
+  // already used on <html> in app/[locale]/layout.tsx alongside the
+  // anti-flash inline script that pre-applies data-theme.
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
+    if (typeof window === 'undefined') {
+      return 'system'
+    }
+    try {
+      const stored = window.localStorage.getItem('theme-preference')
+      if (stored === 'light' || stored === 'dark' || stored === 'system') {
+        return stored
+      }
+    } catch { /* ignore */ }
+    return 'system'
+  })
 
   const applyTheme = useCallback((nextTheme: 'light' | 'dark' | 'system') => {
     if (typeof document === 'undefined') {
@@ -55,22 +71,8 @@ function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
   }, [])
 
   useEffect(() => {
-    let saved: 'light' | 'dark' | 'system' = 'system'
-    try {
-      const stored = window.localStorage.getItem('theme-preference')
-      if (stored === 'light' || stored === 'dark' || stored === 'system') {
-        saved = stored
-      }
-    } catch { /* ignore */ }
-    setTheme(saved)
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (mounted) {
-      applyTheme(theme)
-    }
-  }, [applyTheme, theme, mounted])
+    applyTheme(theme)
+  }, [applyTheme, theme])
 
   const cycleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
@@ -95,6 +97,7 @@ function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
       className={`flex items-center justify-center min-h-[44px] min-w-[44px] text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] dark:focus:ring-offset-[var(--color-surface-dark)] rounded-sm ${compact ? 'px-2' : 'px-3'}`}
       aria-label={`Current theme: ${theme}. Click to cycle between light, dark, and system themes.`}
       title={`Theme: ${theme}`}
+      suppressHydrationWarning
     >
       {theme === 'light' && (
         <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

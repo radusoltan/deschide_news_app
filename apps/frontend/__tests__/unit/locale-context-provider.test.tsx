@@ -12,7 +12,7 @@
  * identical to the SSR-primed initialData.
  */
 
-import React, { act } from 'react';
+import React, { act, useEffect } from 'react';
 import { render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
@@ -83,9 +83,11 @@ describe('LocaleContextProvider — shallow-equal short-circuit', () => {
     let renderCount = 0;
 
     function Probe() {
-      renderCount += 1;
       const ctx = useLocaleContext();
-      capturedSetLocaleContext = ctx.setLocaleContext;
+      useEffect(() => {
+        renderCount += 1;
+        capturedSetLocaleContext = ctx.setLocaleContext;
+      });
       return <span>{ctx.context}</span>;
     }
 
@@ -115,9 +117,11 @@ describe('LocaleContextProvider — shallow-equal short-circuit', () => {
     let renderCount = 0;
 
     function Probe() {
-      renderCount += 1;
       const ctx = useLocaleContext();
-      capturedSetLocaleContext = ctx.setLocaleContext;
+      useEffect(() => {
+        renderCount += 1;
+        capturedSetLocaleContext = ctx.setLocaleContext;
+      });
       return <span>{ctx.context}</span>;
     }
 
@@ -144,9 +148,11 @@ describe('LocaleContextProvider — shallow-equal short-circuit', () => {
     let renderCount = 0;
 
     function Probe() {
-      renderCount += 1;
       const ctx = useLocaleContext();
-      captured = { reset: ctx.resetLocaleContext };
+      useEffect(() => {
+        renderCount += 1;
+        captured = { reset: ctx.resetLocaleContext };
+      });
       return null;
     }
 
