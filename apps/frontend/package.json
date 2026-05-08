@@ -96,6 +96,10 @@
     "typescript": "^5.9.3"
   },
   "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp",
+      "unrs-resolver"
+    ],
     "overrides": {
       "dompurify": ">=3.3.3"
     }
