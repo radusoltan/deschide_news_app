@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
+    <div data-testid="not-found" className="flex min-h-[50vh] flex-col items-center justify-center px-4">
       <h1 className="mb-4 text-4xl font-display font-bold">404</h1>
       <p className="mb-6 max-w-md text-center text-xl">
         Pagina căutată nu a fost găsită.

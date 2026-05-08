@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 export default function ArticleNotFound() {
   return (
-    <main id="content">
+    <main id="content" data-testid="not-found">
       <div className="bg-surface-sunken py-12">
         <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
           <div className="flex flex-col items-center justify-center min-h-[500px]">

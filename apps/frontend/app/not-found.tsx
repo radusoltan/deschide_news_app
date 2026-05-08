@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-sunken px-4">
+    <div data-testid="not-found" className="min-h-screen flex items-center justify-center bg-surface-sunken px-4">
       <div className="max-w-lg w-full text-center">
         {/* 404 Illustration */}
         <div className="mb-8">
