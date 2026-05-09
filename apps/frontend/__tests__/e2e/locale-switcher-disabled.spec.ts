@@ -53,13 +53,23 @@ const TRILINGUAL_ARTICLE = {
 // Tooltip text from messages/ro.json:12 (languageSwitcher.notTranslated)
 const TOOLTIP_RO = 'Articolul nu este tradus în această limbă';
 
-// Mobile Chrome viewport hides desktop LangSwitcher behind hamburger menu.
-// Reused pattern from Phase 3.2-impl-3 (sprint-59-i18n.spec.ts).
-function skipMobileChromeForClick(testInfo: TestInfo): void {
+// Hybrid soft-404 marker — dev-mode tolerance for Next.js notFound() emitting
+// HTTP 200 instead of 404. Constant duplicated from sprint-60-articles-ro.spec.ts
+// (Phase 2.7); both files use the same marker. Consolidation into a shared util
+// is TBD post-Sprint 60 if more specs adopt the pattern.
+const SOFT_404_TITLE_MARKER = '<title>Article Not Found</title>';
+
+// Mobile Chrome (Pixel 5 viewport, 393×851) hides the desktop LangSwitcher
+// behind a hamburger menu — element resolves in DOM but display:none at
+// mobile breakpoint blocks BOTH click and hover (Phase 5 TSK-692 surfaced
+// the hover case after Phase 3.2-impl-3 introduced this helper for click).
+// Reused pattern from sprint-59-i18n.spec.ts (renamed in commit a6ec5cd).
+function skipMobileChromeForVisibility(testInfo: TestInfo): void {
   test.skip(
     testInfo.project.name === 'Mobile Chrome',
     'Mobile Chrome (Pixel 5) hides desktop LangSwitcher behind hamburger menu. ' +
-    'Click-based tests need a mobile-menu fixture (T60.X-MOBILE-MENU-LANGSWITCHER-E2E).',
+    'Click + hover both require visibility. ' +
+    'Backlog: T60.X-MOBILE-MENU-LANGSWITCHER-E2E.',
   );
 }
 
@@ -119,7 +129,7 @@ test.describe('TSK-692 — LangSwitcher disabled-state regression guard', () => 
     page,
     context,
   }, testInfo) => {
-    skipMobileChromeForClick(testInfo);
+    skipMobileChromeForVisibility(testInfo);
     await page.goto(RO_ONLY_FULL_URL, { waitUntil: 'domcontentloaded' });
     const urlBefore = page.url();
 
@@ -128,11 +138,18 @@ test.describe('TSK-692 — LangSwitcher disabled-state regression guard', () => 
     const cookiesBefore = await context.cookies();
     const localeCookieBefore = cookiesBefore.find((c) => c.name === 'NEXT_LOCALE')?.value ?? null;
 
+    // dispatchEvent('click') bypasses Playwright's aria-disabled enablement check.
+    // Tests the assertion intent: "if a click event reaches the handler,
+    // does anything bad happen?" — exactly the ADR-028 D4 contract surface.
+    // .click({ force: true }) would also bypass visibility checks, which would
+    // overshoot the assertion scope (we want to test handler behavior, not
+    // visual accessibility shortcomings).
     const enDisabled = page.locator('[data-testid="locale-switch-en-disabled"]');
-    await enDisabled.click();
+    await enDisabled.dispatchEvent('click');
+
     // Allow any in-flight handlers a beat to misbehave; if there's a regression
     // it would manifest as URL change or cookie write within this window.
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(500);
 
     expect(page.url(), 'Step 6: URL must not change after clicking disabled span').toBe(urlBefore);
 
@@ -150,7 +167,8 @@ test.describe('TSK-692 — LangSwitcher disabled-state regression guard', () => 
 
   test('Step 7: hover on EN disabled span captures screenshot for visual evidence', async ({
     page,
-  }) => {
+  }, testInfo) => {
+    skipMobileChromeForVisibility(testInfo);
     await page.goto(RO_ONLY_FULL_URL, { waitUntil: 'domcontentloaded' });
     const enDisabled = page.locator('[data-testid="locale-switch-en-disabled"]');
     await expect(enDisabled).toHaveCount(1);
@@ -162,23 +180,39 @@ test.describe('TSK-692 — LangSwitcher disabled-state regression guard', () => 
     console.log(`[Step 7] hover screenshot saved: ${screenshotPath}`);
   });
 
-  test('Step 8: direct URL /en/<ro-only-slug> returns HTTP 404 (ADR-027 locale gate)', async ({
+  test('Step 8: direct URL /en/<ro-only-slug> returns 404 (ADR-027 locale gate, hybrid)', async ({
     request,
   }) => {
     // HTTP-only — uses request fixture so this passes on webkit / Mobile Safari
     // even when their browser binaries fail to launch on WSL2.
+    //
+    // Hybrid assertion (Phase 2.7 pattern): Next.js dev mode renders notFound()
+    // with HTTP 200 (server-component soft-404) while production emits proper
+    // 404. Accept either:
+    //   - status === 404 (production CI), OR
+    //   - status === 200 AND body contains <title>Article Not Found</title>
+    //     (dev-mode soft-404; the ADR-027 locale gate is firing correctly,
+    //     just the dev runtime emits 200 + not-found UI).
     const enUrl = `/en/${RO_ONLY_ARTICLE.category}/${RO_ONLY_ARTICLE.slug}`;
     const response = await request.get(enUrl, { failOnStatusCode: false });
+    const status = response.status();
+    let body = '';
+    if (status === 200) {
+      body = await response.text();
+    }
+    const isHard404 = status === 404;
+    const isSoftDevMode = status === 200 && body.includes(SOFT_404_TITLE_MARKER);
     expect(
-      response.status(),
-      `Step 8: ADR-027 locale gate — /en/<ro-only-slug> must return 404, got ${response.status()}`,
-    ).toBe(404);
+      isHard404 || isSoftDevMode,
+      `Step 8: ADR-027 locale gate — expected 404 (prod) OR 200+title-marker (dev soft-404), ` +
+      `got status=${status} hasMarker=${body.includes(SOFT_404_TITLE_MARKER)}`,
+    ).toBe(true);
   });
 
   test('Step 9: trilingual article cross-check — all 3 locale switches enabled with distinct hrefs', async ({
     page,
   }, testInfo) => {
-    skipMobileChromeForClick(testInfo);
+    skipMobileChromeForVisibility(testInfo);
     const trilingualUrl =
       `${BASE_URL}/ro/${TRILINGUAL_ARTICLE.category}/${TRILINGUAL_ARTICLE.slugs.ro}`;
     await page.goto(trilingualUrl, { waitUntil: 'domcontentloaded' });
