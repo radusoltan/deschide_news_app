@@ -45,8 +45,12 @@ readonly SMOKE_ARTICLE_ID=7
 readonly SMOKE_ARTICLE_SLUG="datele-despre-accidentele-rutiere-din-moldova-vor-fi-centralizate-intr-un-registru-unic"
 readonly SMOKE_ARTICLE_CATEGORY="politica"
 
-readonly BACKEND_URL="http://127.0.0.1:8081"
-readonly FRONTEND_URL="http://127.0.0.1:3005"
+# URL constants — intentionally NOT readonly to allow .env.local override
+# (smoke sources .env.local for credentials; if it also defines FRONTEND_URL/
+# BACKEND_URL, bash abort on readonly conflict would skip credentials defined
+# later in the file).
+BACKEND_URL="${BACKEND_URL:-http://127.0.0.1:8081}"
+FRONTEND_URL="${FRONTEND_URL:-http://127.0.0.1:3005}"
 
 readonly LOG_DIR="/tmp"
 readonly LOG_FILE="${LOG_DIR}/t60-10-baseline-$(date +%Y%m%d-%H%M%S).log"
