@@ -37,6 +37,60 @@ set -uo pipefail
 #   bash apps/backend/bin/smoke/t60-10-cache-invalidation.sh
 # ============================================================================
 
+# ============================================================================
+# === ARCHITECTURAL BASELINE (Phase 4-β closure 2026-05-09) ===
+# ============================================================================
+# Despite the bootstrap blocker (next section), this smoke harness captures
+# the empirical mutation path map for future Phase 4 reuse:
+#
+#   Mutation surface       → POST /api/admin/articles/{id}/{archive,unarchive}
+#                            (admin_article_archive route, controller
+#                            Admin/ArticleArchiveController, ROLE_ADMIN guard)
+#   Cache invalidation    → manual via cache:pool:invalidate-tags + POST
+#                            /api/revalidate
+#   Frontend revalidate   → /api/revalidate (FRONTEND_REVALIDATE_SECRET-gated)
+#   Identified gaps       → no Doctrine listener bridge,
+#                           no Messenger handler,
+#                           no backend HttpClient call to /api/revalidate
+#                           = mutation does NOT auto-bust cache
+#
+# Reusable smoke flow when bootstrap stabilizes: pre-state → mutation
+# → post-mutation (expect no delta, documenting gap) → manual baseline
+# (proves infra works) → cleanup (unarchive).
+# ============================================================================
+
+# ============================================================================
+# === KNOWN BOOTSTRAP BLOCKER (Phase 4-β closure 2026-05-09) ===
+# ============================================================================
+# This smoke is currently NOT runnable end-to-end in the dev environment.
+# Reasons surfaced through Phase 4-β iterations:
+#
+#   (1) CLAUDE.md Rule 2 references ADMIN_EMAIL + ADMIN_PASSWORD env vars
+#       for /api/login_check authentication. Empirical Phase 4-β-discovery-3
+#       confirmed neither variable exists in apps/backend/.env.local nor
+#       apps/backend/.env. CLAUDE.md guidance is stale post-NUKE-EDITORIAL.
+#
+#   (2) Memory-referenced fixture admin user ("canonical dev seed user is
+#       admin, confirmed 2026-04-26") was expected in app_users table.
+#       Phase 4-β-discovery-4-retry confirmed: app_users TABLE DOES NOT
+#       EXIST in current dev database schema. Schema rearchitected
+#       post-NUKE; user table likely renamed or the fixture mechanism
+#       moved to non-DB storage.
+#
+# Until a sprint wires admin user + auth fixture + cache invalidation
+# bridge (T60.X-T60.10-SMOKE-FIXTURE-PREREQ), this smoke captures
+# architectural intent only. The script is reusable as-is once auth
+# bootstrap path stabilizes.
+#
+# Backlog flags surfaced from Phase 4 architectural baseline:
+#   - T60.X-WIRE-CACHE-INVALIDATION-ON-MUTATION (no Doctrine listener,
+#     no Messenger handler, no backend HttpClient call to /api/revalidate)
+#   - T60.X-CACHE-POOL-ORPHAN-AUDIT (deschide.cache pool declared but
+#     zero consumer code references in src/ or tests/)
+#   - T60.X-T60.10-SMOKE-FIXTURE-PREREQ (admin auth fixture rebuild)
+#   - T60.X-CLAUDE-MD-AUTH-DOC-REFRESH (CLAUDE.md Rule 2 stale post-NUKE)
+# ============================================================================
+
 # ----------------------------------------------------------------------------
 # Configuration (smoke target — captured Phase 4-β-discovery-2)
 # ----------------------------------------------------------------------------
@@ -79,6 +133,19 @@ section "T60.10 cache invalidation smoke — $(date -Iseconds)"
 log "Target article: id=${SMOKE_ARTICLE_ID} category=${SMOKE_ARTICLE_CATEGORY} slug=${SMOKE_ARTICLE_SLUG:0:50}…"
 log "Backend: ${BACKEND_URL}  |  Frontend: ${FRONTEND_URL}"
 log "Log file: ${LOG_FILE}"
+
+# ----------------------------------------------------------------------------
+# Bootstrap blocker guard (Phase 4-β F4 closure)
+# ----------------------------------------------------------------------------
+# See ARCHITECTURAL BASELINE + KNOWN BOOTSTRAP BLOCKER docblocks at top of file.
+# Until T60.X-T60.10-SMOKE-FIXTURE-PREREQ wires admin fixture + correct cache
+# invalidation, the script exits early with EX_CONFIG (78 per sysexits.h) so
+# operators / CI distinguish "configuration-incomplete" from clean success.
+# Remove this guard once admin fixture is restored and credentials/auth
+# bootstrap path is empirically validated via narrow probe.
+log "[BOOTSTRAP-BLOCKER] Smoke not runnable in current dev state. See docblock for details."
+log "[BOOTSTRAP-BLOCKER] T60.X-T60.10-SMOKE-FIXTURE-PREREQ tracks remediation."
+exit 78  # EX_CONFIG: configuration error per sysexits.h
 
 # Auth bootstrap — A2 first (env vars), A1 fallback (.env.local source)
 if [[ -z "${ADMIN_EMAIL:-}" || -z "${ADMIN_PASSWORD:-}" ]]; then
