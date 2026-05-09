@@ -173,8 +173,13 @@ test.describe('TSK-692 — LangSwitcher disabled-state regression guard', () => 
     await expect(enDisabled).toHaveCount(1);
 
     // Capture pre-hover state baselines for inert-hover assertion.
+    // Use the LangSwitcher's accessibility-named navigation as the DOM
+    // mutation scope — narrower than <header> (the article page renders
+    // two <header> elements: site banner + article-page header), and ties
+    // the assertion to the LangSwitcher's a11y contract per ADR-028.
+    const langSwitcher = page.getByRole('navigation', { name: 'Switch language' });
     const initialUrl = page.url();
-    const initialHeaderHtml = await page.locator('header').innerHTML();
+    const initialDomSnapshot = await langSwitcher.innerHTML();
     const consoleErrors: string[] = [];
     page.on('console', (msg) => {
       if (msg.type() === 'error') consoleErrors.push(msg.text());
@@ -196,9 +201,9 @@ test.describe('TSK-692 — LangSwitcher disabled-state regression guard', () => 
     // Inert-hover contract:
     expect(page.url(), 'Step 7: URL must not change on disabled span hover').toBe(initialUrl);
     expect(
-      await page.locator('header').innerHTML(),
-      'Step 7: <header> DOM must not mutate on disabled span hover',
-    ).toBe(initialHeaderHtml);
+      await langSwitcher.innerHTML(),
+      'Step 7: LangSwitcher DOM must not mutate on disabled span hover',
+    ).toBe(initialDomSnapshot);
     expect(consoleErrors, `Step 7: no console errors during hover window — got ${consoleErrors.join(' | ')}`).toHaveLength(0);
   });
 
