@@ -69,8 +69,7 @@
 
 import { test, expect, type APIRequestContext } from '@playwright/test';
 
-// TODO: extract to BACKEND_URL env var when CI integration lands (T60.X-CI-PLAYWRIGHT-BACKEND-URL)
-const BACKEND_URL = 'http://127.0.0.1:8081';
+const BACKEND_URL = process.env.BACKEND_URL ?? 'http://127.0.0.1:8081';
 
 // Soft-404 SSR marker. See header docblock (Hybrid assertion strategy) for
 // why this is title-based rather than data-testid-based. Single hardcoded EN
