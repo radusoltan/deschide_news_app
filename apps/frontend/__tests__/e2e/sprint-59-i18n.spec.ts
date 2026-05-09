@@ -620,6 +620,21 @@ test.describe('Sprint 60 — LangSwitcher gap-fill (T60.9)', () => {
 
   test('RO → EN article switch: no flash of mismatched locale', async ({ page }, testInfo) => {
     skipMobileChromeForVisibility(testInfo);
+
+    // CRITICAL: attach console listener BEFORE any navigation so initial-load
+    // hydration errors during the RO render are captured (per Phase 1 Agent 3
+    // MAJOR #3). Earlier version attached the listener after articleRouteWorks
+    // had already navigated → only post-click transition errors were seen.
+    // Hydration / locale mismatch warnings are the regression signals we are
+    // guarding against (T60.15 SSR prime + LocaleContextSetter pre-hydration
+    // href correctness).
+    const consoleErrors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+
     const roUrl = articleUrl(
       'ro',
       ARTICLE_TRILINGUAL_ID4.category,
@@ -635,16 +650,6 @@ test.describe('Sprint 60 — LangSwitcher gap-fill (T60.9)', () => {
       );
       return;
     }
-
-    // Capture console errors emitted during the transition. Hydration / locale
-    // mismatch warnings are the regression signals we are guarding against
-    // (T60.15 SSR prime + LocaleContextSetter pre-hydration href correctness).
-    const consoleErrors: string[] = [];
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
-      }
-    });
 
     // Settle initial SSR + hydration before asserting RO baseline. networkidle
     // is also the cold-start insurance referenced in the search test above.

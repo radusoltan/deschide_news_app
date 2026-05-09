@@ -4,7 +4,12 @@
  * Scenario source: .claude/commands/pw-test-locale-switcher-disabled.md
  * Notion task: 3534b6d1-296e-8157-9bca-cfc76ff61173
  * ADRs: 027 (locale gate 404) + 028 (Unified Locale URL Builder D4)
- *      + 029 (SSR locale context prime)
+ *      + 030 (SSR locale context priming)
+ *
+ * NB: Commit a6ea64c body contains historical "ADR-029 (SSR locale context
+ * prime)" reference (corrected here to ADR-030 per Phase 1 review BLOCKER).
+ * Commit history is immutable per --no-ff convention; corrected breadcrumb
+ * lives in this docblock.
  *
  * Partial overlap with sprint-59-i18n.spec.ts (Tests 1, 2, 5, 10).
  * Coexistence intentional: this spec asserts the complete 11-step scenario;
@@ -159,19 +164,42 @@ test.describe('TSK-692 — LangSwitcher disabled-state regression guard', () => 
     ).toBe(localeCookieBefore);
   });
 
-  test('Step 7: hover on EN disabled span captures screenshot for visual evidence', async ({
+  test('Step 7: hover on EN disabled span — observably inert (no nav, no DOM mutation, no console errors)', async ({
     page,
   }, testInfo) => {
     skipMobileChromeForVisibility(testInfo);
     await page.goto(RO_ONLY_FULL_URL, { waitUntil: 'domcontentloaded' });
     const enDisabled = page.locator('[data-testid="locale-switch-en-disabled"]');
     await expect(enDisabled).toHaveCount(1);
+
+    // Capture pre-hover state baselines for inert-hover assertion.
+    const initialUrl = page.url();
+    const initialHeaderHtml = await page.locator('header').innerHTML();
+    const consoleErrors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') consoleErrors.push(msg.text());
+    });
+
     await enDisabled.hover();
 
+    // Capture screenshot for human-in-the-loop visual evidence (cursor change,
+    // tooltip render, opacity state). Path surfaced in test runner output.
     const screenshotPath = '/tmp/tsk-692-en-disabled-hover.png';
     await page.screenshot({ path: screenshotPath, fullPage: false });
-    // Surface path in the test runner output for human verification.
     console.log(`[Step 7] hover screenshot saved: ${screenshotPath}`);
+
+    // Wait short window for any hover-triggered side effects to manifest in
+    // URL, DOM, or console — a regression in tooltip/hover handler that
+    // navigates / mutates / errors would surface within this budget.
+    await page.waitForTimeout(1000);
+
+    // Inert-hover contract:
+    expect(page.url(), 'Step 7: URL must not change on disabled span hover').toBe(initialUrl);
+    expect(
+      await page.locator('header').innerHTML(),
+      'Step 7: <header> DOM must not mutate on disabled span hover',
+    ).toBe(initialHeaderHtml);
+    expect(consoleErrors, `Step 7: no console errors during hover window — got ${consoleErrors.join(' | ')}`).toHaveLength(0);
   });
 
   test.skip('Step 8: ADR-027 locale gate — direct /en/<ro-only-slug> behavior', async () => {
@@ -259,7 +287,8 @@ test.describe('TSK-692 — LangSwitcher disabled-state regression guard', () => 
     ).toBe(true);
   });
 
-  test('Step 11: keyboard Tab order skips disabled spans (a11y)', async ({ page }) => {
+  test('Step 11: keyboard Tab order skips disabled spans (a11y)', async ({ page }, testInfo) => {
+    skipMobileChromeForVisibility(testInfo);
     await page.goto(RO_ONLY_FULL_URL, { waitUntil: 'domcontentloaded' });
     // Allow focus state to settle before walking the tab order.
     await page.waitForLoadState('networkidle');
