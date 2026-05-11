@@ -515,6 +515,22 @@ else
             log_warning "Articles API returned HTTP $HTTP_CODE"
             ((SMOKE_FAIL++))
         fi
+
+        # B4 — queue health probe (catches supervisor restart issues post-deploy)
+        log_info "Checking message queue health..."
+        if QUEUE_STATS=$(cd "$BACKEND_DIR" && symfony console messenger:stats 2>&1); then
+            log_success "Queue health: messenger:stats responding"
+            if echo "$QUEUE_STATS" | grep -qE 'translations'; then
+                log_success "Queue check: translations transport present"
+                ((SMOKE_PASS++))
+            else
+                log_warning "Queue check: translations transport NOT in messenger:stats output"
+                ((SMOKE_FAIL++))
+            fi
+        else
+            log_error "Queue health check failed: $QUEUE_STATS"
+            ((SMOKE_FAIL++))
+        fi
     fi
 
     # Frontend smoke check
