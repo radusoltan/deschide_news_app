@@ -201,6 +201,60 @@ echo ""
 echo -e "${BLUE}----------------------------------------------------------------------------${NC}"
 
 # =============================================================================
+# B6 — Auto-detect entity-removal migrations vs last release tag
+# =============================================================================
+# If migrations newer than the last annotated semver tag contain DROP TABLE
+# or DROP COLUMN, operator MUST pass --confirm-flush. Without the flag, the
+# Doctrine metadata cache in Redis DB 1 retains stale class definitions for
+# removed entities, causing metadata-mapping explosions on first request.
+#
+# Scans only files under apps/backend/migrations/ that are new since the
+# most recent v*.*.* annotated tag. Exits 1 with a clear message if the flag
+# is missing. See scripts/DEPLOY_README.md § "Redis pre-flight" for context.
+# =============================================================================
+
+detect_entity_removal_migrations() {
+    local LAST_RELEASE_TAG
+    LAST_RELEASE_TAG=$(git -C "$ROOT_DIR" describe --tags --abbrev=0 --match='v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo "")
+
+    if [ -z "$LAST_RELEASE_TAG" ]; then
+        log_warning "No release tag found — skipping entity-removal auto-detect"
+        return 0
+    fi
+
+    local NEW_MIGRATIONS
+    NEW_MIGRATIONS=$(git -C "$ROOT_DIR" diff --name-only "$LAST_RELEASE_TAG..HEAD" -- apps/backend/migrations/ 2>/dev/null || echo "")
+
+    if [ -z "$NEW_MIGRATIONS" ]; then
+        log_info "No new migrations since $LAST_RELEASE_TAG — no entity-removal check needed"
+        return 0
+    fi
+
+    local DESTRUCTIVE_FOUND=0
+    while IFS= read -r migration_file; do
+        [ -z "$migration_file" ] && continue
+        local full_path="$ROOT_DIR/$migration_file"
+        [ ! -f "$full_path" ] && continue
+        if grep -qE 'DROP TABLE|DROP COLUMN' "$full_path" 2>/dev/null; then
+            log_warning "Destructive migration found: $migration_file"
+            DESTRUCTIVE_FOUND=1
+        fi
+    done <<< "$NEW_MIGRATIONS"
+
+    if [ "$DESTRUCTIVE_FOUND" -eq 1 ] && [ "$CONFIRM_FLUSH" != true ]; then
+        log_error "Entity-removal migrations detected since $LAST_RELEASE_TAG"
+        log_error "  Re-run with --confirm-flush to enable Redis DB 1 FLUSHDB"
+        log_error "  (Doctrine metadata cache will retain stale entity classes otherwise)"
+        log_error "  See scripts/DEPLOY_README.md § 'Redis pre-flight'"
+        exit 1
+    elif [ "$DESTRUCTIVE_FOUND" -eq 1 ]; then
+        log_info "Destructive migrations + --confirm-flush opted in — proceeding"
+    fi
+}
+
+detect_entity_removal_migrations
+
+# =============================================================================
 # STEP 1: Pre-Deploy Checks
 # =============================================================================
 
