@@ -367,6 +367,31 @@ if [ "$FRONTEND_ONLY" = false ]; then
     log_info "Warming up cache..."
     run_shell "cd '$BACKEND_DIR' && symfony console cache:warmup --env=prod --no-debug"
 
+    # B3 — Reload supervisor configs so messenger-async.conf changes land in
+    # the running daemon. Without this, edits to config/supervisor/*.conf are
+    # ignored until supervisord is manually restarted.
+    if command -v supervisorctl > /dev/null 2>&1; then
+        log_info "Reloading supervisor configs..."
+        if [ "$DRY_RUN" = true ]; then
+            log_dry "sudo supervisorctl reread && sudo supervisorctl update"
+        else
+            if sudo supervisorctl reread > /tmp/supervisor-reread.log 2>&1; then
+                log_success "supervisorctl reread OK"
+            else
+                log_error "supervisorctl reread failed (see /tmp/supervisor-reread.log)"
+                exit 1
+            fi
+            if sudo supervisorctl update > /tmp/supervisor-update.log 2>&1; then
+                log_success "supervisorctl update OK"
+            else
+                log_error "supervisorctl update failed (see /tmp/supervisor-update.log)"
+                exit 1
+            fi
+        fi
+    else
+        log_warning "supervisorctl not found — skipping supervisor reload"
+    fi
+
     log_info "Reloading PHP-FPM..."
     run_cmd sudo systemctl reload "$PHP_FPM_SERVICE"
 
