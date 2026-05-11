@@ -361,6 +361,14 @@ if [ "$FRONTEND_ONLY" = false ]; then
     log_info "Running database migrations..."
     run_shell "cd '$BACKEND_DIR' && symfony console doctrine:migrations:migrate --no-interaction --allow-no-migration"
 
+    # B5 — explicit pool clears to avoid stale entity metadata in Redis DB 1.
+    # Generic cache:clear does not always purge Doctrine metadata pool nor
+    # system pool — required when entity classes have changed (e.g. PR #21
+    # dropped 15 entities + 13 cols).
+    log_info "Clearing Doctrine + system cache pools..."
+    run_shell "cd '$BACKEND_DIR' && symfony console cache:pool:clear cache.app --env=prod --no-debug"
+    run_shell "cd '$BACKEND_DIR' && symfony console cache:pool:clear cache.system_clearer --env=prod --no-debug"
+
     log_info "Clearing production cache..."
     run_shell "cd '$BACKEND_DIR' && symfony console cache:clear --env=prod --no-debug"
 
