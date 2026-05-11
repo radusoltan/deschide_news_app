@@ -4,54 +4,71 @@ set -e
 # ============================================================================
 # PostgreSQL Backup Script for Deschide News Database
 # ============================================================================
-# Description: Creates compressed backups of the deschide_news database
-# Usage: ./backup-database.sh
+# Description: Creates compressed backups of the Deschide News database.
+# Credentials resolved from (in priority order):
+#   1. BACKUP_DB_* env vars (BACKUP_DB_NAME, BACKUP_DB_USER, BACKUP_DB_HOST,
+#      BACKUP_DB_PORT, BACKUP_DB_PASSWORD) and/or PGPASSWORD
+#   2. DATABASE_URL env var (postgresql://USER:PASS@HOST:PORT/DB?...)
+#   3. apps/backend/.env.local DATABASE_URL line
+# Usage:    ./backup-database.sh
 # Schedule: Run daily via cron (recommended: 2 AM)
 # ============================================================================
 
-# Configuration
-DB_NAME="deschide"
-DB_USER="deschide_admin"
-DB_HOST="127.0.0.1"
-DB_PORT="6432"
-BACKUP_DIR="/var/www/deschide_news_app/backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-RETENTION_DAYS=7
-
-# Database password (MUST be set in environment - no hardcoded defaults)
-if [ -z "${PGPASSWORD:-}" ]; then
-    log_error "PGPASSWORD environment variable is not set."
-    log_error "Set it before running: export PGPASSWORD='your_password'"
-    exit 1
-fi
-export PGPASSWORD
-
-# Color codes for output
+# ----------------------------------------------------------------------------
+# Logging helpers (defined first so any caller below can use them)
+# ----------------------------------------------------------------------------
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# ============================================================================
-# Functions
-# ============================================================================
+log_info()    { echo -e "${BLUE}[INFO]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"; }
+log_success() { echo -e "${GREEN}[SUCCESS]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"; }
+log_warning() { echo -e "${YELLOW}[WARNING]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"; }
+log_error()   { echo -e "${RED}[ERROR]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"; }
 
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
-}
+# ----------------------------------------------------------------------------
+# Credential resolution
+# ----------------------------------------------------------------------------
+ROOT_DIR="/var/www/deschide_news_app"
+ENV_LOCAL="${ROOT_DIR}/apps/backend/.env.local"
 
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
-}
+# If DATABASE_URL not in env, try sourcing from .env.local
+if [ -z "${DATABASE_URL:-}" ] && [ -f "$ENV_LOCAL" ]; then
+    DATABASE_URL=$(grep -E '^DATABASE_URL=' "$ENV_LOCAL" | head -1 | cut -d'=' -f2- | tr -d '"')
+fi
 
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
-}
+# Parse DATABASE_URL if available: postgresql://USER:PASS@HOST:PORT/DB[?...]
+URL_USER="" ; URL_PASS="" ; URL_HOST="" ; URL_PORT="" ; URL_DB=""
+if [ -n "${DATABASE_URL:-}" ]; then
+    DB_URL_REGEX='^postgresql://([^:]+):([^@]+)@([^:/]+):([0-9]+)/([^?]+)(\?.*)?$'
+    if [[ "$DATABASE_URL" =~ $DB_URL_REGEX ]]; then
+        URL_USER="${BASH_REMATCH[1]}"
+        URL_PASS="${BASH_REMATCH[2]}"
+        URL_HOST="${BASH_REMATCH[3]}"
+        URL_PORT="${BASH_REMATCH[4]}"
+        URL_DB="${BASH_REMATCH[5]}"
+    fi
+fi
 
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $(date '+%Y-%m-%d %H:%M:%S') - $1"
-}
+# Final values: explicit BACKUP_DB_* env > DATABASE_URL parse > defaults
+DB_NAME="${BACKUP_DB_NAME:-${URL_DB:-deschide_news}}"
+DB_USER="${BACKUP_DB_USER:-${URL_USER:-deschide_user}}"
+DB_HOST="${BACKUP_DB_HOST:-${URL_HOST:-127.0.0.1}}"
+DB_PORT="${BACKUP_DB_PORT:-${URL_PORT:-5432}}"
+export PGPASSWORD="${PGPASSWORD:-${BACKUP_DB_PASSWORD:-${URL_PASS:-}}}"
+
+BACKUP_DIR="${BACKUP_DIR:-${ROOT_DIR}/backups}"
+DATE=$(date +%Y%m%d_%H%M%S)
+RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-7}"
+
+# Validate password resolved
+if [ -z "$PGPASSWORD" ]; then
+    log_error "DB password not resolvable from PGPASSWORD / BACKUP_DB_PASSWORD / DATABASE_URL"
+    log_error "Set PGPASSWORD, BACKUP_DB_PASSWORD, or ensure DATABASE_URL is set / readable in $ENV_LOCAL"
+    exit 1
+fi
 
 # ============================================================================
 # Pre-flight Checks
@@ -59,8 +76,9 @@ log_error() {
 
 echo "=============================================="
 echo "PostgreSQL Backup Script"
-echo "Database: $DB_NAME"
-echo "Started at: $(date)"
+echo "Database: $DB_NAME @ $DB_HOST:$DB_PORT"
+echo "User:     $DB_USER"
+echo "Started:  $(date)"
 echo "=============================================="
 
 # Check if pg_dump is available
@@ -71,8 +89,9 @@ fi
 
 # Check database connectivity
 log_info "Testing database connection..."
-if ! PGPASSWORD="$PGPASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &> /dev/null; then
+if ! psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &> /dev/null; then
     log_error "Cannot connect to database. Please check credentials and connection."
+    log_error "  Host: $DB_HOST, Port: $DB_PORT, User: $DB_USER, DB: $DB_NAME"
     exit 1
 fi
 log_success "Database connection OK"
@@ -93,7 +112,7 @@ log_info "Starting backup to: $BACKUP_FILE"
 log_info "Using pg_dump with custom format (-Fc) and gzip compression..."
 
 # Execute backup with error handling
-if PGPASSWORD="$PGPASSWORD" pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -Fc "$DB_NAME" | gzip > "$BACKUP_FILE"; then
+if pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -Fc "$DB_NAME" | gzip > "$BACKUP_FILE"; then
     log_success "Backup created successfully"
 else
     log_error "Backup failed with exit code $?"
@@ -133,20 +152,18 @@ log_success "Backup verified: $BACKUP_FILE ($SIZE)"
 # ============================================================================
 
 log_info "Database statistics:"
-
-# Get table count and row counts
 log_info "Fetching database statistics..."
 
-TABLE_COUNT=$(PGPASSWORD="$PGPASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "
+TABLE_COUNT=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "
     SELECT COUNT(DISTINCT table_name)
     FROM information_schema.tables
     WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
 " 2>/dev/null | xargs)
 
-ARTICLE_COUNT=$(PGPASSWORD="$PGPASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM article;" 2>/dev/null | xargs)
-CATEGORY_COUNT=$(PGPASSWORD="$PGPASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM category;" 2>/dev/null | xargs)
-AUTHOR_COUNT=$(PGPASSWORD="$PGPASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM author;" 2>/dev/null | xargs)
-IMAGE_COUNT=$(PGPASSWORD="$PGPASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM image;" 2>/dev/null | xargs)
+ARTICLE_COUNT=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM articles;" 2>/dev/null | xargs)
+CATEGORY_COUNT=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM categories;" 2>/dev/null | xargs)
+AUTHOR_COUNT=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM authors;" 2>/dev/null | xargs)
+IMAGE_COUNT=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT COUNT(*) FROM images;" 2>/dev/null | xargs)
 
 echo "  Tables: $TABLE_COUNT"
 echo "  Articles: ${ARTICLE_COUNT:-0}"
@@ -155,7 +172,7 @@ echo "  Authors: ${AUTHOR_COUNT:-0}"
 echo "  Images: ${IMAGE_COUNT:-0}"
 
 # Get database size
-DB_SIZE=$(PGPASSWORD="$PGPASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "
+DB_SIZE=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "
     SELECT pg_size_pretty(pg_database_size('$DB_NAME'));
 " 2>/dev/null | xargs)
 
@@ -164,7 +181,7 @@ log_info "Backup size: $SIZE"
 
 # Calculate compression ratio if bc is available
 if command -v bc &> /dev/null; then
-    DB_SIZE_BYTES=$(PGPASSWORD="$PGPASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT pg_database_size('$DB_NAME');" 2>/dev/null | xargs)
+    DB_SIZE_BYTES=$(psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT pg_database_size('$DB_NAME');" 2>/dev/null | xargs)
     if [ -n "$DB_SIZE_BYTES" ] && [ "$DB_SIZE_BYTES" -gt 0 ]; then
         COMPRESSION_RATIO=$(echo "scale=1; 100 - (100 * $SIZE_BYTES / $DB_SIZE_BYTES)" | bc 2>/dev/null || echo "N/A")
         log_info "Compression ratio: ~${COMPRESSION_RATIO}%"
@@ -217,33 +234,33 @@ echo "Completed at: $(date)"
 echo "=============================================="
 
 # ============================================================================
-# Restore Instructions
+# Restore Instructions (templated with resolved values; PGPASSWORD kept literal)
 # ============================================================================
 
-cat << 'EOF'
+cat <<EOF
 
-📝 RESTORE INSTRUCTIONS:
+RESTORE INSTRUCTIONS:
 
 To restore from this backup:
 
 1. Stop the application:
-   cd /var/www/deschide_news_app/apps/backend
+   cd ${ROOT_DIR}/apps/backend
    symfony server:stop
 
 2. Drop existing database (CAUTION!):
-   PGPASSWORD="$PGPASSWORD" \
-   dropdb -h 127.0.0.1 -p 6432 -U deschide_admin deschide
+   PGPASSWORD="\$PGPASSWORD" \\
+   dropdb -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} ${DB_NAME}
 
 3. Create new database:
-   PGPASSWORD="$PGPASSWORD" \
-   createdb -h 127.0.0.1 -p 6432 -U deschide_admin deschide
+   PGPASSWORD="\$PGPASSWORD" \\
+   createdb -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} ${DB_NAME}
 
 4. Restore backup:
-   gunzip -c BACKUP_FILE.sql.gz | PGPASSWORD="$PGPASSWORD" \
-   pg_restore -h 127.0.0.1 -p 6432 -U deschide_admin -d deschide
+   gunzip -c BACKUP_FILE.sql.gz | PGPASSWORD="\$PGPASSWORD" \\
+   pg_restore -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME}
 
 5. Restart the application:
-   cd /var/www/deschide_news_app/apps/backend
+   cd ${ROOT_DIR}/apps/backend
    symfony serve -d --port=8081
 
 EOF

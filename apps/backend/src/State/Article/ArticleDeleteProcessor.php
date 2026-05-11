@@ -8,7 +8,7 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Article;
 use App\Message\CheckOrphanedTagsMessage;
-use App\Service\Editorial\ArticleCacheInvalidator;
+use App\Service\Article\ArticleCacheInvalidator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 

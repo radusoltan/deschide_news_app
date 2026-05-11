@@ -170,8 +170,8 @@ describe('getFirstSentence', () => {
   it('returns truncated text at maxLength when no sentence found', () => {
     const html = '<p>' + 'A'.repeat(200) + '</p>';
     const result = getFirstSentence(html, 100);
-    expect(result.length).toBe(103); // 100 chars + '...'
-    expect(result.endsWith('...')).toBe(true);
+    expect(result.length).toBe(101); // 100 chars + '…' (Unicode ellipsis, 1 code unit)
+    expect(result.endsWith('…')).toBe(true);
   });
 
   it('returns full text when shorter than maxLength and no period', () => {

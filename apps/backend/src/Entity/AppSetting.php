@@ -13,36 +13,20 @@ use Doctrine\ORM\Mapping as ORM;
 class AppSetting
 {
     /**
-     * Keys whose updates require an operator-supplied `--reason` and are broadcast
-     * on Mercure with `isCritical: true` in the payload (T57.P3, ADR-024 D5).
+     * Keys whose updates require an operator-supplied `--reason`.
      *
-     * Supports glob wildcards via {@see fnmatch()}. `editorial.tier_overrides.*`
-     * matches any per-agent tier override key (e.g. `editorial.tier_overrides.flash_writer`).
-     * Exact string entries match verbatim.
-     *
-     * Extending this list requires no listener change — the listener resolves
-     * criticality dynamically at write time via {@see self::isCriticalKey()}.
+     * Supports glob wildcards via {@see fnmatch()}. Exact string entries match verbatim.
      *
      * @var list<string>
      */
     public const CRITICAL_KEYS = [
-        'editorial.emergency_halt',
-        'editorial.pipeline.enabled',
-        'editorial.tier_overrides.*',
-        // T57.P4+P5 — legacy Gemini rollback flags for the briefing writer.
-        // Flipping any of these routes production briefings through the
-        // pre-migration Gemini draft + Claude polish path; operational
-        // override with production blast radius, semantically parallel to
-        // `editorial.tier_overrides.*`.
-        'briefing.llm.use_legacy_gemini_*',
+        'agent.emergency_halt',
     ];
 
     /**
      * Returns true when `$key` matches one of {@see self::CRITICAL_KEYS}, with
      * glob-matching semantics (fnmatch): `*` matches any run of characters
-     * including dots. Bare-prefix matches (e.g. `editorial.tier_overrides` with
-     * no trailing segment) do NOT match `editorial.tier_overrides.*` — the
-     * wildcard requires at least one character in the segment position.
+     * including dots.
      */
     public static function isCriticalKey(string $key): bool
     {

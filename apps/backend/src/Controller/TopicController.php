@@ -6,10 +6,7 @@ namespace App\Controller;
 
 use App\Entity\Topic;
 use App\Repository\TopicRepository;
-use App\Service\Topic\TopicMarkdownExporter;
-use App\Service\TopicDetectorService;
 use App\Service\TopicService;
-use App\ValueObject\DateRange;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,8 +21,6 @@ class TopicController extends AbstractController
     public function __construct(
         private readonly TopicService $topicService,
         private readonly TopicRepository $topicRepository,
-        private readonly TopicDetectorService $topicDetectorService,
-        private readonly TopicMarkdownExporter $markdownExporter,
         private readonly TagAwareCacheInterface $cache,
     ) {}
 
@@ -159,89 +154,6 @@ class TopicController extends AbstractController
     }
 
     /**
-     * Get topic summary with article/PR counts.
-     */
-    #[Route('/{id}/summary', name: 'summary', methods: ['GET'], priority: 2)]
-    public function summary(int $id): JsonResponse
-    {
-        $topic = $this->topicRepository->find($id);
-        if (!$topic) {
-            return $this->json([
-                '@type' => 'hydra:Error',
-                'hydra:title' => 'Not Found',
-                'hydra:description' => \sprintf('Topic with ID %d not found.', $id),
-            ], Response::HTTP_NOT_FOUND);
-        }
-
-        $em = $this->topicRepository->getEntityManager();
-
-        $articleCount = $this->topicRepository->getArticleCountForTopic($topic);
-
-        // PR counts via pivot
-        $prCount7d = (int) $em->createQueryBuilder()
-            ->select('COUNT(prt.id)')
-            ->from(\App\Entity\PressReleaseTopic::class, 'prt')
-            ->where('prt.topic = :topicId')
-            ->andWhere('prt.detectedAt >= :since')
-            ->setParameter('topicId', $topic->getId())
-            ->setParameter('since', new \DateTimeImmutable('-7 days'))
-            ->getQuery()->getSingleScalarResult();
-
-        $prCount30d = (int) $em->createQueryBuilder()
-            ->select('COUNT(prt.id)')
-            ->from(\App\Entity\PressReleaseTopic::class, 'prt')
-            ->where('prt.topic = :topicId')
-            ->andWhere('prt.detectedAt >= :since')
-            ->setParameter('topicId', $topic->getId())
-            ->setParameter('since', new \DateTimeImmutable('-30 days'))
-            ->getQuery()->getSingleScalarResult();
-
-        $prCountTotal = (int) $em->createQueryBuilder()
-            ->select('COUNT(prt.id)')
-            ->from(\App\Entity\PressReleaseTopic::class, 'prt')
-            ->where('prt.topic = :topicId')
-            ->setParameter('topicId', $topic->getId())
-            ->getQuery()->getSingleScalarResult();
-
-        return $this->json([
-            'topic' => $this->serializeTopic($topic),
-            'articles' => ['total' => $articleCount],
-            'pressReleases' => [
-                'total' => $prCountTotal,
-                'last7d' => $prCount7d,
-                'last30d' => $prCount30d,
-            ],
-        ]);
-    }
-
-    /**
-     * Get topic content as markdown bundle.
-     */
-    #[Route('/{id}/markdown', name: 'markdown', methods: ['GET'], priority: 2)]
-    public function markdown(int $id, Request $request): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_EDITOR');
-
-        $topic = $this->topicRepository->find($id);
-        if (!$topic) {
-            return $this->json([
-                '@type' => 'hydra:Error',
-                'hydra:title' => 'Not Found',
-                'hydra:description' => \sprintf('Topic with ID %d not found.', $id),
-            ], Response::HTTP_NOT_FOUND);
-        }
-
-        $days = (int) $request->query->get('range', '30');
-        $range = DateRange::lastDays(max(1, min($days, 365)));
-
-        $markdown = $this->markdownExporter->export($topic, $range);
-
-        return new Response($markdown, Response::HTTP_OK, [
-            'Content-Type' => 'text/markdown; charset=utf-8',
-        ]);
-    }
-
-    /**
      * Search/autocomplete topics by title.
      */
     #[Route('/search', name: 'search', methods: ['GET'], priority: 2)]
@@ -311,53 +223,6 @@ class TopicController extends AbstractController
             'message' => 'Topic moved successfully.',
             'topic' => $this->serializeTopic($topic),
         ]);
-    }
-
-    /**
-     * AI-powered topic detection from article content.
-     */
-    #[Route('/detect', name: 'detect', methods: ['POST'], priority: 2)]
-    public function detect(Request $request): JsonResponse
-    {
-        $this->denyAccessUnlessGranted('ROLE_EDITOR');
-
-        $body = json_decode($request->getContent(), true);
-        $title = $body['title'] ?? '';
-        $lead = $body['lead'] ?? '';
-        $content = $body['content'] ?? '';
-
-        if ($title === '' && $lead === '') {
-            return $this->json([
-                '@type' => 'hydra:Error',
-                'hydra:title' => 'Invalid request',
-                'hydra:description' => 'At least "title" or "lead" is required.',
-            ], Response::HTTP_BAD_REQUEST);
-        }
-
-        $suggestions = $this->topicDetectorService->detectTopics($title, $lead, $content);
-
-        // Enrich suggestions with topic path
-        $enriched = [];
-        foreach ($suggestions as $suggestion) {
-            $topic = $this->topicRepository->find($suggestion['topicId']);
-            if ($topic) {
-                $path = $this->topicService->getPath($topic);
-                $pathString = implode(' > ', array_map(fn (Topic $t) => $t->getTitle(), $path));
-
-                $enriched[] = [
-                    'topic' => [
-                        'id' => $topic->getId(),
-                        'title' => $topic->getTitle(),
-                        'slug' => $topic->getSlug(),
-                        'path' => $pathString,
-                    ],
-                    'confidence' => $suggestion['confidence'],
-                    'reason' => $suggestion['reason'],
-                ];
-            }
-        }
-
-        return $this->json(['suggestions' => $enriched]);
     }
 
     /**

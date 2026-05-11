@@ -2,7 +2,7 @@
  * Unified entity type barrel for all backend API entities.
  *
  * Re-exports canonical types from lib/types/ and adds missing entity
- * interfaces for Source, User, and AppSetting.
+ * interfaces for User and AppSetting.
  */
 
 // Core entities
@@ -20,7 +20,6 @@ export type {
 export type { ArticleImage, ArticleImageListResponse } from '@/lib/types/image';
 export type { Tag } from '@/lib/types/tag';
 export type { Topic, TopicTreeNode, TopicSuggestion } from '@/lib/types/topic';
-export type { PressRelease, PressReleaseCollection } from '@/lib/api/press-releases';
 
 // API infrastructure types
 export type {
@@ -37,17 +36,6 @@ export type {
 export type { AuthTokens, LoginCredentials } from '@/lib/api-client';
 
 // --- Additional entities not yet defined elsewhere ---
-
-export interface Source {
-  '@id': string;
-  '@type': string;
-  id: number;
-  name: string;
-  url: string;
-  type: 'rss' | 'api' | 'scraper' | 'manual';
-  isActive: boolean;
-  locale: string;
-}
 
 export interface User {
   '@id': string;

@@ -31,7 +31,7 @@ FRONTEND_URL="${FRONTEND_URL:-http://localhost:3005}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 
 # PHP-FPM service name (adjust for your server)
-PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php8.4-fpm}"
+PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php8.5-fpm}"
 
 # Minimum disk space required (in MB)
 MIN_DISK_SPACE_MB=500
@@ -201,6 +201,60 @@ echo ""
 echo -e "${BLUE}----------------------------------------------------------------------------${NC}"
 
 # =============================================================================
+# B6 — Auto-detect entity-removal migrations vs last release tag
+# =============================================================================
+# If migrations newer than the last annotated semver tag contain DROP TABLE
+# or DROP COLUMN, operator MUST pass --confirm-flush. Without the flag, the
+# Doctrine metadata cache in Redis DB 1 retains stale class definitions for
+# removed entities, causing metadata-mapping explosions on first request.
+#
+# Scans only files under apps/backend/migrations/ that are new since the
+# most recent v*.*.* annotated tag. Exits 1 with a clear message if the flag
+# is missing. See scripts/DEPLOY_README.md § "Redis pre-flight" for context.
+# =============================================================================
+
+detect_entity_removal_migrations() {
+    local LAST_RELEASE_TAG
+    LAST_RELEASE_TAG=$(git -C "$ROOT_DIR" describe --tags --abbrev=0 --match='v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo "")
+
+    if [ -z "$LAST_RELEASE_TAG" ]; then
+        log_warning "No release tag found — skipping entity-removal auto-detect"
+        return 0
+    fi
+
+    local NEW_MIGRATIONS
+    NEW_MIGRATIONS=$(git -C "$ROOT_DIR" diff --name-only "$LAST_RELEASE_TAG..HEAD" -- apps/backend/migrations/ 2>/dev/null || echo "")
+
+    if [ -z "$NEW_MIGRATIONS" ]; then
+        log_info "No new migrations since $LAST_RELEASE_TAG — no entity-removal check needed"
+        return 0
+    fi
+
+    local DESTRUCTIVE_FOUND=0
+    while IFS= read -r migration_file; do
+        [ -z "$migration_file" ] && continue
+        local full_path="$ROOT_DIR/$migration_file"
+        [ ! -f "$full_path" ] && continue
+        if grep -qE 'DROP TABLE|DROP COLUMN' "$full_path" 2>/dev/null; then
+            log_warning "Destructive migration found: $migration_file"
+            DESTRUCTIVE_FOUND=1
+        fi
+    done <<< "$NEW_MIGRATIONS"
+
+    if [ "$DESTRUCTIVE_FOUND" -eq 1 ] && [ "$CONFIRM_FLUSH" != true ]; then
+        log_error "Entity-removal migrations detected since $LAST_RELEASE_TAG"
+        log_error "  Re-run with --confirm-flush to enable Redis DB 1 FLUSHDB"
+        log_error "  (Doctrine metadata cache will retain stale entity classes otherwise)"
+        log_error "  See scripts/DEPLOY_README.md § 'Redis pre-flight'"
+        exit 1
+    elif [ "$DESTRUCTIVE_FOUND" -eq 1 ]; then
+        log_info "Destructive migrations + --confirm-flush opted in — proceeding"
+    fi
+}
+
+detect_entity_removal_migrations
+
+# =============================================================================
 # STEP 1: Pre-Deploy Checks
 # =============================================================================
 
@@ -321,7 +375,7 @@ if [ "$FRONTEND_ONLY" = false ]; then
     log_step "[4/6] Backend deployment (Symfony)"
 
     log_info "Installing PHP dependencies..."
-    run_shell "cd '$BACKEND_DIR' && composer install --no-dev --optimize-autoloader --no-interaction --classmap-authoritative"
+    run_shell "cd '$BACKEND_DIR' && composer install --no-dev --optimize-autoloader --no-interaction --classmap-authoritative --no-scripts"
 
     # =========================================================================
     # Redis pre-flight (ADR-019 / Sprint 52 cluster-drop pattern)
@@ -359,7 +413,15 @@ if [ "$FRONTEND_ONLY" = false ]; then
     fi
 
     log_info "Running database migrations..."
-    run_shell "cd '$BACKEND_DIR' && symfony console doctrine:migrations:migrate --no-interaction --allow-no-migration"
+    run_shell "cd '$BACKEND_DIR' && symfony console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod"
+
+    # B5 — explicit pool clears to avoid stale entity metadata in Redis DB 1.
+    # Generic cache:clear does not always purge Doctrine metadata pool nor
+    # system pool — required when entity classes have changed (e.g. PR #21
+    # dropped 15 entities + 13 cols).
+    log_info "Clearing Doctrine + system cache pools..."
+    run_shell "cd '$BACKEND_DIR' && symfony console cache:pool:clear cache.app --env=prod --no-debug"
+    run_shell "cd '$BACKEND_DIR' && symfony console cache:pool:clear cache.system_clearer --env=prod --no-debug"
 
     log_info "Clearing production cache..."
     run_shell "cd '$BACKEND_DIR' && symfony console cache:clear --env=prod --no-debug"
@@ -367,10 +429,40 @@ if [ "$FRONTEND_ONLY" = false ]; then
     log_info "Warming up cache..."
     run_shell "cd '$BACKEND_DIR' && symfony console cache:warmup --env=prod --no-debug"
 
+    # B3 — Reload supervisor configs so messenger-async.conf changes land in
+    # the running daemon. Without this, edits to config/supervisor/*.conf are
+    # ignored until supervisord is manually restarted.
+    if command -v supervisorctl > /dev/null 2>&1; then
+        log_info "Reloading supervisor configs..."
+        if [ "$DRY_RUN" = true ]; then
+            log_dry "sudo supervisorctl reread && sudo supervisorctl update"
+        else
+            if sudo supervisorctl reread > /tmp/supervisor-reread.log 2>&1; then
+                log_success "supervisorctl reread OK"
+            else
+                log_error "supervisorctl reread failed (see /tmp/supervisor-reread.log)"
+                exit 1
+            fi
+            if sudo supervisorctl update > /tmp/supervisor-update.log 2>&1; then
+                log_success "supervisorctl update OK"
+            else
+                log_error "supervisorctl update failed (see /tmp/supervisor-update.log)"
+                exit 1
+            fi
+        fi
+    else
+        log_warning "supervisorctl not found — skipping supervisor reload"
+    fi
+
     log_info "Reloading PHP-FPM..."
     run_cmd sudo systemctl reload "$PHP_FPM_SERVICE"
 
     log_success "Backend deployment complete"
+    if [ -f "$BACKEND_DIR/.env.local" ] && grep -q 'APP_ENV=dev' "$BACKEND_DIR/.env.local"; then
+        log_info "Dev machine detected -- restoring dev dependencies for local server..."
+        run_shell "cd '$BACKEND_DIR' && composer install --no-interaction --quiet"
+        log_info "Dev dependencies restored"
+    fi
 else
     log_info "[4/6] Backend deployment SKIPPED (--frontend-only)"
 fi
@@ -385,6 +477,10 @@ if [ "$BACKEND_ONLY" = false ]; then
     log_step "[5/6] Frontend deployment (Next.js)"
 
     log_info "Installing Node dependencies..."
+    if [ -L "$FRONTEND_DIR/public/tinymce" ]; then
+        log_info "Removing stale tinymce symlink..."
+        run_cmd rm "$FRONTEND_DIR/public/tinymce"
+    fi
     run_shell "cd '$FRONTEND_DIR' && pnpm install --frozen-lockfile"
 
     log_info "Building production bundle..."
@@ -467,20 +563,36 @@ else
         HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time "$SMOKE_TIMEOUT" "$BACKEND_URL/api" 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" = "200" ]; then
             log_success "Backend API responding (HTTP $HTTP_CODE)"
-            ((SMOKE_PASS++))
+            SMOKE_PASS=$((SMOKE_PASS + 1))
         else
             log_error "Backend API NOT responding (HTTP $HTTP_CODE)"
-            ((SMOKE_FAIL++))
+            SMOKE_FAIL=$((SMOKE_FAIL + 1))
         fi
 
         # Test articles endpoint
         HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time "$SMOKE_TIMEOUT" "$BACKEND_URL/api/articles" 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" = "200" ]; then
             log_success "Articles API responding (HTTP $HTTP_CODE)"
-            ((SMOKE_PASS++))
+            SMOKE_PASS=$((SMOKE_PASS + 1))
         else
             log_warning "Articles API returned HTTP $HTTP_CODE"
-            ((SMOKE_FAIL++))
+            SMOKE_FAIL=$((SMOKE_FAIL + 1))
+        fi
+
+        # B4 — queue health probe (catches supervisor restart issues post-deploy)
+        log_info "Checking message queue health..."
+        if QUEUE_STATS=$(cd "$BACKEND_DIR" && symfony console messenger:stats --env=prod 2>&1); then
+            log_success "Queue health: messenger:stats responding"
+            if echo "$QUEUE_STATS" | grep -qE 'translations'; then
+                log_success "Queue check: translations transport present"
+                SMOKE_PASS=$((SMOKE_PASS + 1))
+            else
+                log_warning "Queue check: translations transport NOT in messenger:stats output"
+                SMOKE_FAIL=$((SMOKE_FAIL + 1))
+            fi
+        else
+            log_error "Queue health check failed: $QUEUE_STATS"
+            SMOKE_FAIL=$((SMOKE_FAIL + 1))
         fi
     fi
 
@@ -492,20 +604,20 @@ else
         HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time "$SMOKE_TIMEOUT" -L "$FRONTEND_URL" 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" = "200" ]; then
             log_success "Frontend responding (HTTP $HTTP_CODE)"
-            ((SMOKE_PASS++))
+            SMOKE_PASS=$((SMOKE_PASS + 1))
         else
             log_error "Frontend NOT responding (HTTP $HTTP_CODE)"
-            ((SMOKE_FAIL++))
+            SMOKE_FAIL=$((SMOKE_FAIL + 1))
         fi
 
         # Check Romanian homepage
         HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time "$SMOKE_TIMEOUT" -L "$FRONTEND_URL/ro" 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" = "200" ]; then
             log_success "Romanian homepage responding (HTTP $HTTP_CODE)"
-            ((SMOKE_PASS++))
+            SMOKE_PASS=$((SMOKE_PASS + 1))
         else
             log_warning "Romanian homepage returned HTTP $HTTP_CODE"
-            ((SMOKE_FAIL++))
+            SMOKE_FAIL=$((SMOKE_FAIL + 1))
         fi
 
         # T60.10: Verify trilingual category slugs are not stale
@@ -517,14 +629,14 @@ else
             if [ "$LOC_HTTP" = "200" ]; then
                 if grep -q "/uncategorized/" /tmp/smoke-${LOCALE}.html; then
                     log_error "[$LOCALE] /uncategorized/ slug leaked — cache likely stale"
-                    ((SMOKE_FAIL++))
+                    SMOKE_FAIL=$((SMOKE_FAIL + 1))
                 else
                     log_success "[$LOCALE] homepage clean of /uncategorized/"
-                    ((SMOKE_PASS++))
+                    SMOKE_PASS=$((SMOKE_PASS + 1))
                 fi
             else
                 log_warning "[$LOCALE] homepage HTTP $LOC_HTTP — cannot verify slugs"
-                ((SMOKE_FAIL++))
+                SMOKE_FAIL=$((SMOKE_FAIL + 1))
             fi
         done
     fi

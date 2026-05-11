@@ -9,7 +9,12 @@ import Link from 'next/link';
 
 export default function ArticleNotFound() {
   return (
-    <main id="content">
+    // data-testid="not-found" reserved for E2E testing.
+    // Current Next.js 16 + Turbopack 'use client' SSR pipeline materializes this
+    // attribute only post-hydration; E2E specs (sprint-60-articles-ro.spec.ts) use
+    // the SSR-stable <title>Article Not Found</title> marker instead. When/if this
+    // limitation is fixed upstream, the spec can switch back to data-testid.
+    <main id="content" data-testid="not-found">
       <div className="bg-surface-sunken py-12">
         <div className="xl:container mx-auto px-3 sm:px-4 xl:px-2">
           <div className="flex flex-col items-center justify-center min-h-[500px]">

@@ -11,7 +11,7 @@ use App\Entity\Category;
 use App\Entity\Tag;
 use App\Enum\ArticleStatus;
 use App\Event\ArticlePublishedEvent;
-use App\Service\Editorial\CollectionSyncService;
+use App\Service\Article\CollectionSyncService;
 use App\State\Article\ArticleCreateProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;

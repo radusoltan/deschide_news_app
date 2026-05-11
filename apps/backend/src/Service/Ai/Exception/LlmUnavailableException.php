@@ -14,7 +14,7 @@ use App\Enum\LlmModelTier;
  * log line and let the exception propagate.
  *
  * `invocationId` is carried for telemetry correlation but is always `null`
- * on the exhaust path in P8 (the executor only opens {@see \App\Service\Editorial\Llm\LlmInvocationLogger}
+ * on the exhaust path in P8 (the executor only opens {@see \App\Service\Ai\Logging\LlmInvocationLogger}
  * rows on successful invocations). Populating exhaust-path rows is a S58+
  * follow-up captured as cleanup debt.
  */

@@ -23,10 +23,9 @@ use App\Enum\LlmModelTier;
  *                   AppSettings read) and pass the result explicitly.
  *  - `systemPrompt`: optional system-role prompt. Preserved for Anthropic
  *                   prompt caching (ADR-022 D6).
- *  - `tierVariant`: optional tier variant key. Populated by
- *                   {@see \App\Service\Editorial\Verification\VerificationGate}
- *                   as either `model_tier_simple` or `model_tier_conflict`
- *                   so downstream logging / future analytics can distinguish
+ *  - `tierVariant`: optional tier variant key. Set by callers as either
+ *                   `model_tier_simple` or `model_tier_conflict` so
+ *                   downstream logging / future analytics can distinguish
  *                   the two call shapes; the dispatcher itself treats the
  *                   field opaquely.
  *

@@ -57,138 +57,8 @@ framework:
                     multiplier: 3
                     max_delay: 60000
 
-            # Scraping pipeline transport (Sprint 16)
-            scraping:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: scraping
-                retry_strategy:
-                    max_retries: 2
-                    delay: 5000
-                    multiplier: 3
-                    max_delay: 60000
-
-            # AI processing transport — dedicated queue with generous retries
-            # for Gemini CLI calls (translation, SEO, topic detection, clustering)
-            ai_async:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: ai_async
-                retry_strategy:
-                    max_retries: 3
-                    delay: 5000
-                    multiplier: 3
-                    max_delay: 120000
-
-            # Python scraper transport (Sprint 46)
-            python_scraper:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: python_scraper
-                retry_strategy:
-                    max_retries: 2
-                    delay: 5000
-                    multiplier: 3
-                    max_delay: 60000
-
-            # Topic detection transport — separate from ai_async to avoid
-            # competing with translation/generation workload (ADR-015)
-            topic_detection:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: topic_detection
-                retry_strategy:
-                    max_retries: 2
-                    delay: 5000
-                    multiplier: 3
-                    max_delay: 60000
-
-            # Briefing generation transport — isolated from editorial/ai_async
-            # to prevent long AI calls blocking curation UX (ADR-016 D3/D8)
-            briefing:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: briefing
-                retry_strategy:
-                    max_retries: 3
-                    delay: 5000
-                    multiplier: 3
-                    max_delay: 120000
-
-            # Editorial processing transport (Sprint 16)
-            editorial:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: editorial
-                retry_strategy:
-                    max_retries: 3
-                    delay: 3000
-                    multiplier: 2
-                    max_delay: 45000
-
-            # Editorial-pipeline signal ingestion transport (Sprint 53, ADR-020 D4).
-            # Dedicated queue for SignalIngestedMessage produced by SourceMonitor
-            # runs so wire/MD/RO signal volume cannot starve the editorial
-            # curation queue. Sprint 53 handler is a log-only stub; Sprint 54
-            # replaces it with the SignalAggregator entry point.
-            editorial_signal_ingest:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: editorial_signal_ingest
-                retry_strategy:
-                    max_retries: 3
-                    delay: 3000
-                    multiplier: 2
-                    max_delay: 45000
-
-            # Editorial-pipeline verification layer transports (Sprint 55 T55.1,
-            # ADR-020 D2 + audit D3). The Sprint 54 single `editorial_verification`
-            # queue FIFO-starved the low-volume Aggregate+Verify messages behind
-            # the high-volume Extract+Flush ticks. Split into two queues so the
-            # per-stage worker pools scale independently:
-            #   - extract (4w): ExtractSourceAttributionMessage + FlushStabilizedSignalsMessage
-            #   - decide  (2w): AggregateSignalsMessage + VerifyClaimMessage
-            # Retry strategies kept identical to the S54 baseline for V1;
-            # tune per-transport post-observation if needed.
-            editorial_verification_extract:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: editorial_verification_extract
-                retry_strategy:
-                    max_retries: 3
-                    delay: 3000
-                    multiplier: 2
-                    max_delay: 45000
-
-            editorial_verification_decide:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: editorial_verification_decide
-                retry_strategy:
-                    max_retries: 3
-                    delay: 3000
-                    multiplier: 2
-                    max_delay: 45000
-
-            # Editorial-pipeline L3 writer transport (Sprint 55 T55.3, ADR-020 D5).
-            # Dedicated queue for WriteFlashMessage (and WriteDevelopingStoryMessage
-            # in T55.4) so the writer pool is isolated from both the verification
-            # stage and the legacy `editorial` queue (7286 stale messages).
-            # Consumed by messenger-editorial-flash Supervisor pool (numprocs=2).
-            editorial_flash:
-                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
-                options:
-                    queue_name: editorial_flash
-                retry_strategy:
-                    max_retries: 3
-                    delay: 3000
-                    multiplier: 2
-                    max_delay: 45000
-
         routing:
             # Route your messages to the transports
-            # Cache messages (Sprint 2)
-            # 'App\Message\CacheWarmEvent': cache_async
 
             # Statistics messages (Sprint 3)
             'App\Message\PageViewEvent': stats_async
@@ -202,73 +72,16 @@ framework:
             # Short link analytics (async for fast redirects)
             'App\Message\ShortLinkClickMessage': async
 
-            # Translation: routed to ai_async (Gemini CLI subprocess)
-            'App\Message\TranslateArticleMessage': ai_async
-            'App\Message\TranslateEntityMessage': ai_async
+            # Translation default routing — NORMAL priority transport.
+            # TranslationPriorityDispatcher overrides via TransportNamesStamp
+            # to route CRITICAL/URGENT/HIGH messages to their priority queues;
+            # raw bus->dispatch() callers (RssFeedImporter, TranslationController)
+            # fall back to NORMAL via this default.
+            'App\Message\TranslateArticleMessage': translations
+            'App\Message\TranslateEntityMessage': translations
 
             # Batch translation scheduling (processed by TranslatePendingBatchHandler)
             'App\Message\TranslatePendingBatch': async
-
-            # SEO optimization (Gemini AI generates metaTitle, metaDescription, tags)
-            'App\Message\OptimizeSeoMessage': ai_async
-
-            # Scraping pipeline (Sprint 16)
-            'App\Message\Editorial\ScrapeSourceMessage': scraping
-            'App\Message\Editorial\ProcessScrapedArticleMessage': editorial
-
-            # AI ingestion pipeline (Sprint 17)
-            'App\Message\Editorial\IngestArticleMessage': editorial
-
-            # Translation evaluation pipeline (Sprint 18)
-            'App\Message\Editorial\EvaluateTranslationMessage': editorial
-
-            # Editorial scheduler (Sprint 22 — weekly summary, dossiers)
-            'App\Message\Editorial\GenerateWeeklySummaryMessage': editorial
-            'App\Message\Editorial\GenerateDossiersMessage': editorial
-
-            # Aggregator pipeline (Sprint 24)
-            'App\Message\Aggregator\ProcessAggregatorResultMessage': editorial
-            'App\Message\Aggregator\TriggerAggregatorRunMessage': editorial
-
-
-            # Python scraper pipeline (Sprint 46)
-            'App\Message\Scraping\PythonScrapeMessage': python_scraper
-
-            # Topic detection pipeline (Sprint 49, ADR-015)
-            'App\Message\Topic\DetectTopicsForPressReleaseMessage': topic_detection
-
-            # Topic briefing pipeline (Sprint 50, ADR-016)
-            'App\Message\Topic\TriggerTopicBriefingRunMessage': briefing
-            'App\Message\Topic\GenerateTopicBriefingMessage': briefing
-
-            # Topic-window article generation (Sprint 52, ADR-019 D2)
-            # Shared briefing transport per D2 default. Split into a
-            # dedicated `article_generation` transport in messenger.yaml
-            # if post-merge observation surfaces queue saturation.
-            'App\Message\GenerateTopicArticleMessage': briefing
-
-            # Editorial-pipeline signal ingestion (Sprint 53, ADR-020 D4)
-            'App\Message\Editorial\SignalIngestedMessage': editorial_signal_ingest
-
-            # Verification layer (Sprint 54 T54.12 → Sprint 55 T55.1, ADR-020 D2).
-            # Extract+Flush ride the _extract pool (4w, cheap per-signal LLM),
-            # Aggregate+Verify ride _decide (2w, cluster-level + verdict).
-            'App\Message\Editorial\ExtractSourceAttributionMessage': editorial_verification_extract
-            'App\Message\Editorial\FlushStabilizedSignalsMessage': editorial_verification_extract
-            'App\Message\Editorial\AggregateSignalsMessage': editorial_verification_decide
-            'App\Message\Editorial\VerifyClaimMessage': editorial_verification_decide
-
-            # Editorial-pipeline writers (Sprint 55 T55.3, T55.4, ADR-020 L3 layer).
-            # Both writer messages share the editorial_flash pool — developing-story
-            # merges are cheaper than fresh flash emission and the writer workload
-            # is low-volume end-to-end. FIFO ordering is acceptable because the two
-            # handlers never target the same Article (findDevelopingStoryForTopic
-            # discriminates at dispatch time in T55.9).
-            'App\Message\Editorial\WriteFlashMessage': editorial_flash
-            'App\Message\Editorial\WriteDevelopingStoryMessage': editorial_flash
-
-            # NotebookLM sync (Sprint 51a)
-            'App\Message\NotebookLM\TriggerTopicNotebookSyncMessage': editorial
 
             # Mercure real-time updates (Sprint 20)
             'Symfony\Component\Mercure\Update': async

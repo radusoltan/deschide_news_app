@@ -20,7 +20,7 @@
  *     scenarios that don't require the article page to render still execute.
  */
 
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
 
 // ─────────────────────────────────────────────────────────────────
 // Fixtures
@@ -486,5 +486,205 @@ test.describe('Sprint 59 — Graceful degradation', () => {
 
     // No uncaught JS errors during render.
     expect(errors, `Unexpected page errors: ${errors.join('; ')}`).toHaveLength(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// 7. Sprint 60 — LangSwitcher gap-fill (T60.9)
+// ─────────────────────────────────────────────────────────────────
+//
+// Three surgical gap cases discovered in Phase 3.1 inventory against the
+// existing Sprint 59 corpus + LangSwitcher implementation:
+//   - Topic page locale switch (route exists, context handled, no E2E coverage)
+//   - Search results locale switch (route exists, NO context — generic fallback)
+//   - No-flash assertion on article RO↔EN transition (regression guard)
+//
+// Fixture choices (empirically captured 2026-05-08):
+//   - Article id=4 trilingual (RO/EN/RU), category=economie. Article 100 from
+//     existing fixtures is absent in current dev DB; id=4 is the lowest stable
+//     trilingual article available.
+//   - KNOWN_TOPIC_SLUG=politics-governance, picked from 3 ext_translations
+//     candidates as the most stable English compound. Topic slugs are NOT in
+//     ext_translations (Topic.title and Topic.description ARE translated, but
+//     Topic.slug is single-canonical) so locale switch is prefix-swap behavior.
+//
+// Out-of-scope flags surfaced from this sprint, recorded inline:
+//   - T60.X-LANG-SWITCHER-SEARCH-CONTEXT — search context branch missing in
+//     LangSwitcher. Currently falls through to buildLocaleUrlGeneric which
+//     operates on usePathname() only and does NOT preserve the query string.
+//   - Topic slug localization — open product question, no backlog task yet.
+
+const ARTICLE_TRILINGUAL_ID4 = {
+  id: 4,
+  category: 'economie',
+  slugs: {
+    ro: 'energocom-obligata-sa-cumpere-energie-de-pe-pietele-organizate-ministerul-energiei',
+    en: 'energocom-obliged-to-buy-energy-from-organized-markets-ministry-of-energy',
+    ru: 'energocom-obyazhut-zakupat-elektroenergiyu-na-organizovannyh-rynkah-ministerstvo-energetiki',
+  },
+} as const;
+
+const KNOWN_TOPIC_SLUG = 'politics-governance';
+
+/**
+ * Mobile Chrome (Pixel 5 viewport, 393×851) hides the desktop LangSwitcher
+ * behind a hamburger menu — the inline LangSwitcher resolves in DOM but is
+ * `display: none` at mobile breakpoint. Click + hover (and any interaction
+ * that requires viewport visibility) cannot reach the element. Phase 5
+ * extended this skip to hover-based steps (TSK-692 Step 7), prompting the
+ * rename from skipMobileChromeForClick → skipMobileChromeForVisibility.
+ *
+ * Coverage of mobile LangSwitcher needs a distinct mobile-menu fixture
+ * (open hamburger → assert menu items visible → click/hover). That is
+ * separate scope from this gap-fill.
+ *
+ * Topic test below uses `toHaveCount()` (DOM presence) and works on every
+ * viewport, so it does NOT skip. Search + No-flash require interaction
+ * with the LangSwitcher and therefore skip on Mobile Chrome via this helper.
+ *
+ * Backlog: T60.X-MOBILE-MENU-LANGSWITCHER-E2E.
+ */
+function skipMobileChromeForVisibility(testInfo: TestInfo): void {
+  test.skip(
+    testInfo.project.name === 'Mobile Chrome',
+    'Mobile Chrome (Pixel 5) hides desktop LangSwitcher behind hamburger menu. ' +
+    'Click-based locale switch coverage requires distinct mobile-menu fixture. ' +
+    'Backlog: T60.X-MOBILE-MENU-LANGSWITCHER-E2E.',
+  );
+}
+
+test.describe('Sprint 60 — LangSwitcher gap-fill (T60.9)', () => {
+  test('Topic page LangSwitcher renders disabled state (translatedSlugs unpopulated)', async ({ page }) => {
+    // KNOWN LIMITATION: Topic page does not populate translatedSlugs in
+    // LocaleContext (no parallel of resolve-locale-context-data.ts plumbing
+    // for topic context). LanguageSwitcher's topic-context handler invokes
+    // buildLocaleUrlForTopic with empty translatedSlugs → returns null → all
+    // non-current locales render as disabled spans (data-testid="locale-switch-
+    // <code>-disabled") with aria-disabled="true".
+    //
+    // This test asserts current empirical behavior. When the backlog item
+    // T60.X-TOPIC-PAGE-TRANSLATED-SLUGS lands (server-side context population
+    // for topics, parallel to article + category pattern), flip these
+    // assertions: enable active testids, assert URL navigates to target
+    // locale's translated topic slug.
+    await page.goto(`${BASE_URL}/ro/topics/${KNOWN_TOPIC_SLUG}`, {
+      waitUntil: 'domcontentloaded',
+    });
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ro');
+
+    // EN + RU rendered as disabled spans, not active links.
+    const enDisabled = page.locator('[data-testid="locale-switch-en-disabled"]');
+    const ruDisabled = page.locator('[data-testid="locale-switch-ru-disabled"]');
+    await expect(enDisabled, 'EN must render disabled on topic page').toHaveCount(1);
+    await expect(ruDisabled, 'RU must render disabled on topic page').toHaveCount(1);
+    await expect(enDisabled).toHaveAttribute('aria-disabled', 'true');
+
+    // Mutual exclusion: active EN/RU testids ABSENT.
+    await expect(
+      page.locator('[data-testid="locale-switch-en"]'),
+      'EN active testid must be absent (disabled state)',
+    ).toHaveCount(0);
+    await expect(
+      page.locator('[data-testid="locale-switch-ru"]'),
+      'RU active testid must be absent (disabled state)',
+    ).toHaveCount(0);
+  });
+
+  test('Search results locale switch (generic fallback) drops query param', async ({ page }, testInfo) => {
+    skipMobileChromeForVisibility(testInfo);
+    // KNOWN LIMITATION: LanguageSwitcher has no 'search' context branch.
+    // Search routes fall through to buildLocaleUrlGeneric → prefix-swap on
+    // usePathname() (which excludes the query string). Query param is
+    // therefore DROPPED on locale switch.
+    // Backlog: T60.X-LANG-SWITCHER-SEARCH-CONTEXT.
+    // This test documents current empirical behavior, NOT desired behavior.
+    await page.goto(`${BASE_URL}/ro/search?q=moldova`, {
+      waitUntil: 'domcontentloaded',
+    });
+    // Cold-start insurance: networkidle settles SSR + initial hydration. 5×repeat
+    // chromium-only verification (Phase 3.2-investigate-search) confirmed 5/5 PASS
+    // on warm runs, but a cold first-run-after-restart can race the click before
+    // the LangSwitcher is fully hydrated and reactive.
+    await page.waitForLoadState('networkidle');
+
+    const enSwitch = page.locator('[data-testid="locale-switch-en"]').first();
+    await expect(enSwitch, 'EN locale switch must render on /ro/search').toHaveCount(1);
+
+    await enSwitch.click();
+
+    // Expect query DROPPED — generic fallback behavior. Once
+    // T60.X-LANG-SWITCHER-SEARCH-CONTEXT lands, flip this to
+    // /\/en\/search\?.*q=moldova/ and remove the inline TODO.
+    await expect(page).toHaveURL(/\/en\/search$/);
+  });
+
+  test('RO → EN article switch: no flash of mismatched locale', async ({ page }, testInfo) => {
+    skipMobileChromeForVisibility(testInfo);
+
+    // CRITICAL: attach console listener BEFORE any navigation so initial-load
+    // hydration errors during the RO render are captured (per Phase 1 Agent 3
+    // MAJOR #3). Earlier version attached the listener after articleRouteWorks
+    // had already navigated → only post-click transition errors were seen.
+    // Hydration / locale mismatch warnings are the regression signals we are
+    // guarding against (T60.15 SSR prime + LocaleContextSetter pre-hydration
+    // href correctness).
+    const consoleErrors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+
+    const roUrl = articleUrl(
+      'ro',
+      ARTICLE_TRILINGUAL_ID4.category,
+      ARTICLE_TRILINGUAL_ID4.slugs.ro,
+    );
+    const works = await articleRouteWorks(page, roUrl);
+    if (!works) {
+      test.skip(
+        true,
+        `BLOCKER: article route ${roUrl} returns 404 in dev environment. ` +
+        `Article id=4 (economie/energocom-...) must be available for trilingual ` +
+        `no-flash assertion. If the fixture is renamed, update ARTICLE_TRILINGUAL_ID4.`,
+      );
+      return;
+    }
+
+    // Settle initial SSR + hydration before asserting RO baseline. networkidle
+    // is also the cold-start insurance referenced in the search test above.
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ro');
+
+    const enSwitch = page.locator('[data-testid="locale-switch-en"]').first();
+    await expect(enSwitch, 'EN locale switch must render on RO article page').toHaveCount(1);
+
+    await enSwitch.click();
+
+    // Lang transition budget: 1500ms accommodates client-side navigation +
+    // Next.js App Router segment swap + re-render. Real flash (visual locale
+    // mismatch) would manifest as a paint frame, not as a slow attribute
+    // change — the user-perceptible threshold is ~100-200ms, but Playwright's
+    // expect.poll cycle on the attribute change runs at much finer granularity
+    // and a 1500ms outer budget is strict enough to catch genuine regressions
+    // while tolerant of healthy WSL2/CI variance.
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en', { timeout: 1500 });
+
+    await page.waitForLoadState('networkidle');
+
+    // Strict pattern: only genuine hydration/locale mismatch errors. The
+    // earlier greedy /hydrat|locale|mismatch/i caught benign React DevTools
+    // warnings and unrelated console noise. These four patterns target the
+    // specific React/Next.js error texts that would surface a real regression.
+    const criticalErrors = consoleErrors.filter((e) =>
+      /Hydration failed/i.test(e)
+      || /Text content does not match/i.test(e)
+      || /Expected server HTML to contain/i.test(e)
+      || /lang.*mismatch|locale.*mismatch/i.test(e),
+    );
+    expect(
+      criticalErrors,
+      `Hydration / locale mismatch errors during transition: ${criticalErrors.join(' | ')}`,
+    ).toHaveLength(0);
   });
 });

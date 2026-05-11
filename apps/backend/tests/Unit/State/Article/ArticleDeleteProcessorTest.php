@@ -8,7 +8,7 @@ use ApiPlatform\Metadata\Delete;
 use App\Entity\Article;
 use App\Entity\Tag;
 use App\Message\CheckOrphanedTagsMessage;
-use App\Service\Editorial\ArticleCacheInvalidator;
+use App\Service\Article\ArticleCacheInvalidator;
 use App\State\Article\ArticleDeleteProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
