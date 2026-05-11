@@ -31,7 +31,7 @@ FRONTEND_URL="${FRONTEND_URL:-http://localhost:3005}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 
 # PHP-FPM service name (adjust for your server)
-PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php8.4-fpm}"
+PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php8.5-fpm}"
 
 # Minimum disk space required (in MB)
 MIN_DISK_SPACE_MB=500
@@ -375,7 +375,7 @@ if [ "$FRONTEND_ONLY" = false ]; then
     log_step "[4/6] Backend deployment (Symfony)"
 
     log_info "Installing PHP dependencies..."
-    run_shell "cd '$BACKEND_DIR' && composer install --no-dev --optimize-autoloader --no-interaction --classmap-authoritative"
+    run_shell "cd '$BACKEND_DIR' && composer install --no-dev --optimize-autoloader --no-interaction --classmap-authoritative --no-scripts"
 
     # =========================================================================
     # Redis pre-flight (ADR-019 / Sprint 52 cluster-drop pattern)
@@ -413,7 +413,7 @@ if [ "$FRONTEND_ONLY" = false ]; then
     fi
 
     log_info "Running database migrations..."
-    run_shell "cd '$BACKEND_DIR' && symfony console doctrine:migrations:migrate --no-interaction --allow-no-migration"
+    run_shell "cd '$BACKEND_DIR' && symfony console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod"
 
     # B5 — explicit pool clears to avoid stale entity metadata in Redis DB 1.
     # Generic cache:clear does not always purge Doctrine metadata pool nor
@@ -458,6 +458,11 @@ if [ "$FRONTEND_ONLY" = false ]; then
     run_cmd sudo systemctl reload "$PHP_FPM_SERVICE"
 
     log_success "Backend deployment complete"
+    if [ -f "$BACKEND_DIR/.env.local" ] && grep -q 'APP_ENV=dev' "$BACKEND_DIR/.env.local"; then
+        log_info "Dev machine detected -- restoring dev dependencies for local server..."
+        run_shell "cd '$BACKEND_DIR' && composer install --no-interaction --quiet"
+        log_info "Dev dependencies restored"
+    fi
 else
     log_info "[4/6] Backend deployment SKIPPED (--frontend-only)"
 fi
@@ -472,6 +477,10 @@ if [ "$BACKEND_ONLY" = false ]; then
     log_step "[5/6] Frontend deployment (Next.js)"
 
     log_info "Installing Node dependencies..."
+    if [ -L "$FRONTEND_DIR/public/tinymce" ]; then
+        log_info "Removing stale tinymce symlink..."
+        run_cmd rm "$FRONTEND_DIR/public/tinymce"
+    fi
     run_shell "cd '$FRONTEND_DIR' && pnpm install --frozen-lockfile"
 
     log_info "Building production bundle..."
@@ -554,36 +563,36 @@ else
         HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time "$SMOKE_TIMEOUT" "$BACKEND_URL/api" 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" = "200" ]; then
             log_success "Backend API responding (HTTP $HTTP_CODE)"
-            ((SMOKE_PASS++))
+            SMOKE_PASS=$((SMOKE_PASS + 1))
         else
             log_error "Backend API NOT responding (HTTP $HTTP_CODE)"
-            ((SMOKE_FAIL++))
+            SMOKE_FAIL=$((SMOKE_FAIL + 1))
         fi
 
         # Test articles endpoint
         HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time "$SMOKE_TIMEOUT" "$BACKEND_URL/api/articles" 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" = "200" ]; then
             log_success "Articles API responding (HTTP $HTTP_CODE)"
-            ((SMOKE_PASS++))
+            SMOKE_PASS=$((SMOKE_PASS + 1))
         else
             log_warning "Articles API returned HTTP $HTTP_CODE"
-            ((SMOKE_FAIL++))
+            SMOKE_FAIL=$((SMOKE_FAIL + 1))
         fi
 
         # B4 — queue health probe (catches supervisor restart issues post-deploy)
         log_info "Checking message queue health..."
-        if QUEUE_STATS=$(cd "$BACKEND_DIR" && symfony console messenger:stats 2>&1); then
+        if QUEUE_STATS=$(cd "$BACKEND_DIR" && symfony console messenger:stats --env=prod 2>&1); then
             log_success "Queue health: messenger:stats responding"
             if echo "$QUEUE_STATS" | grep -qE 'translations'; then
                 log_success "Queue check: translations transport present"
-                ((SMOKE_PASS++))
+                SMOKE_PASS=$((SMOKE_PASS + 1))
             else
                 log_warning "Queue check: translations transport NOT in messenger:stats output"
-                ((SMOKE_FAIL++))
+                SMOKE_FAIL=$((SMOKE_FAIL + 1))
             fi
         else
             log_error "Queue health check failed: $QUEUE_STATS"
-            ((SMOKE_FAIL++))
+            SMOKE_FAIL=$((SMOKE_FAIL + 1))
         fi
     fi
 
@@ -595,20 +604,20 @@ else
         HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time "$SMOKE_TIMEOUT" -L "$FRONTEND_URL" 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" = "200" ]; then
             log_success "Frontend responding (HTTP $HTTP_CODE)"
-            ((SMOKE_PASS++))
+            SMOKE_PASS=$((SMOKE_PASS + 1))
         else
             log_error "Frontend NOT responding (HTTP $HTTP_CODE)"
-            ((SMOKE_FAIL++))
+            SMOKE_FAIL=$((SMOKE_FAIL + 1))
         fi
 
         # Check Romanian homepage
         HTTP_CODE=$(curl -sf -o /dev/null -w "%{http_code}" --max-time "$SMOKE_TIMEOUT" -L "$FRONTEND_URL/ro" 2>/dev/null || echo "000")
         if [ "$HTTP_CODE" = "200" ]; then
             log_success "Romanian homepage responding (HTTP $HTTP_CODE)"
-            ((SMOKE_PASS++))
+            SMOKE_PASS=$((SMOKE_PASS + 1))
         else
             log_warning "Romanian homepage returned HTTP $HTTP_CODE"
-            ((SMOKE_FAIL++))
+            SMOKE_FAIL=$((SMOKE_FAIL + 1))
         fi
 
         # T60.10: Verify trilingual category slugs are not stale
@@ -620,14 +629,14 @@ else
             if [ "$LOC_HTTP" = "200" ]; then
                 if grep -q "/uncategorized/" /tmp/smoke-${LOCALE}.html; then
                     log_error "[$LOCALE] /uncategorized/ slug leaked — cache likely stale"
-                    ((SMOKE_FAIL++))
+                    SMOKE_FAIL=$((SMOKE_FAIL + 1))
                 else
                     log_success "[$LOCALE] homepage clean of /uncategorized/"
-                    ((SMOKE_PASS++))
+                    SMOKE_PASS=$((SMOKE_PASS + 1))
                 fi
             else
                 log_warning "[$LOCALE] homepage HTTP $LOC_HTTP — cannot verify slugs"
-                ((SMOKE_FAIL++))
+                SMOKE_FAIL=$((SMOKE_FAIL + 1))
             fi
         done
     fi
