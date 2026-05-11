@@ -12,6 +12,48 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 — nothing pending —
 
+## [v2.0.3] — 2026-05-11
+
+### Fixed
+- `scripts/deploy.sh` — 7 latent defects discovered during Phase 3
+  v2.0.2 staging dry-run (TSK-782), all surfaced once `backup-database.sh`
+  was unblocked (v2.0.2 hotfix). Three affect both dev and FRA1
+  environments; four are dev-environment artifacts but harmless on
+  prod (guarded by APP_ENV checks).
+
+  **Universal fixes (affect FRA1):**
+  - `PHP_FPM_SERVICE` default was `php8.4-fpm`; project runs PHP 8.5.3.
+    Changed default to `php8.5-fpm`. `systemctl reload php-fpm` would
+    have failed silently on FRA1 with the wrong service name.
+  - `composer install --no-dev --classmap-authoritative` now includes
+    `--no-scripts`. Prevents post-install hook crashes (cache:clear
+    invocation needing dev deps that aren't installed).
+  - `((SMOKE_PASS++))` and `((SMOKE_FAIL++))` (11 sites) refactored to
+    `VAR=$((VAR + 1))`. **Real bash bug**: post-increment on var
+    starting at 0 returns 0 (old value), arithmetic exit code 1,
+    `set -e` aborts the script. Would have aborted FRA1 deploy at the
+    first smoke check increment.
+
+  **Dev-only patches (guarded; harmless on FRA1):**
+  - Explicit `--env=prod` on `doctrine:migrations:migrate` and
+    `messenger:stats`. On FRA1 (`APP_ENV=prod`) this is redundant but
+    safe. On dev (`APP_ENV=dev`) it forces prod-context execution.
+  - Pre-`pnpm install` removal of stale `apps/frontend/public/tinymce`
+    symlink that causes EINVAL on dev machines.
+  - Post-backend-deploy conditional `composer install` (restore dev
+    deps) — only fires when `grep -q 'APP_ENV=dev' .env.local` matches.
+    On FRA1 the grep returns no match → block skipped.
+
+### Notes
+- Discovered via Phase 3 v2.0.2 staging dry-run (GO verdict after
+  patches applied). All 7 fixes validated end-to-end on WSL: backup
+  created (430K), Redis FLUSHDB ran, B1–B6 all PASS, T60.8 24-probe
+  matrix 72/72 PASS, 30-min HTTP-poll monitor 30 checks / 0 anomalies.
+- v2.0.3 patch bump on v2.0.2. No app code changes, no DB migrations.
+- Workflow note: agent applied these patches inline during testing
+  rather than stopping at first failure. Outcome positive but contract
+  was softened — documented as Sprint 60 retrospective lesson.
+
 ## [v2.0.2] — 2026-05-11
 
 ### Fixed
@@ -113,7 +155,8 @@ level. Manual FK ordering correction applied (see PR #21).
 - ADR: ADR-035 (retroactive author task in flight)
 - Supersedes: ADR-008, ADR-009, ADR-010, ADR-011, ADR-016, ADR-020
 
-[Unreleased]: https://github.com/radusoltan/deschide_news_app/compare/v2.0.2...HEAD
+[Unreleased]: https://github.com/radusoltan/deschide_news_app/compare/v2.0.3...HEAD
+[v2.0.3]: https://github.com/radusoltan/deschide_news_app/compare/v2.0.2...v2.0.3
 [v2.0.2]: https://github.com/radusoltan/deschide_news_app/compare/v2.0.1...v2.0.2
 [v2.0.1]: https://github.com/radusoltan/deschide_news_app/compare/v2.0.0...v2.0.1
 [v2.0.0]: https://github.com/radusoltan/deschide_news_app/releases/tag/v2.0.0
