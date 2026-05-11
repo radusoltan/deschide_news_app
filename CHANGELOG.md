@@ -12,6 +12,29 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 — nothing pending —
 
+## [v2.0.2] — 2026-05-11
+
+### Fixed
+- `scripts/backup-database.sh` — script was unrunnable as deploy.sh
+  child-process: (1) `log_error` called at lines 22–24 before being
+  defined at line 52 → `command not found`; (2) hardcoded credentials
+  (`deschide` DB / `deschide_admin` user / port `6432`) did not match
+  actual topology (`deschide_news` / `deschide_user` / `5432`);
+  (3) required `PGPASSWORD` exported externally but `deploy.sh` did
+  not export it. Resolved by reordering `log_*()` defs to top of file,
+  parsing `DATABASE_URL` from environment or `apps/backend/.env.local`,
+  and supporting `BACKUP_DB_*` overrides. Verified standalone on WSL:
+  430K compressed backup, 97.7% compression, real stats (67 articles).
+
+### Notes
+- Phase 1 review (PR #25 A1) missed this because `deploy.sh --dry-run`
+  emits `[DRY-RUN]` lines instead of invoking `backup-database.sh`.
+  Future deploy.sh hardening reviews should include a real-mode
+  child-process invocation test.
+- v2.0.2 patch bump on v2.0.1. No app-code changes; no DB migrations.
+  Tag lives on `develop`. Main advancement remains deferred until
+  FRA1 production deploy successful.
+
 ## [v2.0.1] — 2026-05-11
 
 ### Deployment requirements
@@ -90,6 +113,7 @@ level. Manual FK ordering correction applied (see PR #21).
 - ADR: ADR-035 (retroactive author task in flight)
 - Supersedes: ADR-008, ADR-009, ADR-010, ADR-011, ADR-016, ADR-020
 
-[Unreleased]: https://github.com/radusoltan/deschide_news_app/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/radusoltan/deschide_news_app/compare/v2.0.2...HEAD
+[v2.0.2]: https://github.com/radusoltan/deschide_news_app/compare/v2.0.1...v2.0.2
 [v2.0.1]: https://github.com/radusoltan/deschide_news_app/compare/v2.0.0...v2.0.1
 [v2.0.0]: https://github.com/radusoltan/deschide_news_app/releases/tag/v2.0.0
