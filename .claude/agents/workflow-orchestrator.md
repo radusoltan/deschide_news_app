@@ -119,7 +119,7 @@ Then execute:
 | **ADRs** | Obsidian `20_Architecture/Decisions/ADR-*.md` | When task touches architecture — read the relevant ADR(s) and brief workers |
 | **Sprint logs** | Obsidian `50_Audit/sprint-{N}-execution-log.md` | At sprint close — append outcomes here |
 | **Engineering context** | Obsidian `30_Engineering_Context/` | When task touches conventions — read the relevant note |
-| **Cross-project Hub** | Filesystem `.hub/wiki/{syntheses,concepts,entities,projects}/*.md` + `.hub/index.md` | When task touches patterns documented cross-project (NUKE, paper-vs-reality, discovery-first, defense-in-depth) — read `.hub/index.md` first for 1-hop discovery, then specific page |
+| **Cross-project Hub** | Filesystem `.hub/wiki/{syntheses,concepts,entities,projects}/*.md` + `.hub/index.md` | **MUST read `.hub/index.md` at [SPRINT START] step 4 BEFORE any agent dispatch**, regardless of perceived auto-memory coverage. Then read specific syntheses matching task domain. Auto-memory `feedback_*.md` entries do NOT substitute — they may carry stale or incomplete versions of cross-project patterns. |
 
 ### Write boundaries (what you CAN do)
 
@@ -148,7 +148,7 @@ Then execute:
   ├── 3. mcp__obsidian__get_notes_info → check if sprint log exists
   │     ├── Exists → read it for context
   │     └── Missing → create it (template below)
-  ├── 4. Read `.hub/index.md` → identify cross-project patterns applicable to this sprint
+  ├── 4. Read `.hub/index.md` (REQUIRED — cannot be skipped via auto-memory shortcut) → identify cross-project patterns applicable to this sprint; for any matching pattern, also read `.hub/wiki/syntheses/{pattern}.md`
   ├── 5. Plan workflow phases (delegate to specialists)
   └── 6. mcp__notion__notion-update-page → mark sprint as 'In Progress' if not already
 

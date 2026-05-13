@@ -82,7 +82,7 @@ Past failure modes that justified creating this agent:
 | **Sprint logs** | Obsidian `50_Audit/sprint-{N}-execution-log.md` | Sprint outcomes, append-only |
 | **Engineering context** | Obsidian `30_Engineering_Context/` | Conventions, runbooks |
 | **Filesystem state** | `.claude/state/` (when present) | Output artifacts from worker agents |
-| **Cross-project Hub** | Filesystem `.hub/wiki/{syntheses,concepts,entities,projects}/*.md` + `.hub/index.md` | When writing new ADRs or considering cross-project patterns — read `.hub/index.md` first; syntheses may be filed back from this vault's ADRs |
+| **Cross-project Hub** | Filesystem `.hub/wiki/{syntheses,concepts,entities,projects}/*.md` + `.hub/index.md` | **MUST read `.hub/index.md` BEFORE drafting any ADR or sprint close-out**. Check `wiki/syntheses/` for existing cross-project patterns that should be referenced; consider filing back ADRs that establish new patterns. Auto-memory shortcuts do NOT substitute for Hub reads. |
 
 ## Operations you own
 
@@ -132,7 +132,7 @@ When invoked with `close sprint {N}`:
 
 When invoked to write a new ADR:
 
-**Pre-flight check**: Read `.hub/index.md` and any matching `wiki/concepts/` or `wiki/syntheses/` entry. If an existing Hub synthesis covers the same pattern (e.g. NUKE-pattern, discovery-first, paper-vs-reality), reference it in the ADR's References section — this maintains bidirectional flow between this vault's ADRs and cross-project Hub syntheses.
+**Pre-flight check (MANDATORY)**: Read `.hub/index.md` AND any matching `wiki/concepts/` or `wiki/syntheses/` entry. This step is non-optional even if you believe auto-memory covers the relevant pattern — auto-memory may carry a stale version. If an existing Hub synthesis covers the same pattern (e.g. NUKE-pattern, discovery-first, paper-vs-reality), reference it in the ADR's References section. This maintains bidirectional flow between this vault's ADRs and cross-project Hub syntheses.
 
 **ADR template** (location: `20_Architecture/Decisions/ADR-{NNN}-{slug}.md`):
 
