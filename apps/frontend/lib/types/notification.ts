@@ -3,7 +3,6 @@ export enum NotificationType {
   ARTICLE_UPDATED = 'article_updated',
   ARTICLE_AUTO_CREATED = 'article_auto_created',
   ARTICLE_TRANSLATED = 'article_translated',
-  PRESS_QUEUE_NEW = 'press_queue_new',
   USER_LOGIN = 'user_login',
   USER_ACTION = 'user_action',
   SYSTEM_ERROR = 'system_error',
