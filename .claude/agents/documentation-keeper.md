@@ -82,6 +82,7 @@ Past failure modes that justified creating this agent:
 | **Sprint logs** | Obsidian `50_Audit/sprint-{N}-execution-log.md` | Sprint outcomes, append-only |
 | **Engineering context** | Obsidian `30_Engineering_Context/` | Conventions, runbooks |
 | **Filesystem state** | `.claude/state/` (when present) | Output artifacts from worker agents |
+| **Cross-project Hub** | Filesystem `.hub/wiki/{syntheses,concepts,entities,projects}/*.md` + `.hub/index.md` | When writing new ADRs or considering cross-project patterns — read `.hub/index.md` first; syntheses may be filed back from this vault's ADRs |
 
 ## Operations you own
 
@@ -130,6 +131,8 @@ When invoked with `close sprint {N}`:
 ### 2. ADR creation
 
 When invoked to write a new ADR:
+
+**Pre-flight check**: Read `.hub/index.md` and any matching `wiki/concepts/` or `wiki/syntheses/` entry. If an existing Hub synthesis covers the same pattern (e.g. NUKE-pattern, discovery-first, paper-vs-reality), reference it in the ADR's References section — this maintains bidirectional flow between this vault's ADRs and cross-project Hub syntheses.
 
 **ADR template** (location: `20_Architecture/Decisions/ADR-{NNN}-{slug}.md`):
 
