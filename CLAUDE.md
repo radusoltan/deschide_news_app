@@ -4,6 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Cross-Project Knowledge Hub
+
+For cross-project patterns, lessons, and reference material that transcend this codebase — Symfony idioms, Next.js conventions, agent workflow patterns, governance models picked up from external sources (Karpathy, Aftab, etc.) — consult the **Hub vault** at `.hub/index.md` (symlink, read-only).
+
+**Entry workflow:**
+1. Open `.hub/index.md` for the catalog of available pages
+2. Navigate 1-hop to the relevant page (Projects / Concepts / Entities / Syntheses)
+3. Each page has a TL;DR in the first 1-3 sentences — use it to decide whether to read further
+
+**Scope distinction:**
+- `.hub/` — cross-project knowledge (Karpathy LLM Wiki paradigm, lessons portable to other codebases)
+- `DeschideVault` (separate Obsidian vault) — this project's operational docs (ADRs, sprint logs, governance §4.3)
+- This repo — the code itself
+
+**Discipline:**
+- `.hub/` is **read-only** from this project. Do not write, edit, or commit changes there — it's a symlink to a separately-versioned repository.
+- If you discover a cross-project pattern worth filing in the Hub, surface it in chat (`/file-back <topic>` workflow) — Radu curates additions.
+
+---
+
 # ⛔ HARD RULES — NEVER VIOLATE
 
 These rules apply to ALL agents, ALL tasks, ALL sprints. Violations waste time and break workflows.

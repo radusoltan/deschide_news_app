@@ -23,26 +23,15 @@ interface DarkModeToggleProps {
 }
 
 function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
-  // Lazy useState init reads localStorage on the client first render,
-  // so React 19 strict-mode does not flag a synchronous setState inside
-  // useEffect (react-hooks/set-state-in-effect). The icon path will
-  // legitimately differ between SSR ('system') and the client first
-  // render (whatever localStorage holds); suppressHydrationWarning on
-  // the button is the documented escape hatch for this exact pattern,
-  // already used on <html> in app/[locale]/layout.tsx alongside the
-  // anti-flash inline script that pre-applies data-theme.
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>(() => {
-    if (typeof window === 'undefined') {
-      return 'system'
-    }
-    try {
-      const stored = window.localStorage.getItem('theme-preference')
-      if (stored === 'light' || stored === 'dark' || stored === 'system') {
-        return stored
-      }
-    } catch { /* ignore */ }
-    return 'system'
-  })
+  // SSR and the client's first render must produce identical HTML, so
+  // theme starts as 'system' on both. After mount, useEffect reads
+  // localStorage and updates state; `mounted` gates icon rendering so
+  // the SVG <path> diff (sun vs moon vs monitor) cannot trip hydration.
+  // The anti-flash inline script in app/[locale]/layout.tsx still
+  // pre-applies data-theme on <html> before React loads, so page colors
+  // do not flicker — only the toggle icon settles after mount.
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
+  const [mounted, setMounted] = useState(false)
 
   const applyTheme = useCallback((nextTheme: 'light' | 'dark' | 'system') => {
     if (typeof document === 'undefined') {
@@ -70,9 +59,27 @@ function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
     }
   }, [])
 
+  /* eslint-disable react-hooks/set-state-in-effect --
+     Sync React state with external storage (localStorage) at mount and
+     flip the mount gate. Lazy useState init is incompatible with SSR
+     (server has no localStorage) and previously caused the SVG <path>
+     hydration mismatch this effect exists to fix. */
   useEffect(() => {
-    applyTheme(theme)
-  }, [applyTheme, theme])
+    try {
+      const stored = window.localStorage.getItem('theme-preference')
+      if (stored === 'light' || stored === 'dark' || stored === 'system') {
+        setTheme(stored)
+      }
+    } catch { /* ignore */ }
+    setMounted(true)
+  }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (mounted) {
+      applyTheme(theme)
+    }
+  }, [applyTheme, mounted, theme])
 
   const cycleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
@@ -95,21 +102,21 @@ function DarkModeToggle({ compact = false }: DarkModeToggleProps) {
     <button
       onClick={cycleTheme}
       className={`flex items-center justify-center min-h-[44px] min-w-[44px] text-[var(--color-text-primary)] dark:text-[var(--color-text-primary-dark)] hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] focus:ring-offset-2 focus:ring-offset-[var(--color-surface)] dark:focus:ring-offset-[var(--color-surface-dark)] rounded-sm ${compact ? 'px-2' : 'px-3'}`}
-      aria-label={`Current theme: ${theme}. Click to cycle between light, dark, and system themes.`}
-      title={`Theme: ${theme}`}
-      suppressHydrationWarning
+      aria-label={mounted ? `Current theme: ${theme}. Click to cycle between light, dark, and system themes.` : 'Theme toggle'}
+      title={mounted ? `Theme: ${theme}` : undefined}
     >
-      {theme === 'light' && (
+      {!mounted && <svg className={iconClass} viewBox="0 0 24 24" aria-hidden="true" />}
+      {mounted && theme === 'light' && (
         <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
       )}
-      {theme === 'dark' && (
+      {mounted && theme === 'dark' && (
         <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
         </svg>
       )}
-      {theme === 'system' && (
+      {mounted && theme === 'system' && (
         <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>

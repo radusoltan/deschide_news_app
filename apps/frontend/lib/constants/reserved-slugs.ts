@@ -9,7 +9,7 @@
  * These slugs are reserved for system pages and cannot be used for categories.
  * This list is fetched from the backend validation in src/Validator/ReservedSlugValidator.php
  *
- * Generated: 2026-04-13T08:48:07.721Z
+ * Generated: 2026-05-11T07:58:57.365Z
  * Source: http://127.0.0.1:8081/api/slug/reserved
  *
  * These routes have their own pages in app/[locale]/(public)/ directory:

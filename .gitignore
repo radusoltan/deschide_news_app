@@ -194,3 +194,8 @@ apps/frontend/apps/
 # Memory Compiler (cloned subfolder, has own git history)
 # ------------------------------------------------------------------------------
 memory-compiler/
+
+# ------------------------------------------------------------------------------
+# Hub vault symlink (read-only cross-project knowledge, separately versioned)
+# ------------------------------------------------------------------------------
+.hub
